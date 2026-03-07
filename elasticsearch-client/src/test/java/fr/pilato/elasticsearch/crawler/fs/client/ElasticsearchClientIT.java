@@ -521,133 +521,138 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void bulk() throws Exception {
-        {
-            long nbItems = RandomizedTest.randomLongBetween(5, 20);
+    public void bulk_index_only() throws Exception {
+        long nbItems = RandomizedTest.randomLongBetween(5, 20);
 
-            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+        ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
-            // Add some index op
-            for (int i = 0; i < nbItems; i++) {
-                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
-                        "" + i,
-                        null,
-                        "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
-            }
-
-            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
-            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-            assertThat(bulkResponse.hasFailures()).isFalse();
-            assertThat(bulkResponse.getItems()).isNotEmpty();
-
-            // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems);
+        // Add some index op
+        for (int i = 0; i < nbItems; i++) {
+            bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
+                    "" + i,
+                    null,
+                    "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
         }
-        {
-            esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            long nbItems = RandomizedTest.randomLongBetween(5, 20);
-            long nbItemsToDelete = RandomizedTest.randomLongBetween(1, nbItems);
 
-            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+        ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+        ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+        assertThat(bulkResponse.hasFailures()).isFalse();
+        assertThat(bulkResponse.getItems()).isNotEmpty();
 
-            // Add some index op
-            for (int i = 0; i < nbItems; i++) {
-                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
-                        "" + i,
-                        null,
-                        "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
-            }
-            // Add some delete op
-            for (int i = 0; i < nbItemsToDelete; i++) {
-                bulkRequest.add(new ElasticsearchDeleteOperation(getCrawlerName() + INDEX_SUFFIX_DOCS, "" + i));
-            }
+        // Wait until we have the expected number of documents indexed
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems);
+    }
 
-            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
-            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-            assertThat(bulkResponse.hasFailures()).isFalse();
-            assertThat(bulkResponse.getItems()).isNotEmpty();
+    @Test
+    public void bulk_index_and_delete() throws Exception {
+        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
+        long nbItems = RandomizedTest.randomLongBetween(5, 20);
+        long nbItemsToDelete = RandomizedTest.randomLongBetween(1, nbItems);
 
-            // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems - nbItemsToDelete);
+        ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+
+        // Add some index op
+        for (int i = 0; i < nbItems; i++) {
+            bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
+                    "" + i,
+                    null,
+                    "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
         }
-        {
-            esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            long nbItems = RandomizedTest.randomLongBetween(5, 20);
-
-            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
-
-            // Add some index op
-            for (int i = 0; i < nbItems; i++) {
-                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
-                        "" + i,
-                        null,
-                        """
-                                {
-                                  "foo" : {
-                                    "bar" : "baz"
-                                  }
-                                }"""));
-            }
-
-            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
-            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-            assertThat(bulkResponse.hasFailures()).isFalse();
-            assertThat(bulkResponse.getItems()).isNotEmpty();
-
-            // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems);
+        // Add some delete op
+        for (int i = 0; i < nbItemsToDelete; i++) {
+            bulkRequest.add(new ElasticsearchDeleteOperation(getCrawlerName() + INDEX_SUFFIX_DOCS, "" + i));
         }
-        {
-            esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            String indexSettings = """
-                    {
-                      "mappings": {
-                        "properties": {
-                          "foo": {
-                            "properties": {
-                              "number": {
-                                "type": "long"
+
+        ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+        ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+        assertThat(bulkResponse.hasFailures()).isFalse();
+        assertThat(bulkResponse.getItems()).isNotEmpty();
+
+        // Wait until we have the expected number of documents indexed
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems - nbItemsToDelete);
+    }
+
+    @Test
+    public void bulk_index_with_multiline_json() throws Exception {
+        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
+        long nbItems = RandomizedTest.randomLongBetween(5, 20);
+
+        ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+
+        // Add some index op with multiline JSON
+        for (int i = 0; i < nbItems; i++) {
+            bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
+                    "" + i,
+                    null,
+                    """
+                            {
+                              "foo" : {
+                                "bar" : "baz"
                               }
-                            }
+                            }"""));
+        }
+
+        ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+        ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+        assertThat(bulkResponse.hasFailures()).isFalse();
+        assertThat(bulkResponse.getItems()).isNotEmpty();
+
+        // Wait until we have the expected number of documents indexed
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems);
+    }
+
+    @Test
+    public void bulk_index_with_errors() throws Exception {
+        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
+        String indexSettings = """
+                {
+                  "mappings": {
+                    "properties": {
+                      "foo": {
+                        "properties": {
+                          "number": {
+                            "type": "long"
                           }
                         }
                       }
-                    }""";
+                    }
+                  }
+                }""";
 
-            createIndex(indexSettings);
+        createIndex(indexSettings);
 
-            long nbItems = RandomizedTest.randomLongBetween(6, 20);
+        long nbItems = RandomizedTest.randomLongBetween(6, 20);
 
-            ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
+        ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
-            // Add some index op
-            // Every 5 ops, we had a failing document
-            long nbErrors = 0;
-            for (int i = 0; i < nbItems; i++) {
-                if (i > 0 && i % 5 == 0) {
-                    bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
-                            "" + i,
-                            null,
-                            "{\"foo\":{\"bar\":\"bar\"},\"number\":\"bar\"}"));
-                    nbErrors++;
-                } else {
-                    bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
-                            "" + i,
-                            null,
-                            "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
-                }
+        // Add some index op
+        // Every 5 ops, we had a failing document
+        long nbErrors = 0;
+        for (int i = 0; i < nbItems; i++) {
+            if (i > 0 && i % 5 == 0) {
+                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
+                        "" + i,
+                        null,
+                        "{\"foo\":{\"bar\":\"bar\"},\"number\":\"bar\"}"));
+                nbErrors++;
+            } else {
+                bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS,
+                        "" + i,
+                        null,
+                        "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
             }
-
-            ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
-            ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-            assertThat(bulkResponse.hasFailures()).isTrue();
-            assertThat(bulkResponse.getItems()).isNotEmpty();
-            long errors = bulkResponse.getItems().stream().filter(FsCrawlerBulkResponse.BulkItemResponse::isFailed).count();
-            assertThat(errors).isEqualTo(nbErrors);
-
-            // Wait until we have the expected number of documents indexed
-            countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems - nbErrors);
         }
+        logger.info("🎯 We index {} items: {} good ✅ and {} bad ❌", nbItems, nbItems - nbErrors, nbErrors);
+
+        ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+        ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
+        assertThat(bulkResponse.hasFailures()).as("We should see errors in the bulk response").isTrue();
+        assertThat(bulkResponse.getItems()).isNotEmpty();
+        long errors = bulkResponse.getItems().stream().filter(FsCrawlerBulkResponse.BulkItemResponse::isFailed).count();
+        assertThat(errors).isEqualTo(nbErrors);
+
+        // Wait until we have the expected number of documents indexed
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems - nbErrors);
     }
 
     @Test
@@ -958,7 +963,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.waitForHealthyIndex(request.getIndex());
 
         // We wait before considering a failing test
-        logger.info("  ---> Waiting up to {} for {} documents in {}", maxWaitForSearch,
+        logger.info("⏳ Waiting up to {} for {} documents in {}", maxWaitForSearch,
                 expected == null ? "some" : expected, request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 

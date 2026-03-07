@@ -89,6 +89,29 @@ elasticsearch:
   index: "my-index"
 ```
 
+## Commit Messages
+
+- **Language**: Write all commit messages in **English**.
+- **Emojis**: Use emojis to classify the type of change:
+  - **Title**: Prefer a short emoji in the title (e.g. `feat(core): ✨ add X`, `fix(plugin): 🐛 prevent Y`).
+  - **Body**: You may add emojis in the body for clarity (e.g. bullet points or section markers).
+- **Types**: Common prefixes and emojis:
+  - `feat` / ✨ – new feature
+  - `fix` / 🐛 – bug fix
+  - `docs` / 📝 – documentation
+  - `refactor` / ♻️ – refactoring
+  - `test` / 🧪 – tests
+  - `chore` / 🔧 – maintenance, deps, tooling
+
+Example:
+
+```
+fix(core): 🐛 re-check checkpoint nextCheck in between-runs wait
+
+- Allow forced rescan when checkpoint file is updated externally
+- Read checkpoint from disk each wait chunk when !userStopped
+```
+
 ## Build Commands
 
 ```bash
@@ -124,12 +147,52 @@ The project uses the Randomized Testing Framework from Carrotsearch:
 -Dtests.cluster.url=...        # Use external Elasticsearch cluster
 ```
 
+### Local Elasticsearch for integration tests
+
+You can run integration tests against a **local** Elasticsearch instead of TestContainers. To start Elasticsearch locally, use the **start-local** method described in the skills under `.agents/skills/`:
+
+- **`.agents/skills/start-elasticsearch/SKILL.md`** – How to start Elasticsearch locally (e.g. `curl -fsSL https://elastic.co/start-local | ES_LOCAL_PASSWORD="changeme" sh -s -- -v 9.3.1`). Run this in an `IGNORE_ME` directory so it is not committed. The cluster will be at http://localhost:9200 with user `elastic` and password `changeme`.
+- **`.agents/skills/check-elasticsearch/SKILL.md`** – How to check that Elasticsearch is running and to inspect indices, content, or mapping.
+
+Once Elasticsearch is running locally, run a single integration test with:
+
+```bash
+mvn verify -pl integration-tests -am \
+  -Dtests.cluster.url=http://localhost:9200 \
+  -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch.FsCrawlerTestAddNewFilesIT \
+  -Dtests.method="add_new_files_and_force_rescan"
+```
+
+- Replace the class and method with the desired test.
+- Same pattern is documented in `docs/source/dev/build.rst` (e.g. `-Dtests.class=... -Dtests.method="METHOD_NAME"`).
+
+### Fixing failing tests
+
+When fixing a bug or addressing a test failure:
+
+1. **Reproduce first**: Add or adjust a unit test and/or integration test that reproduces the error (e.g. an assertion that fails with the current behaviour).
+2. **Run the test**: Execute the test and confirm it **fails** (red).
+3. **Fix the code**: Change the production (or test) code so that the intended behaviour is correct.
+4. **Verify**: Run the test again and confirm it **passes** (green).
+
+Do not fix the code first and then add a test that passes; the test must fail before the fix so that it actually guards against the bug.
+
 ## REST API Endpoints
 
-- `GET /` - Server status
-- `POST /_document` - Upload a document (multipart/form-data)
-- `PUT /_document/{id}` - Upload with specific ID
-- `DELETE /_document/{id}` - Delete a document
+### Server
+- `GET /` – Server status (version, job name, Elasticsearch connection)
+
+### Documents (`/_document`)
+- `POST /_document` – Upload a document (multipart/form-data or application/json for 3rd-party providers). Optional query/header/form: `id`, `index`, `debug`, `simulate`.
+- `PUT /_document/{id}` – Upload a document with a specific ID (multipart/form-data). Optional: `index`, `debug`, `simulate`.
+- `DELETE /_document` – Delete a document by filename (header or query `filename`, optional `index`).
+- `DELETE /_document/{id}` – Delete a document by ID (optional query `index`).
+
+### Crawler control (`/_crawler`)
+- `GET /_crawler/status` – Crawler status (state, checkpoint, scan stats, nextCheck).
+- `POST /_crawler/pause` – Pause the crawler and save checkpoint; no auto-run until resume.
+- `POST /_crawler/resume` – Resume a paused crawler (or trigger next run between runs).
+- `DELETE /_crawler/checkpoint` – Clear the checkpoint file (crawler must be paused or stopped first).
 
 ## Plugin Development
 

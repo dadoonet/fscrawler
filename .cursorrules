@@ -1,0 +1,4 @@
+# FSCrawler project rules
+
+- Always consider the project documentation in .agents/CURSOR.md for architecture, build commands, testing, and conventions before answering or making changes.
+- When working on this codebase, use .agents/CURSOR.md as the main reference for module layout, key classes, and development practices.

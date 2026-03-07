@@ -21,7 +21,9 @@ package fr.pilato.elasticsearch.crawler.plugins;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.pf4j.DefaultExtensionFinder;
 import org.pf4j.DefaultPluginManager;
+import org.pf4j.ExtensionFinder;
 import org.pf4j.PluginManager;
 
 import java.util.HashMap;
@@ -33,7 +35,14 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
     private final HashMap<String, FsCrawlerExtensionFsProvider> fsProviders;
 
     public FsCrawlerPluginsManager() {
-        pluginManager = new DefaultPluginManager();
+        pluginManager = new DefaultPluginManager() {
+            @Override
+            protected ExtensionFinder createExtensionFinder() {
+                DefaultExtensionFinder extensionFinder = (DefaultExtensionFinder) super.createExtensionFinder();
+                extensionFinder.add(new FsCrawlerServiceProviderExtensionFinder(this));
+                return extensionFinder;
+            }
+        };
         fsProviders = new HashMap<>();
     }
 
@@ -55,6 +64,14 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
 
     public void close() {
         logger.debug("Stopping plugins");
+        for (FsCrawlerExtensionFsProvider provider : fsProviders.values()) {
+            try {
+                logger.trace("Closing provider [{}]", provider.getType());
+                provider.close();
+            } catch (Exception e) {
+                logger.warn("Error closing provider [{}]: {}", provider.getType(), e.getMessage());
+            }
+        }
         pluginManager.stopPlugins();
     }
 

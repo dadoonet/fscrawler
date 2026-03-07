@@ -23,6 +23,18 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 public class DeleteResponse extends RestResponse {
 
+    public DeleteResponse() {
+        super();
+    }
+
+    public DeleteResponse(boolean ok, String message) {
+        super(ok, message);
+    }
+
+    public DeleteResponse(boolean ok) {
+        super(ok);
+    }
+
     private String filename;
     private String url;
     private Doc doc;

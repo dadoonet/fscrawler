@@ -19,6 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -34,7 +35,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -44,9 +44,6 @@ import static org.awaitility.Awaitility.await;
  * @author dadoonet (David Pilato)
  */
 public class FsCrawlerImpl implements AutoCloseable {
-
-    @Deprecated
-    public static final String INDEX_TYPE_FOLDER = "folder";
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -85,11 +82,10 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         // Generate the directory where we write status and other files
         Path jobSettingsFolder = config.resolve(settings.getName());
-        try {
-            Files.createDirectories(jobSettingsFolder);
-        } catch (IOException e) {
-            throw new RuntimeException("Can not create the job config directory", e);
-        }
+        FsCrawlerUtil.createDirIfMissing(jobSettingsFolder);
+
+        // Migrate the old status file to the new checkpoint file if needed
+        new FsCrawlerCheckpointFileHandler(config).migrateLegacyStatus(settings.getName());
 
         // Set default temp directory if not configured
         if (settings.getFs().getTempDir() == null) {
@@ -98,24 +94,20 @@ public class FsCrawlerImpl implements AutoCloseable {
             logger.debug("Using default temp directory: [{}]", tempDir);
         }
 
-        // Create the fsParser instance depending on the settings
-        if (loop != 0) {
-            // Determine the protocol type
+        // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
+        // pass null so we don't resolve/start a provider (e.g. SSH/FTP) that could fail if config is missing.
+        final FsCrawlerExtensionFsProvider crawlerPlugin;
+        if (loop != null && loop == 0) {
+            logger.debug("Loop is 0 (REST-only mode): no crawler provider");
+            crawlerPlugin = null;
+        } else {
             String protocolType = determineProtocolType(settings);
             logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
-
-            // Get the crawler plugin from the plugin manager (validates that it supports crawling)
-            FsCrawlerExtensionFsProvider crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
-
-            // Initialize the plugin with settings
+            crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
             crawlerPlugin.start(settings, "{}");
-
-            // Create the parser with the plugin
-            fsParser = new FsParserAbstract(settings, config, managementService, documentService, loop, crawlerPlugin);
-        } else {
-            // We start a No-OP parser
-            fsParser = new FsParserNoop(settings);
         }
+
+        fsParser = new FsParser(settings, config, managementService, documentService, loop, rest, crawlerPlugin);
         fsCrawlerThread = new Thread(fsParser, "fs-crawler");
     }
 
@@ -203,8 +195,9 @@ public class FsCrawlerImpl implements AutoCloseable {
             logger.info("FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.");
         }
 
+        // Set closed=false before start() so a concurrent close() cannot set true and then be overwritten here
+        fsParser.closed.set(false);
         fsCrawlerThread.start();
-        fsParser.closed = false;
     }
 
     @Override

@@ -640,3 +640,223 @@ You can change it using ``rest`` settings:
 
 It also means that if you are running more than one instance of FScrawler locally, you can (must) change the port as
 it will conflict.
+
+Crawler control
+^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.10
+
+FSCrawler provides REST endpoints to control the crawler, allowing you to pause, resume, 
+and monitor the crawling process. This is particularly useful for large file systems 
+where crawling may take a long time and you want to be able to stop and resume later.
+
+Getting crawler status
+~~~~~~~~~~~~~~~~~~~~~~
+
+To get the current status of the crawler, you can call ``GET /_crawler/status``:
+
+.. code:: sh
+
+   curl http://127.0.0.1:8080/_crawler/status
+
+It will give you a response similar to:
+
+.. code:: json
+
+   {
+     "state" : "RUNNING",
+     "scan_id" : "abc123-def456",
+     "current_path" : "/data/documents/subfolder",
+     "pending_directories" : 42,
+     "completed_directories" : 158,
+     "files_processed" : 1523,
+     "files_deleted" : 12,
+     "scan_start_time" : "2024-01-15T10:30:00",
+     "scan_end_time" : null,
+     "next_check" : null,
+     "elapsed_time" : "15m 32s",
+     "retry_count" : 0,
+     "last_error" : null
+   }
+
+When a scan is completed, the response will also include the ``scan_end_time`` and ``next_check`` fields:
+
+.. code:: json
+
+   {
+     "state" : "COMPLETED",
+     "files_processed" : 2500,
+     "files_deleted" : 25,
+     "scan_start_time" : "2024-01-15T10:30:00",
+     "scan_end_time" : "2024-01-15T11:45:00",
+     "next_check" : "2024-01-15T12:00:00",
+     "elapsed_time" : "1h 15m"
+   }
+
+The possible states are:
+
+* ``RUNNING``: The crawler is actively processing files
+* ``PAUSED``: The crawler is between runs or has been explicitly paused (see below)
+* ``STOPPED``: The crawler is not running
+* ``COMPLETED``: The crawler has finished its scan successfully
+* ``ERROR``: The crawler encountered an error and stopped
+
+Behavior between runs
+~~~~~~~~~~~~~~~~~~~~
+
+After each crawl run, the crawler enters a pause and waits for the next run. The next run
+starts when either:
+
+* You call ``POST /_crawler/resume`` (run on demand), or
+* The configured ``update_rate`` time has elapsed (automatic run).
+
+This behavior is the same whether you use the REST service or not. So you can trigger a run
+at any time with ``resume``, or let the crawler run automatically at the scheduled interval.
+
+If you explicitly call ``POST /_crawler/pause`` while the crawler is in that "between runs"
+wait, the crawler will **not** start the next run when the time elapses; it will only start
+when you call ``POST /_crawler/resume``. This lets you truly pause and control when the next
+run happens.
+
+Pausing the crawler
+~~~~~~~~~~~~~~~~~~~
+
+To pause the crawler, call ``POST /_crawler/pause``:
+
+.. code:: sh
+
+   curl -X POST http://127.0.0.1:8080/_crawler/pause
+
+The crawler will save its current progress (checkpoint) and pause. While explicitly paused,
+it will **not** automatically start the next run when ``update_rate`` elapses; you must call
+``POST /_crawler/resume`` to start the next run. You can also safely stop FSCrawler while
+paused; when you restart FSCrawler, it will resume from where it left off when you call
+``resume``.
+
+Success response (200):
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler paused. Checkpoint saved."
+   }
+
+If the crawler is already paused, you get 200 with:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler is already paused."
+   }
+
+Error response (400) when the crawler is not running:
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Crawler is not running"
+   }
+
+Resuming the crawler
+~~~~~~~~~~~~~~~~~~~~
+
+To resume a paused crawler, call ``POST /_crawler/resume``:
+
+.. code:: sh
+
+   curl -X POST http://127.0.0.1:8080/_crawler/resume
+
+Success response (200) when resuming from pause:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler resumed."
+   }
+
+If the crawler is not paused, you get 200 with no action taken:
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Crawler is not paused. No action needed."
+   }
+
+Error response (400) when the crawler is closed:
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Crawler is closed. Cannot resume."
+   }
+
+Clearing the checkpoint
+~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to force a fresh start and ignore any saved progress, you can clear 
+the checkpoint file. The crawler must be paused or stopped first:
+
+.. code:: sh
+
+   curl -X DELETE http://127.0.0.1:8080/_crawler/checkpoint
+
+Success response (200):
+
+.. code:: json
+
+   {
+     "ok" : true,
+     "message" : "Checkpoint cleared"
+   }
+
+Error response (400) when the crawler is running and not paused:
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Cannot clear checkpoint while crawler is running. Pause or stop it first."
+   }
+
+Error response (404) when there is no active crawler (e.g. started with ``--loop 0``):
+
+.. code:: json
+
+   {
+     "ok" : false,
+     "message" : "Failed to clear checkpoint as we don't have a checkpoint handler. This probably means there's no active crawler. Did you start with --loop 0?"
+   }
+
+On I/O error, the server returns 500 with a message starting with ``Failed to clear checkpoint:``.
+
+.. note::
+
+   You can also clear the checkpoint using the ``--restart`` command line option 
+   when starting FSCrawler. See :ref:`cli-options` for more details.
+
+Automatic resume after crash
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If FSCrawler crashes or is forcefully terminated during a crawl, it will automatically 
+resume from the last saved checkpoint when restarted. The checkpoint is saved periodically 
+(every 100 files by default) and whenever the crawler state changes.
+
+Network error recovery
+~~~~~~~~~~~~~~~~~~~~~~
+
+FSCrawler automatically handles network errors with exponential backoff retry. If a network 
+error occurs, it will:
+
+1. Save the current checkpoint
+2. Wait with exponential backoff (starting from 1 second, doubling each retry)
+3. Attempt to reconnect
+4. Resume from the failed directory
+
+After 10 consecutive failures, the crawler will stop with an error state. You can then 
+fix the network issue and restart FSCrawler to resume from the checkpoint.

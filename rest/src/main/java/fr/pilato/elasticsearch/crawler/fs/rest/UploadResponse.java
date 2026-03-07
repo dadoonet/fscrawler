@@ -23,6 +23,18 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 
 public class UploadResponse extends RestResponse {
 
+    public UploadResponse() {
+        super();
+    }
+
+    public UploadResponse(boolean ok, String message) {
+        super(ok, message);
+    }
+
+    public UploadResponse(boolean ok) {
+        super(ok);
+    }
+
     private String filename;
     private String url;
     private Doc doc;

@@ -19,47 +19,20 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+/**
+ * Simple response for operations
+ */
+public class SimpleResponse extends RestResponse {
 
-public class ServerStatusResponse extends RestResponse {
-
-    public ServerStatusResponse() {
+    public SimpleResponse() {
         super();
     }
 
-    public ServerStatusResponse(boolean ok, String message) {
+    public SimpleResponse(boolean ok, String message) {
         super(ok, message);
     }
 
-    public ServerStatusResponse(boolean ok) {
+    public SimpleResponse(boolean ok) {
         super(ok);
-    }
-
-    private String version;
-    private String elasticsearch;
-    private FsSettings settings;
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getElasticsearch() {
-        return elasticsearch;
-    }
-
-    public void setElasticsearch(String elasticsearch) {
-        this.elasticsearch = elasticsearch;
-    }
-
-    public FsSettings getSettings() {
-        return settings;
-    }
-
-    public void setSettings(FsSettings settings) {
-        this.settings = settings;
     }
 }

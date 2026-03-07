@@ -132,11 +132,9 @@ public class DocumentApi extends RestApi {
             logger.debug("Failed to add document from [{}] 3rd-party: [{}] - [{}]",
                     type, e.getClass().getSimpleName(), e.getMessage());
             logger.trace("Full stacktrace:", e);
-            UploadResponse response = new UploadResponse();
-            response.setOk(false);
-            response.setMessage("Failed to add document from [" + type + "] 3rd-party: ["
+            return new UploadResponse(false,
+                    "Failed to add document from [" + type + "] 3rd-party: ["
                     + e.getClass().getSimpleName() + "] - [" + e.getMessage() + "]");
-            return response;
         }
     }
 
@@ -158,11 +156,9 @@ public class DocumentApi extends RestApi {
         }
 
         if (filename == null) {
-            DeleteResponse response = new DeleteResponse();
-            response.setOk(false);
-            response.setMessage("We can not delete a document without an id or a filename. " +
+            return new DeleteResponse(false,
+                    "We can not delete a document without an id or a filename. " +
                     "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
-            return response;
         }
 
         return removeDocumentInDocumentService(SignTool.sign(filename), filename, index);
@@ -260,8 +256,7 @@ public class DocumentApi extends RestApi {
                     settings.getElasticsearch().getPipeline());
         }
 
-        UploadResponse response = new UploadResponse();
-        response.setOk(true);
+        UploadResponse response = new UploadResponse(true);
         response.setFilename(doc.getFile().getFilename());
         response.setUrl(url);
 
@@ -282,28 +277,24 @@ public class DocumentApi extends RestApi {
         }
 
         if (id == null && filename == null) {
-            DeleteResponse response = new DeleteResponse();
-            response.setOk(false);
-            response.setMessage("We can not delete a document without an id or a filename. " +
+            return new DeleteResponse(false,
+                    "We can not delete a document without an id or a filename. " +
                     "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
-            return response;
         }
 
         logger.debug("Delete document [{}/{}] from elasticsearch using index [{}].", id, filename, index);
-        DeleteResponse response = new DeleteResponse();
+        DeleteResponse response;
         try {
             documentService.deleteSingle(index, id);
-            response.setOk(true);
-            response.setIndex(index);
-            response.setId(id);
-            response.setFilename(filename);
+            response = new DeleteResponse(true);
         } catch (Exception e) {
-            response.setOk(false);
-            response.setMessage("Can not remove document [" + index + "/" + (filename == null ? id : filename) + "]: " + e.getMessage());
-            response.setIndex(index);
-            response.setId(id);
-            response.setFilename(filename);
+            response = new DeleteResponse(false,
+                    "Can not remove document [" + index + "/" + (filename == null ? id : filename) + "]: "
+                            + e.getMessage());
         }
+        response.setIndex(index);
+        response.setId(id);
+        response.setFilename(filename);
 
         return response;
     }

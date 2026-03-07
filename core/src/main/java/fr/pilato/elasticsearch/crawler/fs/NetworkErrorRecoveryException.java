@@ -17,39 +17,15 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.rest;
+package fr.pilato.elasticsearch.crawler.fs;
 
-class RestResponse {
+/**
+ * Thrown when network error recovery fails (max retries exceeded or reconnect failed).
+ * The failed path has already been re-added to the checkpoint; callers must not add it again.
+ */
+public class NetworkErrorRecoveryException extends RuntimeException {
 
-    public RestResponse() {
-
-    }
-
-    public RestResponse(boolean ok, String message) {
-        this.ok = ok;
-        this.message = message;
-    }
-
-    public RestResponse(boolean ok) {
-        this.ok = ok;
-    }
-
-    private boolean ok;
-    private String message;
-
-    public void setOk(boolean ok) {
-        this.ok = ok;
-    }
-
-    public boolean isOk() {
-        return ok;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    public NetworkErrorRecoveryException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

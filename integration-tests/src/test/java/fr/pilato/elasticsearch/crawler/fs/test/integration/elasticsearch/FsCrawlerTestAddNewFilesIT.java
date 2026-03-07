@@ -19,12 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJob;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -99,7 +100,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     public void add_new_file() throws Exception {
         // We need to wait for 2 seconds before starting the test as the file might have just been created
         // It's due to https://github.com/dadoonet/fscrawler/issues/82 which removes 2 seconds from the last scan date
-        Thread.sleep(2000L);
+        FsCrawlerUtil.waitFor(Duration.ofSeconds(2));
 
         FsSettings fsSettings = createTestSettings();
         // We change the update rate to 5 seconds because the FsParser last scan date is set to 2 seconds less than the current time
@@ -150,14 +151,14 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
                 .atMost(10, SECONDS)
                 .until(() -> {
             try {
-                FsJobFileHandler fsJobFileHandler = new FsJobFileHandler(metadataDir);
-                FsJob fsJob = fsJobFileHandler.read(jobName);
-                fsJob.setNextCheck(dateTime);
-                fsJobFileHandler.write(jobName, fsJob);
+                FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(metadataDir);
+                FsCrawlerCheckpoint checkpoint = checkpointHandler.read(jobName);
+                checkpoint.setNextCheck(dateTime);
+                checkpointHandler.write(jobName, checkpoint);
                 return true;
             } catch (Exception e) {
-                logger.warn("FsJob is not available yet: [{}] : {}", jobName, e.getMessage());
-                logger.debug("Error while reading FsJob", e);
+                logger.warn("Checkpoint is not available yet: [{}] : {}", jobName, e.getMessage());
+                logger.debug("Error while reading checkpoint", e);
                 return false;
             }
         });

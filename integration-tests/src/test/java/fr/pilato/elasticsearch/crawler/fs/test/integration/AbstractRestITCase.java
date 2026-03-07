@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
@@ -77,6 +79,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private FsCrawlerManagementServiceElasticsearchImpl managementService;
     private FsCrawlerDocumentService documentService;
     private RestServer restServer;
+    private FsCrawlerImpl restCrawler;
 
     /**
      * Get the Rest Port. It could be set externally. If 0,
@@ -104,13 +107,14 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         // Add the rest interface
         fsSettings.getRest().setUrl("http://127.0.0.1:" + getRestPort() + "/fscrawler");
 
-        this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(fsSettings);
-        this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(fsSettings);
+        // Start crawler in REST-only mode (loop 0, rest): parser stays in pause, no crawl until resume
+        restCrawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, true);
+        restCrawler.start();
 
-        managementService.start();
-        documentService.start();
+        this.managementService = (FsCrawlerManagementServiceElasticsearchImpl) restCrawler.getManagementService();
+        this.documentService = restCrawler.getDocumentService();
 
-        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager);
+        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager, restCrawler.getFsParser());
         restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
@@ -121,10 +125,19 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     }
 
     @After
-    public void stopRestServer() throws IOException {
-        restServer.close();
-        managementService.close();
-        documentService.close();
+    public void stopRestServer() throws IOException, InterruptedException {
+        if (restServer != null) {
+            restServer.close();
+        }
+        if (restCrawler != null) {
+            restCrawler.close();
+        }
+        if (managementService != null) {
+            managementService.close();
+        }
+        if (documentService != null) {
+            documentService.close();
+        }
     }
 
     public static <T> T get(String path, Class<T> clazz) {

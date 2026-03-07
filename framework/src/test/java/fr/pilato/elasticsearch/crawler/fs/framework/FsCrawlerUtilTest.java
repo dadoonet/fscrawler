@@ -333,4 +333,19 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(61))).isEqualTo("1h1m");
         assertThat(FsCrawlerUtil.durationToString(Duration.ofMillis(randomLongBetween(0, 999999999L)))).isNotEmpty();
     }
+
+    @Test
+    public void wait_for() {
+        int duration = randomIntBetween(50, 100);
+        LocalDateTime now = LocalDateTime.now();
+        FsCrawlerUtil.waitFor(Duration.ofMillis(duration));
+        LocalDateTime afterWait1 = LocalDateTime.now();
+        assertThat(Duration.between(now, afterWait1).toMillis()).isGreaterThanOrEqualTo(duration);
+        FsCrawlerUtil.waitFor(Duration.ofMillis(100));
+        LocalDateTime afterWait2 = LocalDateTime.now();
+        assertThat(Duration.between(now, afterWait2).toMillis()).isGreaterThanOrEqualTo(100);
+        FsCrawlerUtil.waitFor(Duration.ofSeconds(1));
+        LocalDateTime afterWait3 = LocalDateTime.now();
+        assertThat(Duration.between(now, afterWait3).toSeconds()).isGreaterThanOrEqualTo(1);
+    }
 }

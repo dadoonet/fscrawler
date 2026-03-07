@@ -29,6 +29,10 @@ import java.util.EnumSet;
 public class FsCrawlerUtilForTests {
     private static final Logger logger = LogManager.getLogger();
 
+    private FsCrawlerUtilForTests() {
+        // Utility class should not be instantiated
+    }
+
     /**
      * Copy files from a source to a target
      * under a _default subdirectory.

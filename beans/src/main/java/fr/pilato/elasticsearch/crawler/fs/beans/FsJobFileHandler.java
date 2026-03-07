@@ -28,7 +28,9 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper
 
 /**
  * Provides utility methods to read and write job status files (_status.json)
+ * @deprecated since 2.10, use {@link FsCrawlerCheckpointFileHandler} instead
  */
+@Deprecated
 public class FsJobFileHandler extends MetaFileHandler {
 
     public static final String FILENAME = "_status.json";

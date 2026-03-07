@@ -23,6 +23,7 @@ import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +32,7 @@ import org.junit.Test;
 
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -54,7 +56,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         logger.info(" ---> Creating a new file second.txt");
         // Let's wait for at least one second to make sure we have different dates
         // between the two files. Created date seems to be rounded to the second.
-        Thread.sleep(1001);
+        FsCrawlerUtil.waitFor(Duration.ofMillis(1001));
 
         Files.write(currentTestResourceDir.resolve("second.txt"), "This is a second file".getBytes());
 

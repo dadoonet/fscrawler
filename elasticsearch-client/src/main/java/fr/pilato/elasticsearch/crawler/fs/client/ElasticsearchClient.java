@@ -745,22 +745,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         logger.debug("searching index [{}]", request.getIndex());
 
-        final AtomicReference<String> body = new AtomicReference<>("{");
-
-        boolean bodyEmpty = true;
+        final AtomicReference<String> body = new AtomicReference<>("{ \"track_total_hits\": true");
 
         int size = 10;
         if (request.getSize() != null) {
             size = request.getSize();
-            body.getAndUpdate(s -> s + ("\"size\":" + request.getSize()));
-            bodyEmpty = false;
+            body.getAndUpdate(s -> s + (", \"size\":" + request.getSize()));
         }
         if (!request.getStoredFields().isEmpty()) {
-            if (!bodyEmpty) {
-                body.getAndUpdate(s -> s + ",");
-            }
-            body.getAndUpdate(s -> s + "\"stored_fields\" : [");
-
+            body.getAndUpdate(s -> s + ", \"stored_fields\" : [");
             AtomicBoolean moreFields = new AtomicBoolean(false);
             request.getStoredFields().forEach(f -> {
                 if (moreFields.getAndSet(true)) {
@@ -769,27 +762,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 body.getAndUpdate(s -> s + ("\"" + f + "\""));
             });
             body.getAndUpdate(s -> s + "]");
-            bodyEmpty = false;
         }
         if (request.getESQuery() != null) {
-            if (!bodyEmpty) {
-                body.getAndUpdate(s -> s + ",");
-            }
-            body.getAndUpdate(s -> s + ("\"query\" : {" + toElasticsearchQuery(request.getESQuery()) + "}"));
-            bodyEmpty = false;
+            body.getAndUpdate(s -> s + (", \"query\" : {" + toElasticsearchQuery(request.getESQuery()) + "}"));
         }
         if (!isNullOrEmpty(request.getSort())) {
-            if (!bodyEmpty) {
-                body.getAndUpdate(s -> s + ",");
-            }
-            body.getAndUpdate(s -> s + ("\"sort\" : [\"" + request.getSort() + "\"]"));
-            bodyEmpty = false;
+            body.getAndUpdate(s -> s + (", \"sort\" : [\"" + request.getSort() + "\"]"));
         }
         if (!request.getHighlighters().isEmpty()) {
-            if (!bodyEmpty) {
-                body.getAndUpdate(s -> s + ",");
-            }
-            body.getAndUpdate(s -> s + "\"highlight\": { \"fields\": {");
+            body.getAndUpdate(s -> s + ", \"highlight\": { \"fields\": {");
 
             AtomicBoolean moreFields = new AtomicBoolean(false);
             request.getHighlighters().forEach(f -> {
@@ -799,13 +780,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 body.getAndUpdate(s -> s + ("\"" + f + "\":{}"));
             });
             body.getAndUpdate(s -> s + "}}");
-            bodyEmpty = false;
         }
         if (!request.getAggregations().isEmpty()) {
-            if (!bodyEmpty) {
-                body.getAndUpdate(s -> s + ",");
-            }
-            body.getAndUpdate(s -> s + "\"aggs\": {");
+            body.getAndUpdate(s -> s + ", \"aggs\": {");
 
             AtomicBoolean moreFields = new AtomicBoolean(false);
             request.getAggregations().forEach(a -> {

@@ -35,14 +35,14 @@ you want to index in it and start again:
    $ bin/fscrawler
    17:41:45,395 INFO  [f.p.e.c.f.FsCrawlerImpl] FSCrawler is now connected to Elasticsearch version [9.0.0]
    17:41:45,395 INFO  [f.p.e.c.f.FsCrawlerImpl] FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.
-   17:41:45,395 INFO  [f.p.e.c.f.FsParserAbstract] FS crawler started for [fscrawler] for [/tmp/es] every [15m]
+   17:41:45,395 INFO  [f.p.e.c.f.FsParser] FS crawler started for [fscrawler] for [/tmp/es] every [15m]
 
 If you did not create the directory, FSCrawler will complain until you fix it:
 
 ::
 
-   17:41:45,396 INFO  [f.p.e.c.f.FsParserAbstract] Run #1: job [fscrawler]: starting...
-   17:41:45,397 WARN  [f.p.e.c.f.FsParserAbstract] Error while crawling /tmp/es: /tmp/es doesn't exists.
+   17:41:45,396 INFO  [f.p.e.c.f.FsParser] Run #1: job [fscrawler]: starting...
+   17:41:45,397 WARN  [f.p.e.c.f.FsParser] Error while crawling /tmp/es: /tmp/es doesn't exists.
 
 Searching for docs
 ^^^^^^^^^^^^^^^^^^

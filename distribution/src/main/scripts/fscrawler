@@ -55,4 +55,6 @@ JAVA_OPTS="$JAVA_OPTS -Dlog4j2.formatMsgNoLookups=true"
 # If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 JAVA_OPTS="$JAVA_OPTS $FS_JAVA_OPTS"
 
+# Run from FS_HOME so PF4J resolves "plugins" to distribution's plugins directory
+cd "$FS_HOME"
 exec "$JAVA" ${JAVA_OPTS} -cp "$FS_CLASSPATH" "${distribution.mainClassName}" "$@"

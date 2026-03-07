@@ -17,39 +17,34 @@
  * under the License.
  */
 
-package fr.pilato.elasticsearch.crawler.fs.rest;
+package fr.pilato.elasticsearch.crawler.fs.beans;
 
-class RestResponse {
-
-    public RestResponse() {
-
-    }
-
-    public RestResponse(boolean ok, String message) {
-        this.ok = ok;
-        this.message = message;
-    }
-
-    public RestResponse(boolean ok) {
-        this.ok = ok;
-    }
-
-    private boolean ok;
-    private String message;
-
-    public void setOk(boolean ok) {
-        this.ok = ok;
-    }
-
-    public boolean isOk() {
-        return ok;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
+/**
+ * Represents the state of the crawler
+ */
+public enum CrawlerState {
+    /**
+     * The crawler is currently running and processing files
+     */
+    RUNNING,
+    
+    /**
+     * The crawler has been paused and is waiting for a resume command
+     */
+    PAUSED,
+    
+    /**
+     * The crawler has been stopped
+     */
+    STOPPED,
+    
+    /**
+     * The crawler has completed its scan successfully
+     */
+    COMPLETED,
+    
+    /**
+     * The crawler encountered an error and stopped
+     */
+    ERROR
 }
