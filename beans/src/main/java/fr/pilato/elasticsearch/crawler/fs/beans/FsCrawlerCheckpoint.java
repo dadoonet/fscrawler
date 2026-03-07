@@ -392,7 +392,15 @@ public class FsCrawlerCheckpoint {
      * @return true if the path is pending
      */
     public boolean isPending(String path) {
-        return pendingPathsSet != null && pendingPathsSet.contains(path);
+        if (path == null || pendingPaths == null || pendingPaths.isEmpty()) {
+            return false;
+        }
+        if (pendingPathsSet == null) {
+            // Defensive rebuild: pendingPathsSet is @JsonIgnore and may be null on partially initialized instances.
+            pendingPathsSet = ConcurrentHashMap.newKeySet();
+            pendingPathsSet.addAll(pendingPaths);
+        }
+        return pendingPathsSet.contains(path);
     }
 
     /**

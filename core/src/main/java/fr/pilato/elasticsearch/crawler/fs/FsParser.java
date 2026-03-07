@@ -449,6 +449,8 @@ public class FsParser implements Runnable, AutoCloseable {
     private FsCrawlerCheckpoint loadOrCreateCheckpoint(String rootPath) throws IOException {
         FsCrawlerCheckpoint existing = checkpointHandler.read(fsSettings.getName());
         if (existing != null) {
+            // Build transient lookup sets before any pending-path checks.
+            existing.ensureConcurrentCollections();
             if (existing.getState() == CrawlerState.COMPLETED) {
                 // Previous scan completed - start fresh but use its scanEndTime as reference
                 logger.debug("Found completed checkpoint for job [{}], starting new scan with lastrun [{}]",

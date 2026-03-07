@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
@@ -122,6 +123,18 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         checkpoint.clearPendingPaths();
         assertThat(checkpoint.hasPendingWork()).isFalse();
         assertThat(checkpoint.isPending("/path2")).isFalse();
+    }
+
+    @Test
+    public void testIsPendingRebuildsLookupSetWhenNull() throws Exception {
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        checkpoint.addPath("/path1");
+
+        Field pendingPathsSetField = FsCrawlerCheckpoint.class.getDeclaredField("pendingPathsSet");
+        pendingPathsSetField.setAccessible(true);
+        pendingPathsSetField.set(checkpoint, null);
+
+        assertThat(checkpoint.isPending("/path1")).isTrue();
     }
 
     @Test
