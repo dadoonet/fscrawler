@@ -1,0 +1,17 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Test email for FSCrawler issue 494
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="----=_Part_Issue494_12345"
+
+------=_Part_Issue494_12345
+Content-Type: text/plain; charset=UTF-8
+
+Unique plain text body for issue 494.
+
+------=_Part_Issue494_12345
+Content-Type: text/html; charset=UTF-8
+
+<html><body><p>Unique plain text body for issue 494.</p></body></html>
+
+------=_Part_Issue494_12345--

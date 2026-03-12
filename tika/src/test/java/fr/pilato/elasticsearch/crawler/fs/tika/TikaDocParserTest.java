@@ -62,6 +62,18 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/494">https://github.com/dadoonet/fscrawler/issues/494</a>.
+     * Email files (multipart/alternative) can contain both text/plain and text/html with the same content.
+     * Since Tika 1.17, extraction of all alternatives is no longer done by default, so the body text
+     * should appear only once in the extracted content.
+     */
+    @Test
+    public void emailIssue494NoDuplicateContent() throws IOException {
+        Doc doc = extractFromFile("issue-494-email-with-plain-and-html.eml");
+        assertThat(doc.getContent()).containsOnlyOnce("Unique plain text body for issue 494");
+    }
+
+    /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/162">https://github.com/dadoonet/fscrawler/issues/162</a>
      */
     @Test
