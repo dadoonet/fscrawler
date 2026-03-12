@@ -669,8 +669,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             int sshPort = sshd.getPort();
             logger.info("SSH server started on localhost:{}", sshPort);
 
-            // We try with a document that does not exist
-            String json = """
+            // We try with a document that does not exist (use Locale.ROOT so port is always ASCII digits in JSON)
+            String json = String.format(Locale.ROOT, """
                     {
                       "type": "ssh",
                       "ssh": {
@@ -681,13 +681,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                         "path": "/doesnotexist.txt"
                       }
                     }
-                    """.formatted(sshPort, sshUsername, sshPassword);
+                    """, sshPort, sshUsername, sshPassword);
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isFalse();
             assertThat(uploadResponse.getMessage()).contains("does not exist");
 
-            // We try with an existing document
-            json = """
+            // We try with an existing document (use Locale.ROOT so port is always ASCII digits in JSON)
+            json = String.format(Locale.ROOT, """
                     {
                       "type": "ssh",
                       "ssh": {
@@ -698,7 +698,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                         "path": "/testfile.txt"
                       }
                     }
-                    """.formatted(sshPort, sshUsername, sshPassword);
+                    """, sshPort, sshUsername, sshPassword);
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isTrue();
 
@@ -739,8 +739,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
             int ftpPort = fakeFtpServer.getServerControlPort();
             logger.info("FTP server started on localhost:{}", ftpPort);
 
-            // We try with a document that does not exist
-            String json = """
+            // We try with a document that does not exist (use Locale.ROOT so port is always ASCII digits in JSON)
+            String json = String.format(Locale.ROOT, """
                     {
                       "type": "ftp",
                       "ftp": {
@@ -751,13 +751,13 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                         "path": "/doesnotexist.txt"
                       }
                     }
-                    """.formatted(ftpPort, ftpUser, ftpPass);
+                    """, ftpPort, ftpUser, ftpPass);
             UploadResponse uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isFalse();
             assertThat(uploadResponse.getMessage()).contains("does not exist");
 
-            // We try with an existing document
-            json = """
+            // We try with an existing document (use Locale.ROOT so port is always ASCII digits in JSON)
+            json = String.format(Locale.ROOT, """
                     {
                       "type": "ftp",
                       "ftp": {
@@ -768,7 +768,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                         "path": "/testfile.txt"
                       }
                     }
-                    """.formatted(ftpPort, ftpUser, ftpPass);
+                    """, ftpPort, ftpUser, ftpPass);
             uploadResponse = post(target, "/_document", json, UploadResponse.class);
             assertThat(uploadResponse.isOk()).isTrue();
 
