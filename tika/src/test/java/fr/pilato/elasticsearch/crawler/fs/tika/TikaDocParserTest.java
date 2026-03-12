@@ -62,6 +62,19 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/782">https://github.com/dadoonet/fscrawler/issues/782</a>.
+     * Apple Keynote (.key) files should have their text content extracted by Tika (IWorkPackageParser).
+     * The test.key file contains "FSCrawler" and "You know, for files!".
+     */
+    @Test
+    public void keynoteIssue782() throws IOException {
+        Doc doc = extractFromFile("test.key");
+        assertThat(doc.getContent())
+                .contains("FSCrawler")
+                .contains("You know, for files!");
+    }
+
+    /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/494">https://github.com/dadoonet/fscrawler/issues/494</a>.
      * Email files (multipart/alternative) can contain both text/plain and text/html with the same content.
      * Since Tika 1.17, extraction of all alternatives is no longer done by default, so the body text
