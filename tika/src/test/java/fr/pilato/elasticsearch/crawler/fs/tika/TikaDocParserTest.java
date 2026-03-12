@@ -62,6 +62,39 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
+     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/782">https://github.com/dadoonet/fscrawler/issues/782</a>.
+     * Apple Keynote (.key) files should have their text content extracted by Tika (IWorkPackageParser).
+     * With OCR enabled, the test.key file yields "FSCrawler" and "You know, for files!" from the slide content.
+     * Skipped when Tesseract is not installed.
+     */
+    @Test
+    public void keynoteIssue782() throws IOException {
+        assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
+
+        Doc doc = extractFromFile("test.key");
+        assertThat(doc.getContent())
+                .contains("FSCrawler")
+                .contains("You know, for files!");
+    }
+
+    /**
+     * Keynote (.key) without OCR: Tika extracts the package structure (file paths) but not the slide text.
+     * Verifies that we get at least the image path pattern and not the slide text "FSCrawler".
+     */
+    @Test
+    public void keynoteIssue782WithoutOcr() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setEnabled(false);
+        Doc doc = extractFromFile("test.key", fsSettings);
+
+        assertThat(doc.getContent())
+                .doesNotContain("FSCrawler")
+                .contains("Data/mt-6335B693-B5E5-4B9F-A3FC-584A33E732CA-9090.jpg");
+    }
+
+    /**
      * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/494">https://github.com/dadoonet/fscrawler/issues/494</a>.
      * Email files (multipart/alternative) can contain both text/plain and text/html with the same content.
      * Since Tika 1.17, extraction of all alternatives is no longer done by default, so the body text

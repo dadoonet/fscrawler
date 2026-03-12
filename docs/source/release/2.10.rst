@@ -56,6 +56,7 @@ New
 Fix
 ---
 
+* Apple Keynote (``.key``) files are now supported for content extraction and indexing. Closes `#782 <https://github.com/dadoonet/fscrawler/issues/782>`_.
 * Closed open file streams after use. Thanks to alexbluesteele.
 * ``fs.ocr.enabled`` was always false. Thanks to ywjung.
 * Do not hide YAML parsing errors. Thanks to dadoonet.
