@@ -35,6 +35,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -117,7 +118,8 @@ public class FsSettingsLoader extends MetaFileHandler {
             String fileName = configFile.getFileName().toString();
             if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
                 try (InputStream is = Files.newInputStream(configFile)) {
-                    new Yaml().load(is);
+                    // compose() validates syntax without constructing Java objects (safe, no tag processing)
+                    new Yaml().compose(new InputStreamReader(is));
                 } catch (YAMLException e) {
                     throw new FsCrawlerIllegalConfigurationException(
                             "Syntax error in configuration file [" + configFile.getFileName() + "]: " + e.getMessage(), e);

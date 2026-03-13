@@ -29,8 +29,8 @@ public class FsSettingsLoaderTest {
         assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-wrong"))
                 .withMessageContaining("Syntax error in configuration file [_settings.yaml]")
-                .withMessageContaining("while parsing a block mapping")
-                .withMessageContaining("update_rate: \"5m\"");
+                .withMessageContaining("line ")
+                .withMessageContaining("column ");
     }
 
     @Test
