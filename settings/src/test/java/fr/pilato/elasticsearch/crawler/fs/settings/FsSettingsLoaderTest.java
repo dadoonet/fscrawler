@@ -26,9 +26,19 @@ public class FsSettingsLoaderTest {
 
     @Test
     public void loadWrongSettings() {
-        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
-                // This should fail
-                new FsSettingsLoader(configPath).read("yaml-wrong"));
+        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+                .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-wrong"))
+                .withMessageContaining("Syntax error in configuration file [_settings.yaml]")
+                .withMessageContaining("line ")
+                .withMessageContaining("column ");
+    }
+
+    @Test
+    public void loadStructuralWrongSettings() {
+        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+                .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-structural-wrong"))
+                .withMessageContaining("Can not load settings")
+                .withMessageContaining("Please make sure that your setting file(s) are properly formatted.");
     }
 
     @Test

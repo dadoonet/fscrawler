@@ -1,0 +1,5 @@
+# This file has a structural error: url:"/tmp/es" is valid YAML but maps to a
+# string instead of a mapping, causing a MapNode vs LeafNode error in Gestalt
+name: "example1"
+fs:
+  url:"/tmp/es"
