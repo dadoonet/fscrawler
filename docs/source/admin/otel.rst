@@ -1,19 +1,19 @@
-.. _apm:
+.. _otel:
 
-APM / OpenTelemetry Tracing
-============================
+OTel Tracing / EDOT Collector
+==============================
 
 FSCrawler ships with built-in distributed tracing support via the
 `Elastic OpenTelemetry Java agent <https://github.com/elastic/elastic-otel-java>`_.
 When the agent is present in the ``external/`` directory, FSCrawler automatically
 loads it on startup and exports traces to any OpenTelemetry-compatible backend
-(Elastic APM, Jaeger, Zipkin, …).
+(EDOT Collector, Jaeger, Zipkin, …).
 
 .. note::
 
-   APM is **enabled by default** when using the standard FSCrawler distribution.
+   OTel tracing is **enabled by default** when using the standard FSCrawler distribution.
    The agent JAR is bundled in ``external/``.  No configuration is required to
-   start collecting traces — just point the exporter at your APM server.
+   start collecting traces — just point the exporter at your EDOT Collector.
 
 How it works
 -------------
@@ -51,8 +51,8 @@ FSCrawler uses a hybrid instrumentation approach:
      - ``es.bulk.actions``
      - Elasticsearch bulk indexing request
 
-Disabling APM tracing
-----------------------
+Disabling OTel tracing
+-----------------------
 
 Remove the agent JAR to disable tracing entirely::
 
@@ -63,15 +63,15 @@ Alternatively, keep the JAR but disable the SDK at runtime::
     export OTEL_SDK_DISABLED=true
     ./bin/fscrawler my-job
 
-Configuring the APM exporter
-------------------------------
+Configuring the OTel exporter
+-------------------------------
 
 Use standard OpenTelemetry environment variables before starting FSCrawler:
 
 .. code-block:: bash
 
-   # Send traces to Elastic APM Server
-   export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:8200
+   # Send traces to an EDOT Collector (OTLP HTTP)
+   export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
    export OTEL_SERVICE_NAME=fscrawler
    export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.version=2.10
 
@@ -88,7 +88,7 @@ Common variables:
    * - ``OTEL_EXPORTER_OTLP_ENDPOINT``
      - OTLP endpoint (default: ``http://localhost:4317``)
    * - ``OTEL_SERVICE_NAME``
-     - Service name shown in APM (default: ``fscrawler``)
+     - Service name shown in Kibana APM (default: ``fscrawler``)
    * - ``OTEL_RESOURCE_ATTRIBUTES``
      - Comma-separated ``key=value`` resource attributes
    * - ``OTEL_EXPORTER_OTLP_HEADERS``
@@ -96,30 +96,30 @@ Common variables:
    * - ``OTEL_SDK_DISABLED``
      - Set to ``true`` to disable without removing the agent
    * - ``OTEL_EXPORTER_OTLP_TIMEOUT``
-     - Export timeout in ms (e.g. ``1000``); reduce if APM server is unavailable
+     - Export timeout in ms (e.g. ``1000``); reduce if the collector is unavailable
 
-Using with Elastic APM (Elastic Cloud or self-hosted)
-------------------------------------------------------
+Using with Elastic Cloud (managed EDOT)
+-----------------------------------------
 
 .. code-block:: bash
 
-   export OTEL_EXPORTER_OTLP_ENDPOINT=https://<your-apm-server>:443
-   export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer <secret-token>"
+   export OTEL_EXPORTER_OTLP_ENDPOINT=https://<your-otel-endpoint>:443
+   export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer <api-key>"
    export OTEL_SERVICE_NAME=fscrawler
    ./bin/fscrawler my-job
 
-You can find your APM Server URL and secret token in Kibana under
-**Observability → Add data → APM → OpenTelemetry**.
+You can find your OTel endpoint and API key in Kibana under
+**Observability → Add data → Monitor with OpenTelemetry**.
 
-Behavior without an APM server
---------------------------------
+Behavior without a collector
+------------------------------
 
-If the agent is present but no APM server is reachable, the OTLP exporter
+If the agent is present but no EDOT Collector is reachable, the OTLP exporter
 will log a ``WARN`` message on each failed export attempt and retry with
 exponential back-off.  FSCrawler continues to run normally — tracing failures
 are non-blocking.
 
-To suppress the warnings when no APM server is available::
+To suppress the warnings when no collector is available::
 
     export OTEL_SDK_DISABLED=true
 
@@ -139,11 +139,11 @@ Example for Jaeger (OTLP/gRPC):
    export OTEL_SERVICE_NAME=fscrawler
    ./bin/fscrawler my-job
 
-Docker example with Elastic APM
----------------------------------
+Docker example with EDOT Collector
+-------------------------------------
 
-A complete ``docker-compose`` stack (Elasticsearch + Kibana + APM Server + FSCrawler)
-is available under ``contrib/docker-compose-example-apm/``.
+A complete ``docker-compose`` stack (Elasticsearch + Kibana + EDOT Collector + FSCrawler)
+is available under ``contrib/docker-compose-example-edot/``.
 
 .. code-block:: yaml
 
@@ -151,11 +151,11 @@ is available under ``contrib/docker-compose-example-apm/``.
      fscrawler:
        image: dadoonet/fscrawler:latest
        environment:
-         - OTEL_EXPORTER_OTLP_ENDPOINT=http://apm-server:8200
+         - OTEL_EXPORTER_OTLP_ENDPOINT=http://edot-collector:4318
          - OTEL_SERVICE_NAME=fscrawler
          - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=docker
 
-To disable APM in Docker without rebuilding the image::
+To disable OTel tracing in Docker without rebuilding the image::
 
     environment:
       - OTEL_SDK_DISABLED=true
@@ -166,6 +166,6 @@ Windows
 The ``bin\fscrawler.bat`` launcher applies the same auto-detection logic.
 Set environment variables in the same shell before running::
 
-    set OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:8200
+    set OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     set OTEL_SERVICE_NAME=fscrawler
     bin\fscrawler.bat my-job

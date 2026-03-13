@@ -1,12 +1,10 @@
-# docker-compose stack: Elasticsearch + Kibana + APM Server + FSCrawler with Elastic OTel APM
+# docker-compose stack: Elasticsearch + Kibana + EDOT Collector + FSCrawler with Elastic OTel
 #
 # Usage:
 #   docker-compose up -d
-#   Open http://localhost:5601 → Observability → APM
+#   Open http://localhost:5601 → Observability → APM → Services → fscrawler
 #
-# To disable APM tracing for FSCrawler: remove OTEL_* env vars or add OTEL_SDK_DISABLED=true
-
-version: "3.8"
+# To disable OTel tracing for FSCrawler: remove OTEL_* env vars or add OTEL_SDK_DISABLED=true
 
 services:
 
@@ -16,7 +14,7 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.routing.allocation.disk.threshold_enabled=false
     ports:
       - "9200:9200"
     healthcheck:
@@ -35,23 +33,20 @@ services:
       elasticsearch:
         condition: service_healthy
 
-  apm-server:
-    image: docker.elastic.co/apm/apm-server:9.3.1
-    command: >
-      apm-server -e
-        -E apm-server.rum.enabled=true
-        -E setup.kibana.host=kibana:5601
-        -E setup.template.settings.index.number_of_replicas=0
-        -E apm-server.kibana.enabled=true
-        -E apm-server.kibana.host=kibana:5601
-        -E output.elasticsearch.hosts=["elasticsearch:9200"]
+  edot-collector:
+    image: elastic/elastic-agent:9.3.1
+    environment:
+      - ELASTIC_AGENT_OTEL=true
+    volumes:
+      - ./otel-collector-config.yml:/usr/share/elastic-agent/otel.yml:ro
     ports:
-      - "8200:8200"
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
     depends_on:
       elasticsearch:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-s", "http://localhost:8200/"]
+      test: ["CMD", "curl", "-sf", "http://localhost:13133/"]
       interval: 10s
       timeout: 10s
       retries: 12
@@ -60,16 +55,16 @@ services:
     image: dadoonet/fscrawler:latest
     environment:
       # OpenTelemetry configuration — standard env vars
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://apm-server:8200
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://edot-collector:4318
       - OTEL_SERVICE_NAME=fscrawler
       - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=docker
-      # Uncomment to disable APM tracing without removing the agent JAR:
+      # Uncomment to disable OTel tracing without removing the agent JAR:
       # - OTEL_SDK_DISABLED=true
     volumes:
       - ./config:/root/.fscrawler
       - ./documents:/tmp/es:ro
     depends_on:
-      apm-server:
+      edot-collector:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy

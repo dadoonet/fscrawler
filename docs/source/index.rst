@@ -57,7 +57,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    admin/cli-options
    admin/jvm-settings
    admin/logger
-   admin/apm
+   admin/otel
    admin/fs/index
    admin/fs/simple
    admin/fs/local-fs
