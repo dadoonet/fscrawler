@@ -30,7 +30,11 @@ import org.github.gestalt.config.source.EnvironmentConfigSourceBuilder;
 import org.github.gestalt.config.source.FileConfigSourceBuilder;
 import org.github.gestalt.config.source.SystemPropertiesConfigSourceBuilder;
 
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -108,6 +112,21 @@ public class FsSettingsLoader extends MetaFileHandler {
      * @throws FsCrawlerIllegalConfigurationException when we can not read settings
      */
     public static FsSettings load(Path... configFiles) throws FsCrawlerIllegalConfigurationException {
+        // Pre-validate YAML files for syntax errors to provide meaningful messages with line/column info
+        for (Path configFile : configFiles) {
+            String fileName = configFile.getFileName().toString();
+            if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+                try (InputStream is = Files.newInputStream(configFile)) {
+                    new Yaml().load(is);
+                } catch (YAMLException e) {
+                    throw new FsCrawlerIllegalConfigurationException(
+                            "Syntax error in configuration file [" + configFile.getFileName() + "]: " + e.getMessage(), e);
+                } catch (IOException e) {
+                    // Let Gestalt handle file I/O errors
+                }
+            }
+        }
+
         try {
             GestaltBuilder builder = new GestaltBuilder()
                 .addSource(ClassPathConfigSourceBuilder.builder().setResource(DEFAULT_SETTINGS).build());
@@ -144,7 +163,8 @@ public class FsSettingsLoader extends MetaFileHandler {
 
             return settings;
         } catch (Exception e) {
-            throw new FsCrawlerIllegalConfigurationException("Can not load settings", e);
+            throw new FsCrawlerIllegalConfigurationException("Can not load settings. " +
+                    "Please make sure that your setting file(s) are properly formatted.", e);
         }
     }
 }
