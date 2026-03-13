@@ -58,6 +58,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://edot-collector:4318
       - OTEL_SERVICE_NAME=fscrawler
       - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=docker
+      - OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED=true
       # Uncomment to disable OTel tracing without removing the agent JAR:
       # - OTEL_SDK_DISABLED=true
     volumes:

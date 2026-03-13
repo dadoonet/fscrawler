@@ -191,6 +191,7 @@ fs:
 elasticsearch:
   urls:
   - "$ES_URL"
+  semantic_search: false
 YAML
 success "Job config created"
 
@@ -209,6 +210,11 @@ else
     export OTEL_RESOURCE_ATTRIBUTES="deployment.environment=local,service.version=$FSCRAWLER_VERSION"
     # Reduce export timeout so the agent doesn't block on startup if the collector is slow
     export OTEL_EXPORTER_OTLP_TIMEOUT=5000
+    # Flush metrics every 5s so JVM metrics are exported before FSCrawler exits (--loop 1)
+    # (default is 60s — too long for a short-lived process)
+    export OTEL_METRIC_EXPORT_INTERVAL=5000
+    # Enable Java 17+ JVM runtime metrics (jvm.cpu.recent_utilization, etc.)
+    export OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED=true
 fi
 
 info ""
@@ -226,4 +232,4 @@ info " Press Ctrl+C to stop FSCrawler"
 info ""
 
 export FS_JAVA_OPTS="-DLOG_LEVEL=$LOG_LEVEL"
-exec "$INSTALL_DIR/bin/fscrawler" --config_dir "$CONFIG_DIR" --loop 1 "$JOB_NAME" --restart
+exec "$INSTALL_DIR/bin/fscrawler" --config_dir "$CONFIG_DIR" "$JOB_NAME" --restart

@@ -97,6 +97,10 @@ Common variables:
      - Set to ``true`` to disable without removing the agent
    * - ``OTEL_EXPORTER_OTLP_TIMEOUT``
      - Export timeout in ms (e.g. ``1000``); reduce if the collector is unavailable
+   * - ``OTEL_METRIC_EXPORT_INTERVAL``
+     - Metric flush interval in ms (default: ``60000``); set to ``5000`` for short-lived runs
+   * - ``OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED``
+     - Set to ``true`` to enable Java 17+ JVM metrics (``jvm.cpu.recent_utilization``, etc.)
 
 Using with Elastic Cloud (managed EDOT)
 -----------------------------------------
