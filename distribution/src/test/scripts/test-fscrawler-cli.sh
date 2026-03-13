@@ -1,5 +1,5 @@
 #!/bin/sh
-# test-apm.sh — Manual smoke test for FSCrawler + Elastic APM (OpenTelemetry)
+# test-fscrawler-cli.sh — Manual smoke test for FSCrawler + Elastic APM (OpenTelemetry)
 #
 # What this script does:
 #   1. (optional) Build the distribution ZIP with Maven
@@ -12,11 +12,12 @@
 #   - Java 17+, Maven, Docker, docker-compose (or docker compose v2), curl, unzip
 #
 # Usage:
-#   ./test-apm.sh                 # full run: build + docker + crawl
-#   ./test-apm.sh --skip-build    # reuse existing distribution ZIP
-#   ./test-apm.sh --skip-docker   # assume docker stack is already running
-#   ./test-apm.sh --no-apm        # run FSCrawler without OTel agent
-#   ./test-apm.sh --help
+#   ./test-fscrawler-cli.sh                        # full run: build + docker + crawl
+#   ./test-fscrawler-cli.sh --skip-build           # reuse existing distribution ZIP
+#   ./test-fscrawler-cli.sh --skip-docker          # assume docker stack is already running
+#   ./test-fscrawler-cli.sh --no-apm               # run FSCrawler without OTel agent
+#   ./test-fscrawler-cli.sh --log-level=trace      # set log level (default: info)
+#   ./test-fscrawler-cli.sh --help
 
 set -e
 
@@ -47,13 +48,15 @@ APM_URL="http://localhost:8200"
 SKIP_BUILD=false
 SKIP_DOCKER=false
 NO_APM=false
+LOG_LEVEL=info
 for arg in "$@"; do
     case "$arg" in
-        --skip-build)  SKIP_BUILD=true ;;
-        --skip-docker) SKIP_DOCKER=true ;;
-        --no-apm)      NO_APM=true ;;
+        --skip-build)      SKIP_BUILD=true ;;
+        --skip-docker)     SKIP_DOCKER=true ;;
+        --no-apm)          NO_APM=true ;;
+        --log-level=*)     LOG_LEVEL="${arg#--log-level=}" ;;
         --help|-h)
-            sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *)
@@ -167,8 +170,8 @@ fs:
     - "*.DS_Store"
 
 elasticsearch:
-  nodes:
-    - url: "$ES_URL"
+  urls:
+  - "$ES_URL"
   index: "test-apm"
 YAML
 success "Job config created"
@@ -196,6 +199,7 @@ info " Launching FSCrawler — job: $JOB_NAME"
 info "   Documents  : $DOCUMENTS_DIR"
 info "   Config dir : $CONFIG_DIR"
 info "   ES index   : http://localhost:9200/test-apm"
+info "   Log level  : $LOG_LEVEL"
 if ! $NO_APM; then
     info "   APM traces : http://localhost:5601 → Observability → APM"
 fi
@@ -203,4 +207,5 @@ info "========================================================"
 info " Press Ctrl+C to stop FSCrawler"
 info ""
 
+export FS_JAVA_OPTS="-DLOG_LEVEL=$LOG_LEVEL"
 exec "$INSTALL_DIR/bin/fscrawler" --config_dir "$CONFIG_DIR" --loop 1 "$JOB_NAME"
