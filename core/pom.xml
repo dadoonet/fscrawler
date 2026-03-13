@@ -76,6 +76,12 @@
             <artifactId>fscrawler-elasticsearch-client</artifactId>
         </dependency>
 
+        <!-- OpenTelemetry API — noop at runtime unless elastic-otel-javaagent is attached -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+        </dependency>
+
         <!-- For REST Server -->
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>

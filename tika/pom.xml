@@ -64,6 +64,12 @@
             <artifactId>fscrawler-settings</artifactId>
         </dependency>
 
+        <!-- OpenTelemetry API — noop at runtime unless elastic-otel-javaagent is attached -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>

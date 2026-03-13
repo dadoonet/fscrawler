@@ -57,6 +57,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
    admin/cli-options
    admin/jvm-settings
    admin/logger
+   admin/apm
    admin/fs/index
    admin/fs/simple
    admin/fs/local-fs
@@ -75,6 +76,7 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
       dev/build
       dev/doc
       dev/release
+      dev/test-fscrawler-cli
 
 .. toctree::
       :caption: Release Notes

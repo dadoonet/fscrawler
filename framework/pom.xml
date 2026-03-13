@@ -90,6 +90,12 @@
             <artifactId>json-path</artifactId>
         </dependency>
 
+        <!-- OpenTelemetry API — noop at runtime unless elastic-otel-javaagent is attached -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+        </dependency>
+
         <!-- Logging dependencies -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

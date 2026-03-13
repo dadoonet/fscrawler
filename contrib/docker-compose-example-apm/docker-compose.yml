@@ -1,0 +1,75 @@
+# docker-compose stack: Elasticsearch + Kibana + APM Server + FSCrawler with Elastic OTel APM
+#
+# Usage:
+#   docker-compose up -d
+#   Open http://localhost:5601 → Observability → APM
+#
+# To disable APM tracing for FSCrawler: remove OTEL_* env vars or add OTEL_SDK_DISABLED=true
+
+version: "3.8"
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.3.1
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:9.3.1
+    command: >
+      apm-server -e
+        -E apm-server.rum.enabled=true
+        -E setup.kibana.host=kibana:5601
+        -E setup.template.settings.index.number_of_replicas=0
+        -E apm-server.kibana.enabled=true
+        -E apm-server.kibana.host=kibana:5601
+        -E output.elasticsearch.hosts=["elasticsearch:9200"]
+    ports:
+      - "8200:8200"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:8200/"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  fscrawler:
+    image: dadoonet/fscrawler:latest
+    environment:
+      # OpenTelemetry configuration — standard env vars
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://apm-server:8200
+      - OTEL_SERVICE_NAME=fscrawler
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=docker
+      # Uncomment to disable APM tracing without removing the agent JAR:
+      # - OTEL_SDK_DISABLED=true
+    volumes:
+      - ./config:/root/.fscrawler
+      - ./documents:/tmp/es:ro
+    depends_on:
+      apm-server:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy

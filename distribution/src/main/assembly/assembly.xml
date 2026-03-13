@@ -45,5 +45,14 @@
             <directory>src/main/external</directory>
             <outputDirectory>external</outputDirectory>
         </fileSet>
+        <!-- Elastic OTel javaagent: auto-detected by fscrawler launch script.
+             Remove this JAR from external/ to disable APM tracing. -->
+        <fileSet>
+            <directory>${project.build.directory}/otel-agent</directory>
+            <outputDirectory>external</outputDirectory>
+            <includes>
+                <include>elastic-otel-javaagent-*.jar</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>
