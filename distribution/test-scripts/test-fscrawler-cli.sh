@@ -15,6 +15,7 @@
 #   ./test-fscrawler-cli.sh                        # full run: build + docker + crawl
 #   ./test-fscrawler-cli.sh --skip-build           # reuse existing distribution ZIP
 #   ./test-fscrawler-cli.sh --skip-docker          # assume docker stack is already running
+#   ./test-fscrawler-cli.sh --reset-docker         # stop stack and wipe volumes before starting
 #   ./test-fscrawler-cli.sh --no-otel              # run FSCrawler without OTel agent
 #   ./test-fscrawler-cli.sh --log-level=trace      # set log level (default: info)
 #   ./test-fscrawler-cli.sh --help
@@ -47,12 +48,14 @@ COLLECTOR_URL="http://localhost:4318"
 # ---------------------------------------------------------------------------
 SKIP_BUILD=false
 SKIP_DOCKER=false
+RESET_DOCKER=false
 NO_OTEL=false
 LOG_LEVEL=info
 for arg in "$@"; do
     case "$arg" in
         --skip-build)      SKIP_BUILD=true ;;
         --skip-docker)     SKIP_DOCKER=true ;;
+        --reset-docker)    RESET_DOCKER=true ;;
         --no-otel)         NO_OTEL=true ;;
         --log-level=*)     LOG_LEVEL="${arg#--log-level=}" ;;
         --help|-h)
@@ -140,9 +143,15 @@ else
         die "Neither 'docker compose' nor 'docker-compose' found. Please install Docker."
     fi
 
+    cd "$DOCKER_COMPOSE_DIR"
+    if $RESET_DOCKER; then
+        info "Resetting docker-compose stack (--reset-docker): stopping and wiping volumes..."
+        $DOCKER_COMPOSE down -v
+        success "Stack stopped and volumes wiped"
+    fi
+
     info "Starting EDOT stack via docker-compose (ES + Kibana + EDOT Collector)..."
     # We run the stack without the fscrawler service (we run it locally instead)
-    cd "$DOCKER_COMPOSE_DIR"
     $DOCKER_COMPOSE up -d elasticsearch kibana edot-collector
     success "docker-compose services started"
 
