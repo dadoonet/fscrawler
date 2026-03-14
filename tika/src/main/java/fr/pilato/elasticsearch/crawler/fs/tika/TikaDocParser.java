@@ -24,7 +24,11 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
+import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.language.detect.LanguageResult;
@@ -82,6 +86,10 @@ public class TikaDocParser {
     }
 
     public static void generate(FsSettings fsSettings, InputStream inputStream, Doc doc, long filesize) throws IOException {
+        Span tikaSpan = FsCrawlerTracing.startSpan("fscrawler.tika.extract");
+        Scope tikaScope = tikaSpan.makeCurrent();
+        tikaSpan.setAttribute("file.size", filesize);
+        try {
         logger.trace("Generating document [{}]", doc.getPath().getReal());
         // Extracting content with Tika
         // See #38: https://github.com/dadoonet/fscrawler/issues/38
@@ -325,6 +333,20 @@ public class TikaDocParser {
                     logger.warn("Failed to delete temp file [{}]: {}", tempFile, e.getMessage());
                 }
             }
+        }
+        } catch (Exception e) {
+            tikaSpan.recordException(e);
+            tikaSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+            throw e;
+        } finally {
+            if (doc.getFile().getContentType() != null) {
+                tikaSpan.setAttribute("tika.content_type", doc.getFile().getContentType());
+            }
+            if (doc.getFile().getIndexedChars() != null) {
+                tikaSpan.setAttribute("tika.indexed_chars", doc.getFile().getIndexedChars());
+            }
+            tikaScope.close();
+            tikaSpan.end();
         }
     }
 

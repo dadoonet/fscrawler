@@ -1,0 +1,73 @@
+# docker-compose stack: Elasticsearch + Kibana + EDOT Collector + FSCrawler with Elastic OTel
+#
+# Usage:
+#   docker-compose up -d
+#   Open http://localhost:5601 → Observability → APM → Services → fscrawler
+#
+# To disable OTel tracing for FSCrawler: remove OTEL_* env vars or add OTEL_SDK_DISABLED=true
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.3.1
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  edot-collector:
+    image: elastic/elastic-agent:9.3.1
+    environment:
+      - ELASTIC_AGENT_OTEL=true
+    volumes:
+      - ./otel-collector-config.yml:/usr/share/elastic-agent/otel.yml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:13133/"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  fscrawler:
+    image: dadoonet/fscrawler:latest
+    environment:
+      # OpenTelemetry configuration — standard env vars
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://edot-collector:4318
+      - OTEL_SERVICE_NAME=fscrawler
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=docker
+      - OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED=true
+      # Inferred spans via async-profiler — uncomment if running Java 17/21 LTS on x86_64:
+      # - ELASTIC_OTEL_INFERRED_SPANS_ENABLED=true
+      # Uncomment to disable OTel tracing without removing the agent JAR:
+      # - OTEL_SDK_DISABLED=true
+    volumes:
+      - ./config:/root/.fscrawler
+      - ./documents:/tmp/es:ro
+    depends_on:
+      edot-collector:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy

@@ -206,7 +206,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 license = getLicense();
                 if (!"enterprise".equals(license) && !"trial".equals(license)) {
                     logger.warn("Semantic search is enabled but we are running Elasticsearch with a {} " +
-                            "license although we need either an enterprise or trial license." +
+                            "license although we need either an enterprise or trial license. " +
                             "We will not be able to use the semantic search features ATM. We might switch later to " +
                             "a vector embeddings generation.", license);
                     semanticSearch = false;

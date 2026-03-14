@@ -101,6 +101,11 @@
         <!-- When we need to disable a specific CVE -->
         <ossindex.exclude />
 
+        <!-- OpenTelemetry API (instrumentation only; SDK provided by elastic-otel-javaagent at runtime) -->
+        <opentelemetry.version>1.49.0</opentelemetry.version>
+        <!-- Elastic OTel javaagent bundled in distribution/external/ -->
+        <elastic.otel.agent.version>1.5.0</elastic.otel.agent.version>
+
         <java.compiler.version>17</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -861,6 +866,15 @@
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
                 <version>4.3.0</version>
+            </dependency>
+
+            <!-- OpenTelemetry BOM — API only; SDK/agent injected at runtime by elastic-otel-javaagent -->
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-bom</artifactId>
+                <version>${opentelemetry.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <!-- Test dependencies -->
