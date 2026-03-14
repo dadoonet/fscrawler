@@ -101,6 +101,8 @@ Common variables:
      - Metric flush interval in ms (default: ``60000``); set to ``5000`` for short-lived runs
    * - ``OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED``
      - Set to ``true`` to enable Java 17+ JVM metrics (``jvm.cpu.recent_utilization``, etc.)
+   * - ``ELASTIC_OTEL_INFERRED_SPANS_ENABLED``
+     - Set to ``true`` to enable inferred spans via async-profiler (Elastic OTel agent only)
 
 Using with Elastic Cloud (managed EDOT)
 -----------------------------------------

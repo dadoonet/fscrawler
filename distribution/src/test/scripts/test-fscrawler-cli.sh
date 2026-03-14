@@ -215,6 +215,8 @@ else
     export OTEL_METRIC_EXPORT_INTERVAL=5000
     # Enable Java 17+ JVM runtime metrics (jvm.cpu.recent_utilization, etc.)
     export OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED=true
+    # Enable inferred spans via async-profiler (Elastic OTel agent specific)
+    export ELASTIC_OTEL_INFERRED_SPANS_ENABLED=true
 fi
 
 info ""
