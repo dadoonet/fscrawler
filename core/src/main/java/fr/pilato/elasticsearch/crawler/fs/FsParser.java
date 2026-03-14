@@ -724,7 +724,7 @@ public class FsParser implements Runnable, AutoCloseable {
      */
     private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
         Span dirSpan = FsCrawlerTracing.startSpan("fscrawler.directory.process");
-        try (Scope dirScope = dirSpan.makeCurrent()) {
+        Scope dirScope = dirSpan.makeCurrent();
         dirSpan.setAttribute("fs.path", filepath);
         try {
         logger.debug("indexing [{}] content", filepath);
@@ -918,9 +918,9 @@ public class FsParser implements Runnable, AutoCloseable {
             dirSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             throw e;
         } finally {
+            dirScope.close();
             dirSpan.end();
         }
-        } // dirScope
     }
 
 

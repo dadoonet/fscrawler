@@ -334,7 +334,7 @@ public class TikaDocParser {
                 }
             }
         }
-        } catch (IOException e) {
+        } catch (Exception e) {
             tikaSpan.recordException(e);
             tikaSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             throw e;
