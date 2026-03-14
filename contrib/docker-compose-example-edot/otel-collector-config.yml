@@ -46,4 +46,4 @@ service:
       exporters: [elasticsearch/otel]
     logs:
       receivers: [otlp]
-      exporters: [elasticapm, elasticsearch/otel]
+      exporters: [elasticsearch/otel]
