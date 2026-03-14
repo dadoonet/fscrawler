@@ -102,7 +102,8 @@ Common variables:
    * - ``OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED``
      - Set to ``true`` to enable Java 17+ JVM metrics (``jvm.cpu.recent_utilization``, etc.)
    * - ``ELASTIC_OTEL_INFERRED_SPANS_ENABLED``
-     - Set to ``true`` to enable inferred spans via async-profiler (Elastic OTel agent only)
+     - Set to ``true`` to enable inferred spans via async-profiler (Elastic OTel agent only).
+       Requires Java 17/21 LTS on x86_64 — crashes on Java 25 EA or aarch64.
 
 Using with Elastic Cloud (managed EDOT)
 -----------------------------------------
