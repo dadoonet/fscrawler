@@ -23,6 +23,7 @@ import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.*;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerMetrics;
 import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
@@ -339,6 +340,21 @@ public class FsParser implements Runnable, AutoCloseable {
                     stats.setEndTime(LocalDateTime.now());
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
                     stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
+
+                    // Span attributes: functional counters for this run
+                    crawlSpan.setAttribute("docs.added", stats.getNbDocScan());
+                    crawlSpan.setAttribute("docs.deleted", stats.getNbDocDeleted());
+                    Duration scanDuration = stats.computeDuration();
+                    if (scanDuration != null) {
+                        crawlSpan.setAttribute("scan.duration_ms", scanDuration.toMillis());
+                    }
+
+                    // OTel metrics: time-series for dashboards and alerting
+                    FsCrawlerMetrics.recordScanCompletion(
+                            fsSettings.getName(),
+                            stats.getNbDocScan(),
+                            stats.getNbDocDeleted(),
+                            scanDuration != null ? scanDuration.toMillis() : 0L);
 
                     // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
                     LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
