@@ -52,7 +52,7 @@ services:
       retries: 12
 
   fscrawler:
-    image: dadoonet/fscrawler:latest
+    image: dadoonet/fscrawler:${FSCRAWLER_VERSION}
     environment:
       # FSCrawler configuration
       - FSCRAWLER_FS_URL=/tmp/es
