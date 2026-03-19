@@ -9,7 +9,7 @@
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_LOCAL_VERSION}
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -24,7 +24,7 @@ services:
       retries: 12
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:9.3.1
+    image: docker.elastic.co/kibana/kibana:${ES_LOCAL_VERSION}
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
@@ -34,7 +34,7 @@ services:
         condition: service_healthy
 
   edot-collector:
-    image: elastic/elastic-agent:9.3.1
+    image: elastic/elastic-agent:${ES_LOCAL_VERSION}
     environment:
       - ELASTIC_AGENT_OTEL=true
     volumes:
@@ -54,20 +54,29 @@ services:
   fscrawler:
     image: dadoonet/fscrawler:latest
     environment:
+      # FSCrawler configuration
+      - FSCRAWLER_FS_URL=/tmp/es
+      - FSCRAWLER_ELASTICSEARCH_URLS=http://elasticsearch:9200
+      - FSCRAWLER_ELASTICSEARCH_USERNAME=elastic
+      - FSCRAWLER_ELASTICSEARCH_PASSWORD=${ES_LOCAL_PASSWORD}
+      - FSCRAWLER_REST_URL=http://fscrawler:8080
       # OpenTelemetry configuration — standard env vars
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://edot-collector:4318
       - OTEL_SERVICE_NAME=fscrawler
       - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=docker
       - OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED=true
-      # Inferred spans via async-profiler — uncomment if running Java 17/21 LTS on x86_64:
-      # - ELASTIC_OTEL_INFERRED_SPANS_ENABLED=true
+      - ELASTIC_OTEL_INFERRED_SPANS_ENABLED=true
       # Uncomment to disable OTel tracing without removing the agent JAR:
       # - OTEL_SDK_DISABLED=true
     volumes:
       - ./config:/root/.fscrawler
       - ./documents:/tmp/es:ro
+    ports:
+      - "8080:8080"   # FSCrawler REST API
     depends_on:
       edot-collector:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+    command:
+      - --rest
