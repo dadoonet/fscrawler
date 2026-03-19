@@ -213,9 +213,15 @@ public class FsCrawlerImpl implements AutoCloseable {
         }
 
         if (this.fsCrawlerThread != null) {
+            // Interrupt the thread in case notifyAll() arrived before the crawler entered
+            // semaphore.wait() (lost notification race). Object.wait() is interruptible so
+            // the InterruptedException wakes the thread immediately; FsParser.run() already
+            // handles it and exits cleanly when closed==true.
+            fsCrawlerThread.interrupt();
+
             await()
                     .pollInterval(Duration.ofMillis(500))
-                    .forever()
+                    .atMost(Duration.ofSeconds(30))
                     .until(() -> {
                         if (fsCrawlerThread.isAlive()) {
                             // We check that the crawler has been closed effectively
