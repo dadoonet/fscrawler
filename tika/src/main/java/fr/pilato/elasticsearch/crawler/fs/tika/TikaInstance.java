@@ -84,9 +84,11 @@ public class TikaInstance {
     private static void initTika(Fs fs) {
         boolean ocrEnabled = fs.getOcr().isEnabled();
         if (ocrActivated != ocrEnabled) {
-            // OCR setting changed — reset cached parser/context so they are rebuilt with new settings
-            // This normally only applies to Integration Tests
-            parser = null;
+            // OCR setting changed — reset only the context so it is rebuilt with the new OCR
+            // settings (TesseractOCRConfig.setSkipOcr is the canonical runtime switch).
+            // The parser is intentionally NOT reset: DefaultParser initialisation probes external
+            // tools via Runtime.exec() (ExternalParsersFactory) and can take tens of seconds.
+            // This normally only matters for Integration Tests that alternate OCR settings.
             context = null;
         }
         ocrActivated = ocrEnabled;
