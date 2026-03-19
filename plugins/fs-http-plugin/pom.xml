@@ -16,7 +16,7 @@
     <dependencies>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>nginx</artifactId>
+            <artifactId>testcontainers-nginx</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
