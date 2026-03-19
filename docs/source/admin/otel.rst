@@ -49,7 +49,7 @@ FSCrawler uses a hybrid instrumentation approach:
      - Apache Tika text extraction
    * - ``fscrawler.es.bulk``
      - ``es.bulk.actions``
-     - Elasticsearch bulk indexing request
+     - Elasticsearch bulk indexing request (number of operations in the batch)
 
 Disabling OTel tracing
 -----------------------
@@ -61,7 +61,7 @@ Remove the agent JAR to disable tracing entirely::
 Alternatively, keep the JAR but disable the SDK at runtime::
 
     export OTEL_SDK_DISABLED=true
-    ./bin/fscrawler my-job
+    ./bin/fscrawler
 
 Configuring the OTel exporter
 -------------------------------
@@ -75,7 +75,7 @@ Use standard OpenTelemetry environment variables before starting FSCrawler:
    export OTEL_SERVICE_NAME=fscrawler
    export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.version=2.10
 
-   ./bin/fscrawler my-job
+   ./bin/fscrawler
 
 Common variables:
 
@@ -86,7 +86,7 @@ Common variables:
    * - Variable
      - Description
    * - ``OTEL_EXPORTER_OTLP_ENDPOINT``
-     - OTLP endpoint (default: ``http://localhost:4317``)
+     - OTLP endpoint. gRPC default: ``http://localhost:4317``; HTTP default: ``http://localhost:4318``
    * - ``OTEL_SERVICE_NAME``
      - Service name shown in Kibana APM (default: ``fscrawler``)
    * - ``OTEL_RESOURCE_ATTRIBUTES``
@@ -103,7 +103,7 @@ Common variables:
      - Set to ``true`` to enable Java 17+ JVM metrics (``jvm.cpu.recent_utilization``, etc.)
    * - ``ELASTIC_OTEL_INFERRED_SPANS_ENABLED``
      - Set to ``true`` to enable inferred spans via async-profiler (Elastic OTel agent only).
-       Requires Java 17/21 LTS on x86_64 — crashes on Java 25 EA or aarch64.
+       **Disabled by default** — may crash on some platforms (e.g. Java 25 / aarch64).
 
 Using with Elastic Cloud (managed EDOT)
 -----------------------------------------
@@ -113,7 +113,7 @@ Using with Elastic Cloud (managed EDOT)
    export OTEL_EXPORTER_OTLP_ENDPOINT=https://<your-otel-endpoint>:443
    export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer <api-key>"
    export OTEL_SERVICE_NAME=fscrawler
-   ./bin/fscrawler my-job
+   ./bin/fscrawler
 
 You can find your OTel endpoint and API key in Kibana under
 **Observability → Add data → Monitor with OpenTelemetry**.
@@ -144,7 +144,7 @@ Example for Jaeger (OTLP/gRPC):
 
    export OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger-host:4317
    export OTEL_SERVICE_NAME=fscrawler
-   ./bin/fscrawler my-job
+   ./bin/fscrawler
 
 Docker example with EDOT Collector
 -------------------------------------
@@ -175,4 +175,4 @@ Set environment variables in the same shell before running::
 
     set OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     set OTEL_SERVICE_NAME=fscrawler
-    bin\fscrawler.bat my-job
+    bin\fscrawler.bat
