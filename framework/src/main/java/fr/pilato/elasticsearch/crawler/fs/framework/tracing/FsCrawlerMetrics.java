@@ -22,6 +22,8 @@ package fr.pilato.elasticsearch.crawler.fs.framework.tracing;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.LongHistogram;
 import io.opentelemetry.api.metrics.Meter;
 
 /**
@@ -42,12 +44,29 @@ import io.opentelemetry.api.metrics.Meter;
  */
 public final class FsCrawlerMetrics {
 
-    private FsCrawlerMetrics() {
-        // utility class
+    private static final LongCounter DOCS_ADDED;
+    private static final LongCounter DOCS_DELETED;
+    private static final LongHistogram SCAN_DURATION;
+
+    static {
+        Meter meter = GlobalOpenTelemetry.getMeter(FsCrawlerTracing.INSTRUMENTATION_NAME);
+        DOCS_ADDED = meter.counterBuilder("fscrawler.docs.added")
+                .setDescription("Documents indexed during a crawl run")
+                .setUnit("{document}")
+                .build();
+        DOCS_DELETED = meter.counterBuilder("fscrawler.docs.deleted")
+                .setDescription("Documents deleted during a crawl run")
+                .setUnit("{document}")
+                .build();
+        SCAN_DURATION = meter.histogramBuilder("fscrawler.scan.duration")
+                .setDescription("Wall-clock duration of a crawl run")
+                .setUnit("ms")
+                .ofLongs()
+                .build();
     }
 
-    private static Meter meter() {
-        return GlobalOpenTelemetry.getMeter(FsCrawlerTracing.INSTRUMENTATION_NAME);
+    private FsCrawlerMetrics() {
+        // utility class
     }
 
     /**
@@ -59,26 +78,9 @@ public final class FsCrawlerMetrics {
      * @param durationMs  wall-clock duration of the run in milliseconds
      */
     public static void recordScanCompletion(String jobName, int docsAdded, int docsDeleted, long durationMs) {
-        Meter m = meter();
         Attributes attrs = Attributes.of(AttributeKey.stringKey("job.name"), jobName);
-
-        m.counterBuilder("fscrawler.docs.added")
-                .setDescription("Documents indexed during a crawl run")
-                .setUnit("{document}")
-                .build()
-                .add(docsAdded, attrs);
-
-        m.counterBuilder("fscrawler.docs.deleted")
-                .setDescription("Documents deleted during a crawl run")
-                .setUnit("{document}")
-                .build()
-                .add(docsDeleted, attrs);
-
-        m.histogramBuilder("fscrawler.scan.duration")
-                .setDescription("Wall-clock duration of a crawl run")
-                .setUnit("ms")
-                .ofLongs()
-                .build()
-                .record(durationMs, attrs);
+        DOCS_ADDED.add(docsAdded, attrs);
+        DOCS_DELETED.add(docsDeleted, attrs);
+        SCAN_DURATION.record(durationMs, attrs);
     }
 }
