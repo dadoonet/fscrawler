@@ -82,7 +82,14 @@ public class TikaInstance {
      * @param fs fs settings
      */
     private static void initTika(Fs fs) {
-        ocrActivated = fs.getOcr().isEnabled();
+        boolean ocrEnabled = fs.getOcr().isEnabled();
+        if (ocrActivated != ocrEnabled) {
+            // OCR setting changed — reset cached parser/context so they are rebuilt with new settings
+            // This normally only applies to Integration Tests
+            parser = null;
+            context = null;
+        }
+        ocrActivated = ocrEnabled;
         initContext(fs);
         initParser(fs);
     }
