@@ -37,9 +37,9 @@ The script will:
 2. Start **Elasticsearch + Kibana + EDOT Collector** via docker-compose
 3. Unzip the distribution into ``/tmp/fscrawler-edot-test/``
 4. Create a job config pointing to ``test-documents/src/main/resources/documents/``
-5. Set ``OTEL_*`` environment variables and launch FSCrawler for one crawl pass (``--loop 1``)
+5. Set ``OTEL_*`` environment variables and launch FSCrawler with the REST API enabled (``--rest``)
 
-Once the crawl finishes:
+FSCrawler runs until you press **Ctrl+C**. While it is running:
 
 * **Elasticsearch** — ``http://localhost:9200/test-edot/_search``
 * **Kibana APM** — ``http://localhost:5601`` → *Observability → APM* → service ``fscrawler``
