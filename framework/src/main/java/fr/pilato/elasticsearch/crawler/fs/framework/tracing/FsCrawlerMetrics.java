@@ -24,7 +24,6 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.LongHistogram;
-import io.opentelemetry.api.metrics.Meter;
 
 /**
  * OTel metrics for FSCrawler functional counters.
@@ -44,29 +43,34 @@ import io.opentelemetry.api.metrics.Meter;
  */
 public final class FsCrawlerMetrics {
 
-    private static final LongCounter DOCS_ADDED;
-    private static final LongCounter DOCS_DELETED;
-    private static final LongHistogram SCAN_DURATION;
+    // Instruments are resolved lazily on first use so that GlobalOpenTelemetry has time to be
+    // configured by the OTel agent before the Meter is obtained — matching the lazy pattern used
+    // by FsCrawlerTracing.tracer(). volatile ensures visibility across threads; in the rare case
+    // of a concurrent first call the OTel SDK deduplicates instruments by name so both builds
+    // are safe.
+    private static volatile LongCounter docsAddedCounter;
+    private static volatile LongCounter docsDeletedCounter;
+    private static volatile LongHistogram scanDurationHistogram;
 
-    static {
-        Meter meter = GlobalOpenTelemetry.getMeter(FsCrawlerTracing.INSTRUMENTATION_NAME);
-        DOCS_ADDED = meter.counterBuilder("fscrawler.docs.added")
+    private FsCrawlerMetrics() {
+        // utility class
+    }
+
+    private static void initInstruments() {
+        var meter = GlobalOpenTelemetry.getMeter(FsCrawlerTracing.INSTRUMENTATION_NAME);
+        docsAddedCounter = meter.counterBuilder("fscrawler.docs.added")
                 .setDescription("Documents indexed during a crawl run")
                 .setUnit("{document}")
                 .build();
-        DOCS_DELETED = meter.counterBuilder("fscrawler.docs.deleted")
+        docsDeletedCounter = meter.counterBuilder("fscrawler.docs.deleted")
                 .setDescription("Documents deleted during a crawl run")
                 .setUnit("{document}")
                 .build();
-        SCAN_DURATION = meter.histogramBuilder("fscrawler.scan.duration")
+        scanDurationHistogram = meter.histogramBuilder("fscrawler.scan.duration")
                 .setDescription("Wall-clock duration of a crawl run")
                 .setUnit("ms")
                 .ofLongs()
                 .build();
-    }
-
-    private FsCrawlerMetrics() {
-        // utility class
     }
 
     /**
@@ -78,9 +82,12 @@ public final class FsCrawlerMetrics {
      * @param durationMs  wall-clock duration of the run in milliseconds
      */
     public static void recordScanCompletion(String jobName, int docsAdded, int docsDeleted, long durationMs) {
+        if (docsAddedCounter == null) {
+            initInstruments();
+        }
         Attributes attrs = Attributes.of(AttributeKey.stringKey("job.name"), jobName);
-        DOCS_ADDED.add(docsAdded, attrs);
-        DOCS_DELETED.add(docsDeleted, attrs);
-        SCAN_DURATION.record(durationMs, attrs);
+        docsAddedCounter.add(docsAdded, attrs);
+        docsDeletedCounter.add(docsDeleted, attrs);
+        scanDurationHistogram.record(durationMs, attrs);
     }
 }
