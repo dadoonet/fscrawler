@@ -36,12 +36,14 @@ set JAVA_OPTS=%JAVA_OPTS% -Dlog4j2.formatMsgNoLookups=true
 
 REM Auto-load Elastic OTel javaagent if present in external\ (delete the JAR to disable APM tracing)
 REM To disable without deleting: set OTEL_SDK_DISABLED=true
-REM PUSHD/POPD is required so that wildcard expansion works even when FS_HOME contains spaces.
-PUSHD "%FS_HOME%\external"
-FOR %%I IN (elastic-otel-javaagent-*.jar) DO (
-    set OTEL_AGENT=%FS_HOME%\external\%%I
+REM PUSHD is guarded so that a missing external\ directory does not unbalance the directory stack.
+IF EXIST "%FS_HOME%\external\" (
+    PUSHD "%FS_HOME%\external"
+    FOR %%I IN (elastic-otel-javaagent-*.jar) DO (
+        set OTEL_AGENT=%FS_HOME%\external\%%I
+    )
+    POPD
 )
-POPD
 IF DEFINED OTEL_AGENT (
     set JAVA_OPTS=%JAVA_OPTS% -javaagent:!OTEL_AGENT!
 )
