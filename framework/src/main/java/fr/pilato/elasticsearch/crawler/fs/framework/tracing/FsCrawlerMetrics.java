@@ -58,10 +58,9 @@ public final class FsCrawlerMetrics {
 
     private static void initInstruments() {
         var meter = GlobalOpenTelemetry.getMeter(FsCrawlerTracing.INSTRUMENTATION_NAME);
-        docsAddedCounter = meter.counterBuilder("fscrawler.docs.added")
-                .setDescription("Documents indexed during a crawl run")
-                .setUnit("{document}")
-                .build();
+        // docsAddedCounter is the guard field checked in recordScanCompletion(); assign it LAST so
+        // that a concurrent thread seeing it non-null is guaranteed (by volatile JMM happens-before)
+        // to also see the fully-initialised docsDeletedCounter and scanDurationHistogram.
         docsDeletedCounter = meter.counterBuilder("fscrawler.docs.deleted")
                 .setDescription("Documents deleted during a crawl run")
                 .setUnit("{document}")
@@ -70,6 +69,10 @@ public final class FsCrawlerMetrics {
                 .setDescription("Wall-clock duration of a crawl run")
                 .setUnit("ms")
                 .ofLongs()
+                .build();
+        docsAddedCounter = meter.counterBuilder("fscrawler.docs.added")
+                .setDescription("Documents indexed during a crawl run")
+                .setUnit("{document}")
                 .build();
     }
 
