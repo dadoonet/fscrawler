@@ -276,13 +276,12 @@ public class FsParser implements Runnable, AutoCloseable {
             int run = runNumber.incrementAndGet();
 
             Span crawlSpan = FsCrawlerTracing.startSpan("fscrawler.crawl");
-            Scope crawlScope = crawlSpan.makeCurrent();
             crawlSpan.setAttribute("job.name", fsSettings.getName());
             if (crawlerPlugin != null) {
                 crawlSpan.setAttribute("fs.provider", crawlerPlugin.getType());
             }
 
-            try {
+            try (Scope crawlScope = crawlSpan.makeCurrent()) {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
                 filesSinceLastCheckpoint = 0;
 
@@ -386,7 +385,6 @@ public class FsParser implements Runnable, AutoCloseable {
                     saveCheckpoint();
                 }
             } finally {
-                crawlScope.close();
                 crawlSpan.end();
                 persistAclHashCacheIfNeeded();
                 if (crawlerPlugin != null) {
@@ -740,9 +738,8 @@ public class FsParser implements Runnable, AutoCloseable {
      */
     private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
         Span dirSpan = FsCrawlerTracing.startSpan("fscrawler.directory.process");
-        Scope dirScope = dirSpan.makeCurrent();
         dirSpan.setAttribute("fs.path", filepath);
-        try {
+        try (Scope dirScope = dirSpan.makeCurrent()) {
         logger.debug("indexing [{}] content", filepath);
 
         if (closed.get()) {
@@ -934,7 +931,6 @@ public class FsParser implements Runnable, AutoCloseable {
             dirSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             throw e;
         } finally {
-            dirScope.close();
             dirSpan.end();
         }
     }
@@ -1101,10 +1097,9 @@ public class FsParser implements Runnable, AutoCloseable {
     private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
                            long filesize, InputStream externalTags) throws Exception {
         Span fileSpan = FsCrawlerTracing.startSpan("fscrawler.file.index");
-        Scope fileScope = fileSpan.makeCurrent();
         fileSpan.setAttribute("fs.path", fileAbstractModel.getFullpath() != null ? fileAbstractModel.getFullpath() : dirname + "/" + fileAbstractModel.getName());
         fileSpan.setAttribute("file.size", filesize);
-        try {
+        try (Scope fileScope = fileSpan.makeCurrent()) {
         final String filename = fileAbstractModel.getName();
         final LocalDateTime created = fileAbstractModel.getCreationDate();
         final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
@@ -1267,7 +1262,6 @@ public class FsParser implements Runnable, AutoCloseable {
             fileSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             throw e;
         } finally {
-            fileScope.close();
             fileSpan.end();
         }
     }
