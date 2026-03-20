@@ -21,6 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -143,17 +147,24 @@ public class FsCrawlerBulkProcessor<
         this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         final long executionId = executionIdGen.incrementAndGet();
 
+        Span bulkSpan = FsCrawlerTracing.startSpan("fscrawler.es.bulk");
+        bulkSpan.setAttribute("es.bulk.actions", bulkRequest.numberOfActions());
+
         // execute in a blocking fashion...
         boolean afterCalled = false;
-        try {
+        try (Scope bulkScope = bulkSpan.makeCurrent()) {
             listener.beforeBulk(executionId, bulkRequest);
             Res bulkItemResponses = engine.bulk(bulkRequest);
             afterCalled = true;
             listener.afterBulk(executionId, bulkRequest, bulkItemResponses);
         } catch (Exception e) {
+            bulkSpan.recordException(e);
+            bulkSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             if (!afterCalled) {
                 listener.afterBulk(executionId, bulkRequest, e);
             }
+        } finally {
+            bulkSpan.end();
         }
     }
 

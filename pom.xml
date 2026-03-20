@@ -75,7 +75,7 @@
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
         <tests.index.prefix></tests.index.prefix>
         <tests.rest.port>0</tests.rest.port>
-        <testcontainers.version>1.21.4</testcontainers.version>
+        <testcontainers.version>2.0.4</testcontainers.version>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
@@ -100,6 +100,11 @@
         <ossindex.score>7.0</ossindex.score>
         <!-- When we need to disable a specific CVE -->
         <ossindex.exclude />
+
+        <!-- OpenTelemetry API (instrumentation only; SDK provided by elastic-otel-javaagent at runtime) -->
+        <opentelemetry.version>1.60.1</opentelemetry.version>
+        <!-- Elastic OTel javaagent bundled in distribution/external/ -->
+        <elastic.otel.agent.version>1.9.0</elastic.otel.agent.version>
 
         <java.compiler.version>17</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -863,6 +868,15 @@
                 <version>4.3.0</version>
             </dependency>
 
+            <!-- OpenTelemetry BOM — API only; SDK/agent injected at runtime by elastic-otel-javaagent -->
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-bom</artifactId>
+                <version>${opentelemetry.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Test dependencies -->
             <dependency>
                 <groupId>org.assertj</groupId>
@@ -886,17 +900,17 @@
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
-                <artifactId>elasticsearch</artifactId>
+                <artifactId>testcontainers-elasticsearch</artifactId>
                 <version>${testcontainers.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
-                <artifactId>minio</artifactId>
+                <artifactId>testcontainers-minio</artifactId>
                 <version>${testcontainers.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
-                <artifactId>nginx</artifactId>
+                <artifactId>testcontainers-nginx</artifactId>
                 <version>${testcontainers.version}</version>
             </dependency>
             <dependency>

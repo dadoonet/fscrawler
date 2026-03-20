@@ -70,10 +70,22 @@ public class TikaInstance {
     private static LanguageDetector detector;
     private static boolean ocrActivated = false;
 
+    // One (parser, context) pair per OCR state so that switching between enabled and disabled
+    // neither requires rebuilding the expensive DefaultParser nor produces incorrect behaviour.
+    // Each pair is built at most once; switching OCR state is O(1).
+    private static Parser parserOcrOn;
+    private static Parser parserOcrOff;
+    private static ParseContext contextOcrOn;
+    private static ParseContext contextOcrOff;
+
     /* For tests only */
     public static void reloadTika() {
         parser = null;
         context = null;
+        parserOcrOn = null;
+        parserOcrOff = null;
+        contextOcrOn = null;
+        contextOcrOff = null;
         ocrActivated = false;
     }
 
@@ -82,9 +94,22 @@ public class TikaInstance {
      * @param fs fs settings
      */
     private static void initTika(Fs fs) {
-        ocrActivated = fs.getOcr().isEnabled();
+        boolean ocrEnabled = fs.getOcr().isEnabled();
+        ocrActivated = ocrEnabled;
+        // Restore the cached (parser, context) pair for this OCR state; null means not yet built.
+        // initContext and initParser are no-ops when their field is already non-null.
+        parser  = ocrEnabled ? parserOcrOn  : parserOcrOff;
+        context = ocrEnabled ? contextOcrOn : contextOcrOff;
         initContext(fs);
         initParser(fs);
+        // Persist the now-built pair so future calls with the same OCR state skip the rebuild.
+        if (ocrEnabled) {
+            parserOcrOn  = parser;
+            contextOcrOn = context;
+        } else {
+            parserOcrOff  = parser;
+            contextOcrOff = context;
+        }
     }
 
     private static void initParser(Fs fs) {

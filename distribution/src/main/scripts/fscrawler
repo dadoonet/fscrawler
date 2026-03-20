@@ -52,6 +52,15 @@ esac
 # Fix for CVE-2021-44228
 JAVA_OPTS="$JAVA_OPTS -Dlog4j2.formatMsgNoLookups=true"
 
+# Auto-load Elastic OTel javaagent if present in external/ (remove the JAR to disable APM tracing)
+# To disable: rm "$FS_HOME/external/elastic-otel-javaagent-*.jar"
+# To configure: set OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME, etc.
+# To disable without removing: set OTEL_SDK_DISABLED=true
+OTEL_AGENT=$(ls "$FS_HOME"/external/elastic-otel-javaagent-*.jar 2>/dev/null | head -1)
+if [ -n "$OTEL_AGENT" ]; then
+    JAVA_OPTS="$JAVA_OPTS -javaagent:$OTEL_AGENT"
+fi
+
 # If the user defined FS_JAVA_OPTS, we will use it to start the crawler
 JAVA_OPTS="$JAVA_OPTS $FS_JAVA_OPTS"
 

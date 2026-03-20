@@ -47,6 +47,9 @@
         <docker.ocr.buildx.platforms.1>linux/arm64</docker.ocr.buildx.platforms.1>
 
         <distribution.mainClassName>fr.pilato.elasticsearch.crawler.fs.cli.FsCrawler</distribution.mainClassName>
+        <!-- Relative path from distribution/test-scripts/ back to the project root.
+             Used by Maven resource filtering in the test scripts. -->
+        <test.scripts.root.relative.path>../..</test.scripts.root.relative.path>
     </properties>
 
     <dependencies>
@@ -79,6 +82,46 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <!-- Filter test scripts and write them next to src/ (like contrib .env files).
+                         Regenerate after a version bump: mvn generate-test-resources -pl distribution -->
+                    <execution>
+                        <id>filter-test-scripts</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/test-scripts</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/test/scripts</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Set executable bit on filtered test scripts (copy-resources does not preserve it) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>chmod-test-scripts</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <chmod file="${project.basedir}/test-scripts/test-fscrawler-cli.sh" perm="755"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -119,6 +162,34 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+
+            <!-- Download the Elastic OTel javaagent into target/otel-agent/ for bundling in the ZIP -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>download-elastic-otel-agent</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>co.elastic.otel</groupId>
+                                    <artifactId>elastic-otel-javaagent</artifactId>
+                                    <version>${elastic.otel.agent.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/otel-agent</outputDirectory>
+                                    <destFileName>elastic-otel-javaagent-${elastic.otel.agent.version}.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Generate the release zip file (run during package step) -->

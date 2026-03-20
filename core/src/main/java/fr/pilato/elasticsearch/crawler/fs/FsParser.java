@@ -23,6 +23,8 @@ import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.*;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerMetrics;
+import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -30,6 +32,9 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -270,7 +275,13 @@ public class FsParser implements Runnable, AutoCloseable {
 
             int run = runNumber.incrementAndGet();
 
-            try {
+            Span crawlSpan = FsCrawlerTracing.startSpan("fscrawler.crawl");
+            crawlSpan.setAttribute("job.name", fsSettings.getName());
+            if (crawlerPlugin != null) {
+                crawlSpan.setAttribute("fs.provider", crawlerPlugin.getType());
+            }
+
+            try (Scope crawlScope = crawlSpan.makeCurrent()) {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
                 filesSinceLastCheckpoint = 0;
 
@@ -329,6 +340,21 @@ public class FsParser implements Runnable, AutoCloseable {
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
                     stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
 
+                    // Span attributes: functional counters for this run
+                    crawlSpan.setAttribute("docs.added", stats.getNbDocScan());
+                    crawlSpan.setAttribute("docs.deleted", stats.getNbDocDeleted());
+                    Duration scanDuration = stats.computeDuration();
+                    if (scanDuration != null) {
+                        crawlSpan.setAttribute("scan.duration_ms", scanDuration.toMillis());
+                    }
+
+                    // OTel metrics: time-series for dashboards and alerting
+                    FsCrawlerMetrics.recordScanCompletion(
+                            fsSettings.getName(),
+                            stats.getNbDocScan(),
+                            stats.getNbDocDeleted(),
+                            scanDuration != null ? scanDuration.toMillis() : 0L);
+
                     // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
                     LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
                     logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
@@ -348,7 +374,9 @@ public class FsParser implements Runnable, AutoCloseable {
             } catch (Exception e) {
                 logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
-                
+                crawlSpan.recordException(e);
+                crawlSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+
                 // Only overwrite checkpoint file if we loaded/created one this run; otherwise we'd
                 // replace a valid checkpoint with the default empty instance (see High Severity bug).
                 if (checkpoint.get().isLoadedThisRun()) {
@@ -357,6 +385,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     saveCheckpoint();
                 }
             } finally {
+                crawlSpan.end();
                 persistAclHashCacheIfNeeded();
                 if (crawlerPlugin != null) {
                     try {
@@ -556,6 +585,10 @@ public class FsParser implements Runnable, AutoCloseable {
      * Process directories using a work queue with checkpoint support
      */
     private void processDirectoriesWithCheckpoint(LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
+        Span traverseSpan = FsCrawlerTracing.startSpan("fscrawler.directory.traverse");
+        try (Scope traverseScope = traverseSpan.makeCurrent()) {
+        traverseSpan.setAttribute("scan.id", String.valueOf(runNumber.get()));
+
         while (checkpoint.get().hasPendingWork() && !closed.get()) {
             // Handle pause
             if (paused.get()) {
@@ -609,9 +642,14 @@ public class FsParser implements Runnable, AutoCloseable {
                 } else {
                     checkpoint.get().addPathFirst(currentPath);
                     saveCheckpoint();
+                    traverseSpan.recordException(e);
+                    traverseSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
                     throw e;
                 }
             }
+        }
+        } finally {
+            traverseSpan.end();
         }
     }
 
@@ -699,6 +737,9 @@ public class FsParser implements Runnable, AutoCloseable {
      * @return true if the directory was fully processed, false if interrupted by pause/close
      */
     private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
+        Span dirSpan = FsCrawlerTracing.startSpan("fscrawler.directory.process");
+        dirSpan.setAttribute("fs.path", filepath);
+        try (Scope dirScope = dirSpan.makeCurrent()) {
         logger.debug("indexing [{}] content", filepath);
 
         if (closed.get()) {
@@ -885,6 +926,13 @@ public class FsParser implements Runnable, AutoCloseable {
             }
         }
         return true;  // Directory fully processed
+        } catch (Exception e) {
+            dirSpan.recordException(e);
+            dirSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+            throw e;
+        } finally {
+            dirSpan.end();
+        }
     }
 
 
@@ -1048,6 +1096,10 @@ public class FsParser implements Runnable, AutoCloseable {
      */
     private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
                            long filesize, InputStream externalTags) throws Exception {
+        Span fileSpan = FsCrawlerTracing.startSpan("fscrawler.file.index");
+        fileSpan.setAttribute("fs.path", fileAbstractModel.getFullpath() != null ? fileAbstractModel.getFullpath() : dirname + "/" + fileAbstractModel.getName());
+        fileSpan.setAttribute("file.size", filesize);
+        try (Scope fileScope = fileSpan.makeCurrent()) {
         final String filename = fileAbstractModel.getName();
         final LocalDateTime created = fileAbstractModel.getCreationDate();
         final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
@@ -1204,6 +1256,13 @@ public class FsParser implements Runnable, AutoCloseable {
                     }
                 }
             }
+        }
+        } catch (Exception e) {
+            fileSpan.recordException(e);
+            fileSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+            throw e;
+        } finally {
+            fileSpan.end();
         }
     }
 

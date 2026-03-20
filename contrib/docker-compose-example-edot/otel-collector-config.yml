@@ -1,0 +1,49 @@
+# EDOT Collector configuration for FSCrawler
+#
+# Receives OTLP telemetry from FSCrawler and forwards to Elasticsearch / Kibana APM.
+# Based on the official EDOT sample: otel_samples/logs_metrics_traces.yml
+# See: https://www.elastic.co/docs/reference/edot-collector/config/configure-logs-metrics-traces
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+# The elasticapm connector converts OTel spans into Elastic APM transaction/error
+# metrics that Kibana APM uses for its service maps, throughput charts, etc.
+connectors:
+  elasticapm:
+
+processors:
+  elasticapm:
+
+exporters:
+  elasticsearch/otel:
+    endpoints:
+      - http://elasticsearch:9200
+    mapping:
+      mode: otel
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [elasticapm]
+      exporters: [elasticapm, elasticsearch/otel]
+    metrics:
+      receivers: [otlp]
+      exporters: [elasticsearch/otel]
+    metrics/apm:
+      receivers: [elasticapm]
+      exporters: [elasticsearch/otel]
+    logs:
+      receivers: [otlp]
+      exporters: [elasticsearch/otel]

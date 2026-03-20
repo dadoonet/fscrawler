@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 
 import static org.awaitility.Awaitility.await;
+import org.awaitility.core.ConditionTimeoutException;
 
 /**
  * @author dadoonet (David Pilato)
@@ -213,21 +214,32 @@ public class FsCrawlerImpl implements AutoCloseable {
         }
 
         if (this.fsCrawlerThread != null) {
-            await()
-                    .pollInterval(Duration.ofMillis(500))
-                    .forever()
-                    .until(() -> {
-                        if (fsCrawlerThread.isAlive()) {
-                            // We check that the crawler has been closed effectively
-                            logger.debug("FS crawler thread is still running");
-                            if (logger.isDebugEnabled()) {
-                                Thread.dumpStack();
+            try {
+                // Interrupt the thread in case notifyAll() arrived before the crawler entered
+                // semaphore.wait() (lost notification race). Object.wait() is interruptible so
+                // the InterruptedException wakes the thread immediately; FsParser.run() already
+                // handles it and exits cleanly when closed==true.
+                fsCrawlerThread.interrupt();
+
+                await()
+                        .pollInterval(Duration.ofMillis(500))
+                        .atMost(Duration.ofSeconds(30))
+                        .until(() -> {
+                            if (fsCrawlerThread.isAlive()) {
+                                // We check that the crawler has been closed effectively
+                                logger.debug("FS crawler thread is still running");
+                                if (logger.isDebugEnabled()) {
+                                    Thread.dumpStack();
+                                }
+                                return false;
                             }
-                            return false;
-                        }
-                        return true;
-                    });
-            logger.debug("FS crawler thread is now stopped");
+                            return true;
+                        });
+                logger.debug("FS crawler thread is now stopped");
+            } catch (ConditionTimeoutException e) {
+                logger.warn("FS crawler thread [{}] did not stop within 30 seconds, proceeding with cleanup anyway",
+                        settings.getName());
+            }
         }
 
         managementService.close();
