@@ -20,17 +20,15 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 /** Test store_source crawler setting */
@@ -42,11 +40,12 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setStoreSource(true);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is in _source
-            assertThat((String) JsonPath.read(hit.getSource(), "$.attachment")).isNotEmpty();
+            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.attachment"))
+                    .isNotEmpty();
         }
     }
 
@@ -54,13 +53,13 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
     public void do_not_store_source() throws Exception {
         crawler = startCrawler();
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
 
         ESSearchResponse searchResponse =
-                client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS));
+                client.search(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS));
         for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is not part of _source
-            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.attachment"))
+            Assertions.assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.attachment"))
                     .isInstanceOf(PathNotFoundException.class);
         }
     }
@@ -72,11 +71,12 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexContent(false);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             // We check that the field is in _source
-            assertThat((String) JsonPath.read(hit.getSource(), "$.attachment")).isNotEmpty();
+            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.attachment"))
+                    .isNotEmpty();
         }
     }
 }

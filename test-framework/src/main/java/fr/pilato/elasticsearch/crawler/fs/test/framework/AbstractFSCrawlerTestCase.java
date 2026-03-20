@@ -20,13 +20,13 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
-import static org.apache.commons.lang3.StringUtils.split;
-
 import com.carrotsearch.randomizedtesting.RandomizedContext;
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
-import com.carrotsearch.randomizedtesting.annotations.*;
+import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.Listeners;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
 import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.TimeZone;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -90,7 +91,7 @@ public abstract class AbstractFSCrawlerTestCase {
     public static void setLocale() {
         String testLocale = getSystemProperty("tests.locale", RANDOM);
         Locale locale = testLocale.equals(RANDOM)
-                ? randomLocale()
+                ? RandomizedTest.randomLocale()
                 : new Locale.Builder().setLanguageTag(testLocale).build();
         logger.debug("Running test suite with Locale [{}]", locale);
         Locale.setDefault(locale);
@@ -104,7 +105,8 @@ public abstract class AbstractFSCrawlerTestCase {
     @BeforeClass
     public static void setTimeZone() {
         String testTimeZone = getSystemProperty("tests.timezone", RANDOM);
-        TimeZone timeZone = testTimeZone.equals(RANDOM) ? randomTimeZone() : TimeZone.getTimeZone(testTimeZone);
+        TimeZone timeZone =
+                testTimeZone.equals(RANDOM) ? RandomizedTest.randomTimeZone() : TimeZone.getTimeZone(testTimeZone);
         logger.debug("Running test suite with TimeZone [{}]/[{}]", timeZone.getID(), timeZone.getDisplayName());
         TimeZone.setDefault(timeZone);
     }
@@ -151,7 +153,7 @@ public abstract class AbstractFSCrawlerTestCase {
                     .concat("_")
                     .concat(methodName);
         }
-        return testName.contains(" ") ? split(testName, " ")[0] : testName;
+        return testName.contains(" ") ? StringUtils.split(testName, " ")[0] : testName;
     }
 
     public static int between(int min, int max) {

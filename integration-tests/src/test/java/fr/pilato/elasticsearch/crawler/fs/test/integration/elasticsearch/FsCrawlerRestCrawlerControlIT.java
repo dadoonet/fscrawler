@@ -20,11 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.*;
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
@@ -52,6 +48,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.junit.After;
 import org.junit.Before;
@@ -108,8 +106,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_pause_resume_indexing() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
-        long nbFolders = randomLongBetween(5, 20);
-        long nbFiles = randomLongBetween(100, 1000);
+        long nbFolders = RandomizedTest.randomLongBetween(5, 20);
+        long nbFiles = RandomizedTest.randomLongBetween(100, 1000);
 
         Path testDir = currentTestResourceDir;
         for (long i = 0; i < nbFolders; i++) {
@@ -146,12 +144,12 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                     responseAfterStart.getTotalHits(),
                     expectedDocs);
             SimpleResponse pauseResponse = restPauseCrawler();
-            assertThat(pauseResponse.isOk()).isTrue();
-            assertThat(pauseResponse.getMessage()).contains("paused");
+            Assertions.assertThat(pauseResponse.isOk()).isTrue();
+            Assertions.assertThat(pauseResponse.getMessage()).contains("paused");
 
             // Verify status shows PAUSED
             CrawlerStatusResponse status = restGetCrawlerStatus();
-            assertThat(status.getState()).isEqualTo(CrawlerState.PAUSED);
+            Assertions.assertThat(status.getState()).isEqualTo(CrawlerState.PAUSED);
 
             ESSearchResponse response = countTestHelper(
                     new ESSearchRequest()
@@ -171,15 +169,15 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             logger.info("📍 Documents indexed after pause: {}", docsAfterPause);
 
             // Verify no new documents were indexed during the pause period
-            assertThat(docsAfterPause)
+            Assertions.assertThat(docsAfterPause)
                     .as("No new documents should be indexed while paused")
                     .isEqualTo(docsBeforePause);
 
             // Resume the crawler
             logger.info("⏯️ Resuming crawler...");
             SimpleResponse resumeResponse = restResumeCrawler();
-            assertThat(resumeResponse.isOk()).isTrue();
-            assertThat(resumeResponse.getMessage()).contains("resumed");
+            Assertions.assertThat(resumeResponse.isOk()).isTrue();
+            Assertions.assertThat(resumeResponse.getMessage()).contains("resumed");
 
             // Count expected files
             countTestHelper(
@@ -194,7 +192,7 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_delete_checkpoint_reindex() throws Exception {
         // Create a small set of test files
-        long nbFiles = randomLongBetween(5, 10);
+        long nbFiles = RandomizedTest.randomLongBetween(5, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(currentTestResourceDir.resolve("doc_" + i + ".txt"), "Document content " + i);
         }
@@ -217,24 +215,25 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                     currentTestResourceDir);
 
             // Wait for the scan to complete (state should be COMPLETED)
-            await().atMost(Duration.ofSeconds(30))
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
                     .pollInterval(Duration.ofMillis(500))
                     .until(() -> fsCrawler.getFsParser().getState() == CrawlerState.COMPLETED);
 
             // Pause the crawler before deleting checkpoint
             logger.info("⏸️ Pausing crawler before clearing checkpoint...");
             SimpleResponse pauseResponse = restPauseCrawler();
-            assertThat(pauseResponse.isOk()).isTrue();
+            Assertions.assertThat(pauseResponse.isOk()).isTrue();
             // Verify crawler is paused
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
             // Delete the checkpoint
             logger.info("⌫ Deleting checkpoint...");
             SimpleResponse deleteResponse = restDeleteCheckpoint();
-            assertThat(deleteResponse.isOk()).isTrue();
-            assertThat(deleteResponse.getMessage()).contains("cleared");
+            Assertions.assertThat(deleteResponse.isOk()).isTrue();
+            Assertions.assertThat(deleteResponse.getMessage()).contains("cleared");
             // Verify crawler is still paused
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
             // Clear the Elasticsearch index to verify re-indexing
             logger.info("⌫ Clearing Elasticsearch index to verify re-indexing...");
@@ -243,9 +242,9 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             // Resume the crawler - it should re-index everything
             logger.info("⏯️ Resuming crawler after checkpoint deletion...");
             SimpleResponse resumeResponse = restResumeCrawler();
-            assertThat(resumeResponse.isOk()).isTrue();
+            Assertions.assertThat(resumeResponse.isOk()).isTrue();
             // Verify crawler is now running again
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
 
             // Wait for documents to be re-indexed
             logger.info("⏳ Waiting for {} documents to be re-indexed...", expectedDocs);
@@ -256,7 +255,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                     currentTestResourceDir);
 
             // Wait until the crawler is marked as COMPLETED again
-            await().atMost(Duration.ofSeconds(30))
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
                     .pollInterval(Duration.ofMillis(500))
                     .until(() -> fsCrawler.getFsParser().getState() == CrawlerState.COMPLETED);
         }
@@ -269,7 +269,7 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @Test
     public void test_status_after_completed_scan() throws Exception {
         // Create test files
-        long nbFiles = randomLongBetween(3, 10);
+        long nbFiles = RandomizedTest.randomLongBetween(3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(currentTestResourceDir.resolve("status_test_" + i + ".txt"), "Status test " + i);
         }
@@ -290,7 +290,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 currentTestResourceDir);
 
         // Wait for the scan to be marked as COMPLETED
-        await().atMost(Duration.ofSeconds(30))
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofMillis(500))
                 .until(() -> fsCrawler.getFsParser().getState() == CrawlerState.COMPLETED);
 
@@ -303,15 +304,15 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 status.getScanEndTime(),
                 status.getNextCheck());
 
-        assertThat(status.getState()).isEqualTo(CrawlerState.COMPLETED);
-        assertThat(status.getFilesProcessed()).isEqualTo(expectedDocs);
-        assertThat(status.getScanEndTime()).isNotNull();
-        assertThat(status.getNextCheck()).isNotNull().isAfter(status.getScanEndTime());
+        Assertions.assertThat(status.getState()).isEqualTo(CrawlerState.COMPLETED);
+        Assertions.assertThat(status.getFilesProcessed()).isEqualTo(expectedDocs);
+        Assertions.assertThat(status.getScanEndTime()).isNotNull();
+        Assertions.assertThat(status.getNextCheck()).isNotNull().isAfter(status.getScanEndTime());
     }
 
     @Test
     public void test_pause_already_paused() throws Exception {
-        long nbFiles = randomLongBetween(3, 10);
+        long nbFiles = RandomizedTest.randomLongBetween(3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(
                     currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
@@ -327,22 +328,22 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             // crawler to start and begin indexing.
             logger.info("⏸️ Pausing crawler.");
             SimpleResponse pauseResponse = restPauseCrawler();
-            assertThat(pauseResponse.isOk()).isTrue();
-            assertThat(pauseResponse.getMessage()).contains("Crawler paused. Checkpoint saved.");
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
+            Assertions.assertThat(pauseResponse.isOk()).isTrue();
+            Assertions.assertThat(pauseResponse.getMessage()).contains("Crawler paused. Checkpoint saved.");
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
             logger.info("⏸️ Pausing again the crawler.");
             SimpleResponse pauseResponse2 = restPauseCrawler();
-            assertThat(pauseResponse2.isOk()).isTrue();
-            assertThat(pauseResponse2.getMessage()).contains("Crawler is already paused.");
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
+            Assertions.assertThat(pauseResponse2.isOk()).isTrue();
+            Assertions.assertThat(pauseResponse2.getMessage()).contains("Crawler is already paused.");
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
             // Resume the crawler
             logger.info("⏯️ Resuming crawler...");
             SimpleResponse resumeResponse = restResumeCrawler();
-            assertThat(resumeResponse.isOk()).isTrue();
-            assertThat(resumeResponse.getMessage()).contains("Crawler resumed.");
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
+            Assertions.assertThat(resumeResponse.isOk()).isTrue();
+            Assertions.assertThat(resumeResponse.getMessage()).contains("Crawler resumed.");
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
 
             // Count expected files
             countTestHelper(
@@ -355,7 +356,7 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void test_delete_checkpoint_while_running() throws Exception {
-        long nbFiles = randomLongBetween(3, 10);
+        long nbFiles = RandomizedTest.randomLongBetween(3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(
                     currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
@@ -367,15 +368,15 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
         // Start crawler with REST
         try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
 
             logger.info("⌫ Deleting checkpoint...");
             SimpleResponse deleteResponse = restDeleteCheckpoint();
-            assertThat(deleteResponse.isOk()).isFalse();
-            assertThat(deleteResponse.getMessage())
+            Assertions.assertThat(deleteResponse.isOk()).isFalse();
+            Assertions.assertThat(deleteResponse.getMessage())
                     .contains("Cannot clear checkpoint while crawler is running. Pause or stop it first.");
             // Verify crawler is still running
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
 
             // Count expected files
             countTestHelper(
@@ -389,8 +390,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @Test
     public void status_during_scan() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
-        long nbFolders = randomLongBetween(5, 20);
-        long nbFiles = randomLongBetween(100, 1000);
+        long nbFolders = RandomizedTest.randomLongBetween(5, 20);
+        long nbFiles = RandomizedTest.randomLongBetween(100, 1000);
 
         Path testDir = currentTestResourceDir;
         for (long i = 0; i < nbFolders; i++) {
@@ -412,12 +413,13 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
         try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
             // Verify status shows RUNNING
             CrawlerStatusResponse status = restGetCrawlerStatus();
-            assertThat(status.getState()).isEqualTo(CrawlerState.RUNNING);
+            Assertions.assertThat(status.getState()).isEqualTo(CrawlerState.RUNNING);
 
             final AtomicLong counterFiles = new AtomicLong(status.getFilesProcessed());
             final AtomicInteger counterCompletedDirs = new AtomicInteger(status.getCompletedDirectories());
             final AtomicInteger counterPendingDirs = new AtomicInteger(status.getPendingDirectories());
-            await().pollInterval(Duration.ofSeconds(1))
+            Awaitility.await()
+                    .pollInterval(Duration.ofSeconds(1))
                     .timeout(Duration.ofMinutes(5))
                     .until(() -> {
                         CrawlerStatusResponse s = restGetCrawlerStatus();
@@ -434,22 +436,22 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                         int oldCompletedDirs = counterCompletedDirs.getAndSet(s.getCompletedDirectories());
                         int oldPendingDirs = counterPendingDirs.getAndSet(s.getPendingDirectories());
                         // We should see progress in both files and directories processed
-                        assertThat(s.getFilesProcessed()).isGreaterThanOrEqualTo(oldFiles);
+                        Assertions.assertThat(s.getFilesProcessed()).isGreaterThanOrEqualTo(oldFiles);
                         // But if the crawler is completed, we should have no completed directories anymore (since we
                         // reset the checkpoint)
                         if (s.getState() == CrawlerState.COMPLETED) {
-                            assertThat(s.getCompletedDirectories()).isZero();
-                            assertThat(s.getPendingDirectories()).isZero();
+                            Assertions.assertThat(s.getCompletedDirectories()).isZero();
+                            Assertions.assertThat(s.getPendingDirectories()).isZero();
                         } else {
-                            assertThat(s.getCompletedDirectories()).isGreaterThanOrEqualTo(oldCompletedDirs);
-                            assertThat(s.getPendingDirectories()).isLessThanOrEqualTo(oldPendingDirs);
+                            Assertions.assertThat(s.getCompletedDirectories()).isGreaterThanOrEqualTo(oldCompletedDirs);
+                            Assertions.assertThat(s.getPendingDirectories()).isLessThanOrEqualTo(oldPendingDirs);
                         }
 
                         // We wait until the crawler is completed and has no pending directories
                         return s.getState() == CrawlerState.COMPLETED && s.getPendingDirectories() == 0;
                     });
 
-            assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.COMPLETED);
+            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.COMPLETED);
 
             // Count expected files
             countTestHelper(
@@ -468,7 +470,7 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
         fsSettings.getRest().setUrl("http://127.0.0.1:" + restPort + "/fscrawler");
 
         // Create the crawler
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, true);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, true);
         // Create the Rest server
         restServer = new RestServer(
                 fsSettings,

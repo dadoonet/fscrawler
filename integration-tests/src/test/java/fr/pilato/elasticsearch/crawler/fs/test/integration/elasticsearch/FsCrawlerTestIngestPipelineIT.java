@@ -20,14 +20,15 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-
-import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 /** Test crawler with ingest pipelines */
@@ -65,15 +66,17 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         // We expect to have one file
         countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESMatchQuery("my_content_field", "perniciosoque")),
                 1L,
                 currentTestResourceDir);
 
         // We expect to have one folder
         ESSearchResponse response = countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), 1L, currentTestResourceDir);
-        assertThat(response.getTotalHits()).isEqualTo(1L);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER),
+                1L,
+                currentTestResourceDir);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
     /**
@@ -117,11 +120,11 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
         // We expect to have one file
         ESSearchResponse response = countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESTermQuery("ip_addr", "127.0.0.1")),
                 1L,
                 currentTestResourceDir);
-        assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
     /**
@@ -138,9 +141,10 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
         try {
             crawler = startCrawler(fsSettings);
-            fail("We should have caught an ElasticsearchClientException");
+            Assertions.fail("We should have caught an ElasticsearchClientException");
         } catch (ElasticsearchClientException e) {
-            assertThat(e.getMessage()).contains("You defined pipeline:" + crawlerName + ", but it does not exist.");
+            Assertions.assertThat(e.getMessage())
+                    .contains("You defined pipeline:" + crawlerName + ", but it does not exist.");
         }
     }
 }

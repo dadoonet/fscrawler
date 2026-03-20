@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import static fr.pilato.elasticsearch.crawler.fs.settings.Defaults.ELASTICSEARCH_URL_DEFAULT;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
@@ -33,7 +31,7 @@ import org.github.gestalt.config.annotations.Config;
 
 public class Elasticsearch {
 
-    @Config(defaultVal = ELASTICSEARCH_URL_DEFAULT)
+    @Config(defaultVal = Defaults.ELASTICSEARCH_URL_DEFAULT)
     @Nullable
     private List<String> urls;
 

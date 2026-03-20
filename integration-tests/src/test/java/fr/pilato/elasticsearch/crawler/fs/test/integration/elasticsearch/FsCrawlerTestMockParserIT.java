@@ -20,16 +20,15 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 /**
@@ -66,12 +65,12 @@ public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
 
         // We expect 3 valid files to be indexed
         // The mock-exception.xml is also be indexed (with empty content)
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
         // Verify that the content from valid files is searchable
         countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESMatchQuery("content", "valid")),
                 2L,
                 null);
@@ -79,7 +78,7 @@ public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
         // Verify content from valid2.txt specifically - it contains "continue"
         countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESMatchQuery("content", "continue")),
                 1L,
                 null);
@@ -87,11 +86,12 @@ public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
         // Verify content from the xml file specifically. It should be empty
         ESSearchResponse response = countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESTermQuery("file.extension", "xml")),
                 1L,
                 null);
-        assertThatThrownBy(() -> JsonPath.read(response.getHits().get(0).getSource(), "$.content"))
+        Assertions.assertThatThrownBy(
+                        () -> JsonPath.read(response.getHits().get(0).getSource(), "$.content"))
                 .isInstanceOf(PathNotFoundException.class);
     }
 }

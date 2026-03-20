@@ -20,9 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import static fr.pilato.elasticsearch.crawler.fs.cli.FsCrawlerCli.*;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +34,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
+import org.assertj.core.api.Assertions;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -81,86 +79,86 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
      */
     @Before
     public void resetLogger() {
-        reinitLoggerContext();
+        FsCrawlerCli.reinitLoggerContext();
     }
 
     @Test
     public void changeLoggerContextForDebug() {
         String[] args = {"--debug", "jobName"};
-        FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
-        assertThat(command).isNotNull();
-        changeLoggerContext(command);
+        FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
+        Assertions.assertThat(command).isNotNull();
+        FsCrawlerCli.changeLoggerContext(command);
 
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         Configuration config = ctx.getConfiguration();
         LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
-        assertThat(loggerConfig).isNotNull();
-        assertThat(loggerConfig.getLevel()).isEqualTo(Level.DEBUG);
+        Assertions.assertThat(loggerConfig).isNotNull();
+        Assertions.assertThat(loggerConfig.getLevel()).isEqualTo(Level.DEBUG);
 
         ConsoleAppender console = config.getAppender("Console");
-        assertThat(console).isNotNull();
-        assertThat(console.getFilter()).isInstanceOf(LevelRangeFilter.class);
+        Assertions.assertThat(console).isNotNull();
+        Assertions.assertThat(console.getFilter()).isInstanceOf(LevelRangeFilter.class);
         LevelRangeFilter filter = (LevelRangeFilter) console.getFilter();
-        assertThat(filter.getMinLevel()).isEqualTo(Level.TRACE);
-        assertThat(filter.getMaxLevel()).isEqualTo(Level.ALL);
+        Assertions.assertThat(filter.getMinLevel()).isEqualTo(Level.TRACE);
+        Assertions.assertThat(filter.getMaxLevel()).isEqualTo(Level.ALL);
     }
 
     @Test
     public void changeLoggerContextForTrace() {
         String[] args = {"--trace", "jobName"};
-        FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
-        assertThat(command).isNotNull();
-        changeLoggerContext(command);
+        FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
+        Assertions.assertThat(command).isNotNull();
+        FsCrawlerCli.changeLoggerContext(command);
 
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         Configuration config = ctx.getConfiguration();
         LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
-        assertThat(loggerConfig).isNotNull();
-        assertThat(loggerConfig.getLevel()).isEqualTo(Level.TRACE);
+        Assertions.assertThat(loggerConfig).isNotNull();
+        Assertions.assertThat(loggerConfig.getLevel()).isEqualTo(Level.TRACE);
 
         ConsoleAppender console = config.getAppender("Console");
-        assertThat(console).isNotNull();
-        assertThat(console.getFilter()).isInstanceOf(LevelRangeFilter.class);
+        Assertions.assertThat(console).isNotNull();
+        Assertions.assertThat(console.getFilter()).isInstanceOf(LevelRangeFilter.class);
         LevelRangeFilter filter = (LevelRangeFilter) console.getFilter();
-        assertThat(filter.getMinLevel()).isEqualTo(Level.ALL);
-        assertThat(filter.getMaxLevel()).isEqualTo(Level.ALL);
+        Assertions.assertThat(filter.getMinLevel()).isEqualTo(Level.ALL);
+        Assertions.assertThat(filter.getMaxLevel()).isEqualTo(Level.ALL);
     }
 
     @Test
     public void changeLoggerContextForSilent() {
         String[] args = {"--silent", "jobName"};
-        FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
-        assertThat(command).isNotNull();
-        changeLoggerContext(command);
+        FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
+        Assertions.assertThat(command).isNotNull();
+        FsCrawlerCli.changeLoggerContext(command);
 
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         Configuration config = ctx.getConfiguration();
         LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
-        assertThat(loggerConfig).isNotNull();
-        assertThat(loggerConfig.getLevel()).isEqualTo(Level.TRACE);
+        Assertions.assertThat(loggerConfig).isNotNull();
+        Assertions.assertThat(loggerConfig.getLevel()).isEqualTo(Level.TRACE);
 
         ConsoleAppender console = config.getAppender("Console");
-        assertThat(console).isNotNull();
-        assertThat(console.getFilter()).isInstanceOf(LevelMatchFilter.class);
+        Assertions.assertThat(console).isNotNull();
+        Assertions.assertThat(console.getFilter()).isInstanceOf(LevelMatchFilter.class);
         LevelMatchFilter filter = (LevelMatchFilter) console.getFilter();
-        assertThat(filter.getOnMatch()).isEqualTo(Filter.Result.DENY);
+        Assertions.assertThat(filter.getOnMatch()).isEqualTo(Filter.Result.DENY);
     }
 
     @Test
     public void changeLoggerContextByDefault() {
         String[] args = {"jobName"};
-        FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
-        assertThat(command).isNotNull();
-        changeLoggerContext(command);
+        FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
+        Assertions.assertThat(command).isNotNull();
+        FsCrawlerCli.changeLoggerContext(command);
 
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         Configuration config = ctx.getConfiguration();
         LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
-        assertThat(loggerConfig).isNotNull();
-        assertThat(loggerConfig.getLevel()).isEqualTo(Level.INFO);
+        Assertions.assertThat(loggerConfig).isNotNull();
+        Assertions.assertThat(loggerConfig.getLevel()).isEqualTo(Level.INFO);
 
         ConsoleAppender console = config.getAppender("Console");
-        assertThat(console).isNotNull();
-        assertThat(console.getFilter()).isNull();
+        Assertions.assertThat(console).isNotNull();
+        Assertions.assertThat(console.getFilter()).isNull();
     }
 }

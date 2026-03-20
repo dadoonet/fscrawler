@@ -20,15 +20,14 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.junit.Test;
 
 /**
@@ -63,25 +62,28 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         client.pushComponentTemplate(componentTemplateName, customComponentTemplate);
 
         // Verify the component template exists
-        assertThat(client.isExistingComponentTemplate(componentTemplateName)).isTrue();
+        Assertions.assertThat(client.isExistingComponentTemplate(componentTemplateName))
+                .isTrue();
 
         // Start FSCrawler with loop = 0 (no document indexing, just template creation)
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
         crawler.start();
 
         // Wait for the crawler to complete
-        await().pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
-                .atMost(30, SECONDS)
+        Awaitility.await()
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
+                .atMost(30, TimeUnit.SECONDS)
                 .until(() -> crawler.getFsParser().isClosed());
 
         // Verify the component template still exists
-        assertThat(client.isExistingComponentTemplate(componentTemplateName)).isTrue();
+        Assertions.assertThat(client.isExistingComponentTemplate(componentTemplateName))
+                .isTrue();
 
         // Verify that the custom component template content is preserved by checking
         // that the "french" analyzer is still defined
         String templateContent =
                 client.performLowLevelRequest("GET", "_component_template/" + componentTemplateName, null);
-        assertThat(templateContent).contains("french");
+        Assertions.assertThat(templateContent).contains("french");
     }
 
     /** Test that force_push_templates = true overrides existing component templates */
@@ -107,10 +109,11 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         client.pushComponentTemplate(componentTemplateName, customComponentTemplate);
 
         // Verify the component template exists with french analyzer
-        assertThat(client.isExistingComponentTemplate(componentTemplateName)).isTrue();
+        Assertions.assertThat(client.isExistingComponentTemplate(componentTemplateName))
+                .isTrue();
         String templateContentBefore =
                 client.performLowLevelRequest("GET", "_component_template/" + componentTemplateName, null);
-        assertThat(templateContentBefore).contains("french");
+        Assertions.assertThat(templateContentBefore).contains("french");
 
         // Start FSCrawler with force_push_templates = true
         fsSettings.getElasticsearch().setForcePushTemplates(true);
@@ -118,14 +121,15 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         crawler.start();
 
         // Wait for the crawler to complete
-        await().pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
-                .atMost(30, SECONDS)
+        Awaitility.await()
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
+                .atMost(30, TimeUnit.SECONDS)
                 .until(() -> crawler.getFsParser().isClosed());
 
         // Verify the component template was overridden (french analyzer should be gone)
         String templateContentAfter =
                 client.performLowLevelRequest("GET", "_component_template/" + componentTemplateName, null);
-        assertThat(templateContentAfter).doesNotContain("french");
+        Assertions.assertThat(templateContentAfter).doesNotContain("french");
     }
 
     /** Test that templates are skipped when the index template already exists */
@@ -142,12 +146,13 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         crawler.start();
 
         // Wait for the crawler to complete
-        await().pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
-                .atMost(30, SECONDS)
+        Awaitility.await()
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
+                .atMost(30, TimeUnit.SECONDS)
                 .until(() -> crawler.getFsParser().isClosed());
 
         // Verify the index template exists
-        assertThat(client.isExistingIndexTemplate(indexTemplateName)).isTrue();
+        Assertions.assertThat(client.isExistingIndexTemplate(indexTemplateName)).isTrue();
 
         // Close the crawler
         crawler.close();
@@ -170,20 +175,21 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         // Verify the component template has the German analyzer
         String templateContentBefore =
                 client.performLowLevelRequest("GET", "_component_template/" + componentTemplateName, null);
-        assertThat(templateContentBefore).contains("german");
+        Assertions.assertThat(templateContentBefore).contains("german");
 
         // Start FSCrawler again - it should skip template management
         crawler = new FsCrawlerImpl(metadataDir, fsSettings, 0, false);
         crawler.start();
 
         // Wait for the crawler to complete
-        await().pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
-                .atMost(30, SECONDS)
+        Awaitility.await()
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
+                .atMost(30, TimeUnit.SECONDS)
                 .until(() -> crawler.getFsParser().isClosed());
 
         // Verify the component template was NOT overridden (german analyzer should still be there)
         String templateContentAfter =
                 client.performLowLevelRequest("GET", "_component_template/" + componentTemplateName, null);
-        assertThat(templateContentAfter).contains("german");
+        Assertions.assertThat(templateContentAfter).contains("german");
     }
 }

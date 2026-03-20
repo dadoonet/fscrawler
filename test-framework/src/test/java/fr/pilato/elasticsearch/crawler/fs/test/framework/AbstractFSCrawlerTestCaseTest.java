@@ -20,17 +20,17 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void toUnderscoreCase() {
-        assertThat(toUnderscoreCase("")).isEmpty();
-        assertThat(toUnderscoreCase("AbstractFSCrawlerTestCaseTest")).isEqualTo("abstract_f_s_crawler_test_case_test");
-        assertThat(toUnderscoreCase("abstract_f_s_crawler_test_case_test"))
+        Assertions.assertThat(toUnderscoreCase("")).isEmpty();
+        Assertions.assertThat(toUnderscoreCase("AbstractFSCrawlerTestCaseTest"))
+                .isEqualTo("abstract_f_s_crawler_test_case_test");
+        Assertions.assertThat(toUnderscoreCase("abstract_f_s_crawler_test_case_test"))
                 .isEqualTo("abstract_f_s_crawler_test_case_test");
     }
 
@@ -40,9 +40,10 @@ public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
 
         // The test depends on the env variable "test.index.prefix" being set to something"
         if (indexPrefix.isEmpty()) {
-            assertThat(crawlerName).isEqualTo("fscrawler_abstract_f_s_crawler_test_case_test_test_crawler_name");
+            Assertions.assertThat(crawlerName)
+                    .isEqualTo("fscrawler_abstract_f_s_crawler_test_case_test_test_crawler_name");
         } else {
-            assertThat(crawlerName)
+            Assertions.assertThat(crawlerName)
                     .isEqualTo("fscrawler_" + indexPrefix + "_abstract_f_s_crawler_test_case_test_test_crawler_name");
         }
     }

@@ -20,17 +20,20 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,7 +62,8 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
         private String url;
 
         private static final Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
-                file -> getModificationOrCreationTime(file.toFile()), Comparator.nullsLast(Comparator.naturalOrder()));
+                file -> FsCrawlerUtil.getModificationOrCreationTime(file.toFile()),
+                Comparator.nullsLast(Comparator.naturalOrder()));
 
         @Override
         public String getType() {
@@ -104,7 +108,9 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             doc.getFile().setFilename(filename);
             doc.getFile().setFilesize(getFilesize());
             // The virtual URL (not including the initial root dir)
-            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), filename));
+            doc.getPath()
+                    .setVirtual(FsCrawlerUtil.computeVirtualPathName(
+                            fsSettings.getFs().getUrl(), filename));
             // The real URL on the filesystem
             doc.getPath().setReal(path.toAbsolutePath().toString());
             return doc;
@@ -191,26 +197,26 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
         private FileAbstractModel toFileAbstractModel(String path, File file) {
             List<FileAcl> fileAcls =
                     fsSettings.getFs().isAclSupport() && fsSettings.getFs().isAttributesSupport()
-                            ? getFileAcls(file.toPath())
+                            ? FsCrawlerUtil.getFileAcls(file.toPath())
                             : Collections.emptyList();
 
-            String separator = getPathSeparator(fsSettings.getFs().getUrl());
+            String separator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
 
             return new FileAbstractModel(
                     file.getName(),
                     file.isFile(),
-                    getModificationTime(file),
-                    getCreationTime(file),
-                    getLastAccessTime(file),
-                    getFileExtension(file),
+                    FsCrawlerUtil.getModificationTime(file),
+                    FsCrawlerUtil.getCreationTime(file),
+                    FsCrawlerUtil.getLastAccessTime(file),
+                    FsCrawlerUtil.getFileExtension(file),
                     resolveSeparator(path, separator),
                     resolveSeparator(file.getAbsolutePath(), separator),
                     file.length(),
-                    getOwnerName(file),
-                    getGroupName(file),
-                    getFilePermissions(file),
+                    FsCrawlerUtil.getOwnerName(file),
+                    FsCrawlerUtil.getGroupName(file),
+                    FsCrawlerUtil.getFilePermissions(file),
                     fileAcls,
-                    computeAclHash(fileAcls));
+                    FsCrawlerUtil.computeAclHash(fileAcls));
         }
 
         private String resolveSeparator(String path, String separator) {

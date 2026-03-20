@@ -20,13 +20,14 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
-
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
@@ -37,7 +38,9 @@ import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.DockerClientFactory;
@@ -60,7 +63,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     @Before
     public void startMinioContainer() {
         // We can only run this test if Docker is available on this machine
-        assumeTrue(
+        Assume.assumeTrue(
                 "We can only run this test if Docker is available on this machine",
                 DockerClientFactory.instance().isDockerAvailable());
 
@@ -122,10 +125,10 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
                             + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).isEqualTo(text);
+            Assertions.assertThat(object).isEqualTo(text);
             Doc doc = provider.createDocument();
-            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+            Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
         }
     }
 }

@@ -20,13 +20,25 @@
  */
 package fr.pilato.elasticsearch.crawler.fs;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
-
 import com.jayway.jsonpath.DocumentContext;
-import fr.pilato.elasticsearch.crawler.fs.beans.*;
+import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsAclsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
+import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerMetrics;
 import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -39,8 +51,10 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
-import java.io.*;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -296,7 +310,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 filesSinceLastCheckpoint = 0;
 
                 String url = fsSettings.getFs().getUrl();
-                if (crawlerPlugin == null || isNullOrEmpty(url)) {
+                if (crawlerPlugin == null || FsCrawlerUtil.isNullOrEmpty(url)) {
                     // REST-only (no provider) or no folder to monitor: no-op run, checkpoint completed with 0 files
                     logger.info(
                             "Run #{}: job [{}]: skipping crawl (REST-only or no fs.url).", run, fsSettings.getName());
@@ -384,7 +398,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             scanDatenew,
                             stats.getStartTime(),
                             stats.getEndTime(),
-                            durationToString(stats.computeDuration()),
+                            FsCrawlerUtil.durationToString(stats.computeDuration()),
                             nextCheck);
 
                     // If we completed successfully, update the checkpoint with completion info.
@@ -876,11 +890,11 @@ public class FsParser implements Runnable, AutoCloseable {
                             continue;
                         }
 
-                        String virtualFileName =
-                                computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, filename));
+                        String virtualFileName = FsCrawlerUtil.computeVirtualPathName(
+                                stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, filename));
 
                         // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
-                        boolean isIndexable = isIndexable(
+                        boolean isIndexable = FsCrawlerUtil.isIndexable(
                                 child.isDirectory(),
                                 virtualFileName,
                                 fsSettings.getFs().getIncludes(),
@@ -898,7 +912,8 @@ public class FsParser implements Runnable, AutoCloseable {
                                             child.getLastModifiedDate(),
                                             lastScanDate);
 
-                                    if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
+                                    if (FsCrawlerUtil.isFileSizeUnderLimit(
+                                            fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
                                         InputStream inputStream = null;
                                         InputStream metadataStream = null;
                                         try {
@@ -991,9 +1006,9 @@ public class FsParser implements Runnable, AutoCloseable {
                 for (String esfile : esFiles) {
                     logger.trace("Checking file [{}]", esfile);
 
-                    String virtualFileName =
-                            computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, esfile));
-                    if (isIndexable(
+                    String virtualFileName = FsCrawlerUtil.computeVirtualPathName(
+                            stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, esfile));
+                    if (FsCrawlerUtil.isIndexable(
                                     false,
                                     virtualFileName,
                                     fsSettings.getFs().getIncludes(),
@@ -1015,9 +1030,9 @@ public class FsParser implements Runnable, AutoCloseable {
 
                     // for the delete folder
                     for (String esfolder : esFolders) {
-                        String virtualFileName =
-                                computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, esfolder));
-                        if (isIndexable(
+                        String virtualFileName = FsCrawlerUtil.computeVirtualPathName(
+                                stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, esfolder));
+                        if (FsCrawlerUtil.isIndexable(
                                 true,
                                 virtualFileName,
                                 fsSettings.getFs().getIncludes(),
@@ -1230,7 +1245,7 @@ public class FsParser implements Runnable, AutoCloseable {
             final long size = fileAbstractModel.getSize();
 
             logger.trace("fetching content from [{}],[{}]", dirname, filename);
-            String fullFilename = computeRealPathName(dirname, filename);
+            String fullFilename = FsCrawlerUtil.computeRealPathName(dirname, filename);
 
             // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't
             // index json or xml)
@@ -1242,10 +1257,10 @@ public class FsParser implements Runnable, AutoCloseable {
 
                 // File
                 doc.getFile().setFilename(filename);
-                doc.getFile().setCreated(localDateTimeToDate(created));
-                doc.getFile().setLastModified(localDateTimeToDate(lastModified));
-                doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
-                doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+                doc.getFile().setCreated(FsCrawlerUtil.localDateTimeToDate(created));
+                doc.getFile().setLastModified(FsCrawlerUtil.localDateTimeToDate(lastModified));
+                doc.getFile().setLastAccessed(FsCrawlerUtil.localDateTimeToDate(lastAccessed));
+                doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
                 if (fsSettings.getServer() == null
                         || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
                     doc.getFile().setUrl("file://" + fullFilename);
@@ -1267,7 +1282,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 // Encoded version of the dir this file belongs to
                 doc.getPath().setRoot(SignTool.sign(dirname));
                 // The virtual URL (not including the initial root dir)
-                doc.getPath().setVirtual(computeVirtualPathName(stats.getRootPath(), fullFilename));
+                doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename));
                 // The real and complete filename
                 doc.getPath().setReal(fullFilename);
                 // Path
@@ -1292,7 +1307,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 // If needed, we generate the content in addition to metadata
                 if (fsSettings.getFs().isJsonSupport()) {
                     // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                    doc.setObject(asMap(inputStream));
+                    doc.setObject(JsonUtil.asMap(inputStream));
                 } else if (fsSettings.getFs().isXmlSupport()) {
                     // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
                     doc.setObject(XmlDocParser.generateMap(inputStream));
@@ -1313,10 +1328,13 @@ public class FsParser implements Runnable, AutoCloseable {
                 mergedDoc = DocUtils.getMergedDoc(mergedDoc, metadataFilename, externalTags);
 
                 // We index the data structure
-                if (isIndexable(mergedDoc.getContent(), fsSettings.getFs().getFilters())) {
+                if (FsCrawlerUtil.isIndexable(
+                        mergedDoc.getContent(), fsSettings.getFs().getFilters())) {
                     if (!closed.get()) {
                         FSCrawlerLogger.documentDebug(
-                                id, computeVirtualPathName(stats.getRootPath(), fullFilename), "Indexing content");
+                                id,
+                                FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
+                                "Indexing content");
                         documentService.index(
                                 fsSettings.getElasticsearch().getIndex(),
                                 id,
@@ -1339,7 +1357,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 if (fsSettings.getFs().isJsonSupport()) {
                     FSCrawlerLogger.documentDebug(
                             generateIdFromFilename(filename, dirname),
-                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
                             "Indexing json content");
                     // We need to check that the provided file is actually a JSON file which can be parsed
                     try {
@@ -1371,7 +1389,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 } else if (fsSettings.getFs().isXmlSupport()) {
                     FSCrawlerLogger.documentDebug(
                             generateIdFromFilename(filename, dirname),
-                            computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
                             "Indexing xml content");
                     // We need to check that the provided file is actually a JSON file which can be parsed
                     try {
@@ -1463,23 +1481,23 @@ public class FsParser implements Runnable, AutoCloseable {
                 name,
                 SignTool.sign(rootdir),
                 path,
-                computeVirtualPathName(rootPath, path),
-                getCreationTime(folderInfo),
-                getModificationTime(folderInfo),
-                getLastAccessTime(folderInfo));
+                FsCrawlerUtil.computeVirtualPathName(rootPath, path),
+                FsCrawlerUtil.getCreationTime(folderInfo),
+                FsCrawlerUtil.getModificationTime(folderInfo),
+                FsCrawlerUtil.getLastAccessTime(folderInfo));
 
         if (fsSettings.getFs().isAttributesSupport()
                 && (fsSettings.getServer() == null
                         || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol()))) {
             Attributes attributes = new Attributes();
-            attributes.setOwner(getOwnerName(folderInfo));
-            attributes.setGroup(getGroupName(folderInfo));
-            int permissions = getFilePermissions(folderInfo);
+            attributes.setOwner(FsCrawlerUtil.getOwnerName(folderInfo));
+            attributes.setGroup(FsCrawlerUtil.getGroupName(folderInfo));
+            int permissions = FsCrawlerUtil.getFilePermissions(folderInfo);
             if (permissions >= 0) {
                 attributes.setPermissions(permissions);
             }
             if (fsSettings.getFs().isAclSupport()) {
-                List<FileAcl> folderAcls = getFileAcls(folderInfo.toPath());
+                List<FileAcl> folderAcls = FsCrawlerUtil.getFileAcls(folderInfo.toPath());
                 if (!folderAcls.isEmpty()) {
                     attributes.setAcl(folderAcls);
                 }

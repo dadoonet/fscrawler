@@ -20,10 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import java.io.IOException;
 import org.apache.commons.io.FilenameUtils;
@@ -147,7 +146,7 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
         String rootUrl = (fsSettings.getFs() != null && fsSettings.getFs().getUrl() != null)
                 ? fsSettings.getFs().getUrl()
                 : "/";
-        doc.getPath().setVirtual(computeVirtualPathName(rootUrl, remotePath));
+        doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(rootUrl, remotePath));
         doc.getPath().setReal(remotePath);
         return doc;
     }

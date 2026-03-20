@@ -20,8 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,6 +99,6 @@ public class ESSearchRequest {
 
     @Override
     public String toString() {
-        return serialize(this);
+        return JsonUtil.serialize(this);
     }
 }

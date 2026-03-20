@@ -20,10 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -31,6 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class JsonUtilTest extends AbstractFSCrawlerTestCase {
@@ -72,12 +69,14 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                    }
                 }""";
 
-        DocumentContext context = parseJsonAsDocumentContext(json);
-        assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");
-        assertThat((Integer) context.read("$.attributes.permissions")).isEqualTo(644);
-        assertThat((Integer) context.read("$.attributes.foobar")).isNull();
-        assertThat((String) context.read("$.attributes.acl[0].principal")).isEqualTo("dpilato");
-        assertThat((String) context.read("$.attributes.acl[0].type")).isEqualTo("ALLOW");
+        DocumentContext context = JsonUtil.parseJsonAsDocumentContext(json);
+        Assertions.assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");
+        Assertions.assertThat((Integer) context.read("$.attributes.permissions"))
+                .isEqualTo(644);
+        Assertions.assertThat((Integer) context.read("$.attributes.foobar")).isNull();
+        Assertions.assertThat((String) context.read("$.attributes.acl[0].principal"))
+                .isEqualTo("dpilato");
+        Assertions.assertThat((String) context.read("$.attributes.acl[0].type")).isEqualTo("ALLOW");
     }
 
     public static class Country {
@@ -127,17 +126,17 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 "---\n" + "name: \"Netherlands\"\n" + "cities:\n" + "- \"Amsterdam\"\n",
                 List.of("Amsterdam"));
         // We try with one single element in the cities field as a string and this should fail
-        assertThatThrownBy(() ->
+        Assertions.assertThatThrownBy(() ->
                         JsonUtil.mapper.readValue("{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining(
                         "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
-        assertThatThrownBy(() -> JsonUtil.prettyMapper.readValue(
+        Assertions.assertThatThrownBy(() -> JsonUtil.prettyMapper.readValue(
                         "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining(
                         "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
-        assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue(
+        Assertions.assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue(
                         "---\n" + "name: \"Netherlands\"\n" + "cities: \"Amsterdam\"\n", Country.class))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining(
@@ -156,14 +155,14 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
     private void mapperTester(ObjectMapper mapper, String input, List<String> expectedCities) throws IOException {
         logger.debug("Testing mapper: {} with {}", mapper.version().toFullString(), input);
         Country country = mapper.readValue(input, Country.class);
-        assertThat(country.name).isEqualTo("Netherlands");
-        assertThat(country.cities).hasSize(expectedCities.size());
-        assertThat(country.cities).containsAll(expectedCities);
+        Assertions.assertThat(country.name).isEqualTo("Netherlands");
+        Assertions.assertThat(country.cities).hasSize(expectedCities.size());
+        Assertions.assertThat(country.cities).containsAll(expectedCities);
 
         String generated = mapper.writeValueAsString(country);
         logger.debug(generated);
         /*automatically convert all \r\n (Windows) and \n (Unix) to a single \n before comparing the strings, making the test platform-independent.
          */
-        assertThat(generated).isEqualToNormalizingNewlines(input);
+        Assertions.assertThat(generated).isEqualToNormalizingNewlines(input);
     }
 }

@@ -20,8 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -51,7 +50,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
      */
     public FsCrawlerCheckpoint read(String jobname) throws IOException {
         try {
-            return prettyMapper.readValue(readFile(jobname, FILENAME), FsCrawlerCheckpoint.class);
+            return JsonUtil.prettyMapper.readValue(readFile(jobname, FILENAME), FsCrawlerCheckpoint.class);
         } catch (NoSuchFileException e) {
             // No checkpoint file exists, return null
             return null;
@@ -80,7 +79,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
      * @throws IOException in case of error while writing
      */
     public void write(String jobname, FsCrawlerCheckpoint checkpoint) throws IOException {
-        writeFile(jobname, FILENAME, prettyMapper.writeValueAsString(checkpoint));
+        writeFile(jobname, FILENAME, JsonUtil.prettyMapper.writeValueAsString(checkpoint));
     }
 
     /**

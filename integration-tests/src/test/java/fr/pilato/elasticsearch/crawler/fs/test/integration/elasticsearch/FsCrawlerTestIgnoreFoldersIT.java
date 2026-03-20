@@ -20,15 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 /** Test index_folders crawler setting */
@@ -46,13 +43,15 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
 
         // The folder index should not exist
-        assertThatThrownBy(() -> client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)))
+        Assertions.assertThatThrownBy(() -> client.search(
+                        new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER)))
                 .isInstanceOfSatisfying(
                         ElasticsearchClientException.class,
-                        e -> assertThat(e.getMessage())
-                                .isEqualTo("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist."));
+                        e -> Assertions.assertThat(e.getMessage())
+                                .isEqualTo("index " + getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER
+                                        + " does not exist."));
     }
 }

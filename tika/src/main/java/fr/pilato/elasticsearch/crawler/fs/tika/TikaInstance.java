@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import static org.apache.tika.langdetect.optimaize.OptimaizeLangDetector.getDefaultLanguageDetector;
-
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.File;
@@ -39,6 +37,7 @@ import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
+import org.apache.tika.langdetect.optimaize.OptimaizeLangDetector;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -49,7 +48,11 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.gdal.GDALParser;
-import org.apache.tika.parser.image.*;
+import org.apache.tika.parser.image.BPGParser;
+import org.apache.tika.parser.image.HeifParser;
+import org.apache.tika.parser.image.ImageParser;
+import org.apache.tika.parser.image.JpegParser;
+import org.apache.tika.parser.image.TiffParser;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.apache.tika.parser.pdf.PDFParser;
@@ -258,7 +261,7 @@ public class TikaInstance {
     static LanguageDetector langDetector() {
         if (detector == null) {
             try {
-                detector = getDefaultLanguageDetector();
+                detector = OptimaizeLangDetector.getDefaultLanguageDetector();
                 detector.loadModels();
             } catch (IOException e) {
                 logger.warn("Can not load lang detector models", e);

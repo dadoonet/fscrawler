@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +28,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -63,16 +62,18 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertThat(settings.getFs().getOcr())
+            Assertions.assertThat(settings.getFs().getOcr())
                     .as("Checking Ocr")
                     .isEqualTo(expected.getFs().getOcr());
         }
-        assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
-        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
-        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
-        assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
-        assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
-        assertThat(settings).as("Checking whole settings").isEqualTo(expected);
+        Assertions.assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
+        Assertions.assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        Assertions.assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
+        Assertions.assertThat(settings.getElasticsearch())
+                .as("Checking Elasticsearch")
+                .isEqualTo(expected.getElasticsearch());
+        Assertions.assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        Assertions.assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
     @Test

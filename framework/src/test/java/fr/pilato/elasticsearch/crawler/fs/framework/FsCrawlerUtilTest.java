@@ -20,10 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
-
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +37,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -63,30 +62,32 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     public void ownerName() {
         String ownerName = FsCrawlerUtil.getOwnerName(file);
-        assertThat(ownerName).isNotEmpty();
+        Assertions.assertThat(ownerName).isNotEmpty();
     }
 
     @Test
     public void groups() {
-        assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
+        Assume.assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
         String groupName = FsCrawlerUtil.getGroupName(file);
-        assertThat(groupName).isNotEmpty();
+        Assertions.assertThat(groupName).isNotEmpty();
     }
 
     @Test
     public void permissions() {
-        assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
+        Assume.assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
         int permissions = FsCrawlerUtil.getFilePermissions(file);
-        assertThat(permissions).isEqualTo(700);
+        Assertions.assertThat(permissions).isEqualTo(700);
     }
 
     @Test
     public void aclEntries() {
         List<FileAcl> aclEntries = FsCrawlerUtil.getFileAcls(file.toPath());
         if (OsValidator.WINDOWS) {
-            assertThat(aclEntries).as("ACL entries should exist on Windows").isNotEmpty();
+            Assertions.assertThat(aclEntries)
+                    .as("ACL entries should exist on Windows")
+                    .isNotEmpty();
         } else {
-            assertThat(aclEntries)
+            Assertions.assertThat(aclEntries)
                     .as("ACL entries should be empty when ACL view is not supported")
                     .isEmpty();
         }
@@ -108,37 +109,37 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
         String hash1 = FsCrawlerUtil.computeAclHash(List.of(aclOne));
         String hash2 = FsCrawlerUtil.computeAclHash(List.of(aclTwo));
-        assertThat(hash1).isEqualTo(hash2);
+        Assertions.assertThat(hash1).isEqualTo(hash2);
 
         aclTwo.setPermissions(List.of("WRITE_DATA"));
         String hash3 = FsCrawlerUtil.computeAclHash(List.of(aclTwo));
-        assertThat(hash3).isNotEqualTo(hash1);
+        Assertions.assertThat(hash3).isNotEqualTo(hash1);
     }
 
     @Test
     public void isFileSizeUnderLimit() {
-        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1))
+        Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1))
                 .isTrue();
-        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576))
+        Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576))
                 .isTrue();
-        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(
+        Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(
                         ByteSizeValue.parseBytesSizeValue("1mb"),
-                        new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()))
+                        new ByteSizeValue(RandomizedTest.randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()))
                 .isFalse();
     }
 
     @Test
     public void extractMajorVersion() {
-        assertThat(FsCrawlerUtil.extractMajorVersion("7.2.0")).isEqualTo(7);
-        assertThat(FsCrawlerUtil.extractMajorVersion("8.17.1")).isEqualTo(8);
-        assertThat(FsCrawlerUtil.extractMajorVersion("10.1.0")).isEqualTo(10);
+        Assertions.assertThat(FsCrawlerUtil.extractMajorVersion("7.2.0")).isEqualTo(7);
+        Assertions.assertThat(FsCrawlerUtil.extractMajorVersion("8.17.1")).isEqualTo(8);
+        Assertions.assertThat(FsCrawlerUtil.extractMajorVersion("10.1.0")).isEqualTo(10);
     }
 
     @Test
     public void extractMinorVersion() {
-        assertThat(FsCrawlerUtil.extractMinorVersion("7.2.0")).isEqualTo(2);
-        assertThat(FsCrawlerUtil.extractMinorVersion("8.17.1")).isEqualTo(17);
-        assertThat(FsCrawlerUtil.extractMinorVersion("10.1.0")).isEqualTo(1);
+        Assertions.assertThat(FsCrawlerUtil.extractMinorVersion("7.2.0")).isEqualTo(2);
+        Assertions.assertThat(FsCrawlerUtil.extractMinorVersion("8.17.1")).isEqualTo(17);
+        Assertions.assertThat(FsCrawlerUtil.extractMinorVersion("10.1.0")).isEqualTo(1);
     }
 
     @Test
@@ -187,7 +188,8 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     private void testRealPath(String dirname, String filename, String expectedPath) {
-        assertThat(FsCrawlerUtil.computeRealPathName(dirname, filename)).isEqualTo(expectedPath);
+        Assertions.assertThat(FsCrawlerUtil.computeRealPathName(dirname, filename))
+                .isEqualTo(expectedPath);
     }
 
     @Test
@@ -273,14 +275,17 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     private void testVirtualPath(String rootPath, String realPath, String expectedPath) {
-        assertThat(FsCrawlerUtil.computeVirtualPathName(rootPath, realPath)).isEqualTo(expectedPath);
+        Assertions.assertThat(FsCrawlerUtil.computeVirtualPathName(rootPath, realPath))
+                .isEqualTo(expectedPath);
     }
 
     @Test
     public void getFileExtension() {
-        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar"))).isEqualTo("bar");
-        assertThat(FsCrawlerUtil.getFileExtension(new File("foo"))).isEmpty();
-        assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar.baz"))).isEqualTo("baz");
+        Assertions.assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar")))
+                .isEqualTo("bar");
+        Assertions.assertThat(FsCrawlerUtil.getFileExtension(new File("foo"))).isEmpty();
+        Assertions.assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar.baz")))
+                .isEqualTo("baz");
     }
 
     @Test
@@ -292,7 +297,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
                 now,
                 TimeZone.getDefault().getDisplayName(),
                 date);
-        assertThat(date).isNotNull();
+        Assertions.assertThat(date).isNotNull();
     }
 
     /**
@@ -302,51 +307,59 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     public void getPathSeparator() {
         // Linux-style paths
-        assertThat(FsCrawlerUtil.getPathSeparator("/tmp/dir")).isEqualTo("/");
-        assertThat(FsCrawlerUtil.getPathSeparator("/")).isEqualTo("/");
-        assertThat(FsCrawlerUtil.getPathSeparator("//SOMEONE/share")).isEqualTo("/");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("/tmp/dir")).isEqualTo("/");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("/")).isEqualTo("/");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("//SOMEONE/share")).isEqualTo("/");
 
         // Windows-style paths with backslashes
-        assertThat(FsCrawlerUtil.getPathSeparator("C:\\tmp\\dir")).isEqualTo("\\");
-        assertThat(FsCrawlerUtil.getPathSeparator("C:\\")).isEqualTo("\\");
-        assertThat(FsCrawlerUtil.getPathSeparator("\\\\SOMEONE\\share")).isEqualTo("\\");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("C:\\tmp\\dir")).isEqualTo("\\");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("C:\\")).isEqualTo("\\");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("\\\\SOMEONE\\share"))
+                .isEqualTo("\\");
 
         // Windows-style paths with forward slashes (common user mistake on Windows)
         // These should return "/" because they contain "/" but not "\"
-        assertThat(FsCrawlerUtil.getPathSeparator("C:/tmp/dir")).isEqualTo("/");
-        assertThat(FsCrawlerUtil.getPathSeparator("C:/")).isEqualTo("/");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("C:/tmp/dir")).isEqualTo("/");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("C:/")).isEqualTo("/");
 
         // Edge case: just a drive letter with colon but no slashes
         // Should return "\" because it contains ":" but no "/"
-        assertThat(FsCrawlerUtil.getPathSeparator("C:")).isEqualTo("\\");
+        Assertions.assertThat(FsCrawlerUtil.getPathSeparator("C:")).isEqualTo("\\");
     }
 
     @Test
     public void humanReadableDuration() {
-        assertThat(FsCrawlerUtil.durationToString(Duration.ZERO)).isEqualTo("0s");
-        assertThat(FsCrawlerUtil.durationToString(null)).isNull();
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(59))).isEqualTo("59s");
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(60))).isEqualTo("1m");
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(61))).isEqualTo("1m1s");
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(59))).isEqualTo("59m");
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(60))).isEqualTo("1h");
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(61))).isEqualTo("1h1m");
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofMillis(randomLongBetween(0, 999999999L))))
+        Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ZERO)).isEqualTo("0s");
+        Assertions.assertThat(FsCrawlerUtil.durationToString(null)).isNull();
+        Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(59)))
+                .isEqualTo("59s");
+        Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(60)))
+                .isEqualTo("1m");
+        Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(61)))
+                .isEqualTo("1m1s");
+        Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(59)))
+                .isEqualTo("59m");
+        Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(60)))
+                .isEqualTo("1h");
+        Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(61)))
+                .isEqualTo("1h1m");
+        Assertions.assertThat(FsCrawlerUtil.durationToString(
+                        Duration.ofMillis(RandomizedTest.randomLongBetween(0, 999999999L))))
                 .isNotEmpty();
     }
 
     @Test
     public void wait_for() {
-        int duration = randomIntBetween(50, 100);
+        int duration = RandomizedTest.randomIntBetween(50, 100);
         LocalDateTime now = LocalDateTime.now();
         FsCrawlerUtil.waitFor(Duration.ofMillis(duration));
         LocalDateTime afterWait1 = LocalDateTime.now();
-        assertThat(Duration.between(now, afterWait1).toMillis()).isGreaterThanOrEqualTo(duration);
+        Assertions.assertThat(Duration.between(now, afterWait1).toMillis()).isGreaterThanOrEqualTo(duration);
         FsCrawlerUtil.waitFor(Duration.ofMillis(100));
         LocalDateTime afterWait2 = LocalDateTime.now();
-        assertThat(Duration.between(now, afterWait2).toMillis()).isGreaterThanOrEqualTo(100);
+        Assertions.assertThat(Duration.between(now, afterWait2).toMillis()).isGreaterThanOrEqualTo(100);
         FsCrawlerUtil.waitFor(Duration.ofSeconds(1));
         LocalDateTime afterWait3 = LocalDateTime.now();
-        assertThat(Duration.between(now, afterWait3).toSeconds()).isGreaterThanOrEqualTo(1);
+        Assertions.assertThat(Duration.between(now, afterWait3).toSeconds()).isGreaterThanOrEqualTo(1);
     }
 }

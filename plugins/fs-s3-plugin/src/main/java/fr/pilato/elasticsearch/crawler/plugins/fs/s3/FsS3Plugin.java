@@ -31,7 +31,7 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
-import io.minio.errors.*;
+import io.minio.errors.MinioException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;

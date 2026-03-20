@@ -20,11 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
-import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
@@ -183,7 +178,7 @@ public class TikaDocParser {
                     try {
                         // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
                         logger.trace("Beginning Tika extraction");
-                        parsedContent = extractText(fsSettings, indexedChars, inputStream, metadata);
+                        parsedContent = TikaInstance.extractText(fsSettings, indexedChars, inputStream, metadata);
                         logger.trace("End of Tika extraction");
                     } catch (Throwable e) {
                         // Build a message from embedded errors
@@ -202,7 +197,7 @@ public class TikaDocParser {
                                     fsSettings.getFs().isFilenameAsId()
                                             ? doc.getFile().getFilename()
                                             : SignTool.sign(doc.getPath().getReal()),
-                                    computeVirtualPathName(
+                                    FsCrawlerUtil.computeVirtualPathName(
                                             fsSettings.getFs().getUrl(),
                                             doc.getPath().getReal()),
                                     sb.toString());
@@ -332,7 +327,7 @@ public class TikaDocParser {
                                     return lang;
                                 } else if (fsSettings.getFs().isLangDetect() && finalParsedContent != null) {
                                     List<LanguageResult> languages =
-                                            langDetector().detectAll(finalParsedContent);
+                                            TikaInstance.langDetector().detectAll(finalParsedContent);
                                     if (!languages.isEmpty()) {
                                         LanguageResult language = languages.get(0);
                                         logger.trace("Main detected language: [{}]", language);
@@ -429,21 +424,21 @@ public class TikaDocParser {
                     // Add support for more OOTB standard metadata
 
                     if (fsSettings.getFs().isRawMetadata()) {
-                        metadata("Listing all available metadata:");
-                        metadata("  assertThat(raw)");
-                        metadata("    .hasSize({})", metadata.size());
+                        FSCrawlerLogger.metadata("Listing all available metadata:");
+                        FSCrawlerLogger.metadata("  assertThat(raw)");
+                        FSCrawlerLogger.metadata("    .hasSize({})", metadata.size());
                         for (String metadataName : metadata.names()) {
                             String value = metadata.get(metadataName);
                             // This is a logger trick which helps to generate our unit tests
                             // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika
                             // level to trace
-                            metadata("    .containsEntry(\"{}\", \"{}\")", metadataName, value);
+                            FSCrawlerLogger.metadata("    .containsEntry(\"{}\", \"{}\")", metadataName, value);
 
                             // We need to remove dots in field names if any. See
                             // https://github.com/dadoonet/fscrawler/issues/256
                             doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
                         }
-                        metadata(";");
+                        FSCrawlerLogger.metadata(";");
                     }
                     // Meta
 

@@ -20,39 +20,38 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class TimeValueTest {
 
     @Test
     public void timeValueFromString() {
-        assertThat(TimeValue.parseTimeValue("1s").millis()).isEqualTo(1000L);
-        assertThat(TimeValue.parseTimeValue("1s").seconds()).isEqualTo(1L);
-        assertThat(TimeValue.parseTimeValue("10s").seconds()).isEqualTo(10L);
-        assertThat(TimeValue.parseTimeValue("1m").seconds()).isEqualTo(60L);
-        assertThat(TimeValue.parseTimeValue("1m").minutes()).isEqualTo(1L);
-        assertThat(TimeValue.parseTimeValue("1h").minutes()).isEqualTo(60L);
-        assertThat(TimeValue.parseTimeValue("1h").hours()).isEqualTo(1L);
-        assertThat(TimeValue.parseTimeValue("1d").hours()).isEqualTo(24L);
-        assertThat(TimeValue.parseTimeValue("1d").days()).isEqualTo(1L);
-        assertThat(TimeValue.parseTimeValue("2d").days()).isEqualTo(2L);
-        assertThat(TimeValue.parseTimeValue("30d").days()).isEqualTo(30L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1s").millis()).isEqualTo(1000L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1s").seconds()).isEqualTo(1L);
+        Assertions.assertThat(TimeValue.parseTimeValue("10s").seconds()).isEqualTo(10L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1m").seconds()).isEqualTo(60L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1m").minutes()).isEqualTo(1L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1h").minutes()).isEqualTo(60L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1h").hours()).isEqualTo(1L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1d").hours()).isEqualTo(24L);
+        Assertions.assertThat(TimeValue.parseTimeValue("1d").days()).isEqualTo(1L);
+        Assertions.assertThat(TimeValue.parseTimeValue("2d").days()).isEqualTo(2L);
+        Assertions.assertThat(TimeValue.parseTimeValue("30d").days()).isEqualTo(30L);
     }
 
     @Test
     public void timeValueToString() {
-        assertThat(TimeValue.parseTimeValue("1s")).hasToString("1s");
-        assertThat(TimeValue.parseTimeValue("10s")).hasToString("10s");
-        assertThat(TimeValue.parseTimeValue("1m")).hasToString("1m");
-        assertThat(TimeValue.parseTimeValue("70s")).hasToString("1.1m");
-        assertThat(TimeValue.parseTimeValue("1h")).hasToString("1h");
-        assertThat(TimeValue.parseTimeValue("75m")).hasToString("1.2h");
-        assertThat(TimeValue.parseTimeValue("3830s")).hasToString("1h");
-        assertThat(TimeValue.parseTimeValue("1d")).hasToString("1d");
-        assertThat(TimeValue.parseTimeValue("25h")).hasToString("1d");
-        assertThat(TimeValue.parseTimeValue("2d")).hasToString("2d");
-        assertThat(TimeValue.parseTimeValue("30d")).hasToString("30d");
+        Assertions.assertThat(TimeValue.parseTimeValue("1s")).hasToString("1s");
+        Assertions.assertThat(TimeValue.parseTimeValue("10s")).hasToString("10s");
+        Assertions.assertThat(TimeValue.parseTimeValue("1m")).hasToString("1m");
+        Assertions.assertThat(TimeValue.parseTimeValue("70s")).hasToString("1.1m");
+        Assertions.assertThat(TimeValue.parseTimeValue("1h")).hasToString("1h");
+        Assertions.assertThat(TimeValue.parseTimeValue("75m")).hasToString("1.2h");
+        Assertions.assertThat(TimeValue.parseTimeValue("3830s")).hasToString("1h");
+        Assertions.assertThat(TimeValue.parseTimeValue("1d")).hasToString("1d");
+        Assertions.assertThat(TimeValue.parseTimeValue("25h")).hasToString("1d");
+        Assertions.assertThat(TimeValue.parseTimeValue("2d")).hasToString("2d");
+        Assertions.assertThat(TimeValue.parseTimeValue("30d")).hasToString("30d");
     }
 }

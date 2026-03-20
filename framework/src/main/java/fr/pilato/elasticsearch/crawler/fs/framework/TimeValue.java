@@ -37,8 +37,6 @@ package fr.pilato.elasticsearch.crawler.fs.framework; /*
                                                        * under the License.
                                                        */
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.format1Decimals;
-
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -184,7 +182,7 @@ public class TimeValue {
             value = microsFrac();
             suffix = "micros";
         }
-        return format1Decimals(value, suffix);
+        return FsCrawlerUtil.format1Decimals(value, suffix);
     }
 
     public static TimeValue parseTimeValue(String sValue) {

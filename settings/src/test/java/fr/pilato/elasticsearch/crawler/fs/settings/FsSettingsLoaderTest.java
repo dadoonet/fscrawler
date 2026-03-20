@@ -20,16 +20,19 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-
-import fr.pilato.elasticsearch.crawler.fs.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.Test;
 
 public class FsSettingsLoaderTest {
@@ -45,7 +48,7 @@ public class FsSettingsLoaderTest {
 
     @Test
     public void loadWrongSettings() {
-        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+        AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-wrong"))
                 .withMessageContaining("Syntax error in configuration file [_settings.yaml]")
                 .withMessageContaining("line ")
@@ -54,7 +57,7 @@ public class FsSettingsLoaderTest {
 
     @Test
     public void loadStructuralWrongSettings() {
-        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+        AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-structural-wrong"))
                 .withMessageContaining("Can not load settings")
                 .withMessageContaining("Please make sure that your setting file(s) are properly formatted.");
@@ -63,7 +66,7 @@ public class FsSettingsLoaderTest {
     @Test
     public void loadDeprecatedElasticsearchNodesSettings() throws IOException {
         FsSettings fsSettings = new FsSettingsLoader(configPath).read("yaml-deprecated");
-        assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
+        Assertions.assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
     }
 
     @Test
@@ -213,16 +216,18 @@ public class FsSettingsLoaderTest {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertThat(settings.getFs().getOcr())
+            Assertions.assertThat(settings.getFs().getOcr())
                     .as("Checking Ocr")
                     .isEqualTo(expected.getFs().getOcr());
         }
-        assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
-        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
-        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
-        assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
-        assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
-        assertThat(settings).as("Checking whole settings").isEqualTo(expected);
+        Assertions.assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
+        Assertions.assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
+        Assertions.assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        Assertions.assertThat(settings.getElasticsearch())
+                .as("Checking Elasticsearch")
+                .isEqualTo(expected.getElasticsearch());
+        Assertions.assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        Assertions.assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
     private FsSettings generateExpectedDefaultFsSettings() {

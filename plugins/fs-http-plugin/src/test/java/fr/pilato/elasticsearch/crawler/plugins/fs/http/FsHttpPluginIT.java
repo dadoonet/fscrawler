@@ -20,9 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -36,6 +33,8 @@ import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.junit.Assume;
 import org.junit.Test;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.NginxContainer;
@@ -55,7 +54,7 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     @Test
     public void readFileFromNginx() throws Exception {
         // We can only run this test if Docker is available on this machine
-        assumeTrue(
+        Assume.assumeTrue(
                 "We can only run this test if Docker is available on this machine",
                 DockerClientFactory.instance().isDockerAvailable());
 
@@ -84,10 +83,10 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
                                 + "}");
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                assertThat(object).isEqualTo(text);
+                Assertions.assertThat(object).isEqualTo(text);
                 Doc doc = provider.createDocument();
-                assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
-                assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+                Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+                Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
             }
         }
     }
@@ -105,10 +104,10 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
                             + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).contains("User-agent: *");
+            Assertions.assertThat(object).contains("User-agent: *");
             Doc doc = provider.createDocument();
-            assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(14L);
+            Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
+            Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(14L);
         }
     }
 }

@@ -894,8 +894,9 @@
                                 <formatJavadoc>true</formatJavadoc>
                             </palantirJavaFormat>
                             <forbidWildcardImports/>
+                            <removeUnusedImports/>
                             <licenseHeader>
-                                <file>/Users/david/IdeaProjects/fscrawler/src/main/spotless/JavaLicenseHeader.java</file>
+                                <file>${maven.multiModuleProjectDirectory}/src/main/spotless/JavaLicenseHeader.java</file>
                             </licenseHeader>
                         </java>
                         <pom>

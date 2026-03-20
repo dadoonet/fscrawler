@@ -20,26 +20,23 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
-import static fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient.CHECK_NODES_EVERY;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assume.assumeTrue;
-
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.Nightly;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,8 +53,16 @@ import javax.net.ssl.SSLHandshakeException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -145,14 +150,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient = startClient(fsSettings);
         }
 
-        assumeThat(esClient)
+        Assumptions.assumeThat(esClient)
                 .as("Integration tests are skipped because we have not been able to find an Elasticsearch cluster")
                 .isNotNull();
 
         // If the Api Key is not provided, we want to generate it and use in all the tests
         if (testApiKey == null) {
             // Generate the Api-Key
-            testApiKey = esClient.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+            testApiKey = esClient.generateApiKey("fscrawler-" + RandomizedTest.randomAsciiAlphanumOfLength(10));
 
             fsSettings.getElasticsearch().setApiKey(testApiKey);
             fsSettings.getElasticsearch().setUsername(null);
@@ -206,8 +211,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Before
     public void cleanExistingIndex() throws ElasticsearchClientException {
         logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
-        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
         // Remove existing templates if any
         logger.debug(" -> Removing existing templates");
         removeTemplatesForIndex(getCrawlerName());
@@ -220,8 +225,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             logger.debug(" -> Removing index [{}*]", getCrawlerName());
-            esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+            esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             logger.debug(" -> Removing existing templates");
             removeTemplatesForIndex(getCrawlerName());
@@ -242,26 +247,27 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     public void deleteIndex() throws ElasticsearchClientException {
         esClient.deleteIndex("does-not-exist-index");
         createIndex();
-        assertThat(esClient.isExistingIndex(getCrawlerName() + INDEX_SUFFIX_DOCS))
+        Assertions.assertThat(esClient.isExistingIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS))
                 .isTrue();
-        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        assertThat(esClient.isExistingIndex(getCrawlerName() + INDEX_SUFFIX_DOCS))
+        esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        Assertions.assertThat(esClient.isExistingIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS))
                 .isFalse();
     }
 
     @Test
     public void waitForHealthyIndex() throws ElasticsearchClientException {
         createIndex();
-        esClient.waitForHealthyIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
+        esClient.waitForHealthyIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
 
         // This one could take a long time as the index does not exist
-        assertThatNoException().isThrownBy(() -> esClient.waitForHealthyIndex("does-not-exist-index"));
+        Assertions.assertThatNoException().isThrownBy(() -> esClient.waitForHealthyIndex("does-not-exist-index"));
     }
 
     @Test
     public void refresh() throws ElasticsearchClientException {
         createIndex();
-        assertThatNoException().isThrownBy(() -> esClient.refresh(getCrawlerName() + INDEX_SUFFIX_DOCS));
+        Assertions.assertThatNoException()
+                .isThrownBy(() -> esClient.refresh(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS));
     }
 
     private void createSearchDataset() throws Exception {
@@ -286,13 +292,15 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                   }
                 }""");
 
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "3", "{ \"number\": 1 }", null);
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "4", "{ \"number\": 2 }", null);
+        esClient.indexSingle(
+                getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
+        esClient.indexSingle(
+                getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
+        esClient.indexSingle(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "3", "{ \"number\": 1 }", null);
+        esClient.indexSingle(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "4", "{ \"number\": 2 }", null);
 
         // Wait until we have 4 documents indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 4L);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 4L);
     }
 
     @Test
@@ -300,16 +308,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response =
-                esClient.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS));
-        assertThat(response.getTotalHits()).isEqualTo(4L);
+                esClient.search(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS));
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(4L);
 
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            assertThat(hit.getId()).containsAnyOf("1", "2", "3", "4");
-            assertThat(hit.getVersion()).isEqualTo(1L);
-            assertThat(hit.getSource()).isNotEmpty();
-            assertThat(hit.getHighlightFields()).isEmpty();
-            assertThat(hit.getStoredFields()).isNull();
+            Assertions.assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            Assertions.assertThat(hit.getId()).containsAnyOf("1", "2", "3", "4");
+            Assertions.assertThat(hit.getVersion()).isEqualTo(1L);
+            Assertions.assertThat(hit.getSource()).isNotEmpty();
+            Assertions.assertThat(hit.getHighlightFields()).isEmpty();
+            Assertions.assertThat(hit.getStoredFields()).isNull();
         }
     }
 
@@ -318,15 +326,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESTermQuery("foo.bar", "bar")));
-        assertThat(response.getTotalHits()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        assertThat(response.getHits().get(0).getId()).isEqualTo("1");
-        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getIndex())
+                .isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        Assertions.assertThat(response.getHits().get(0).getId()).isEqualTo("1");
+        Assertions.assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        Assertions.assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        Assertions.assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
     @Test
@@ -334,15 +343,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESMatchQuery("foo.bar", "bar")));
-        assertThat(response.getTotalHits()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        assertThat(response.getHits().get(0).getId()).isEqualTo("1");
-        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getIndex())
+                .isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        Assertions.assertThat(response.getHits().get(0).getId()).isEqualTo("1");
+        Assertions.assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        Assertions.assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        Assertions.assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
     @Test
@@ -350,17 +360,17 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESPrefixQuery("foo.bar", "ba")));
-        assertThat(response.getTotalHits()).isEqualTo(2L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(2L);
 
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            assertThat(hit.getId()).containsAnyOf("1", "2");
-            assertThat(hit.getVersion()).isEqualTo(1L);
-            assertThat(hit.getSource()).isNotEmpty();
-            assertThat(hit.getHighlightFields()).isEmpty();
-            assertThat(hit.getStoredFields()).isNull();
+            Assertions.assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            Assertions.assertThat(hit.getId()).containsAnyOf("1", "2");
+            Assertions.assertThat(hit.getVersion()).isEqualTo(1L);
+            Assertions.assertThat(hit.getSource()).isNotEmpty();
+            Assertions.assertThat(hit.getHighlightFields()).isEmpty();
+            Assertions.assertThat(hit.getStoredFields()).isNull();
         }
     }
 
@@ -369,15 +379,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESRangeQuery("number").withLt(2)));
-        assertThat(response.getTotalHits()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        assertThat(response.getHits().get(0).getId()).isEqualTo("3");
-        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getIndex())
+                .isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        Assertions.assertThat(response.getHits().get(0).getId()).isEqualTo("3");
+        Assertions.assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        Assertions.assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        Assertions.assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
     @Test
@@ -385,15 +396,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESRangeQuery("number").withGte(2)));
-        assertThat(response.getTotalHits()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        assertThat(response.getHits().get(0).getId()).isEqualTo("4");
-        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getIndex())
+                .isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        Assertions.assertThat(response.getHits().get(0).getId()).isEqualTo("4");
+        Assertions.assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        Assertions.assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        Assertions.assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
     @Test
@@ -401,17 +413,18 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESBoolQuery()
                         .addMust(new ESPrefixQuery("foo.bar", "ba"))
                         .addMust(new ESMatchQuery("foo.bar", "bar"))));
-        assertThat(response.getTotalHits()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        assertThat(response.getHits().get(0).getId()).isEqualTo("1");
-        assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
-        assertThat(response.getHits().get(0).getSource()).isNotEmpty();
-        assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
-        assertThat(response.getHits().get(0).getStoredFields()).isNull();
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getIndex())
+                .isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        Assertions.assertThat(response.getHits().get(0).getId()).isEqualTo("1");
+        Assertions.assertThat(response.getHits().get(0).getVersion()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits().get(0).getSource()).isNotEmpty();
+        Assertions.assertThat(response.getHits().get(0).getHighlightFields()).isEmpty();
+        Assertions.assertThat(response.getHits().get(0).getStoredFields()).isNull();
     }
 
     @Test
@@ -419,23 +432,24 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESMatchQuery("foo.bar", "bar"))
                 .addHighlighter("foo.bar"));
-        assertThat(response.getTotalHits()).isEqualTo(1L);
-        assertThat(response.getHits()).singleElement().satisfies(hit -> {
-            assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            assertThat(hit.getId()).isEqualTo("1");
-            assertThat(hit.getVersion()).isEqualTo(1L);
-            assertThat(hit.getSource()).isNotEmpty();
-            assertThat(hit.getHighlightFields())
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getHits()).singleElement().satisfies(hit -> {
+            Assertions.assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            Assertions.assertThat(hit.getId()).isEqualTo("1");
+            Assertions.assertThat(hit.getVersion()).isEqualTo(1L);
+            Assertions.assertThat(hit.getSource()).isNotEmpty();
+            Assertions.assertThat(hit.getHighlightFields())
                     .hasSize(1)
-                    .satisfies(highlight -> assertThat(highlight)
+                    .satisfies(highlight -> Assertions.assertThat(highlight)
                             .containsKey("foo.bar")
                             .extractingByKey("foo.bar")
-                            .satisfies(highlightField ->
-                                    assertThat(highlightField).singleElement().isEqualTo("<em>bar</em>")));
-            assertThat(hit.getStoredFields()).isNull();
+                            .satisfies(highlightField -> Assertions.assertThat(highlightField)
+                                    .singleElement()
+                                    .isEqualTo("<em>bar</em>")));
+            Assertions.assertThat(hit.getStoredFields()).isNull();
         });
     }
 
@@ -444,21 +458,21 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
                 .addStoredField("foo.bar"));
-        assertThat(response.getTotalHits()).isEqualTo(2L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(2L);
 
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            assertThat(hit.getId()).containsAnyOf("1", "2");
-            assertThat(hit.getVersion()).isEqualTo(1L);
-            assertThat(hit.getSource()).isNullOrEmpty();
-            assertThat(hit.getHighlightFields()).isEmpty();
-            assertThat(hit.getStoredFields()).isNotNull();
-            assertThat(hit.getStoredFields())
+            Assertions.assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            Assertions.assertThat(hit.getId()).containsAnyOf("1", "2");
+            Assertions.assertThat(hit.getVersion()).isEqualTo(1L);
+            Assertions.assertThat(hit.getSource()).isNullOrEmpty();
+            Assertions.assertThat(hit.getHighlightFields()).isEmpty();
+            Assertions.assertThat(hit.getStoredFields()).isNotNull();
+            Assertions.assertThat(hit.getStoredFields())
                     .extractingByKey("foo.bar")
-                    .satisfies(storedField -> assertThat(storedField).containsAnyOf("bar", "baz"));
+                    .satisfies(storedField -> Assertions.assertThat(storedField).containsAnyOf("bar", "baz"));
         }
     }
 
@@ -467,22 +481,22 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESPrefixQuery("foo.bar", "ba"))
                 .addStoredField("_source")
                 .addStoredField("foo.bar"));
-        assertThat(response.getTotalHits()).isEqualTo(2L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(2L);
 
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            assertThat(hit.getId()).containsAnyOf("1", "2");
-            assertThat(hit.getVersion()).isEqualTo(1L);
-            assertThat(hit.getSource()).isNotEmpty();
-            assertThat(hit.getHighlightFields()).isEmpty();
-            assertThat(hit.getStoredFields()).isNotNull();
-            assertThat(hit.getStoredFields())
+            Assertions.assertThat(hit.getIndex()).isEqualTo(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            Assertions.assertThat(hit.getId()).containsAnyOf("1", "2");
+            Assertions.assertThat(hit.getVersion()).isEqualTo(1L);
+            Assertions.assertThat(hit.getSource()).isNotEmpty();
+            Assertions.assertThat(hit.getHighlightFields()).isEmpty();
+            Assertions.assertThat(hit.getStoredFields()).isNotNull();
+            Assertions.assertThat(hit.getStoredFields())
                     .extractingByKey("foo.bar")
-                    .satisfies(storedField -> assertThat(storedField).containsAnyOf("bar", "baz"));
+                    .satisfies(storedField -> Assertions.assertThat(storedField).containsAnyOf("bar", "baz"));
         }
     }
 
@@ -491,23 +505,27 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createSearchDataset();
 
         ESSearchResponse response = esClient.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withAggregation(new ESTermsAggregation("foobar1", "foo.bar.raw"))
                 .withAggregation(new ESTermsAggregation("foobar2", "foo.bar.raw"))
                 .withSize(0));
-        assertThat(response.getTotalHits()).isEqualTo(4L);
-        assertThat(response.getAggregations()).isNotNull();
-        assertThat(response.getAggregations()).hasSize(2);
-        assertThat(response.getAggregations()).containsKey("foobar1");
-        assertThat(response.getAggregations().get("foobar1").getName()).isEqualTo("foobar1");
-        assertThat(response.getAggregations().get("foobar1").getBuckets()).hasSize(2);
-        assertThat(response.getAggregations().get("foobar1").getBuckets())
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(4L);
+        Assertions.assertThat(response.getAggregations()).isNotNull();
+        Assertions.assertThat(response.getAggregations()).hasSize(2);
+        Assertions.assertThat(response.getAggregations()).containsKey("foobar1");
+        Assertions.assertThat(response.getAggregations().get("foobar1").getName())
+                .isEqualTo("foobar1");
+        Assertions.assertThat(response.getAggregations().get("foobar1").getBuckets())
+                .hasSize(2);
+        Assertions.assertThat(response.getAggregations().get("foobar1").getBuckets())
                 .contains(
                         new ESTermsAggregation.ESTermsBucket("bar", 1), new ESTermsAggregation.ESTermsBucket("baz", 1));
-        assertThat(response.getAggregations()).containsKey("foobar2");
-        assertThat(response.getAggregations().get("foobar2").getName()).isEqualTo("foobar2");
-        assertThat(response.getAggregations().get("foobar2").getBuckets()).hasSize(2);
-        assertThat(response.getAggregations().get("foobar2").getBuckets())
+        Assertions.assertThat(response.getAggregations()).containsKey("foobar2");
+        Assertions.assertThat(response.getAggregations().get("foobar2").getName())
+                .isEqualTo("foobar2");
+        Assertions.assertThat(response.getAggregations().get("foobar2").getBuckets())
+                .hasSize(2);
+        Assertions.assertThat(response.getAggregations().get("foobar2").getBuckets())
                 .contains(
                         new ESTermsAggregation.ESTermsBucket("bar", 1), new ESTermsAggregation.ESTermsBucket("baz", 1));
     }
@@ -520,8 +538,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // If we did not use an external URL but the docker instance we can test for sure that the version is the
         // expected one
         if (System.getProperty("tests.cluster.url") == null) {
-            Properties properties = readPropertiesFromClassLoader("elasticsearch.version.properties");
-            assertThat(version).isEqualTo(properties.getProperty("version"));
+            Properties properties = FsCrawlerUtil.readPropertiesFromClassLoader("elasticsearch.version.properties");
+            Assertions.assertThat(version).isEqualTo(properties.getProperty("version"));
         }
     }
 
@@ -553,8 +571,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 }""";
         esClient.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
 
-        assertThat(esClient.isExistingPipeline(crawlerName)).isTrue();
-        assertThat(esClient.isExistingPipeline(crawlerName + "_foo")).isFalse();
+        Assertions.assertThat(esClient.isExistingPipeline(crawlerName)).isTrue();
+        Assertions.assertThat(esClient.isExistingPipeline(crawlerName + "_foo")).isFalse();
     }
 
     @Test
@@ -566,7 +584,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // Add some index op
         for (int i = 0; i < nbItems; i++) {
             bulkRequest.add(new ElasticsearchIndexOperation(
-                    getCrawlerName() + INDEX_SUFFIX_DOCS,
+                    getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS,
                     "" + i,
                     null,
                     "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
@@ -574,16 +592,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
         ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-        assertThat(bulkResponse.hasFailures()).isFalse();
-        assertThat(bulkResponse.getItems()).isNotEmpty();
+        Assertions.assertThat(bulkResponse.hasFailures()).isFalse();
+        Assertions.assertThat(bulkResponse.getItems()).isNotEmpty();
 
         // Wait until we have the expected number of documents indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), nbItems);
     }
 
     @Test
     public void bulk_index_and_delete() throws Exception {
-        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
+        esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         long nbItems = RandomizedTest.randomLongBetween(5, 20);
         long nbItemsToDelete = RandomizedTest.randomLongBetween(1, nbItems);
 
@@ -592,36 +610,39 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // Add some index op
         for (int i = 0; i < nbItems; i++) {
             bulkRequest.add(new ElasticsearchIndexOperation(
-                    getCrawlerName() + INDEX_SUFFIX_DOCS,
+                    getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS,
                     "" + i,
                     null,
                     "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
         }
         // Add some delete op
         for (int i = 0; i < nbItemsToDelete; i++) {
-            bulkRequest.add(new ElasticsearchDeleteOperation(getCrawlerName() + INDEX_SUFFIX_DOCS, "" + i));
+            bulkRequest.add(
+                    new ElasticsearchDeleteOperation(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "" + i));
         }
 
         ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
         ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-        assertThat(bulkResponse.hasFailures()).isFalse();
-        assertThat(bulkResponse.getItems()).isNotEmpty();
+        Assertions.assertThat(bulkResponse.hasFailures()).isFalse();
+        Assertions.assertThat(bulkResponse.getItems()).isNotEmpty();
 
         // Wait until we have the expected number of documents indexed
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems - nbItemsToDelete);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                nbItems - nbItemsToDelete);
     }
 
     @Test
     public void bulk_index_with_multiline_json() throws Exception {
-        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
+        esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         long nbItems = RandomizedTest.randomLongBetween(5, 20);
 
         ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
         // Add some index op with multiline JSON
         for (int i = 0; i < nbItems; i++) {
-            bulkRequest.add(new ElasticsearchIndexOperation(getCrawlerName() + INDEX_SUFFIX_DOCS, "" + i, null, """
+            bulkRequest.add(new ElasticsearchIndexOperation(
+                    getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "" + i, null, """
                             {
                               "foo" : {
                                 "bar" : "baz"
@@ -631,16 +652,16 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
         ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-        assertThat(bulkResponse.hasFailures()).isFalse();
-        assertThat(bulkResponse.getItems()).isNotEmpty();
+        Assertions.assertThat(bulkResponse.hasFailures()).isFalse();
+        Assertions.assertThat(bulkResponse.getItems()).isNotEmpty();
 
         // Wait until we have the expected number of documents indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), nbItems);
     }
 
     @Test
     public void bulk_index_with_errors() throws Exception {
-        esClient.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
+        esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         String indexSettings = """
                 {
                   "mappings": {
@@ -668,14 +689,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         for (int i = 0; i < nbItems; i++) {
             if (i > 0 && i % 5 == 0) {
                 bulkRequest.add(new ElasticsearchIndexOperation(
-                        getCrawlerName() + INDEX_SUFFIX_DOCS,
+                        getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS,
                         "" + i,
                         null,
                         "{\"foo\":{\"bar\":\"bar\"},\"number\":\"bar\"}"));
                 nbErrors++;
             } else {
                 bulkRequest.add(new ElasticsearchIndexOperation(
-                        getCrawlerName() + INDEX_SUFFIX_DOCS,
+                        getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS,
                         "" + i,
                         null,
                         "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
@@ -685,53 +706,63 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
         ElasticsearchBulkResponse bulkResponse = engine.bulk(bulkRequest);
-        assertThat(bulkResponse.hasFailures())
+        Assertions.assertThat(bulkResponse.hasFailures())
                 .as("We should see errors in the bulk response")
                 .isTrue();
-        assertThat(bulkResponse.getItems()).isNotEmpty();
+        Assertions.assertThat(bulkResponse.getItems()).isNotEmpty();
         long errors = bulkResponse.getItems().stream()
                 .filter(FsCrawlerBulkResponse.BulkItemResponse::isFailed)
                 .count();
-        assertThat(errors).isEqualTo(nbErrors);
+        Assertions.assertThat(errors).isEqualTo(nbErrors);
 
         // Wait until we have the expected number of documents indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), nbItems - nbErrors);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                nbItems - nbErrors);
     }
 
     @Test
     public void deleteSingle() throws Exception {
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "3", "{ \"number\": 1 }", null);
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "4", "{ \"number\": 2 }", null);
+        esClient.indexSingle(
+                getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
+        esClient.indexSingle(
+                getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "2", "{ \"foo\": { \"bar\": \"baz\" } }", null);
+        esClient.indexSingle(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "3", "{ \"number\": 1 }", null);
+        esClient.indexSingle(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "4", "{ \"number\": 2 }", null);
 
-        ESSearchResponse response =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 4L);
-        assertThat(response.getTotalHits()).isEqualTo(4L);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 4L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(4L);
 
-        esClient.deleteSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "1");
+        esClient.deleteSingle(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "1");
 
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L);
-        assertThat(response.getTotalHits()).isEqualTo(3L);
+        response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(3L);
 
         try {
-            esClient.deleteSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "99999");
-            fail("We should have raised an " + ElasticsearchClientException.class.getSimpleName());
+            esClient.deleteSingle(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "99999");
+            Assertions.fail("We should have raised an " + ElasticsearchClientException.class.getSimpleName());
         } catch (ElasticsearchClientException e) {
-            assertThat(e.getMessage())
-                    .isEqualTo("Document " + getCrawlerName() + INDEX_SUFFIX_DOCS + "/99999 does not exist");
+            Assertions.assertThat(e.getMessage())
+                    .isEqualTo(
+                            "Document " + getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS + "/99999 does not exist");
         }
 
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L);
-        assertThat(response.getTotalHits()).isEqualTo(3L);
+        response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 
     @Test
     public void exists() throws ElasticsearchClientException {
-        esClient.indexSingle(getCrawlerName() + INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
-        esClient.refresh(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        assertThat(esClient.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "1")).isTrue();
-        assertThat(esClient.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "999")).isFalse();
+        esClient.indexSingle(
+                getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);
+        esClient.refresh(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        Assertions.assertThat(esClient.exists(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "1"))
+                .isTrue();
+        Assertions.assertThat(esClient.exists(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "999"))
+                .isFalse();
     }
 
     @Test
@@ -742,10 +773,10 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
         try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
-            assertThatNoException().isThrownBy(localClient::start);
-            assertThat(localClient.isExistingIndex("foo")).isFalse();
-            assertThat(localClient.isExistingIndex("bar")).isFalse();
-            assertThat(localClient.isExistingIndex("baz")).isFalse();
+            Assertions.assertThatNoException().isThrownBy(localClient::start);
+            Assertions.assertThat(localClient.isExistingIndex("foo")).isFalse();
+            Assertions.assertThat(localClient.isExistingIndex("bar")).isFalse();
+            Assertions.assertThat(localClient.isExistingIndex("baz")).isFalse();
         }
     }
 
@@ -768,25 +799,31 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 localClient.isExistingIndex("foo");
             }
 
-            assertThat(localClient.getAvailableNodes()).hasSize(4);
+            Assertions.assertThat(localClient.getAvailableNodes()).hasSize(4);
             localClient.isExistingIndex("foo");
-            assertThat(localClient.getAvailableNodes()).hasSize(3);
+            Assertions.assertThat(localClient.getAvailableNodes()).hasSize(3);
 
-            for (int i = 0; i < CHECK_NODES_EVERY - 4; i++) {
+            for (int i = 0; i < ElasticsearchClient.CHECK_NODES_EVERY - 4; i++) {
                 localClient.isExistingIndex("foo");
-                assertThat(localClient.getAvailableNodes()).as("Run " + i).hasSize(3);
+                Assertions.assertThat(localClient.getAvailableNodes())
+                        .as("Run " + i)
+                        .hasSize(3);
             }
 
             for (int i = 0; i < 10; i++) {
                 localClient.isExistingIndex("foo");
-                assertThat(localClient.getAvailableNodes()).hasSize(4);
+                Assertions.assertThat(localClient.getAvailableNodes()).hasSize(4);
                 localClient.isExistingIndex("foo");
-                assertThat(localClient.getAvailableNodes()).as("Run " + i).hasSize(4);
+                Assertions.assertThat(localClient.getAvailableNodes())
+                        .as("Run " + i)
+                        .hasSize(4);
                 localClient.isExistingIndex("foo");
-                assertThat(localClient.getAvailableNodes()).as("Run " + i).hasSize(3);
-                for (int j = 0; j < CHECK_NODES_EVERY - 4; j++) {
+                Assertions.assertThat(localClient.getAvailableNodes())
+                        .as("Run " + i)
+                        .hasSize(3);
+                for (int j = 0; j < ElasticsearchClient.CHECK_NODES_EVERY - 4; j++) {
                     localClient.isExistingIndex("foo");
-                    assertThat(localClient.getAvailableNodes())
+                    Assertions.assertThat(localClient.getAvailableNodes())
                             .as("Run " + i + "-" + j)
                             .hasSize(3);
                 }
@@ -803,7 +840,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
-            assertThatExceptionOfType(ElasticsearchClientException.class)
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
                     .isThrownBy(localClient::start)
                     .withMessageContaining("All nodes are failing");
         }
@@ -818,7 +855,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setSslVerification(false);
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
-            assertThatExceptionOfType(ElasticsearchClientException.class)
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
                     .isThrownBy(localClient::start)
                     .withMessageContaining("Can not execute GET")
                     .havingCause()
@@ -836,9 +873,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
             localClient.start();
-            fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
+            Assertions.fail("We should have raised a " + ElasticsearchClientException.class.getSimpleName());
         } catch (NotAuthorizedException ex) {
-            assertThat(ex.getMessage()).contains("HTTP 401 Unauthorized");
+            Assertions.assertThat(ex.getMessage()).contains("HTTP 401 Unauthorized");
         }
     }
 
@@ -847,7 +884,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // This is not a critical one as this code is only used in tests
         try {
             String key = esClient.generateApiKey("fscrawler-es-client-test");
-            assertThat(key).isNotNull();
+            Assertions.assertThat(key).isNotNull();
         } catch (Exception e) {
             // creating derived api keys requires an explicit role descriptor that is empty (has no privileges)
             logger.warn(
@@ -860,14 +897,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     public void withHttpService() throws IOException, ElasticsearchClientException {
         // We can only run this test if Docker is available on this machine
-        assumeTrue(
+        Assume.assumeTrue(
                 "We can only run this test if Docker is available on this machine",
                 DockerClientFactory.instance().isDockerAvailable());
 
         logger.debug("Starting Nginx from {}", rootTmpDir);
 
         // First we call Elasticsearch client
-        assertThat(esClient.getVersion()).isNotEmpty();
+        Assertions.assertThat(esClient.getVersion()).isNotEmpty();
 
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
@@ -882,17 +919,17 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
             InputStream inputStream = url.openStream();
             String text = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(text).contains("Hello World!");
+            Assertions.assertThat(text).contains("Hello World!");
         }
 
         // Then we call Elasticsearch client again
-        assertThat(esClient.getVersion()).isNotEmpty();
+        Assertions.assertThat(esClient.getVersion()).isNotEmpty();
     }
 
     @Test
     public void license() throws ElasticsearchClientException {
         String license = esClient.getLicense();
-        assertThat(license).isNotEmpty();
+        Assertions.assertThat(license).isNotEmpty();
     }
 
     @Test
@@ -903,7 +940,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         removeComponentTemplates(crawlerName);
 
         // Check it does not exist
-        assertThat(esClient.isExistingComponentTemplate(crawlerName)).isFalse();
+        Assertions.assertThat(esClient.isExistingComponentTemplate(crawlerName)).isFalse();
 
         // Create a simple component template
         String componentTemplate = """
@@ -918,8 +955,9 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 }""";
         esClient.pushComponentTemplate(crawlerName, componentTemplate);
 
-        assertThat(esClient.isExistingComponentTemplate(crawlerName)).isTrue();
-        assertThat(esClient.isExistingComponentTemplate(crawlerName + "_foo")).isFalse();
+        Assertions.assertThat(esClient.isExistingComponentTemplate(crawlerName)).isTrue();
+        Assertions.assertThat(esClient.isExistingComponentTemplate(crawlerName + "_foo"))
+                .isFalse();
     }
 
     @Nightly("This test is only run in nightly builds as semantic search could take a long time")
@@ -953,21 +991,21 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         countTestHelper(new ESSearchRequest().withIndex(DOC_INDEX_NAME), 3L);
 
         // We can run some queries to check that semantic search actually works as expected
-        assertThat(esClient.search(new ESSearchRequest()
+        Assertions.assertThat(esClient.search(new ESSearchRequest()
                                 .withIndex(DOC_INDEX_NAME)
                                 .withESQuery(new ESMatchQuery("content", "father")))
                         .getHits()
                         .get(0)
                         .getId())
                 .isEqualTo("StarWars");
-        assertThat(esClient.search(new ESSearchRequest()
+        Assertions.assertThat(esClient.search(new ESSearchRequest()
                                 .withIndex(DOC_INDEX_NAME)
                                 .withESQuery(new ESMatchQuery("content", "future")))
                         .getHits()
                         .get(0)
                         .getId())
                 .isEqualTo("BackToTheFuture");
-        assertThat(esClient.search(new ESSearchRequest()
+        Assertions.assertThat(esClient.search(new ESSearchRequest()
                                 .withIndex(DOC_INDEX_NAME)
                                 .withESQuery(new ESMatchQuery("content", "Flame")))
                         .getHits()
@@ -978,14 +1016,14 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         // We can only execute this test when semantic search is available
         if (esClient.isSemanticSupported()) {
             // We can run some queries to check that semantic search actually works as expected
-            assertThat(esClient.search(new ESSearchRequest()
+            Assertions.assertThat(esClient.search(new ESSearchRequest()
                                     .withIndex(DOC_INDEX_NAME)
                                     .withESQuery(new ESSemanticQuery("content_semantic", "a movie from Georges Lucas")))
                             .getHits()
                             .get(0)
                             .getId())
                     .isEqualTo("StarWars");
-            assertThat(esClient.search(new ESSearchRequest()
+            Assertions.assertThat(esClient.search(new ESSearchRequest()
                                     .withIndex(DOC_INDEX_NAME)
                                     .withESQuery(
                                             new ESSemanticQuery("content_semantic", "a movie with a delorean car")))
@@ -993,7 +1031,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                             .get(0)
                             .getId())
                     .isEqualTo("BackToTheFuture");
-            assertThat(esClient.search(new ESSearchRequest()
+            Assertions.assertThat(esClient.search(new ESSearchRequest()
                                     .withIndex(DOC_INDEX_NAME)
                                     .withESQuery(new ESSemanticQuery("content_semantic", "Frodo and Gollum")))
                             .getHits()
@@ -1057,7 +1095,8 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 
         try {
-            await().atMost(maxWaitForSearch)
+            Awaitility.await()
+                    .atMost(maxWaitForSearch)
                     .pollInterval(
                             ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                     .until(() -> {
@@ -1098,11 +1137,13 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         long hits = response[0].getTotalHits();
         if (expected == null) {
-            assertThat(hits)
+            Assertions.assertThat(hits)
                     .as("checking if any document in %s", request.getIndex())
                     .isGreaterThan(0);
         } else {
-            assertThat(hits).as("checking documents in %s", request.getIndex()).isEqualTo(expected);
+            Assertions.assertThat(hits)
+                    .as("checking documents in %s", request.getIndex())
+                    .isEqualTo(expected);
         }
 
         return response[0];
@@ -1120,7 +1161,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
      */
     private void createIndex(String indexSettings) throws ElasticsearchClientException {
         String realIndexSettings = indexSettings;
-        String index = getCrawlerName() + INDEX_SUFFIX_DOCS;
+        String index = getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
         logger.debug("create index [{}]", index);
         if (indexSettings == null) {
             // We need to pass an empty body because PUT requires a body
@@ -1134,7 +1175,7 @@ public class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR) {
                 logger.debug("Response for create index [{}]: {}", index, e.getMessage());
                 DocumentContext document =
-                        parseJsonAsDocumentContext(e.getResponse().readEntity(String.class));
+                        JsonUtil.parseJsonAsDocumentContext(e.getResponse().readEntity(String.class));
                 String errorType = document.read("$.error.type");
                 if (!errorType.contains("resource_already_exists_exception")) {
                     throw new ElasticsearchClientException(

@@ -20,11 +20,10 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -50,7 +49,7 @@ public class XmlDocParser {
         Map<String, Object> map = generateMap(inputStream);
 
         // Serialize to JSON
-        String json = mapper.writeValueAsString(map);
+        String json = JsonUtil.mapper.writeValueAsString(map);
         logger.trace("Generated JSON: {}", json);
         return json;
     }

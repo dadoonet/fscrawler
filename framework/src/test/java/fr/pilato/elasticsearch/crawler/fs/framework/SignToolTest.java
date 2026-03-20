@@ -20,10 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.security.NoSuchAlgorithmException;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class SignToolTest extends AbstractFSCrawlerTestCase {
@@ -31,6 +30,6 @@ public class SignToolTest extends AbstractFSCrawlerTestCase {
     @Test
     public void sign() throws NoSuchAlgorithmException {
         String signature = SignTool.sign("ABCD");
-        assertThat(signature).isEqualTo("cb8ca4a7bb5f9683c19133a84872ca7");
+        Assertions.assertThat(signature).isEqualTo("cb8ca4a7bb5f9683c19133a84872ca7");
     }
 }

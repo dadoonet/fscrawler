@@ -20,8 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -40,9 +39,9 @@ public class FsAclsFileHandler extends MetaFileHandler {
 
     public Map<String, String> read(String jobName) throws IOException {
         try {
-            return prettyMapper.readValue(
+            return JsonUtil.prettyMapper.readValue(
                     readFile(jobName, FILENAME),
-                    prettyMapper.getTypeFactory().constructMapType(HashMap.class, String.class, String.class));
+                    JsonUtil.prettyMapper.getTypeFactory().constructMapType(HashMap.class, String.class, String.class));
         } catch (NoSuchFileException e) {
             return new HashMap<>();
         }
@@ -52,7 +51,7 @@ public class FsAclsFileHandler extends MetaFileHandler {
         if (cache == null || cache.isEmpty()) {
             removeFile(jobName, FILENAME);
         } else {
-            writeFile(jobName, FILENAME, prettyMapper.writeValueAsString(cache));
+            writeFile(jobName, FILENAME, JsonUtil.prettyMapper.writeValueAsString(cache));
         }
     }
 }

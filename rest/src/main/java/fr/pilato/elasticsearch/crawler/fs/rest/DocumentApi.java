@@ -20,20 +20,26 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.getMergedDoc;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
@@ -117,7 +123,7 @@ public class DocumentApi extends RestApi {
         String id = headerId != null ? headerId : queryParamId;
         String index = headerIndex != null ? headerIndex : queryParamIndex;
 
-        DocumentContext document = parseJsonAsDocumentContext(json);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(json);
         String type = document.read("$.type");
 
         logger.debug("Reading document from 3rd-party [{}]", type);
@@ -217,14 +223,14 @@ public class DocumentApi extends RestApi {
         doc.getFile()
                 .setExtension(
                         FilenameUtils.getExtension(doc.getFile().getFilename()).toLowerCase());
-        doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+        doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
         // File
 
         // Read the file content
         TikaDocParser.generate(settings, filecontent, doc, doc.getFile().getFilesize());
 
         // We merge tags if any and return the final doc
-        return getMergedDoc(doc, tags, mapper);
+        return DocUtils.getMergedDoc(doc, tags, JsonUtil.mapper);
     }
 
     private UploadResponse uploadToDocumentService(String debug, String simulate, String id, String index, Doc doc)

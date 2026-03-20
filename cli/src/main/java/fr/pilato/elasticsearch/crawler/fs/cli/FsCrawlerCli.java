@@ -20,17 +20,22 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static org.awaitility.Awaitility.await;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
-import fr.pilato.elasticsearch.crawler.fs.settings.*;
+import fr.pilato.elasticsearch.crawler.fs.settings.Defaults;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import java.io.Console;
 import java.io.IOException;
@@ -51,6 +56,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
+import org.awaitility.Awaitility;
 
 /** Main entry point to launch FsCrawler */
 public class FsCrawlerCli {
@@ -237,7 +243,7 @@ public class FsCrawlerCli {
             // Write the example config files from the classpath FsSettingsLoader.EXAMPLE_SETTINGS
             logger.debug(
                     "Creating [{}] from the classloader [{}] file.", configFile, FsSettingsLoader.EXAMPLE_SETTINGS);
-            copyResourceFile(FsSettingsLoader.EXAMPLE_SETTINGS, configFile);
+            FsCrawlerUtil.copyResourceFile(FsSettingsLoader.EXAMPLE_SETTINGS, configFile);
         }
     }
 
@@ -371,7 +377,8 @@ public class FsCrawlerCli {
                 Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager, restServer));
 
                 // We just have to wait until the process is stopped
-                await().forever()
+                Awaitility.await()
+                        .forever()
                         .pollInterval(CLOSE_POLLING_WAIT_TIME)
                         .until(() -> fsCrawler.getFsParser().isClosed());
             }

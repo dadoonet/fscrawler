@@ -20,12 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 /** Test crawler with zip files */
@@ -41,8 +40,8 @@ public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(createTestSettings());
 
         // We expect to have one file
-        ESSearchResponse response =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
-        assertThat(response.getTotalHits()).isEqualTo(1L);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 }

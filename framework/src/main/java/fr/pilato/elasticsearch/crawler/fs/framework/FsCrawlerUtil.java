@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static org.awaitility.Awaitility.await;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,14 +27,32 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.*;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryFlag;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -44,6 +60,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 
 public class FsCrawlerUtil {
@@ -581,7 +598,8 @@ public class FsCrawlerUtil {
     public static void waitFor(Duration duration) {
         logger.trace("⏳ Waiting for {} seconds...", duration.toSeconds());
         try {
-            await().atMost(duration)
+            Awaitility.await()
+                    .atMost(duration)
                     // We must have a longer poll delay than the duration
                     .pollDelay(duration.plusMillis(1))
                     // We must have a longer timeout than the poll delay

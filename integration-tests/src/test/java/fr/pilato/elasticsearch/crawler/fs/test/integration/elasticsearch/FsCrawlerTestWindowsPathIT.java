@@ -20,13 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.Assumptions;
 import org.junit.Test;
 
 /**
@@ -43,7 +42,7 @@ public class FsCrawlerTestWindowsPathIT extends AbstractFsCrawlerITCase {
     @Test
     public void windows_path_with_forward_slashes() throws Exception {
         // This test is only relevant on Windows
-        assumeThat(OsValidator.WINDOWS)
+        Assumptions.assumeThat(OsValidator.WINDOWS)
                 .as("This test is only relevant on Windows")
                 .isTrue();
 
@@ -56,7 +55,7 @@ public class FsCrawlerTestWindowsPathIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have at least one document indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
     }
 
     /**
@@ -66,7 +65,7 @@ public class FsCrawlerTestWindowsPathIT extends AbstractFsCrawlerITCase {
     @Test
     public void windows_path_with_backslashes() throws Exception {
         // This test is only relevant on Windows
-        assumeThat(OsValidator.WINDOWS)
+        Assumptions.assumeThat(OsValidator.WINDOWS)
                 .as("This test is only relevant on Windows")
                 .isTrue();
 
@@ -79,6 +78,6 @@ public class FsCrawlerTestWindowsPathIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have at least one document indexed
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
     }
 }

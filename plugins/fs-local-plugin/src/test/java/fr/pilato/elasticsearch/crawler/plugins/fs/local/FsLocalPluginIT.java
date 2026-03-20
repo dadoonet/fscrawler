@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
-import static org.assertj.core.api.Assertions.*;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
@@ -37,6 +35,7 @@ import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
@@ -72,16 +71,16 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
                             + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).isEqualTo(text);
+            Assertions.assertThat(object).isEqualTo(text);
             Doc doc = provider.createDocument();
-            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+            Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
             if (OsValidator.WINDOWS) {
-                assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
+                Assertions.assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
             } else {
-                assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+                Assertions.assertThat(doc.getPath().getVirtual()).isEqualTo("/");
             }
-            assertThat(doc.getPath().getReal())
+            Assertions.assertThat(doc.getPath().getReal())
                     .isEqualTo(fileName.toAbsolutePath().toString());
         }
     }
@@ -104,16 +103,16 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
                             + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).isEqualTo(text);
+            Assertions.assertThat(object).isEqualTo(text);
             Doc doc = provider.createDocument();
-            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+            Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
             if (OsValidator.WINDOWS) {
-                assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
+                Assertions.assertThat(doc.getPath().getVirtual()).isEqualTo("\\");
             } else {
-                assertThat(doc.getPath().getVirtual()).isEqualTo("/");
+                Assertions.assertThat(doc.getPath().getVirtual()).isEqualTo("/");
             }
-            assertThat(doc.getPath().getReal())
+            Assertions.assertThat(doc.getPath().getReal())
                     .isEqualTo(fileName.toAbsolutePath().toString());
         }
     }
@@ -132,7 +131,7 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(rootDir.toString());
-            assertThatThrownBy(() -> provider.start(
+            Assertions.assertThatThrownBy(() -> provider.start(
                             fsSettings,
                             "{\n" + "  \"type\": \"local\",\n"
                                     + "  \"local\": {\n"

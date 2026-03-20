@@ -20,11 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
-
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
+import org.assertj.core.api.Assertions;
+import org.junit.Assume;
 import org.junit.Test;
 import org.testcontainers.DockerClientFactory;
 
@@ -37,18 +35,19 @@ public class TestContainerHelperIT {
         // Don't run it if an external cluster for Elasticsearch is set
         boolean isExternalClusterSet = System.getProperty("tests.cluster.url") != null
                 && !DEFAULT_TEST_CLUSTER_URL.equals(System.getProperty("tests.cluster.url"));
-        assumeFalse("External Elasticsearch cluster is set, skipping TestContainerHelperIT.", isExternalClusterSet);
+        Assume.assumeFalse(
+                "External Elasticsearch cluster is set, skipping TestContainerHelperIT.", isExternalClusterSet);
 
         // Check if Docker is available on this OS
-        assumeTrue(
+        Assume.assumeTrue(
                 "Docker is not available on this machine.",
                 DockerClientFactory.instance().isDockerAvailable());
 
         TestContainerHelper helper = new TestContainerHelper();
-        assertThat(helper.isStarted()).isFalse();
-        assertThat(helper.getElasticsearchVersion()).isNotBlank();
+        Assertions.assertThat(helper.isStarted()).isFalse();
+        Assertions.assertThat(helper.getElasticsearchVersion()).isNotBlank();
         String url = helper.startElasticsearch(false);
-        assertThat(url).isNotBlank();
-        assertThat(helper.isStarted()).isTrue();
+        Assertions.assertThat(url).isNotBlank();
+        Assertions.assertThat(helper.isStarted()).isTrue();
     }
 }

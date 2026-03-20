@@ -20,15 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.Files;
@@ -38,6 +35,7 @@ import java.time.Instant;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 /** Test different dates of files */
@@ -59,7 +57,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         // We expect to have two files
         ESSearchResponse responseNotModified = countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withSort("file.filename"),
                 2L,
                 currentTestResourceDir);
@@ -80,7 +78,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         // We expect to have 3 files
         ESSearchResponse responseModified = countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withSort("file.filename"),
                 3L,
                 currentTestResourceDir);
@@ -96,12 +94,12 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
     }
 
     private void compareHits(ESSearchHit hitBefore, ESSearchHit hitAfter, boolean shouldBeIdentical) {
-        DocumentContext documentBefore = parseJsonAsDocumentContext(hitBefore.getSource());
+        DocumentContext documentBefore = JsonUtil.parseJsonAsDocumentContext(hitBefore.getSource());
         String hitBeforeCreated = documentBefore.read("$.file.created");
         String hitBeforeIndexingDate = documentBefore.read("$.file.indexing_date");
         String hitBeforeLastModified = documentBefore.read("$.file.last_modified");
         String hitBeforeLastAccessed = documentBefore.read("$.file.last_accessed");
-        DocumentContext documentAfter = parseJsonAsDocumentContext(hitAfter.getSource());
+        DocumentContext documentAfter = JsonUtil.parseJsonAsDocumentContext(hitAfter.getSource());
         String hitAfterCreated = documentAfter.read("$.file.created");
         String hitAfterIndexingDate = documentAfter.read("$.file.indexing_date");
         String hitAfterLastModified = documentAfter.read("$.file.last_modified");
@@ -118,13 +116,13 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
                     hitAfterCreated);
         }
         if (shouldBeIdentical) {
-            assertThat(hitBeforeIndexingDate).isEqualTo(hitAfterIndexingDate);
-            assertThat(hitBeforeLastModified).isEqualTo(hitAfterLastModified);
-            assertThat(hitBeforeLastAccessed).isEqualTo(hitAfterLastAccessed);
+            Assertions.assertThat(hitBeforeIndexingDate).isEqualTo(hitAfterIndexingDate);
+            Assertions.assertThat(hitBeforeLastModified).isEqualTo(hitAfterLastModified);
+            Assertions.assertThat(hitBeforeLastAccessed).isEqualTo(hitAfterLastAccessed);
         } else {
-            assertThat(hitBeforeIndexingDate).isNotEqualTo(hitAfterIndexingDate);
-            assertThat(hitBeforeLastModified).isNotEqualTo(hitAfterLastModified);
-            assertThat(hitBeforeLastAccessed).isNotEqualTo(hitAfterLastAccessed);
+            Assertions.assertThat(hitBeforeIndexingDate).isNotEqualTo(hitAfterIndexingDate);
+            Assertions.assertThat(hitBeforeLastModified).isNotEqualTo(hitAfterLastModified);
+            Assertions.assertThat(hitBeforeLastAccessed).isNotEqualTo(hitAfterLastAccessed);
         }
     }
 
@@ -134,7 +132,7 @@ public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         logger.info(
                 "|-----------------------------|-----------------------------|-----------------------------|-----------------------------|");
         for (ESSearchHit hit : hits) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
             String created = document.read("$.file.created");
             String indexingDate = document.read("$.file.indexing_date");
             String lastModified = document.read("$.file.last_modified");

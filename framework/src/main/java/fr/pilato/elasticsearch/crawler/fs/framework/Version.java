@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
-
 import java.util.Properties;
 
 public class Version {
@@ -29,7 +27,7 @@ public class Version {
     private static final Properties properties;
 
     static {
-        properties = readPropertiesFromClassLoader(FSCRAWLER_PROPERTIES);
+        properties = FsCrawlerUtil.readPropertiesFromClassLoader(FSCRAWLER_PROPERTIES);
     }
 
     public static String getVersion() {

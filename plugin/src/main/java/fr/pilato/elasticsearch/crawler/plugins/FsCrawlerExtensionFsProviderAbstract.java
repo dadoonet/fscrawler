@@ -20,11 +20,10 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +49,7 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         }
 
         logger.trace("with rest settings {}", restSettings);
-        document = parseJsonAsDocumentContext(restSettings);
+        document = JsonUtil.parseJsonAsDocumentContext(restSettings);
 
         try {
             parseSettings();

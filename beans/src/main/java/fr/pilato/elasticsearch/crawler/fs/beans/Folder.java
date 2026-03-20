@@ -20,8 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import java.time.LocalDateTime;
 
 /** Represents a folder we have visited */
@@ -65,9 +64,9 @@ public class Folder {
         file = new File();
         file.setFilename(name);
         file.setContentType(CONTENT_TYPE);
-        file.setLastModified(localDateTimeToDate(modification));
-        file.setCreated(localDateTimeToDate(creation));
-        file.setLastAccessed(localDateTimeToDate(lastAccess));
+        file.setLastModified(FsCrawlerUtil.localDateTimeToDate(modification));
+        file.setCreated(FsCrawlerUtil.localDateTimeToDate(creation));
+        file.setLastAccessed(FsCrawlerUtil.localDateTimeToDate(lastAccess));
     }
 
     public Path getPath() {

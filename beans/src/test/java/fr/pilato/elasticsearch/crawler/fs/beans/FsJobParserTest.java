@@ -20,25 +20,24 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     private void jobTester(FsJob source) throws IOException {
-        String json = prettyMapper.writeValueAsString(source);
+        String json = JsonUtil.prettyMapper.writeValueAsString(source);
 
         logger.info("-> generated job: [{}]", json);
-        FsJob generated = prettyMapper.readValue(json, FsJob.class);
-        assertThat(generated).isEqualTo(source);
+        FsJob generated = JsonUtil.prettyMapper.readValue(json, FsJob.class);
+        Assertions.assertThat(generated).isEqualTo(source);
     }
 
     @Test
@@ -60,8 +59,8 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     public void dateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
         FsJob job = new FsJob(getCurrentTestName(), now, now, 1000, 5);
-        String json = prettyMapper.writeValueAsString(job);
-        FsJob generated = prettyMapper.readValue(json, FsJob.class);
-        assertThat(generated.getLastrun()).isEqualTo(now);
+        String json = JsonUtil.prettyMapper.writeValueAsString(job);
+        FsJob generated = JsonUtil.prettyMapper.readValue(json, FsJob.class);
+        Assertions.assertThat(generated.getLastrun()).isEqualTo(now);
     }
 }

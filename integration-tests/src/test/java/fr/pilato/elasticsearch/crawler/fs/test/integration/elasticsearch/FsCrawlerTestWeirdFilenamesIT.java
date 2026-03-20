@@ -20,12 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -34,6 +31,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.junit.Assume;
 import org.junit.Test;
 
 /** Test weird filenames */
@@ -53,13 +52,13 @@ public class FsCrawlerTestWeirdFilenamesIT extends AbstractFsCrawlerITCase {
             Files.move(currentTestResourceDir.resolve("with_space"), dirWithSpace);
         } catch (InvalidPathException e) {
             logger.warn("Cannot rename directory to have a space at the end on Windows. Ignoring the test.", e);
-            assumeFalse("We can not run this test on Windows", OsValidator.WINDOWS);
+            Assume.assumeFalse("We can not run this test on Windows", OsValidator.WINDOWS);
         }
 
         FsSettings fsSettings = createTestSettings();
         crawler = startCrawler(fsSettings);
-        ESSearchResponse response =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
-        assertThat(response.getTotalHits()).isEqualTo(3L);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 }

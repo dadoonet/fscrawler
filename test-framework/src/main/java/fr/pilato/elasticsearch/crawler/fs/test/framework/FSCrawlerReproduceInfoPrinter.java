@@ -20,11 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import static com.carrotsearch.randomizedtesting.SysGlobals.SYSPROP_ITERATIONS;
-import static com.carrotsearch.randomizedtesting.SysGlobals.SYSPROP_PREFIX;
-import static com.carrotsearch.randomizedtesting.SysGlobals.SYSPROP_TESTMETHOD;
-
 import com.carrotsearch.randomizedtesting.ReproduceErrorMessageBuilder;
+import com.carrotsearch.randomizedtesting.SysGlobals;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -96,7 +93,7 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
             if (description.getMethodName() != null) {
                 // prints out the raw method description instead of methodName(description) which filters out the
                 // parameters
-                super.appendOpt(SYSPROP_TESTMETHOD(), "\"" + description.getMethodName() + "\"");
+                super.appendOpt(SysGlobals.SYSPROP_TESTMETHOD(), "\"" + description.getMethodName() + "\"");
             }
 
             List<String> properties = new ArrayList<>();
@@ -128,15 +125,15 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
         /** Append a single VM option. */
         @Override
         public ReproduceErrorMessageBuilder appendOpt(String sysPropName, String value) {
-            if (sysPropName.equals(SYSPROP_ITERATIONS())) { // we don't want the iters to be in there!
+            if (sysPropName.equals(SysGlobals.SYSPROP_ITERATIONS())) { // we don't want the iters to be in there!
                 return this;
             }
-            if (sysPropName.equals(SYSPROP_TESTMETHOD())) {
+            if (sysPropName.equals(SysGlobals.SYSPROP_TESTMETHOD())) {
                 // don't print out the test method, we print it ourselves in appendAllOpts
                 // without filtering out the parameters (needed for REST tests)
                 return this;
             }
-            if (sysPropName.equals(SYSPROP_PREFIX())) {
+            if (sysPropName.equals(SysGlobals.SYSPROP_PREFIX())) {
                 // we always use the default prefix
                 return this;
             }

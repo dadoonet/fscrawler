@@ -20,13 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.awaitility.Awaitility.await;
-
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -34,21 +27,31 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.Enumeration;
@@ -62,6 +65,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -129,7 +135,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             from = DEFAULT_RESOURCES;
         }
 
-        copyDirs(from, currentTestResourceDir);
+        FsCrawlerUtilForTests.copyDirs(from, currentTestResourceDir);
 
         logger.debug("✅ Test resources ready in [{}]", currentTestResourceDir);
     }
@@ -149,7 +155,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
         if (Files.exists(from)) {
             logger.trace("📂 Copying test resources from [{}]", from);
-            copyDirs(from, currentTestTagDir);
+            FsCrawlerUtilForTests.copyDirs(from, currentTestTagDir);
             logger.debug("✅ Tags ready in [{}]", currentTestTagDir);
         }
     }
@@ -220,7 +226,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 }
 
                 logger.debug("📂 Copying test documents from [{}] to [{}]", source, finalTarget);
-                copyDirs(source, finalTarget);
+                FsCrawlerUtilForTests.copyDirs(source, finalTarget);
                 break;
             }
             case "jar": {
@@ -238,7 +244,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 break;
             }
             default:
-                fail("Unknown protocol for IT document sources: " + resource.getProtocol());
+                Assertions.fail("Unknown protocol for IT document sources: " + resource.getProtocol());
                 break;
         }
     }
@@ -352,14 +358,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         elasticsearchConfiguration = fsSettings.getElasticsearch();
 
-        assumeThat(client)
+        Assumptions.assumeThat(client)
                 .as("Integration tests are skipped because we have not been able to find an Elasticsearch cluster")
                 .isNotNull();
 
         // If the Api Key is not provided, we want to generate it and use in all the tests
         if (testApiKey == null) {
             // Generate the Api-Key
-            testApiKey = client.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+            testApiKey = client.generateApiKey("fscrawler-" + RandomizedTest.randomAsciiAlphanumOfLength(10));
 
             fsSettings.getElasticsearch().setApiKey(testApiKey);
             fsSettings.getElasticsearch().setUsername(null);
@@ -458,13 +464,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // We wait before considering a failing test
         logger.info(
                 "⏳ Waiting up to {} for {} documents in {}",
-                durationToString(duration),
+                FsCrawlerUtil.durationToString(duration),
                 expected == null ? "some" : expected,
                 request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 
         try {
-            await().atMost(duration)
+            Awaitility.await()
+                    .atMost(duration)
                     .pollInterval(
                             ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                     .until(() -> {
@@ -506,7 +513,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         long hits = response[0].getTotalHits();
         if (expected == null) {
-            assertThat(hits)
+            Assertions.assertThat(hits)
                     .as("checking if any document in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
@@ -515,7 +522,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     .isGreaterThan(0);
 
         } else {
-            assertThat(hits)
+            Assertions.assertThat(hits)
                     .as("checking documents in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
@@ -622,8 +629,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
 
         fsSettings.setElasticsearch(elasticsearch);
-        fsSettings.getElasticsearch().setIndex(name + INDEX_SUFFIX_DOCS);
-        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setIndex(name + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        fsSettings.getElasticsearch().setIndexFolder(name + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         // We explicitly set semantic search to false because IT takes too long time
         fsSettings.getElasticsearch().setSemanticSearch(false);

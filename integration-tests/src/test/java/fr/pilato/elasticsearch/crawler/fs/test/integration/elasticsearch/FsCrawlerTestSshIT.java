@@ -20,12 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -46,7 +43,9 @@ import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.sftp.server.SftpFileSystemAccessor;
 import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 import org.apache.sshd.sftp.server.SftpSubsystemProxy;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -111,9 +110,9 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
-        assertThat(response.getTotalHits()).isEqualTo(2L);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(2L);
     }
 
     @Test
@@ -131,9 +130,9 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
-        assertThat(response.getTotalHits()).isEqualTo(1L);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
     /**
@@ -145,7 +144,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     public void dir_with_space_at_the_end() throws Exception {
         // Skip early on Windows to avoid race condition with SSHD async threads during shutdown
         // Windows does not support trailing spaces in path names
-        assumeFalse("This test cannot run on Windows (trailing spaces not supported in paths)", OsValidator.WINDOWS);
+        Assume.assumeFalse(
+                "This test cannot run on Windows (trailing spaces not supported in paths)", OsValidator.WINDOWS);
 
         // We need to do a small hack here and rename the test directory as this could not work on Windows
         Path dirWithSpace = currentTestResourceDir.resolve("with_space ");
@@ -160,8 +160,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setPassword(SSH_PASSWORD);
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
-        ESSearchResponse response =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
-        assertThat(response.getTotalHits()).isEqualTo(3L);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 }

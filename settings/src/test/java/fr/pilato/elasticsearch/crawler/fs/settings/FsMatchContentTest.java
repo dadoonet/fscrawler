@@ -20,14 +20,13 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
@@ -87,7 +86,7 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
     }
 
     private void regexTester(String input, List<String> regexes, boolean expected) {
-        assertThat(isIndexable(input, regexes))
+        Assertions.assertThat(FsCrawlerUtil.isIndexable(input, regexes))
                 .as(regexes + " should " + (expected ? "" : "not ") + "match " + input)
                 .isEqualTo(expected);
     }

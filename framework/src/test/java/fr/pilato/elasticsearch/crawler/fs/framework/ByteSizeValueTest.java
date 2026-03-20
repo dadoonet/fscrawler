@@ -20,13 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
@@ -41,7 +39,7 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
 
         // Test 500 random values
         for (int i = 0; i < 500; i++) {
-            int unitNumber = randomIntBetween(0, 5);
+            int unitNumber = RandomizedTest.randomIntBetween(0, 5);
             ByteSizeUnit unit =
                     switch (unitNumber) {
                         case 1 -> ByteSizeUnit.KB;
@@ -52,7 +50,7 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
                         default -> ByteSizeUnit.BYTES;
                     };
 
-            long value = randomLongBetween(1, 999);
+            long value = RandomizedTest.randomLongBetween(1, 999);
             String randomByteSize = value + unit.getSuffix();
             testConversionBothWays(randomByteSize, value, unit);
         }
@@ -62,8 +60,8 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
         logger.debug("Testing [{}]", value);
 
         ByteSizeValue byteSizeValue = ByteSizeValue.parseBytesSizeValue(value);
-        assertThat(byteSizeValue).hasToString(value);
-        assertThat(byteSizeValue.getBytes()).isEqualTo(bytes);
+        Assertions.assertThat(byteSizeValue).hasToString(value);
+        Assertions.assertThat(byteSizeValue.getBytes()).isEqualTo(bytes);
     }
 
     private void testConversionBothWays(String asString, long size, ByteSizeUnit unit) {

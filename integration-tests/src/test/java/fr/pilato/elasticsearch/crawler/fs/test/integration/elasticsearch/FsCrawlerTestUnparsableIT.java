@@ -20,10 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.FileSystems;
@@ -33,6 +31,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assumptions;
 import org.junit.Test;
 
 /** Test crawler with unparsable files */
@@ -48,7 +47,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
     }
 
     /**
@@ -64,7 +63,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
 
         boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
 
-        assumeThat(isPosix)
+        Assumptions.assumeThat(isPosix)
                 .describedAs("This test can only run on Posix systems")
                 .isTrue();
 
@@ -77,6 +76,8 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
 
         // We should have one doc first
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
     }
 }

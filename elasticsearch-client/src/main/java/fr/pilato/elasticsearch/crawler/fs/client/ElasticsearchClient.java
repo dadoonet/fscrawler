@@ -20,17 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
-
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
@@ -39,26 +34,50 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
-import java.security.*;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.StreamSupport;
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -274,11 +293,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.trace("get version");
         String response = httpGet(null);
         // We parse the response
-        DocumentContext document = parseJsonAsDocumentContext(response);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         // Cache the version and the major version
         version = document.read("$.version.number");
-        majorVersion = extractMajorVersion(version);
-        minorVersion = extractMinorVersion(version);
+        majorVersion = FsCrawlerUtil.extractMajorVersion(version);
+        minorVersion = FsCrawlerUtil.extractMinorVersion(version);
         serverless = false;
 
         try {
@@ -307,7 +326,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         // License endpoint might not be ready in IT so we retry with exponential wait time up to 1 minute
         try {
-            return await().atMost(Duration.ofMinutes(1))
+            return Awaitility.await()
+                    .atMost(Duration.ofMinutes(1))
                     .pollInterval(
                             ExponentialBackoffPollInterval.exponential(Duration.ofSeconds(1), Duration.ofSeconds(10)))
                     .until(
@@ -330,7 +350,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String response = httpGet("_license");
 
         // We parse the response
-        DocumentContext document = parseJsonAsDocumentContext(response);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         // Cache the license level
         license = document.read("$.license.type");
 
@@ -466,7 +486,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             url = "_refresh";
         }
         String response = httpPost(url, null);
-        DocumentContext document = parseJsonAsDocumentContext(response);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         int shardsFailed = document.read("$._shards.failed");
         if (shardsFailed > 0) {
             throw new ElasticsearchClientException("Unable to refresh index " + index + " : " + response);
@@ -482,7 +502,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
         try {
-            await().atMost(10, SECONDS)
+            Awaitility.await()
+                    .atMost(10, TimeUnit.SECONDS)
                     .pollInterval(
                             ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                     .until(() -> {
@@ -508,7 +529,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private String catIndicesHealth(String index) throws ElasticsearchClientException {
         try {
             String response = httpGet("_cat/indices/" + index, new AbstractMap.SimpleImmutableEntry<>("h", "health"));
-            DocumentContext document = parseJsonAsDocumentContext(response);
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
             String health = document.read("$[0].health");
             logger.trace("index [{}] health: [{}]", index, health);
             return health;
@@ -548,7 +569,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     @Override
     public void index(String index, String id, Doc doc, String pipeline) {
-        String json = serialize(doc);
+        String json = JsonUtil.serialize(doc);
         indexRawJson(index, id, json, pipeline);
     }
 
@@ -562,7 +583,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public void indexSingle(String index, String id, String json, String pipeline) throws ElasticsearchClientException {
         logger.trace("JSon indexed : {}", json);
         String url = index + "/_doc/" + id;
-        if (!isNullOrEmpty(pipeline)) {
+        if (!FsCrawlerUtil.isNullOrEmpty(pipeline)) {
             url += "?pipeline=" + pipeline;
         }
         httpPut(url, json);
@@ -579,7 +600,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         try {
             String response = httpDelete(index + "/_doc/" + id, null);
 
-            DocumentContext document = parseJsonAsDocumentContext(response);
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
             String result = document.read("$.result");
             if (!result.equals("deleted")) {
                 throw new ElasticsearchClientException(
@@ -773,7 +794,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.debug("Waiting for component templates to be available: {}", templateNames);
         for (String templateName : templateNames) {
             try {
-                await().atMost(30, SECONDS)
+                Awaitility.await()
+                        .atMost(30, TimeUnit.SECONDS)
                         .pollInterval(ExponentialBackoffPollInterval.exponential(
                                 Duration.ofMillis(100), Duration.ofSeconds(5)))
                         .until(() -> {
@@ -859,7 +881,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         String url = "";
 
-        if (!isNullOrEmpty(request.getIndex())) {
+        if (!FsCrawlerUtil.isNullOrEmpty(request.getIndex())) {
             url += request.getIndex();
         }
 
@@ -888,7 +910,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (request.getESQuery() != null) {
             body.getAndUpdate(s -> s + (", \"query\" : {" + toElasticsearchQuery(request.getESQuery()) + "}"));
         }
-        if (!isNullOrEmpty(request.getSort())) {
+        if (!FsCrawlerUtil.isNullOrEmpty(request.getSort())) {
             body.getAndUpdate(s -> s + (", \"sort\" : [\"" + request.getSort() + "\"]"));
         }
         if (!request.getHighlighters().isEmpty()) {
@@ -925,7 +947,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             ESSearchResponse esSearchResponse = new ESSearchResponse(response);
 
             // Parse
-            DocumentContext document = parseJsonAsDocumentContext(response);
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
             esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
 
             int numHits = document.read("$.hits.hits.length()");
@@ -1052,7 +1074,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.debug("delete index [{}]", index);
         try {
             String response = httpDelete(index, null);
-            DocumentContext document = parseJsonAsDocumentContext(response);
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
             boolean acknowledged = document.read("$.acknowledged");
             if (!acknowledged) {
                 throw new ElasticsearchClientException(
@@ -1080,7 +1102,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String response = httpGet(index + "/_doc/" + id);
 
         // Parse the response
-        DocumentContext document = parseJsonAsDocumentContext(response);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         ESSearchHit hit = new ESSearchHit();
         hit.setIndex(document.read("$._index"));
         hit.setId(document.read("$._id"));
@@ -1118,7 +1140,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String response = httpPost("/_security/api_key", request);
 
         // Parse the response
-        DocumentContext document = parseJsonAsDocumentContext(response);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         String id = document.read("$.id");
         String encodedApiKey = document.read("$.encoded");
         logger.debug("generated key [{}] for [{}]: [{}]", id, keyName, encodedApiKey);
@@ -1141,7 +1163,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     private static String extractJsonFromPath(DocumentContext context, String path) {
         Map<String, Object> jsonMap = context.read(path);
-        return serialize(jsonMap);
+        return JsonUtil.serialize(jsonMap);
     }
 
     void httpHead(String path) throws ElasticsearchClientException {
@@ -1235,7 +1257,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         AtomicReference<WebApplicationException> lastServerError = new AtomicReference<>();
 
         try {
-            String result = await().atMost(maxDuration)
+            String result = Awaitility.await()
+                    .atMost(maxDuration)
                     .pollInterval(ExponentialBackoffPollInterval.exponential(initialDelay, maxDelay))
                     .until(
                             () -> {

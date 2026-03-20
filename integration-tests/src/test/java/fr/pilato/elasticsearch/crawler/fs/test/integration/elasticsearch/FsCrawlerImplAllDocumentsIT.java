@@ -20,24 +20,25 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
 import com.carrotsearch.randomizedtesting.annotations.Timeout;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.client.ESBoolQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -45,14 +46,16 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.parser.external.ExternalParser;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** Test all type of documents we have */
-@TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
-@Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;
@@ -78,8 +81,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         }
 
         logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
-        client.deleteIndex(JOB_NAME + INDEX_SUFFIX_DOCS);
-        client.deleteIndex(JOB_NAME + INDEX_SUFFIX_FOLDER);
+        client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
         String templateName = "fscrawler_" + JOB_NAME + "_*";
@@ -98,20 +101,20 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         // We start with a clean configuration
         Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
         fsSettings.setElasticsearch(elasticsearch);
-        fsSettings.getElasticsearch().setIndex(JOB_NAME + INDEX_SUFFIX_DOCS);
-        fsSettings.getElasticsearch().setIndexFolder(JOB_NAME + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        fsSettings.getElasticsearch().setIndexFolder(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
         fsSettings.getElasticsearch().setBulkSize(5);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         fsSettings.getElasticsearch().setSemanticSearch(false);
 
         fsSettings.getFs().setRawMetadata(true);
 
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false);
         crawler.start();
 
         // We wait until we have all docs up to 10 minutes
         countTestHelper(
-                new ESSearchRequest().withIndex(JOB_NAME + INDEX_SUFFIX_DOCS),
+                new ESSearchRequest().withIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
                 numFiles,
                 null,
                 MAX_WAIT_FOR_SEARCH_LONG_TESTS);
@@ -126,8 +129,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         }
         if (!TEST_KEEP_DATA) {
             logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
-            client.deleteIndex(JOB_NAME + INDEX_SUFFIX_DOCS);
-            client.deleteIndex(JOB_NAME + INDEX_SUFFIX_FOLDER);
+            client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             String templateName = "fscrawler_" + JOB_NAME + "_*";
             logger.debug(" -> Removing existing index and component templates [{}]", templateName);
@@ -171,17 +174,20 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void extractFromDocx() throws ElasticsearchClientException {
         ESSearchResponse response = runSearch("test.docx", "sample");
         for (ESSearchHit hit : response.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-            assertThat((String) document.read("$.file.filename")).isNotEmpty();
-            assertThat((String) document.read("$.file.content_type")).isNotEmpty();
-            assertThat((String) document.read("$.file.url")).isNotEmpty();
-            assertThat((Integer) document.read("$.file.filesize")).isGreaterThan(0);
-            assertThat((String) document.read("$.file.indexing_date")).isNotEmpty();
-            assertThat((String) document.read("$.file.created")).isNotEmpty();
-            assertThat((String) document.read("$.file.last_modified")).isNotEmpty();
-            assertThat((String) document.read("$.file.last_accessed")).isNotEmpty();
-            assertThat((String) document.read("$.meta.title")).isNotEmpty();
-            assertThat((Object) document.read("$.meta.keywords"))
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
+            Assertions.assertThat((String) document.read("$.file.filename")).isNotEmpty();
+            Assertions.assertThat((String) document.read("$.file.content_type")).isNotEmpty();
+            Assertions.assertThat((String) document.read("$.file.url")).isNotEmpty();
+            Assertions.assertThat((Integer) document.read("$.file.filesize")).isGreaterThan(0);
+            Assertions.assertThat((String) document.read("$.file.indexing_date"))
+                    .isNotEmpty();
+            Assertions.assertThat((String) document.read("$.file.created")).isNotEmpty();
+            Assertions.assertThat((String) document.read("$.file.last_modified"))
+                    .isNotEmpty();
+            Assertions.assertThat((String) document.read("$.file.last_accessed"))
+                    .isNotEmpty();
+            Assertions.assertThat((String) document.read("$.meta.title")).isNotEmpty();
+            Assertions.assertThat((Object) document.read("$.meta.keywords"))
                     .asInstanceOf(InstanceOfAssertFactories.list(String.class))
                     .containsExactlyInAnyOrder("keyword1", " keyword2");
         }
@@ -245,17 +251,17 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void languageDetection() throws ElasticsearchClientException {
         ESSearchResponse response = runSearch("test-fr.txt", "fichier");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
+            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
                     .isEqualTo("fr");
         }
         response = runSearch("test-de.txt", "Datei");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
+            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
                     .isEqualTo("de");
         }
         response = runSearch("test.txt", "contains");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
+            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
                     .isEqualTo("en");
         }
     }
@@ -267,7 +273,7 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void ocr() throws ElasticsearchClientException {
-        assumeThat(ExternalParser.check("tesseract"))
+        Assumptions.assumeThat(ExternalParser.check("tesseract"))
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
         runSearch("test-ocr.png", "words");
@@ -297,9 +303,10 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         if (content != null) {
             query.addMust(new ESMatchQuery("content", content));
         }
-        ESSearchResponse response = client.search(
-                new ESSearchRequest().withIndex(JOB_NAME + INDEX_SUFFIX_DOCS).withESQuery(query));
-        assertThat(response.getTotalHits()).isEqualTo(1L);
+        ESSearchResponse response = client.search(new ESSearchRequest()
+                .withIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
+                .withESQuery(query));
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
         return response;
     }
 }

@@ -20,18 +20,17 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.awaitility.Awaitility.await;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.Files;
 import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.junit.Test;
 
 /** Test filename_as_id crawler setting */
@@ -49,12 +48,13 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setFilenameAsId(true);
         crawler = startCrawler(fsSettings);
 
-        await().atMost(MAX_WAIT_FOR_SEARCH)
+        Awaitility.await()
+                .atMost(MAX_WAIT_FOR_SEARCH)
                 .alias("Document should exists with [roottxtfile.txt] id...")
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
-                        return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "roottxtfile.txt");
+                        return client.exists(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "roottxtfile.txt");
                     } catch (ElasticsearchClientException e) {
                         return false;
                     }
@@ -74,24 +74,28 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         // We should have two docs first
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
 
-        await().atMost(Duration.ofSeconds(10))
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
                 .alias("Document should exists with [id1.txt] id...")
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
-                        return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id1.txt");
+                        return client.exists(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "id1.txt");
                     } catch (ElasticsearchClientException e) {
                         return false;
                     }
                 });
-        await().atMost(Duration.ofSeconds(10))
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
                 .alias("Document should exists with [id2.txt] id...")
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
-                        return client.exists(getCrawlerName() + INDEX_SUFFIX_DOCS, "id2.txt");
+                        return client.exists(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "id2.txt");
                     } catch (ElasticsearchClientException e) {
                         return false;
                     }
@@ -103,6 +107,8 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
 
         // We expect to have two files
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
     }
 }

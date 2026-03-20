@@ -20,10 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.charset.StandardCharsets;
@@ -49,7 +48,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We should have two docs first
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
 
         // We remove a file
         logger.info("  ---> Removing file deleted_roottxtfile.txt");
@@ -57,7 +58,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We expect to have one file
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
     }
 
     @Test
@@ -68,7 +71,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We should have two docs first
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
 
         // We remove a file
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
@@ -76,7 +81,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We expect to have two files
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
     }
 
     /**
@@ -92,7 +99,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We should have 7 docs first
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 7L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                7L,
+                currentTestResourceDir);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -103,7 +112,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 4L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                4L,
+                currentTestResourceDir);
     }
 
     /**
@@ -118,7 +129,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We should have one doc first
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
 
         // We rename the file
         logger.info(" ---> Renaming file roottxtfile.txt to renamed_roottxtfile.txt");
@@ -135,7 +148,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         // We expect to have one file only with a new name
         countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESTermQuery("file.filename", "renamed_roottxtfile.txt")),
                 1L,
                 currentTestResourceDir);
@@ -153,7 +166,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We should have one doc first
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
 
         // We move the file
         logger.info(" ---> Moving file roottxtfile.txt to a tmp dir");
@@ -164,7 +179,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We expect to have 0 file
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 0L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                0L,
+                currentTestResourceDir);
 
         // We move the file back
         logger.info(" ---> Moving file roottxtfile.txt from the tmp dir");
@@ -178,7 +195,9 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We expect to have 1 file
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
     }
 
     /**
@@ -204,7 +223,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have 1 doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -217,6 +236,6 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We expect to have 2 docs now
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
     }
 }

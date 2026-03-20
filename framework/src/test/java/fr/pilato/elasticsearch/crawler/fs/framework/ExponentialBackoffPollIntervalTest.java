@@ -20,9 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.Duration;
+import org.assertj.core.api.Assertions;
 import org.awaitility.pollinterval.PollInterval;
 import org.junit.Test;
 
@@ -36,26 +35,26 @@ public class ExponentialBackoffPollIntervalTest {
 
         // We use the start duration for the first poll
         duration = pollInterval.next(++pollCount, duration);
-        assertThat(duration).hasMillis(500);
+        Assertions.assertThat(duration).hasMillis(500);
 
         // Then we double it until we reach the max duration
         duration = pollInterval.next(++pollCount, duration);
-        assertThat(duration).hasSeconds(1);
+        Assertions.assertThat(duration).hasSeconds(1);
 
         // Then we double it until we reach the max duration
         duration = pollInterval.next(++pollCount, duration);
-        assertThat(duration).hasSeconds(2);
+        Assertions.assertThat(duration).hasSeconds(2);
 
         // Then we double it until we reach the max duration
         duration = pollInterval.next(++pollCount, duration);
-        assertThat(duration).hasSeconds(4);
+        Assertions.assertThat(duration).hasSeconds(4);
 
         // Now we have reached the max duration
         duration = pollInterval.next(++pollCount, duration);
-        assertThat(duration).hasSeconds(5);
+        Assertions.assertThat(duration).hasSeconds(5);
 
         // We stay at the max duration
         duration = pollInterval.next(++pollCount, duration);
-        assertThat(duration).hasSeconds(5);
+        Assertions.assertThat(duration).hasSeconds(5);
     }
 }

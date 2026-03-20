@@ -20,16 +20,16 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import fr.pilato.elasticsearch.crawler.fs.settings.*;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -54,13 +54,13 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Files.createDirectories(jobDir);
 
         Files.writeString(
-                jobDir.resolve(SETTINGS_YAML),
+                jobDir.resolve(FsSettingsLoader.SETTINGS_YAML),
                 "name: \"modify_settings_server_ftp\"\n" + "server:\n"
                         + "  hostname: \"mynode.mydomain.com\"\n"
                         + "  protocol: \"ftp\"\n");
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ftp");
-        assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.FTP_PORT);
-        assertThat(settings.getServer().getUsername()).isEqualTo("anonymous");
+        Assertions.assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.FTP_PORT);
+        Assertions.assertThat(settings.getServer().getUsername()).isEqualTo("anonymous");
     }
 
     @Test
@@ -70,15 +70,15 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Files.createDirectories(jobDir);
 
         Files.writeString(
-                jobDir.resolve(SETTINGS_YAML),
+                jobDir.resolve(FsSettingsLoader.SETTINGS_YAML),
                 "name: \"modify_settings_server_ssh\"\n" + "server:\n"
                         + "  hostname: \"mynode.mydomain.com\"\n"
                         + "  protocol: \"ssh\"");
 
-        logger.info("{}", Files.readString(jobDir.resolve(SETTINGS_YAML)));
+        logger.info("{}", Files.readString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML)));
 
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ssh");
-        assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.SSH_PORT);
-        assertThat(settings.getServer().getUsername()).isNull();
+        Assertions.assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.SSH_PORT);
+        Assertions.assertThat(settings.getServer().getUsername()).isNull();
     }
 }

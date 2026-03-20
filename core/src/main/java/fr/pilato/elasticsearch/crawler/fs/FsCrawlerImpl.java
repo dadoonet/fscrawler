@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs;
 
-import static org.awaitility.Awaitility.await;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -39,6 +37,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 
 /** @author dadoonet (David Pilato) */
@@ -222,7 +221,8 @@ public class FsCrawlerImpl implements AutoCloseable {
                 // handles it and exits cleanly when closed==true.
                 fsCrawlerThread.interrupt();
 
-                await().pollInterval(Duration.ofMillis(500))
+                Awaitility.await()
+                        .pollInterval(Duration.ofMillis(500))
                         .atMost(Duration.ofSeconds(30))
                         .until(() -> {
                             if (fsCrawlerThread.isAlive()) {

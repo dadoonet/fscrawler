@@ -20,14 +20,15 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
@@ -39,7 +40,11 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
-import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -50,6 +55,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -118,8 +124,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
-        managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        managementService.getClient().deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        managementService.getClient().deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        managementService.getClient().deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
 
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
     }
@@ -217,10 +223,10 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
     protected void checkDocument(String filename, HitChecker checker) throws IOException, ElasticsearchClientException {
         ESSearchResponse response = documentService.search(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                 .withESQuery(new ESTermQuery("file.filename", filename)));
 
-        assertThat(response.getTotalHits()).isEqualTo(1L);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
         ESSearchHit hit = response.getHits().get(0);
         logger.debug("For [file.filename:{}], we got: {}", filename, hit.getSource());
 
@@ -256,7 +262,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
     public static UploadResponse uploadFileUsingApi(
             WebTarget target, Path file, Path tagsFile, String index, String api, String id) {
-        assertThat(file).exists();
+        Assertions.assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
 
@@ -274,7 +280,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
             mp.field("index", index);
             // Sadly this does not work
             /*
-            if (rarely()) {
+            if (RandomizedTest.rarely()) {
                 logger.info("Force index name to {} using a form field", index);
                 mp.field("index", index);
             } else {
@@ -288,7 +294,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
             mp.field("id", id);
             // Sadly this does not work
             /*
-            if (rarely()) {
+            if (RandomizedTest.rarely()) {
                 logger.info("Force id to {} using a form field", id);
                 mp.field("id", id);
             } else {
@@ -312,7 +318,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     }
 
     public static UploadResponse putDocument(WebTarget target, Path file, Path tagsFile, String index, String id) {
-        assertThat(file).exists();
+        Assertions.assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
 
@@ -323,7 +329,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         mp.bodyPart(filePart);
 
         if (index != null) {
-            if (rarely()) {
+            if (RandomizedTest.rarely()) {
                 logger.info("Force index name to {} using a form field", index);
                 mp.field("index", index);
             } else {

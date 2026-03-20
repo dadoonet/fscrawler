@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -32,6 +30,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -61,11 +60,13 @@ public class FsLocalPluginTest {
 
         Collection<FileAbstractModel> files = localPlugin.getFiles(tempDir.toString());
 
-        assertThat(files).hasSize(2);
+        Assertions.assertThat(files).hasSize(2);
         Iterator<FileAbstractModel> iterator = files.iterator();
         // Files should be sorted by modification time (most recent first)
-        assertThat(iterator.next().getName()).isEqualTo(tempFile2.toFile().getName());
-        assertThat(iterator.next().getName()).isEqualTo(tempFile1.toFile().getName());
+        Assertions.assertThat(iterator.next().getName())
+                .isEqualTo(tempFile2.toFile().getName());
+        Assertions.assertThat(iterator.next().getName())
+                .isEqualTo(tempFile1.toFile().getName());
 
         // Clean up
         Files.delete(tempFile1);
@@ -76,8 +77,8 @@ public class FsLocalPluginTest {
     @Test
     public void exists() throws Exception {
         Path tempDir = Files.createTempDirectory("testExists");
-        assertThat(localPlugin.exists(tempDir.toString())).isTrue();
-        assertThat(localPlugin.exists(tempDir.resolve("nonexistent").toString()))
+        Assertions.assertThat(localPlugin.exists(tempDir.toString())).isTrue();
+        Assertions.assertThat(localPlugin.exists(tempDir.resolve("nonexistent").toString()))
                 .isFalse();
 
         // Clean up
@@ -86,6 +87,6 @@ public class FsLocalPluginTest {
 
     @Test
     public void getType() {
-        assertThat(localPlugin.getType()).isEqualTo("local");
+        Assertions.assertThat(localPlugin.getType()).isEqualTo("local");
     }
 }

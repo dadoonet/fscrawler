@@ -20,15 +20,13 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import java.util.Collection;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.After;
 import org.junit.Before;
@@ -124,21 +122,35 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
             testFilesInDir(
                     ftpPlugin,
                     "/",
-                    tuple(false, true, "nested", "", "/", "/nested", 0L, 777, "none", "none"),
-                    tuple(false, true, "permission", "", "/", "/permission", 0L, 777, "none", "none"),
-                    tuple(false, true, "subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 777, "none", "none"),
-                    tuple(true, false, "testfile.txt", "txt", "/", "/testfile.txt", 15L, 777, "none", "none"));
+                    Assertions.tuple(false, true, "nested", "", "/", "/nested", 0L, 777, "none", "none"),
+                    Assertions.tuple(false, true, "permission", "", "/", "/permission", 0L, 777, "none", "none"),
+                    Assertions.tuple(
+                            false, true, "subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 777, "none", "none"),
+                    Assertions.tuple(
+                            true, false, "testfile.txt", "txt", "/", "/testfile.txt", 15L, 777, "none", "none"));
             testFilesInDir(
                     ftpPlugin,
                     "/nested",
-                    tuple(false, true, "buzz", "", "/nested", "/nested/buzz", 0L, 777, "none", "none"),
-                    tuple(true, false, "foo.txt", "txt", "/nested", "/nested/foo.txt", 24L, 777, "none", "none"),
-                    tuple(true, false, "bar.txt", "txt", "/nested", "/nested/bar.txt", 8L, 777, "none", "none"));
+                    Assertions.tuple(false, true, "buzz", "", "/nested", "/nested/buzz", 0L, 777, "none", "none"),
+                    Assertions.tuple(
+                            true, false, "foo.txt", "txt", "/nested", "/nested/foo.txt", 24L, 777, "none", "none"),
+                    Assertions.tuple(
+                            true, false, "bar.txt", "txt", "/nested", "/nested/bar.txt", 8L, 777, "none", "none"));
             testFilesInDir(
                     ftpPlugin,
                     "/permission",
-                    tuple(true, false, "all.txt", "txt", "/permission", "/permission/all.txt", 3L, 777, "none", "none"),
-                    tuple(
+                    Assertions.tuple(
+                            true,
+                            false,
+                            "all.txt",
+                            "txt",
+                            "/permission",
+                            "/permission/all.txt",
+                            3L,
+                            777,
+                            "none",
+                            "none"),
+                    Assertions.tuple(
                             true,
                             false,
                             "none.txt",
@@ -152,7 +164,7 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
             testFilesInDir(
                     ftpPlugin,
                     "/subdir_with_space ",
-                    tuple(
+                    Assertions.tuple(
                             true,
                             false,
                             "hello.txt",
@@ -163,7 +175,7 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
                             777,
                             "none",
                             "none"),
-                    tuple(
+                    Assertions.tuple(
                             true,
                             false,
                             "world.txt",
@@ -182,14 +194,14 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
     @Test
     public void getType() {
         FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
-        assertThat(ftpPlugin.getType()).isEqualTo("ftp");
+        Assertions.assertThat(ftpPlugin.getType()).isEqualTo("ftp");
     }
 
     private void testFilesInDir(FsCrawlerExtensionFsProvider plugin, String path, Tuple... values) throws Exception {
-        assertThat(plugin.exists(path)).isEqualTo(values.length > 0);
+        Assertions.assertThat(plugin.exists(path)).isEqualTo(values.length > 0);
         Collection<FileAbstractModel> files = plugin.getFiles(path);
-        assertThat(files).hasSize(values.length);
-        assertThat(files)
+        Assertions.assertThat(files).hasSize(values.length);
+        Assertions.assertThat(files)
                 .extracting(
                         FileAbstractModel::isFile,
                         FileAbstractModel::isDirectory,

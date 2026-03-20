@@ -20,13 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.assertj.core.api.Assumptions.assumeThatCode;
-
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import java.io.ByteArrayInputStream;
@@ -41,6 +37,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -68,12 +66,12 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void keynoteIssue782() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
         Doc doc = extractFromFile("test.key");
-        assertThat(doc.getContent()).contains("FSCrawler").contains("You know, for files!");
+        Assertions.assertThat(doc.getContent()).contains("FSCrawler").contains("You know, for files!");
     }
 
     /**
@@ -86,7 +84,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         fsSettings.getFs().getOcr().setEnabled(false);
         Doc doc = extractFromFile("test.key", fsSettings);
 
-        assertThat(doc.getContent())
+        Assertions.assertThat(doc.getContent())
                 .doesNotContain("FSCrawler")
                 .contains("Data/mt-6335B693-B5E5-4B9F-A3FC-584A33E732CA-9090.jpg");
     }
@@ -101,7 +99,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     @Test
     public void emailIssue494NoDuplicateContent() throws IOException {
         Doc doc = extractFromFile("issue-494-email-with-plain-and-html.eml");
-        assertThat(doc.getContent()).containsOnlyOnce("Unique plain text body for issue 494");
+        Assertions.assertThat(doc.getContent()).containsOnlyOnce("Unique plain text body for issue 494");
     }
 
     /**
@@ -113,13 +111,13 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setLangDetect(true);
         Doc doc = extractFromFile("test.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage()).isEqualTo("en");
+        Assertions.assertThat(doc.getMeta().getLanguage()).isEqualTo("en");
         doc = extractFromFile("test-fr.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage()).isEqualTo("fr");
+        Assertions.assertThat(doc.getMeta().getLanguage()).isEqualTo("fr");
         doc = extractFromFile("test-de.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage()).isEqualTo("de");
+        Assertions.assertThat(doc.getMeta().getLanguage()).isEqualTo("de");
         doc = extractFromFile("test-enfrde.txt", fsSettings);
-        assertThat(doc.getMeta().getLanguage()).isEqualTo("fr");
+        Assertions.assertThat(doc.getMeta().getLanguage()).isEqualTo("fr");
     }
 
     /**
@@ -132,31 +130,33 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("issue-221-doc1.pdf");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("coucou");
+        Assertions.assertThat(doc.getContent()).contains("coucou");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).contains("application/pdf");
+        Assertions.assertThat(doc.getFile().getContentType()).contains("application/pdf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNotNull();
-        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 9, 20, 9, 38, 56)));
-        assertThat(doc.getMeta().getKeywords()).isNotEmpty();
-        assertThat(doc.getMeta().getTitle()).contains("Recherche");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNotNull();
+        Assertions.assertThat(doc.getMeta().getDate())
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 9, 20, 9, 38, 56)));
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNotEmpty();
+        Assertions.assertThat(doc.getMeta().getTitle()).contains("Recherche");
 
         // We test document 2
         doc = extractFromFile("issue-221-doc2.pdf");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("FORMATIONS");
+        Assertions.assertThat(doc.getContent()).contains("FORMATIONS");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).contains("application/pdf");
+        Assertions.assertThat(doc.getFile().getContentType()).contains("application/pdf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNull();
-        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 9, 19, 14, 29, 37)));
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isNull();
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNull();
+        Assertions.assertThat(doc.getMeta().getDate())
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 9, 19, 14, 29, 37)));
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isNull();
     }
 
     /**
@@ -170,19 +170,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("issue-163.xml", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent()).isEqualTo("   \n");
+        Assertions.assertThat(doc.getContent()).isEqualTo("   \n");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).contains("application/xml");
+        Assertions.assertThat(doc.getFile().getContentType()).contains("application/xml");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNull();
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isNull();
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNull();
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(4)
                 .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
@@ -195,19 +195,20 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("doc");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This is a sample text available in page");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("application/msword");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/msword");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
-        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
-        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
-        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        Assertions.assertThat(doc.getMeta().getDate())
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
+        Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(25)
                 .containsEntry("cp:revision", "2")
                 .containsEntry("meta:word-count", "19")
@@ -241,20 +242,21 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("docx");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This is a sample text available in page");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType())
+        Assertions.assertThat(doc.getFile().getContentType())
                 .isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
-        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 36, 0)));
-        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
-        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        Assertions.assertThat(doc.getMeta().getDate())
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 36, 0)));
+        Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(31)
                 .containsEntry("cp:revision", "4")
                 .containsEntry("dc:description", "Comments")
@@ -295,19 +297,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("html");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("a sample text available in");
+        Assertions.assertThat(doc.getContent()).contains("a sample text available in");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).contains("text/html");
+        Assertions.assertThat(doc.getFile().getContentType()).contains("text/html");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNull();
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNull();
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(15)
                 .containsEntry("Titre", "Test Tika title")
                 .containsEntry("Content-Location", "Web%20page")
@@ -335,19 +337,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("mp3");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("Test Tika");
+        Assertions.assertThat(doc.getContent()).contains("Test Tika");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("audio/mpeg");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("audio/mpeg");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(19)
                 .containsEntry("xmpDM:genre", "Vocal")
                 .containsEntry("xmpDM:album", "FS Crawler")
@@ -367,9 +369,9 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("xmpDM:duration", "1.0187751054763794")
                 .containsEntry("Content-Type", "audio/mpeg")
                 .containsEntry("samplerate", "44100");
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .extractingByKey("xmpDM:logComment")
-                .satisfies(rawField -> assertThat(rawField).containsAnyOf("Hello but reverted"));
+                .satisfies(rawField -> Assertions.assertThat(rawField).containsAnyOf("Hello but reverted"));
     }
 
     @Test
@@ -377,19 +379,20 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("odt");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This is a sample text available in page");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("application/vnd.oasis.opendocument.text");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/vnd.oasis.opendocument.text");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
-        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
-        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", "  keyword2");
-        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        Assertions.assertThat(doc.getMeta().getDate())
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
+        Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", "  keyword2");
+        Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(22)
                 .containsEntry("dc:description", "Comments")
                 .containsEntry("meta:paragraph-count", "1")
@@ -420,19 +423,20 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("pdf");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This is a sample text available in page");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
-        assertThat(doc.getMeta().getDate()).isEqualTo(localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 42)));
-        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
-        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        Assertions.assertThat(doc.getMeta().getDate())
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 42)));
+        Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(42)
                 .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
                 .containsEntry("pdf:PDFVersion", "1.5")
@@ -475,7 +479,7 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("access_permission:can_modify", "true")
                 .containsEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z")
                 .containsEntry("pdf:containsDamagedFont", "false");
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .containsKey("pdf:ocrPageCount")
                 .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
                 .isNotEmpty();
@@ -492,19 +496,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test.jpg", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent()).isNullOrEmpty();
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("image/jpeg");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("image/jpeg");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNull();
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isNull();
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNull();
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(64)
                 .containsEntry("ICC:Profile Connection Space", "XYZ")
                 .containsEntry("Number of Tables", "4 Huffman tables")
@@ -550,7 +554,8 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("File Size", "41426 bytes")
                 .containsEntry("Exif SubIFD:Exif Version", "2.21")
                 .containsKey("ICC:Red Parametric TRC")
-                .hasEntrySatisfying("File Name", value -> assertThat(value).startsWith("apache-tika-"))
+                .hasEntrySatisfying(
+                        "File Name", value -> Assertions.assertThat(value).startsWith("apache-tika-"))
                 .containsEntry("Exif IFD0:Resolution Unit", "Inch")
                 .containsEntry("ICC:Color space", "RGB")
                 .containsKey("ICC:Green Parametric TRC")
@@ -577,19 +582,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("rtf");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This is a sample text available in page");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("application/rtf");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/rtf");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
-        assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
+        Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(15)
                 .containsEntry("meta:word-count", "19")
                 .containsEntry("dc:subject", "Test Tika Object")
@@ -605,7 +610,7 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("meta:page-count", "2")
                 .containsEntry("cp:category", "test")
                 .containsEntry("Content-Type", "application/rtf");
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .containsKey("dcterms:created")
                 .extractingByKey("dcterms:created", InstanceOfAssertFactories.STRING)
                 .startsWith("2016-07-0");
@@ -616,19 +621,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("txt");
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).contains("text/plain");
+        Assertions.assertThat(doc.getFile().getContentType()).contains("text/plain");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNull();
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isNull();
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNull();
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(7)
                 .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
@@ -638,8 +643,8 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector")
                 .containsEntry("Content-Type", "text/plain; charset=ISO-8859-1");
 
-        assertThat(doc.getAttachment()).isNull();
-        assertThat(doc.getFile().getChecksum()).isNull();
+        Assertions.assertThat(doc.getAttachment()).isNull();
+        Assertions.assertThat(doc.getFile().getChecksum()).isNull();
     }
 
     @Test
@@ -647,19 +652,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFileExtension("wav");
 
         // Extracted content
-        assertThat(doc.getContent()).isEmpty();
+        Assertions.assertThat(doc.getContent()).isEmpty();
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("audio/vnd.wave");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("audio/vnd.wave");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNull();
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isNull();
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNull();
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(10)
                 .containsEntry("xmpDM:audioSampleRate", "44100")
                 .containsEntry("channels", "2")
@@ -681,8 +686,8 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This file contains some words.");
-        assertThat(doc.getAttachment()).isNotNull();
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getAttachment()).isNotNull();
     }
 
     @Test
@@ -694,13 +699,13 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent()).isNull();
-        assertThat(doc.getAttachment()).isNotNull();
+        Assertions.assertThat(doc.getContent()).isNull();
+        Assertions.assertThat(doc.getAttachment()).isNotNull();
     }
 
     @Test
     public void extractFromTxtAndStoreSourceWithDigest() throws IOException {
-        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+        Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
@@ -709,14 +714,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This file contains some words.");
-        assertThat(doc.getAttachment()).isNotNull();
-        assertThat(doc.getFile().getChecksum()).isNotNull();
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getAttachment()).isNotNull();
+        Assertions.assertThat(doc.getFile().getChecksum()).isNotNull();
     }
 
     @Test
     public void extractFromTxtWithDigest() throws IOException {
-        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+        Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
@@ -724,9 +729,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
-        assertThat(doc.getContent()).contains("This file contains some words.");
-        assertThat(doc.getAttachment()).isNull();
-        assertThat(doc.getFile().getChecksum()).isNotNull();
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getAttachment()).isNull();
+        Assertions.assertThat(doc.getFile().getChecksum()).isNotNull();
     }
 
     /**
@@ -737,7 +742,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void checksumForSmallFile() throws Exception {
-        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+        Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
@@ -745,7 +750,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Verify the checksum is computed
-        assertThat(doc.getFile().getChecksum())
+        Assertions.assertThat(doc.getFile().getChecksum())
                 .as("Checksum should be computed for small files using in-memory buffer")
                 .isNotNull()
                 .isNotEmpty();
@@ -758,7 +763,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         for (byte b : expectedDigest) {
             expectedChecksum.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
         }
-        assertThat(doc.getFile().getChecksum()).isEqualTo(expectedChecksum.toString());
+        Assertions.assertThat(doc.getFile().getChecksum()).isEqualTo(expectedChecksum.toString());
     }
 
     /**
@@ -769,7 +774,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void checksumWithUnknownFilesize() throws Exception {
-        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+        Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         // Use test.txt content but pass filesize as 0 (unknown)
         byte[] content = getBinaryContent("test.txt").readAllBytes();
@@ -795,7 +800,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         TikaDocParser.generate(fsSettings, new ByteArrayInputStream(content), doc, 0);
 
         // Verify the checksum is still correctly computed
-        assertThat(doc.getFile().getChecksum())
+        Assertions.assertThat(doc.getFile().getChecksum())
                 .as("Checksum should be computed correctly even with unknown filesize")
                 .isEqualTo(expectedChecksum.toString());
     }
@@ -809,7 +814,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     public void checksumForLargeBinaryFile() throws Exception {
-        assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
+        Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         // Create a binary file larger than 64KB (100KB)
         int size = 100 * 1024;
@@ -839,31 +844,31 @@ public class TikaDocParserTest extends DocParserTestCase {
         TikaDocParser.generate(fsSettings, new ByteArrayInputStream(data), doc, size);
 
         // Verify the checksum is computed over the entire file
-        assertThat(doc.getFile().getChecksum())
+        Assertions.assertThat(doc.getFile().getChecksum())
                 .as("Checksum should be computed over the entire file, not just the first 64KB")
                 .isEqualTo(expectedChecksum.toString());
     }
 
     @Test
     public void ocr() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
         // Test with OCR On (default)
         Doc doc = extractFromFile("test-ocr.png");
-        assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf");
-        assertThat(doc.getContent()).contains("This file contains some words.");
-        assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
         doc = extractFromFile("test-ocr.docx");
-        assertThat(doc.getContent()).contains("This file contains some words.");
-        assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
     }
 
     @Test
     public void ocrWithPdfStrategyNoOcr() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
@@ -871,18 +876,18 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("no_ocr");
         Doc doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent()).contains("This file also contains text.");
-        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent()).doesNotContain("This file contains some words.");
         doc = extractFromFile("test-ocr.docx", fsSettings);
-        assertThat(doc.getContent()).contains("This file also contains text.");
-        assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
     }
 
     @Test
     public void ocrWithPdfStrategyOcrOnly() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
@@ -890,19 +895,19 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("ocr_only");
         Doc doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         // TODO: for a strange reason ocr_only also extracts text.
-        // assertThat(doc.getContent(), not(containsString("This file also contains text.")));
+        // Assertions.assertThat(doc.getContent(), not(containsString("This file also contains text.")));
         doc = extractFromFile("test-ocr.docx", fsSettings);
-        assertThat(doc.getContent()).contains("This file contains some words.");
-        assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
     }
 
     @Test
     public void ocrWithPdfStrategyAuto() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
@@ -911,15 +916,15 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("auto");
         Doc doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
-        assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
         doc = extractFromFile("test-ocr-notext.pdf", fsSettings);
-        assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
     }
 
     @Test
     public void ocrOff() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
@@ -927,16 +932,16 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setEnabled(false);
         Doc doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent()).isEmpty();
+        Assertions.assertThat(doc.getContent()).isEmpty();
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).doesNotContain("This file contains some words.");
         doc = extractFromFile("test-ocr.docx", fsSettings);
-        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).doesNotContain("This file contains some words.");
     }
 
     @Test
     public void ocrWrongPaths() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
@@ -945,14 +950,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         fsSettings.getFs().getOcr().setPath("/path/to/doesnotexist");
         fsSettings.getFs().getOcr().setDataPath("/path/to/doesnotexist");
         Doc doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent()).isEmpty();
+        Assertions.assertThat(doc.getContent()).isEmpty();
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent()).doesNotContain("This file contains some words.");
+        Assertions.assertThat(doc.getContent()).doesNotContain("This file contains some words.");
     }
 
     @Test
     public void ocrOutputTypeHocr() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
@@ -960,14 +965,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setOutputType("hocr");
         Doc doc = extractFromFile("test-ocr.png", fsSettings);
-        assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
+        Assertions.assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
         doc = extractFromFile("test-ocr.pdf", fsSettings);
-        assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
+        Assertions.assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
     }
 
     @Test
     public void ocrLanguageHeb() throws IOException {
-        assumeThat(isOcrAvailable)
+        Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
@@ -977,7 +982,7 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("test-ocr-heb.pdf", fsSettings);
         try {
             // This test requires to have the hebrew language pack, so we don't fail the test but just log
-            assertThat(doc.getContent()).contains("המבודדים מתקבלים");
+            Assertions.assertThat(doc.getContent()).contains("המבודדים מתקבלים");
         } catch (AssertionError e) {
             logger.info(
                     "We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
@@ -1000,28 +1005,28 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         // Test that default parser for HTML is HTML parser
         Doc doc = extractFromFile("test.html");
-        assertThat(doc.getContent()).doesNotContain("Test Tika title");
-        assertThat(doc.getContent()).contains("This second part of the text is in Page 2");
+        Assertions.assertThat(doc.getContent()).doesNotContain("Test Tika title");
+        Assertions.assertThat(doc.getContent()).contains("This second part of the text is in Page 2");
 
         // Test HTML parser is never used, TXT parser used instead
         doc = extractFromFile("test.html", fsSettings);
-        assertThat(doc.getContent()).contains("<title>Test Tika title</title>");
+        Assertions.assertThat(doc.getContent()).contains("<title>Test Tika title</title>");
 
         // Test that default parser for XHTML is HTML parser
         doc = extractFromFile("test.xhtml");
-        assertThat(doc.getContent()).doesNotContain("Test Tika title");
-        assertThat(doc.getContent()).contains("This is an example of XHTML");
+        Assertions.assertThat(doc.getContent()).doesNotContain("Test Tika title");
+        Assertions.assertThat(doc.getContent()).contains("This is an example of XHTML");
 
         // Test XML parser is used to parse XHTML
         doc = extractFromFile("test.xhtml", fsSettings);
-        assertThat(doc.getContent()).contains("Test Tika title");
-        assertThat(doc.getContent()).doesNotContain("<title>Test Tika title</title>");
+        Assertions.assertThat(doc.getContent()).contains("Test Tika title");
+        Assertions.assertThat(doc.getContent()).doesNotContain("<title>Test Tika title</title>");
     }
 
     @Test
     public void shiftJisEncoding() throws IOException {
         Doc doc = extractFromFile("issue-400-shiftjis.txt");
-        assertThat(doc.getContent()).isNotEmpty();
+        Assertions.assertThat(doc.getContent()).isNotEmpty();
     }
 
     /**
@@ -1035,24 +1040,24 @@ public class TikaDocParserTest extends DocParserTestCase {
     @Test
     public void pdfIssue1097() throws IOException {
         // Run the test with or without OCR as the behavior changes
-        boolean withOcr = isOcrAvailable && randomBoolean();
+        boolean withOcr = isOcrAvailable && RandomizedTest.randomBoolean();
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         fsSettings.getFs().getOcr().setEnabled(withOcr);
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
         // TODO This test is now passing but should be failing with ocr when
         // https://issues.apache.org/jira/browse/TIKA-3364 is solved
-        assertThat(doc.getContent())
+        Assertions.assertThat(doc.getContent())
                 .isEqualTo(withOcr ? "\nDummy PDF file\n\nDummy PDF file\n\n\n\n" : "\nDummy PDF file\n\n\n");
 
         // Meta data
-        assertThat(doc.getMeta().getAuthor()).isNotNull();
-        assertThat(doc.getMeta().getDate()).isNull();
-        assertThat(doc.getMeta().getKeywords()).isNull();
-        assertThat(doc.getMeta().getTitle()).isNull();
+        Assertions.assertThat(doc.getMeta().getAuthor()).isNotNull();
+        Assertions.assertThat(doc.getMeta().getDate()).isNull();
+        Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
+        Assertions.assertThat(doc.getMeta().getTitle()).isNull();
 
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(36)
                 .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
                 .containsEntry("pdf:PDFVersion", "1.4")
@@ -1089,7 +1094,7 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("pdf:docinfo:producer", "OpenOffice.org 2.1")
                 .containsEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z")
                 .containsEntry("pdf:containsDamagedFont", "false");
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .containsKey("pdf:ocrPageCount")
                 .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
                 .isNotEmpty();
@@ -1106,11 +1111,11 @@ public class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         Doc doc = extractFromFile("issue-834.txt", fsSettings);
-        assertThat(doc.getContent()).isEmpty();
+        Assertions.assertThat(doc.getContent()).isEmpty();
 
         // Meta data
         Map<String, String> raw = doc.getMeta().getRaw();
-        assertThat(raw)
+        Assertions.assertThat(raw)
                 .hasSize(2)
                 .containsEntry("Content-Type", "text/plain")
                 .containsEntry("resourceName", "issue-834.txt");
@@ -1121,13 +1126,13 @@ public class TikaDocParserTest extends DocParserTestCase {
     public void protectedDocument() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         Doc doc = extractFromFile("test-protected.docx", fsSettings);
-        assertThat(doc.getFile().getContentType()).isEqualTo("application/x-tika-ooxml-protected");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/x-tika-ooxml-protected");
     }
 
     @Test
     public void docxWithEmbeddedBadPDF() throws IOException {
         Doc doc = extractFromFile("issue-stackoverflow.docx");
-        assertThat(doc.getContent()).isNotEmpty();
+        Assertions.assertThat(doc.getContent()).isNotEmpty();
     }
 
     /**
@@ -1142,11 +1147,11 @@ public class TikaDocParserTest extends DocParserTestCase {
     @Test
     public void mockParserRuntimeException() throws IOException {
         Doc doc = testWithMock("mock-runtime-exception.xml");
-        assertThat(doc.getContent()).isNull();
+        Assertions.assertThat(doc.getContent()).isNull();
         doc = testWithMock("mock-io-exception.xml");
-        assertThat(doc.getContent()).isNull();
+        Assertions.assertThat(doc.getContent()).isNull();
         doc = testWithMock("mock-parse-exception.xml");
-        assertThat(doc.getContent()).isNull();
+        Assertions.assertThat(doc.getContent()).isNull();
     }
 
     /**
@@ -1160,9 +1165,9 @@ public class TikaDocParserTest extends DocParserTestCase {
     public void mockParserStdoutAndStderr() throws IOException {
         Doc doc = testWithMock("mock-stdout.xml");
         // Content should be extracted
-        assertThat(doc.getContent()).contains("I'm a fake file");
+        Assertions.assertThat(doc.getContent()).contains("I'm a fake file");
         // Meta data author should be there
-        assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
+        Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
     }
 
     /**
@@ -1177,9 +1182,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile(mockFilename, fsSettings);
 
         // The document should be created despite the exception
-        assertThat(doc).isNotNull();
+        Assertions.assertThat(doc).isNotNull();
         // The filename should still be set
-        assertThat(doc.getFile().getFilename()).isEqualTo(mockFilename);
+        Assertions.assertThat(doc.getFile().getFilename()).isEqualTo(mockFilename);
 
         return doc;
     }

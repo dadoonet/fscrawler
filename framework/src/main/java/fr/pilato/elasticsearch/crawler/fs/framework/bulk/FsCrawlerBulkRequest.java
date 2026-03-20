@@ -20,9 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
-
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
@@ -58,7 +57,7 @@ public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
         // and only compute the size if we need to.
         if (maxBulkSize != null && maxBulkSize.getBytes() > 0) {
             // TODO may be we should just add the serialized request to the T object as an optional payload?
-            String jsonValue = serialize(request);
+            String jsonValue = JsonUtil.serialize(request);
             byte[] bytes = jsonValue.getBytes();
             totalByteSize += bytes.length;
         }

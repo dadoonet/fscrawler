@@ -20,13 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
@@ -34,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 @SuppressWarnings("ALL")
@@ -54,13 +53,13 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
         }
         UploadResponse uploadResponse = uploadFile(target, from);
-        assertThat(uploadResponse.isOk()).isTrue();
+        Assertions.assertThat(uploadResponse.isOk()).isTrue();
 
         // We wait until we have our document
-        ESSearchResponse response =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
+            Assertions.assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
         }
     }
 
@@ -73,17 +72,18 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
         }
         Files.walk(from).filter(Files::isRegularFile).forEach(path -> {
             UploadResponse response = uploadFile(target, path);
-            assertThat(response.getFilename()).isEqualTo(path.getFileName().toString());
+            Assertions.assertThat(response.getFilename())
+                    .isEqualTo(path.getFileName().toString());
         });
 
         // We wait until we have all docs
         ESSearchResponse response = countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS),
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
                 Files.list(from).count(),
                 null,
                 MAX_WAIT_FOR_SEARCH);
         for (ESSearchHit hit : response.getHits()) {
-            assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
+            Assertions.assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
         }
     }
 }

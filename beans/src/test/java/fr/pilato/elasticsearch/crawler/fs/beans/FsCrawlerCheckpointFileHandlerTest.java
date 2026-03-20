@@ -20,14 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,12 +44,12 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     @Test
     public void testReadNonExistent() throws IOException {
         FsCrawlerCheckpoint checkpoint = handler.read("non-existent-job");
-        assertThat(checkpoint).isNull();
+        Assertions.assertThat(checkpoint).isNull();
     }
 
     @Test
     public void testExistsNonExistent() {
-        assertThat(handler.exists("non-existent-job")).isFalse();
+        Assertions.assertThat(handler.exists("non-existent-job")).isFalse();
     }
 
     @Test
@@ -64,13 +62,13 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
 
         handler.write(jobName, checkpoint);
 
-        assertThat(handler.exists(jobName)).isTrue();
+        Assertions.assertThat(handler.exists(jobName)).isTrue();
 
         FsCrawlerCheckpoint read = handler.read(jobName);
-        assertThat(read).isNotNull();
-        assertThat(read.getScanId()).isEqualTo(checkpoint.getScanId());
-        assertThat(read.getFilesProcessed()).isEqualTo(42);
-        assertThat(read.getState()).isEqualTo(CrawlerState.PAUSED);
+        Assertions.assertThat(read).isNotNull();
+        Assertions.assertThat(read.getScanId()).isEqualTo(checkpoint.getScanId());
+        Assertions.assertThat(read.getFilesProcessed()).isEqualTo(42);
+        Assertions.assertThat(read.getState()).isEqualTo(CrawlerState.PAUSED);
     }
 
     @Test
@@ -80,18 +78,18 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
         FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint("/test/path");
         handler.write(jobName, checkpoint);
 
-        assertThat(handler.exists(jobName)).isTrue();
+        Assertions.assertThat(handler.exists(jobName)).isTrue();
 
         handler.clean(jobName);
 
-        assertThat(handler.exists(jobName)).isFalse();
-        assertThat(handler.read(jobName)).isNull();
+        Assertions.assertThat(handler.exists(jobName)).isFalse();
+        Assertions.assertThat(handler.read(jobName)).isNull();
     }
 
     @Test
     public void testCleanNonExistent() {
         // Should not throw an exception even if the job does not exist
-        assertThatNoException().isThrownBy(() -> handler.clean("non-existent-job"));
+        Assertions.assertThatNoException().isThrownBy(() -> handler.clean("non-existent-job"));
     }
 
     @Test
@@ -107,7 +105,7 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
         handler.write(jobName, checkpoint2);
 
         FsCrawlerCheckpoint read = handler.read(jobName);
-        assertThat(read.getFilesProcessed()).isEqualTo(20);
+        Assertions.assertThat(read.getFilesProcessed()).isEqualTo(20);
     }
 
     @Test
@@ -133,15 +131,15 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
 
         FsCrawlerCheckpoint read = handler.read(jobName);
 
-        assertThat(read.getScanId()).isEqualTo("test-scan-id");
-        assertThat(read.getCurrentPath()).isEqualTo("/current");
-        assertThat(read.getPendingPaths()).hasSize(2);
-        assertThat(read.getCompletedPaths()).hasSize(2);
-        assertThat(read.getFilesProcessed()).isEqualTo(100);
-        assertThat(read.getFilesDeleted()).isEqualTo(5);
-        assertThat(read.getState()).isEqualTo(CrawlerState.RUNNING);
-        assertThat(read.getRetryCount()).isEqualTo(3);
-        assertThat(read.getLastError()).isEqualTo("Some error");
+        Assertions.assertThat(read.getScanId()).isEqualTo("test-scan-id");
+        Assertions.assertThat(read.getCurrentPath()).isEqualTo("/current");
+        Assertions.assertThat(read.getPendingPaths()).hasSize(2);
+        Assertions.assertThat(read.getCompletedPaths()).hasSize(2);
+        Assertions.assertThat(read.getFilesProcessed()).isEqualTo(100);
+        Assertions.assertThat(read.getFilesDeleted()).isEqualTo(5);
+        Assertions.assertThat(read.getState()).isEqualTo(CrawlerState.RUNNING);
+        Assertions.assertThat(read.getRetryCount()).isEqualTo(3);
+        Assertions.assertThat(read.getLastError()).isEqualTo("Some error");
     }
 
     @Test
@@ -162,11 +160,11 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
 
         // Check that the checkpoint was created with the expected values
         FsCrawlerCheckpoint checkpoint = handler.read(jobName);
-        assertThat(checkpoint).isNotNull();
-        assertThat(checkpoint.getScanDate()).isEqualTo(legacyJob.getLastrun());
-        assertThat(checkpoint.getNextCheck()).isEqualTo(legacyJob.getNextCheck());
-        assertThat(checkpoint.getFilesProcessed()).isEqualTo(legacyJob.getIndexed());
-        assertThat(checkpoint.getFilesDeleted()).isEqualTo(legacyJob.getDeleted());
-        assertThat(checkpoint.getState()).isEqualTo(CrawlerState.COMPLETED);
+        Assertions.assertThat(checkpoint).isNotNull();
+        Assertions.assertThat(checkpoint.getScanDate()).isEqualTo(legacyJob.getLastrun());
+        Assertions.assertThat(checkpoint.getNextCheck()).isEqualTo(legacyJob.getNextCheck());
+        Assertions.assertThat(checkpoint.getFilesProcessed()).isEqualTo(legacyJob.getIndexed());
+        Assertions.assertThat(checkpoint.getFilesDeleted()).isEqualTo(legacyJob.getDeleted());
+        Assertions.assertThat(checkpoint.getState()).isEqualTo(CrawlerState.COMPLETED);
     }
 }

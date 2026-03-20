@@ -20,13 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.*;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -77,9 +76,9 @@ public class DocUtils {
         logger.trace("Reading tags from {}", filename);
         // We test if the extension is .json or .yml/.yaml
         if (filename.endsWith(".json")) {
-            return getMergedDoc(doc, tags, prettyMapper);
+            return getMergedDoc(doc, tags, JsonUtil.prettyMapper);
         } else {
-            return getMergedDoc(doc, tags, ymlMapper);
+            return getMergedDoc(doc, tags, JsonUtil.ymlMapper);
         }
     }
 
@@ -148,7 +147,7 @@ public class DocUtils {
 
     public static String prettyPrint(Doc doc) {
         try {
-            return prettyMapper.writeValueAsString(doc);
+            return JsonUtil.prettyMapper.writeValueAsString(doc);
         } catch (JsonProcessingException e) {
             logger.warn("Can not pretty print the document as json", e);
             return null;

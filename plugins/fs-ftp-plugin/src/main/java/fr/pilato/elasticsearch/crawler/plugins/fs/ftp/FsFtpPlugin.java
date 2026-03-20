@@ -20,9 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.toOctalPermission;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
@@ -398,15 +397,15 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         /** Determines FTPFile permissions. */
         private static int getFilePermissions(final FTPFile file) {
             try {
-                int user = toOctalPermission(
+                int user = FsCrawlerUtil.toOctalPermission(
                         file.hasPermission(FTPFile.USER_ACCESS, FTPFile.READ_PERMISSION),
                         file.hasPermission(FTPFile.USER_ACCESS, FTPFile.WRITE_PERMISSION),
                         file.hasPermission(FTPFile.USER_ACCESS, FTPFile.EXECUTE_PERMISSION));
-                int group = toOctalPermission(
+                int group = FsCrawlerUtil.toOctalPermission(
                         file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.READ_PERMISSION),
                         file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.WRITE_PERMISSION),
                         file.hasPermission(FTPFile.GROUP_ACCESS, FTPFile.EXECUTE_PERMISSION));
-                int others = toOctalPermission(
+                int others = FsCrawlerUtil.toOctalPermission(
                         file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.READ_PERMISSION),
                         file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.WRITE_PERMISSION),
                         file.hasPermission(FTPFile.WORLD_ACCESS, FTPFile.EXECUTE_PERMISSION));

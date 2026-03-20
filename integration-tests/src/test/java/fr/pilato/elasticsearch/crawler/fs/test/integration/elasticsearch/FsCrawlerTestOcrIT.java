@@ -20,15 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.io.File;
@@ -41,6 +37,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
 import org.junit.Test;
 
 /** Tests with OCR configuration See <a href="https://github.com/dadoonet/fscrawler/issues/1988">#1988</a> */
@@ -54,7 +52,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                 .map(Paths::get)
                 .filter(path -> Files.exists(path.resolve(exec)))
                 .findFirst();
-        assumeThat(tessPath.isPresent())
+        Assumptions.assumeThat(tessPath.isPresent())
                 .as("tesseract executable [%s] should be present in PATH [%s]", exec, System.getenv("PATH"))
                 .isTrue();
         Path tessDirPath = tessPath.get();
@@ -66,13 +64,13 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             crawler = startCrawler();
 
             // We expect to have one file
-            ESSearchResponse searchResponse =
-                    countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+            ESSearchResponse searchResponse = countTestHelper(
+                    new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
             // Check that we extracted the content
-            assertThat(searchResponse.getHits())
+            Assertions.assertThat(searchResponse.getHits())
                     .isNotEmpty()
-                    .allSatisfy(hit -> assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                    .allSatisfy(hit -> Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                             .contains("words"));
 
             crawler.close();
@@ -91,13 +89,13 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             crawler = startCrawler(fsSettings);
 
             // We expect to have one file
-            ESSearchResponse searchResponse =
-                    countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+            ESSearchResponse searchResponse = countTestHelper(
+                    new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
             // Check that we extracted the content
-            assertThat(searchResponse.getHits())
+            Assertions.assertThat(searchResponse.getHits())
                     .isNotEmpty()
-                    .allSatisfy(hit -> assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                    .allSatisfy(hit -> Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                             .contains("words"));
 
             crawler.close();
@@ -116,13 +114,13 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
             crawler = startCrawler(fsSettings);
 
             // We expect to have one file
-            ESSearchResponse searchResponse =
-                    countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+            ESSearchResponse searchResponse = countTestHelper(
+                    new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
             // Check that we extracted the content
-            assertThat(searchResponse.getHits())
+            Assertions.assertThat(searchResponse.getHits())
                     .isNotEmpty()
-                    .allSatisfy(hit -> assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                    .allSatisfy(hit -> Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                             .contains("words"));
         }
     }
@@ -135,20 +133,20 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have one file
-        ESSearchResponse searchResponse =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
         // Check that we extracted the content
-        assertThat(searchResponse.getHits())
+        Assertions.assertThat(searchResponse.getHits())
                 .isNotEmpty()
                 .satisfiesExactlyInAnyOrder(
                         hit -> {
-                            assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
+                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
                                     .isEqualTo("test-ocr.jpg");
-                            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.content"))
+                            Assertions.assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.content"))
                                     .isInstanceOf(PathNotFoundException.class);
                             Map<String, String> raw = JsonPath.read(hit.getSource(), "$.meta.raw");
-                            assertThat(raw)
+                            Assertions.assertThat(raw)
                                     .hasSize(64)
                                     .containsEntry("ICC:Profile Connection Space", "XYZ")
                                     .containsEntry("Number of Tables", "4 Huffman tables")
@@ -196,7 +194,8 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                                     .containsKey("ICC:Red Parametric TRC")
                                     .hasEntrySatisfying(
                                             "File Name",
-                                            value -> assertThat(value).startsWith("apache-tika-"))
+                                            value ->
+                                                    Assertions.assertThat(value).startsWith("apache-tika-"))
                                     .containsEntry("Exif IFD0:Resolution Unit", "Inch")
                                     .containsEntry("ICC:Color space", "RGB")
                                     .containsKey("ICC:Green Parametric TRC")
@@ -218,15 +217,15 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                                     .containsEntry("Exif IFD0:Y Resolution", "144 dots per inch");
                         },
                         hit -> {
-                            assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
+                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
                                     .isEqualTo("test-ocr.png");
-                            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.content"))
+                            Assertions.assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.content"))
                                     .isInstanceOf(PathNotFoundException.class);
                         },
                         hit -> {
-                            assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
+                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
                                     .isEqualTo("test-ocr.pdf");
-                            assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                                     .contains("This file also contains text.")
                                     .doesNotContain("words");
                         });

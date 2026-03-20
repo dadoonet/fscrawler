@@ -20,20 +20,14 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assume.assumeTrue;
-
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -52,7 +46,11 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
+import org.junit.Assume;
 import org.junit.Test;
 
 /** Test attributes crawler settings */
@@ -62,19 +60,23 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAttributesSupport(true);
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse =
-                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-            assertThat((String) document.read("$.attributes.owner")).isNotEmpty();
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
+            Assertions.assertThat((String) document.read("$.attributes.owner")).isNotEmpty();
             if (OsValidator.WINDOWS) {
                 // We should not have values for group and permissions on Windows OS
-                assertThatThrownBy(() -> document.read("$.attributes.group")).isInstanceOf(PathNotFoundException.class);
-                assertThat((Integer) document.read("$.attributes.permissions")).isZero();
+                Assertions.assertThatThrownBy(() -> document.read("$.attributes.group"))
+                        .isInstanceOf(PathNotFoundException.class);
+                Assertions.assertThat((Integer) document.read("$.attributes.permissions"))
+                        .isZero();
             } else {
                 // We test group and permissions only on non Windows OS
-                assertThat((String) document.read("$.attributes.group")).isNotEmpty();
-                assertThat((Integer) document.read("$.attributes.permissions")).isGreaterThanOrEqualTo(400);
+                Assertions.assertThat((String) document.read("$.attributes.group"))
+                        .isNotEmpty();
+                Assertions.assertThat((Integer) document.read("$.attributes.permissions"))
+                        .isGreaterThanOrEqualTo(400);
             }
         }
     }
@@ -88,7 +90,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
 
         ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName()), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
 
             List<?> aclEntries;
             try {
@@ -98,15 +100,16 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
             }
 
             if (OsValidator.WINDOWS) {
-                assertThat(aclEntries)
+                Assertions.assertThat(aclEntries)
                         .as("ACL metadata should be collected on Windows")
                         .isNotNull()
                         .isNotEmpty();
-                assertThat((String) document.read("$.attributes.acl[0].principal"))
+                Assertions.assertThat((String) document.read("$.attributes.acl[0].principal"))
                         .isNotBlank();
-                assertThat((String) document.read("$.attributes.acl[0].type")).isNotBlank();
+                Assertions.assertThat((String) document.read("$.attributes.acl[0].type"))
+                        .isNotBlank();
             } else {
-                assertThat(aclEntries)
+                Assertions.assertThat(aclEntries)
                         .as("ACL metadata should not be present when the platform does not expose ACLs")
                         .isNullOrEmpty();
             }
@@ -117,7 +120,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
     public void aclChangeTriggersReindex() throws Exception {
         Path file = currentTestResourceDir.resolve("roottxtfile.txt");
         AclFileAttributeView aclView = Files.getFileAttributeView(file, AclFileAttributeView.class);
-        assumeTrue("ACL change tests require an ACL-capable filesystem", aclView != null);
+        Assume.assumeTrue("ACL change tests require an ACL-capable filesystem", aclView != null);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAttributesSupport(true);
@@ -133,7 +136,8 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         addCustomAclEntry(file);
 
         AtomicReference<DocumentContext> updatedDocument = new AtomicReference<>();
-        await().atMost(60, SECONDS)
+        Awaitility.await()
+                .atMost(60, TimeUnit.SECONDS)
                 .alias("Document should be reindexed when ACL metadata changes")
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
@@ -147,7 +151,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
                     }
                 });
 
-        assertThat(readAclSize(updatedDocument.get())).isGreaterThan(initialAclSize);
+        Assertions.assertThat(readAclSize(updatedDocument.get())).isGreaterThan(initialAclSize);
     }
 
     private DocumentContext fetchSingleDocument(FsSettings fsSettings) throws Exception {
@@ -155,8 +159,8 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
         ESSearchResponse response = client.search(new ESSearchRequest()
                 .withIndex(fsSettings.getElasticsearch().getIndex())
                 .withSize(1));
-        assertThat(response.getHits()).isNotEmpty();
-        return parseJsonAsDocumentContext(response.getHits().get(0).getSource());
+        Assertions.assertThat(response.getHits()).isNotEmpty();
+        return JsonUtil.parseJsonAsDocumentContext(response.getHits().get(0).getSource());
     }
 
     private void addCustomAclEntry(Path file) throws IOException {

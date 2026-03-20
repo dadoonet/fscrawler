@@ -20,9 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
@@ -44,6 +41,7 @@ import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.sftp.server.SftpFileSystemAccessor;
 import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 import org.apache.sshd.sftp.server.SftpSubsystemProxy;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.After;
 import org.junit.Before;
@@ -160,31 +158,43 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         try {
             sshPlugin.openConnection();
 
-            assertThat(sshPlugin.exists("/ThisPathDoesNotExist")).isFalse();
+            Assertions.assertThat(sshPlugin.exists("/ThisPathDoesNotExist")).isFalse();
 
             testFilesInDir(sshPlugin, "/ThisPathDoesNotExist");
             testFilesInDir(
                     sshPlugin,
                     "/",
-                    tuple(false, true, "nested", "", "/", "/nested", 0L, 16877, "0", "0"),
-                    tuple(false, true, "permission", "", "/", "/permission", 0L, 16877, "0", "0"),
-                    tuple(false, true, "subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 16877, "0", "0"),
-                    tuple(true, false, "testfile.txt", "txt", "/", "/testfile.txt", 15L, 33188, "0", "0"));
+                    Assertions.tuple(false, true, "nested", "", "/", "/nested", 0L, 16877, "0", "0"),
+                    Assertions.tuple(false, true, "permission", "", "/", "/permission", 0L, 16877, "0", "0"),
+                    Assertions.tuple(
+                            false, true, "subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 16877, "0", "0"),
+                    Assertions.tuple(true, false, "testfile.txt", "txt", "/", "/testfile.txt", 15L, 33188, "0", "0"));
             testFilesInDir(
                     sshPlugin,
                     "/nested",
-                    tuple(false, true, "buzz", "", "/nested", "/nested/buzz", 0L, 16877, "0", "0"),
-                    tuple(true, false, "foo.txt", "txt", "/nested", "/nested/foo.txt", 24L, 33188, "0", "0"),
-                    tuple(true, false, "bar.txt", "txt", "/nested", "/nested/bar.txt", 8L, 33188, "0", "0"));
+                    Assertions.tuple(false, true, "buzz", "", "/nested", "/nested/buzz", 0L, 16877, "0", "0"),
+                    Assertions.tuple(true, false, "foo.txt", "txt", "/nested", "/nested/foo.txt", 24L, 33188, "0", "0"),
+                    Assertions.tuple(true, false, "bar.txt", "txt", "/nested", "/nested/bar.txt", 8L, 33188, "0", "0"));
             testFilesInDir(
                     sshPlugin,
                     "/permission",
-                    tuple(true, false, "all.txt", "txt", "/permission", "/permission/all.txt", 3L, 33279, "0", "0"),
-                    tuple(true, false, "none.txt", "txt", "/permission", "/permission/none.txt", 3L, 32768, "0", "0"));
+                    Assertions.tuple(
+                            true, false, "all.txt", "txt", "/permission", "/permission/all.txt", 3L, 33279, "0", "0"),
+                    Assertions.tuple(
+                            true,
+                            false,
+                            "none.txt",
+                            "txt",
+                            "/permission",
+                            "/permission/none.txt",
+                            3L,
+                            32768,
+                            "0",
+                            "0"));
             testFilesInDir(
                     sshPlugin,
                     "/subdir_with_space ",
-                    tuple(
+                    Assertions.tuple(
                             true,
                             false,
                             "hello.txt",
@@ -195,7 +205,7 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
                             33188,
                             "0",
                             "0"),
-                    tuple(
+                    Assertions.tuple(
                             true,
                             false,
                             "world.txt",
@@ -214,14 +224,14 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     @Test
     public void getType() {
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
-        assertThat(sshPlugin.getType()).isEqualTo("ssh");
+        Assertions.assertThat(sshPlugin.getType()).isEqualTo("ssh");
     }
 
     private void testFilesInDir(FsCrawlerExtensionFsProvider plugin, String path, Tuple... values) throws Exception {
-        assertThat(plugin.exists(path)).isEqualTo(values.length > 0);
+        Assertions.assertThat(plugin.exists(path)).isEqualTo(values.length > 0);
         Collection<FileAbstractModel> files = plugin.getFiles(path);
-        assertThat(files).hasSize(values.length);
-        assertThat(files)
+        Assertions.assertThat(files).hasSize(values.length);
+        Assertions.assertThat(files)
                 .extracting(
                         FileAbstractModel::isFile,
                         FileAbstractModel::isDirectory,

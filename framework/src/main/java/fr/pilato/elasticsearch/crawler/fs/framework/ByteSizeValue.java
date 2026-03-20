@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.format1Decimals;
-
 import java.util.Locale;
 
 public class ByteSizeValue implements Comparable<ByteSizeValue> {
@@ -128,7 +126,7 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
             value = getKbFrac();
             suffix = ByteSizeUnit.KB.getSuffix();
         }
-        return format1Decimals(value, suffix);
+        return FsCrawlerUtil.format1Decimals(value, suffix);
     }
 
     public static ByteSizeValue parseBytesSizeValue(String sValue) {

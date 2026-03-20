@@ -20,12 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
 import com.carrotsearch.randomizedtesting.annotations.Nightly;
 import com.carrotsearch.randomizedtesting.annotations.Timeout;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
@@ -34,17 +28,22 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSemanticQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
 import org.junit.Test;
 
 /**
  * Test if semantic search is working as we could expect, ie: not activated when it can't or activated when it should.
  */
 @Nightly("Loading semantic models could take some minutes")
-@TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
-@Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
+@TimeoutSuite(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
+@Timeout(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
     /**
@@ -54,7 +53,7 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
     @Test
     public void semantic() throws Exception {
         // We will execute this test from version 8.17 with a trial or enterprise license
-        assumeThat(client.isSemanticSupported())
+        Assumptions.assumeThat(client.isSemanticSupported())
                 .as("We don't run this test when semantic search is not available")
                 .isTrue();
 
@@ -65,7 +64,7 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
         // We expect to have 3 files
         countTestHelper(
-                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS),
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
                 3L,
                 null,
                 MAX_WAIT_FOR_SEARCH_LONG_TESTS);
@@ -73,13 +72,13 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
         // 2 pdf and 1 txt
         countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESTermQuery("file.extension", "pdf")),
                 2L,
                 null);
         countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(new ESTermQuery("file.extension", "txt")),
                 1L,
                 null);
@@ -87,13 +86,13 @@ public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
         // We should have semantic information
         ESSearchResponse response = countTestHelper(
                 new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
                         .withESQuery(
                                 new ESSemanticQuery("content_semantic", "Someone understanding loans and finances")),
                 3L,
                 null);
         DocumentContext document =
-                parseJsonAsDocumentContext(response.getHits().get(0).getSource());
-        assertThat((String) document.read("$.file.filename")).isEqualTo("3547447.pdf");
+                JsonUtil.parseJsonAsDocumentContext(response.getHits().get(0).getSource());
+        Assertions.assertThat((String) document.read("$.file.filename")).isEqualTo("3547447.pdf");
     }
 }

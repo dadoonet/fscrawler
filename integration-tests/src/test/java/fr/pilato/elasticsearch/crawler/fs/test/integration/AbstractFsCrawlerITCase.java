@@ -20,13 +20,10 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -43,8 +40,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @Before
     public void cleanExistingIndex() throws ElasticsearchClientException {
         logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
-        client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
         String templateName = "fscrawler_" + getCrawlerName() + "_*";
@@ -59,8 +56,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             logger.debug("🧹 Removing index [{}*]", getCrawlerName());
-            client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+            client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             String templateName = "fscrawler_" + getCrawlerName() + "_*";
             logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
@@ -122,7 +119,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         logger.info("🎬 starting crawler [{}]", fsSettings.getName());
         logger.debug("⚙️ with settings [{}]", fsSettings);
 
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false);
         crawler.start();
 
         // Wait for the index to be healthy as we might have a race condition
