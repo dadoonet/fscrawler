@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,26 +15,32 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
@@ -42,11 +48,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-
-import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.getMergedDoc;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/_document")
 public class DocumentApi extends RestApi {
@@ -77,7 +83,8 @@ public class DocumentApi extends RestApi {
             @QueryParam("index") String queryParamIndex,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
-            @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
+            @FormDataParam("file") FormDataContentDisposition d)
+            throws IOException, NoSuchAlgorithmException {
         String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
         String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
         return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
@@ -96,7 +103,8 @@ public class DocumentApi extends RestApi {
             @QueryParam("index") String queryParamIndex,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
-            @FormDataParam("file") FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
+            @FormDataParam("file") FormDataContentDisposition d)
+            throws IOException, NoSuchAlgorithmException {
         String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
         return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
     }
@@ -115,7 +123,7 @@ public class DocumentApi extends RestApi {
         String id = headerId != null ? headerId : queryParamId;
         String index = headerIndex != null ? headerIndex : queryParamIndex;
 
-        DocumentContext document = parseJsonAsDocumentContext(json);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(json);
         String type = document.read("$.type");
 
         logger.debug("Reading document from 3rd-party [{}]", type);
@@ -129,12 +137,16 @@ public class DocumentApi extends RestApi {
                 return uploadToDocumentService(debug, simulate, id, index, doc);
             }
         } catch (Exception e) {
-            logger.debug("Failed to add document from [{}] 3rd-party: [{}] - [{}]",
-                    type, e.getClass().getSimpleName(), e.getMessage());
+            logger.debug(
+                    "Failed to add document from [{}] 3rd-party: [{}] - [{}]",
+                    type,
+                    e.getClass().getSimpleName(),
+                    e.getMessage());
             logger.trace("Full stacktrace:", e);
-            return new UploadResponse(false,
+            return new UploadResponse(
+                    false,
                     "Failed to add document from [" + type + "] 3rd-party: ["
-                    + e.getClass().getSimpleName() + "] - [" + e.getMessage() + "]");
+                            + e.getClass().getSimpleName() + "] - [" + e.getMessage() + "]");
         }
     }
 
@@ -145,7 +157,8 @@ public class DocumentApi extends RestApi {
             @HeaderParam("filename*") String headerFilenameStar,
             @QueryParam("filename") String queryParamFilename,
             @HeaderParam("index") String headerIndex,
-            @QueryParam("index") String queryParamIndex) throws NoSuchAlgorithmException {
+            @QueryParam("index") String queryParamIndex)
+            throws NoSuchAlgorithmException {
         String index = headerIndex == null ? queryParamIndex : headerIndex;
         String filename = headerFilename == null ? queryParamFilename : headerFilename;
 
@@ -156,9 +169,10 @@ public class DocumentApi extends RestApi {
         }
 
         if (filename == null) {
-            return new DeleteResponse(false,
-                    "We can not delete a document without an id or a filename. " +
-                    "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
+            return new DeleteResponse(
+                    false,
+                    "We can not delete a document without an id or a filename. "
+                            + "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
         }
 
         return removeDocumentInDocumentService(SignTool.sign(filename), filename, index);
@@ -181,7 +195,8 @@ public class DocumentApi extends RestApi {
             String index,
             InputStream tags,
             InputStream filecontent,
-            FormDataContentDisposition d) throws IOException, NoSuchAlgorithmException {
+            FormDataContentDisposition d)
+            throws IOException, NoSuchAlgorithmException {
         if (d == null) {
             UploadResponse response = new UploadResponse();
             response.setOk(false);
@@ -202,29 +217,24 @@ public class DocumentApi extends RestApi {
         }
     }
 
-    public static Doc enrichDoc(
-            Doc doc,
-            FsSettings settings,
-            InputStream tags,
-            InputStream filecontent) throws IOException {
+    public static Doc enrichDoc(Doc doc, FsSettings settings, InputStream tags, InputStream filecontent)
+            throws IOException {
         // File
-        doc.getFile().setExtension(FilenameUtils.getExtension(doc.getFile().getFilename()).toLowerCase());
-        doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
+        doc.getFile()
+                .setExtension(
+                        FilenameUtils.getExtension(doc.getFile().getFilename()).toLowerCase());
+        doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
         // File
 
         // Read the file content
         TikaDocParser.generate(settings, filecontent, doc, doc.getFile().getFilesize());
 
         // We merge tags if any and return the final doc
-        return getMergedDoc(doc, tags, mapper);
+        return DocUtils.getMergedDoc(doc, tags, JsonUtil.mapper);
     }
 
-    private UploadResponse uploadToDocumentService(
-            String debug,
-            String simulate,
-            String id,
-            String index,
-            Doc doc) throws NoSuchAlgorithmException {
+    private UploadResponse uploadToDocumentService(String debug, String simulate, String id, String index, Doc doc)
+            throws NoSuchAlgorithmException {
         // Id
         if (id == null) {
             if (settings.getFs().isFilenameAsId()) {
@@ -245,15 +255,14 @@ public class DocumentApi extends RestApi {
         // Elasticsearch entity coordinates (we use the first node address)
         String url = settings.getElasticsearch().getUrls().get(0) + "/" + index + "/_doc/" + id;
         if (Boolean.parseBoolean(simulate)) {
-            logger.debug("Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].",
-                    doc.getFile().getFilename(), url);
+            logger.debug(
+                    "Simulate mode is on, so we skip sending document [{}] to elasticsearch at [{}].",
+                    doc.getFile().getFilename(),
+                    url);
         } else {
-            logger.debug("Sending document [{}] to elasticsearch.", doc.getFile().getFilename());
-            documentService.index(
-                    index,
-                    id,
-                    doc,
-                    settings.getElasticsearch().getPipeline());
+            logger.debug(
+                    "Sending document [{}] to elasticsearch.", doc.getFile().getFilename());
+            documentService.index(index, id, doc, settings.getElasticsearch().getPipeline());
         }
 
         UploadResponse response = new UploadResponse(true);
@@ -268,18 +277,16 @@ public class DocumentApi extends RestApi {
         return response;
     }
 
-    private DeleteResponse removeDocumentInDocumentService(
-            String id,
-            String filename,
-            String index) {
+    private DeleteResponse removeDocumentInDocumentService(String id, String filename, String index) {
         if (index == null) {
             index = settings.getElasticsearch().getIndex();
         }
 
         if (id == null && filename == null) {
-            return new DeleteResponse(false,
-                    "We can not delete a document without an id or a filename. " +
-                    "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
+            return new DeleteResponse(
+                    false,
+                    "We can not delete a document without an id or a filename. "
+                            + "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
         }
 
         logger.debug("Delete document [{}/{}] from elasticsearch using index [{}].", id, filename, index);
@@ -288,7 +295,8 @@ public class DocumentApi extends RestApi {
             documentService.deleteSingle(index, id);
             response = new DeleteResponse(true);
         } catch (Exception e) {
-            response = new DeleteResponse(false,
+            response = new DeleteResponse(
+                    false,
                     "Can not remove document [" + index + "/" + (filename == null ? id : filename) + "]: "
                             + e.getMessage());
         }

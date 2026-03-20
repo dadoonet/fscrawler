@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,24 +15,22 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * Provides utility methods to read and write checkpoint files (_checkpoint.json).
- * The checkpoint file allows the crawler to resume from where it left off after
- * an interruption (crash, manual stop, network error, etc.).
+ * Provides utility methods to read and write checkpoint files (_checkpoint.json). The checkpoint file allows the
+ * crawler to resume from where it left off after an interruption (crash, manual stop, network error, etc.).
  */
 public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
@@ -45,13 +43,14 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
     /**
      * Read checkpoint from ~/.fscrawler/{job_name}/_checkpoint.json
+     *
      * @param jobname the job name
      * @return the checkpoint or null if no checkpoint exists
      * @throws IOException in case of error while reading (other than file not found)
      */
     public FsCrawlerCheckpoint read(String jobname) throws IOException {
         try {
-            return prettyMapper.readValue(readFile(jobname, FILENAME), FsCrawlerCheckpoint.class);
+            return JsonUtil.prettyMapper.readValue(readFile(jobname, FILENAME), FsCrawlerCheckpoint.class);
         } catch (NoSuchFileException e) {
             // No checkpoint file exists, return null
             return null;
@@ -60,6 +59,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
     /**
      * Check if a checkpoint exists for the given job
+     *
      * @param jobname the job name
      * @return true if a checkpoint file exists
      */
@@ -73,16 +73,18 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
     /**
      * Write checkpoint to ~/.fscrawler/{job_name}/_checkpoint.json
+     *
      * @param jobname the job name
      * @param checkpoint the checkpoint to write
      * @throws IOException in case of error while writing
      */
     public void write(String jobname, FsCrawlerCheckpoint checkpoint) throws IOException {
-        writeFile(jobname, FILENAME, prettyMapper.writeValueAsString(checkpoint));
+        writeFile(jobname, FILENAME, JsonUtil.prettyMapper.writeValueAsString(checkpoint));
     }
 
     /**
      * Remove checkpoint file from ~/.fscrawler/{job_name}/_checkpoint.json
+     *
      * @param jobname the job name
      * @throws IOException in case of error while removing
      */
@@ -90,9 +92,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
         removeFile(jobname, FILENAME);
     }
 
-    /**
-     * Migrate from legacy _status.json file if it exists.
-     */
+    /** Migrate from legacy _status.json file if it exists. */
     public void migrateLegacyStatus(String jobname) {
         try {
             FsJobFileHandler legacyJobFileHandler = new FsJobFileHandler(this.root);
@@ -126,5 +126,4 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
             logger.warn("Error migrating legacy {}: {}", FsJobFileHandler.FILENAME, e.getMessage());
         }
     }
-
 }

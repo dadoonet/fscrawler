@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,25 +15,22 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
-
-/**
- * Parse a XML document and generate a FSCrawler Doc
- */
+/** Parse a XML document and generate a FSCrawler Doc */
 @SuppressWarnings("unchecked")
 public class XmlDocParser {
 
@@ -52,13 +49,15 @@ public class XmlDocParser {
         Map<String, Object> map = generateMap(inputStream);
 
         // Serialize to JSON
-        String json = mapper.writeValueAsString(map);
+        String json = JsonUtil.mapper.writeValueAsString(map);
         logger.trace("Generated JSON: {}", json);
         return json;
     }
 
     /**
-     * Extracting XML content. See #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a>
+     * Extracting XML content. See #185: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a>
+     *
      * @param inputStream The XML Stream
      * @return The XML Content as a map
      */

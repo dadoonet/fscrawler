@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,14 +15,14 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import jakarta.annotation.Nullable;
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.Objects;
+import org.github.gestalt.config.annotations.Config;
 
 public class Ocr {
     // Is OCR enabled or disabled in general
@@ -30,16 +30,19 @@ public class Ocr {
     private boolean enabled;
     // Path to tesseract program
     @Config
-    @Nullable private String path;
+    @Nullable
+    private String path;
     // Path to tesseract data
     @Config
-    @Nullable private String dataPath;
+    @Nullable
+    private String dataPath;
     // Language dictionary to be used.
     @Config(defaultVal = "eng")
     private String language;
     // Output Type. Can be txt (default) or hocr. null means the default value.
     @Config
-    @Nullable private String outputType;
+    @Nullable
+    private String outputType;
     // Pdf OCR Strategy
     @Config(defaultVal = "ocr_and_text")
     private String pdfStrategy;
@@ -98,16 +101,17 @@ public class Ocr {
         return this.preserveInterwordSpacing;
     }
 
-    public void setPreserveInterwordSpacing( Boolean preserveInterwordSpacing) {
+    public void setPreserveInterwordSpacing(Boolean preserveInterwordSpacing) {
         this.preserveInterwordSpacing = preserveInterwordSpacing;
     }
 
-    public void setPageSegMode( Integer pageSegMode) {
+    public void setPageSegMode(Integer pageSegMode) {
         this.pageSegMode = pageSegMode;
     }
 
     /**
      * Get the PDF Strategy. Could be "no_ocr", "auto", "ocr_only" or "ocr_and_text" (default)
+     *
      * @return the PDF Strategy
      */
     public String getPdfStrategy() {
@@ -116,6 +120,7 @@ public class Ocr {
 
     /**
      * Set the PDF Strategy.
+     *
      * @param pdfStrategy the PDF Strategy. Could be "no_ocr", "auto", "ocr_only" or "ocr_and_text"
      */
     public void setPdfStrategy(String pdfStrategy) {
@@ -127,31 +132,31 @@ public class Ocr {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Ocr ocr = (Ocr) o;
-        return enabled == ocr.enabled &&
-                Objects.equals(language, ocr.language) &&
-                Objects.equals(path, ocr.path) &&
-                Objects.equals(dataPath, ocr.dataPath) &&
-                Objects.equals(outputType, ocr.outputType) &&
-                Objects.equals(pdfStrategy, ocr.pdfStrategy) &&
-                Objects.equals(pageSegMode, ocr.pageSegMode) &&
-                Objects.equals(preserveInterwordSpacing, ocr.preserveInterwordSpacing);
+        return enabled == ocr.enabled
+                && Objects.equals(language, ocr.language)
+                && Objects.equals(path, ocr.path)
+                && Objects.equals(dataPath, ocr.dataPath)
+                && Objects.equals(outputType, ocr.outputType)
+                && Objects.equals(pdfStrategy, ocr.pdfStrategy)
+                && Objects.equals(pageSegMode, ocr.pageSegMode)
+                && Objects.equals(preserveInterwordSpacing, ocr.preserveInterwordSpacing);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(language, path, dataPath, outputType, enabled, pdfStrategy, pageSegMode, preserveInterwordSpacing);
+        return Objects.hash(
+                language, path, dataPath, outputType, enabled, pdfStrategy, pageSegMode, preserveInterwordSpacing);
     }
 
     @Override
     public String toString() {
-        return "Ocr{" + "language='" + language + '\'' +
-                ", path='" + path + '\'' +
-                ", dataPath='" + dataPath + '\'' +
-                ", outputType='" + outputType + '\'' +
-                ", enabled=" + enabled +
-                ", pdfStrategy='" + pdfStrategy + '\'' +
-                ", pageSegMode='" + pageSegMode + '\'' +
-                ", preserveInterwordSpacing='" + preserveInterwordSpacing + '\'' +
-                '}';
+        return "Ocr{" + "language='" + language + '\'' + ", path='"
+                + path + '\'' + ", dataPath='"
+                + dataPath + '\'' + ", outputType='"
+                + outputType + '\'' + ", enabled="
+                + enabled + ", pdfStrategy='"
+                + pdfStrategy + '\'' + ", pageSegMode='"
+                + pageSegMode + '\'' + ", preserveInterwordSpacing='"
+                + preserveInterwordSpacing + '\'' + '}';
     }
 }

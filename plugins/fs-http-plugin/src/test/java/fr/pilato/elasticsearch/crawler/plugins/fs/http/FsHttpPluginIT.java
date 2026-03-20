@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,6 +15,8 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
@@ -22,24 +24,22 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
-import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.NginxContainer;
-import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
-import org.testcontainers.utility.MountableFile;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.junit.Assume;
+import org.junit.Test;
+import org.testcontainers.DockerClientFactory;
+import org.testcontainers.containers.NginxContainer;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.utility.MountableFile;
 
 public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -54,7 +54,9 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     @Test
     public void readFileFromNginx() throws Exception {
         // We can only run this test if Docker is available on this machine
-        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+        Assume.assumeTrue(
+                "We can only run this test if Docker is available on this machine",
+                DockerClientFactory.instance().isDockerAvailable());
 
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
@@ -72,18 +74,19 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
             logger.info("Starting Test");
             try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-                provider.start(FsSettingsLoader.load(), "{\n" +
-                        "  \"type\": \"http\",\n" +
-                        "  \"http\": {\n" +
-                        "    \"url\": \"" + url + "/foo.txt\"\n" +
-                        "  }\n" +
-                        "}");
+                provider.start(
+                        FsSettingsLoader.load(),
+                        "{\n" + "  \"type\": \"http\",\n"
+                                + "  \"http\": {\n"
+                                + "    \"url\": \""
+                                + url + "/foo.txt\"\n" + "  }\n"
+                                + "}");
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                assertThat(object).isEqualTo(text);
+                Assertions.assertThat(object).isEqualTo(text);
                 Doc doc = provider.createDocument();
-                assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
-                assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+                Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+                Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
             }
         }
     }
@@ -92,18 +95,19 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     public void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-            provider.start(FsSettingsLoader.load(), "{\n" +
-                    "  \"type\": \"http\",\n" +
-                    "  \"http\": {\n" +
-                    "    \"url\": \"https://david.pilato.fr/robots.txt\"\n" +
-                    "  }\n" +
-                    "}");
+            provider.start(
+                    FsSettingsLoader.load(),
+                    "{\n" + "  \"type\": \"http\",\n"
+                            + "  \"http\": {\n"
+                            + "    \"url\": \"https://david.pilato.fr/robots.txt\"\n"
+                            + "  }\n"
+                            + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).contains("User-agent: *");
+            Assertions.assertThat(object).contains("User-agent: *");
             Doc doc = provider.createDocument();
-            assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(14L);
+            Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("robots.txt");
+            Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(14L);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,25 +15,28 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.junit.Test;
-
 import java.util.ArrayList;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
-import static fr.pilato.elasticsearch.crawler.fs.settings.Defaults.DEFAULT_EXCLUDED;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     @Test
     public void default_ignored_file() {
-        assertThat(isIndexable(false, "/~mydoc", new ArrayList<>(), DEFAULT_EXCLUDED)).isFalse();
-        assertThat(isIndexable(false, "/~", new ArrayList<>(), DEFAULT_EXCLUDED)).isFalse();
-        assertThat(isIndexable(false, "/adoc.doc", new ArrayList<>(), DEFAULT_EXCLUDED)).isTrue();
-        assertThat(isIndexable(false, "/mydoc~", new ArrayList<>(), DEFAULT_EXCLUDED)).isTrue();
+        Assertions.assertThat(FsCrawlerUtil.isIndexable(false, "/~mydoc", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isFalse();
+        Assertions.assertThat(FsCrawlerUtil.isIndexable(false, "/~", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isFalse();
+        Assertions.assertThat(
+                        FsCrawlerUtil.isIndexable(false, "/adoc.doc", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isTrue();
+        Assertions.assertThat(FsCrawlerUtil.isIndexable(false, "/mydoc~", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isTrue();
     }
 }

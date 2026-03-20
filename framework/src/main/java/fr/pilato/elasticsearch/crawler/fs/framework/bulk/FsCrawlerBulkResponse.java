@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,15 +15,15 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @SuppressWarnings("CanBeFinal")
 public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
@@ -59,7 +59,10 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
             if (item.failed) {
                 if (logger.isTraceEnabled()) {
                     sbf.append(item.getOperation());
-                    sbf.append(":").append(item.getOperation().toString()).append(":").append(item.getFailureMessage());
+                    sbf.append(":")
+                            .append(item.getOperation().toString())
+                            .append(":")
+                            .append(item.getFailureMessage());
                 }
                 failures++;
             }
@@ -103,15 +106,15 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
         @Override
         public String toString() {
-            return "BulkItemResponse{" + "failed=" + failed +
-                    ", operation='" + operation + '\'' +
-                    ", failureMessage='" + failureMessage + '\'' +
-                    '}';
+            return "BulkItemResponse{" + "failed=" + failed + ", operation='"
+                    + operation + '\'' + ", failureMessage='"
+                    + failureMessage + '\'' + '}';
         }
     }
 
     @Override
     public String toString() {
-        return "BulkResponse{" + "items=" + (items == null ? "null" : List.of(items).toString()) + '}';
+        return "BulkResponse{" + "items="
+                + (items == null ? "null" : List.of(items).toString()) + '}';
     }
 }

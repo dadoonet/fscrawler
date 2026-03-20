@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,19 +15,19 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerExtensionFsProvider {
     private static final Logger logger = LogManager.getLogger();
@@ -35,6 +35,7 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
     protected FsSettings fsSettings;
 
     protected abstract void parseSettings() throws PathNotFoundException, IOException;
+
     protected abstract void validateSettings() throws PathNotFoundException, IOException;
 
     @Override
@@ -48,19 +49,18 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         }
 
         logger.trace("with rest settings {}", restSettings);
-        document = parseJsonAsDocumentContext(restSettings);
+        document = JsonUtil.parseJsonAsDocumentContext(restSettings);
 
         try {
             parseSettings();
             validateSettings();
-        } catch (PathNotFoundException|IOException e) {
+        } catch (PathNotFoundException | IOException e) {
             throw new FsCrawlerIllegalConfigurationException(e.getMessage());
         }
     }
 
     @Override
-    public void stop() throws FsCrawlerPluginException {
-    }
+    public void stop() throws FsCrawlerPluginException {}
 
     @Override
     public void close() throws Exception {

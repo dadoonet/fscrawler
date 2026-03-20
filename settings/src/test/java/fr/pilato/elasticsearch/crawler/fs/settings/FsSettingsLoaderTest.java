@@ -1,17 +1,39 @@
+/*
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
+ */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.Test;
 
 public class FsSettingsLoaderTest {
 
@@ -26,7 +48,7 @@ public class FsSettingsLoaderTest {
 
     @Test
     public void loadWrongSettings() {
-        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+        AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-wrong"))
                 .withMessageContaining("Syntax error in configuration file [_settings.yaml]")
                 .withMessageContaining("line ")
@@ -35,7 +57,7 @@ public class FsSettingsLoaderTest {
 
     @Test
     public void loadStructuralWrongSettings() {
-        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+        AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-structural-wrong"))
                 .withMessageContaining("Can not load settings")
                 .withMessageContaining("Please make sure that your setting file(s) are properly formatted.");
@@ -44,7 +66,7 @@ public class FsSettingsLoaderTest {
     @Test
     public void loadDeprecatedElasticsearchNodesSettings() throws IOException {
         FsSettings fsSettings = new FsSettingsLoader(configPath).read("yaml-deprecated");
-        assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
+        Assertions.assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
     }
 
     @Test
@@ -194,14 +216,18 @@ public class FsSettingsLoaderTest {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
+            Assertions.assertThat(settings.getFs().getOcr())
+                    .as("Checking Ocr")
+                    .isEqualTo(expected.getFs().getOcr());
         }
-        assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
-        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
-        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
-        assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
-        assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
-        assertThat(settings).as("Checking whole settings").isEqualTo(expected);
+        Assertions.assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
+        Assertions.assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
+        Assertions.assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        Assertions.assertThat(settings.getElasticsearch())
+                .as("Checking Elasticsearch")
+                .isEqualTo(expected.getElasticsearch());
+        Assertions.assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        Assertions.assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
     private FsSettings generateExpectedDefaultFsSettings() {

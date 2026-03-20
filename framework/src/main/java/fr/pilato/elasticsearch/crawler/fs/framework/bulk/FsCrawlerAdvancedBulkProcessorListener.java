@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,26 +15,26 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * This Listener exposes the number of successive errors that might have seen previously. So the caller can if needed slow down
- * a bit the injection.
- * A retry mechanism is implemented in RetryBulkProcessorListener
+ * This Listener exposes the number of successive errors that might have seen previously. So the caller can if needed
+ * slow down a bit the injection. A retry mechanism is implemented in RetryBulkProcessorListener
+ *
  * @see FsCrawlerRetryBulkProcessorListener
  */
 public class FsCrawlerAdvancedBulkProcessorListener<
-        O extends FsCrawlerOperation<O>,
-        REQ extends FsCrawlerBulkRequest<O>,
-        RES extends FsCrawlerBulkResponse<O>
-        > extends FsCrawlerSimpleBulkProcessorListener<O, REQ, RES> {
+                O extends FsCrawlerOperation<O>,
+                REQ extends FsCrawlerBulkRequest<O>,
+                RES extends FsCrawlerBulkResponse<O>>
+        extends FsCrawlerSimpleBulkProcessorListener<O, REQ, RES> {
     private static final Logger logger = LogManager.getLogger();
 
     private final AtomicInteger successiveErrors = new AtomicInteger(0);

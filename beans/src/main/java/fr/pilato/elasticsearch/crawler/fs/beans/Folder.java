@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,17 +15,15 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import java.time.LocalDateTime;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-
-/**
- * Represents a folder we have visited
- */
+/** Represents a folder we have visited */
 public class Folder {
 
     public static final String CONTENT_TYPE = "text/directory";
@@ -42,16 +40,23 @@ public class Folder {
 
     /**
      * Build a folder with a single ctor call
-     * @param name      The folder name
-     * @param root      Root of the folder
-     * @param real      The full path to the folder
-     * @param virtual   The virtual path from the root
-     * @param creation  Creation time of the forlder
+     *
+     * @param name The folder name
+     * @param root Root of the folder
+     * @param real The full path to the folder
+     * @param virtual The virtual path from the root
+     * @param creation Creation time of the forlder
      * @param modification Modification time of the folder
      * @param lastAccess Last access time for the folder
      */
-    public Folder(String name, String root, String real, String virtual, LocalDateTime creation, LocalDateTime modification,
-                  LocalDateTime lastAccess) {
+    public Folder(
+            String name,
+            String root,
+            String real,
+            String virtual,
+            LocalDateTime creation,
+            LocalDateTime modification,
+            LocalDateTime lastAccess) {
         path = new Path();
         path.setRoot(root);
         path.setReal(real);
@@ -59,9 +64,9 @@ public class Folder {
         file = new File();
         file.setFilename(name);
         file.setContentType(CONTENT_TYPE);
-        file.setLastModified(localDateTimeToDate(modification));
-        file.setCreated(localDateTimeToDate(creation));
-        file.setLastAccessed(localDateTimeToDate(lastAccess));
+        file.setLastModified(FsCrawlerUtil.localDateTimeToDate(modification));
+        file.setCreated(FsCrawlerUtil.localDateTimeToDate(creation));
+        file.setLastAccessed(FsCrawlerUtil.localDateTimeToDate(lastAccess));
     }
 
     public Path getPath() {

@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,16 +15,16 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.Method;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class OsUtil {
     private static final Logger logger = LogManager.getLogger();
@@ -43,9 +43,7 @@ public class OsUtil {
         getTotalSwapSpaceSize = getMethod("getTotalSwapSpaceSize");
     }
 
-    /**
-     * Returns the amount of free physical memory in bytes.
-     */
+    /** Returns the amount of free physical memory in bytes. */
     public static long getFreePhysicalMemorySize() {
         if (getFreePhysicalMemorySize == null) {
             logger.warn("getFreePhysicalMemorySize is not available");
@@ -64,9 +62,7 @@ public class OsUtil {
         }
     }
 
-    /**
-     * Returns the total amount of physical memory in bytes.
-     */
+    /** Returns the total amount of physical memory in bytes. */
     public static long getTotalPhysicalMemorySize() {
         if (getTotalPhysicalMemorySize == null) {
             logger.warn("getTotalPhysicalMemorySize is not available");
@@ -85,9 +81,7 @@ public class OsUtil {
         }
     }
 
-    /**
-     * Returns the amount of free swap space in bytes.
-     */
+    /** Returns the amount of free swap space in bytes. */
     public static long getFreeSwapSpaceSize() {
         if (getFreeSwapSpaceSize == null) {
             return -1;
@@ -99,9 +93,7 @@ public class OsUtil {
         }
     }
 
-    /**
-     * Returns the total amount of swap space in bytes.
-     */
+    /** Returns the total amount of swap space in bytes. */
     public static long getTotalSwapSpaceSize() {
         if (getTotalSwapSpaceSize == null) {
             return -1;
@@ -113,9 +105,7 @@ public class OsUtil {
         }
     }
 
-    /**
-     * Returns a given method of the OperatingSystemMXBean, or null if the method is not found or unavailable.
-     */
+    /** Returns a given method of the OperatingSystemMXBean, or null if the method is not found or unavailable. */
     private static Method getMethod(String methodName) {
         try {
             return Class.forName("com.sun.management.OperatingSystemMXBean").getMethod(methodName);

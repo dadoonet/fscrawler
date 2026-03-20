@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,65 +15,57 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-
 import java.io.Closeable;
 import java.util.List;
 
-/**
- * Simple Elasticsearch client over HTTP or HTTPS.
- * Only needed methods are exposed.
- */
+/** Simple Elasticsearch client over HTTP or HTTPS. Only needed methods are exposed. */
 public interface IElasticsearchClient extends Closeable {
-    /**
-     * Start the client and its internal resources. This must be called before any operation can be performed.
-     */
+    /** Start the client and its internal resources. This must be called before any operation can be performed. */
     void start() throws ElasticsearchClientException;
 
     /**
      * Get the list of the active nodes. Could be use in an admin status API.
+     *
      * @return the list of available nodes
      */
     List<String> getAvailableNodes();
 
-    /**
-     * Get version about the node it's connected to
-     */
+    /** Get version about the node it's connected to */
     String getVersion() throws ElasticsearchClientException;
 
-    /**
-     * Get license about the cluster it's connected to
-     */
+    /** Get license about the cluster it's connected to */
     String getLicense() throws ElasticsearchClientException;
 
-    /**
-     * Get the major version about the node it's connected to
-     */
+    /** Get the major version about the node it's connected to */
     int getMajorVersion();
 
     /**
      * Create or update a component template
-     * @param name  component template name
-     * @param json  template definition
+     *
+     * @param name component template name
+     * @param json template definition
      * @throws ElasticsearchClientException in case of error
      */
     void pushComponentTemplate(String name, String json) throws ElasticsearchClientException;
 
     /**
      * Create or update an index template
-     * @param name  index template name
-     * @param json  template definition
+     *
+     * @param name index template name
+     * @param json template definition
      * @throws ElasticsearchClientException in case of error
      */
     void pushIndexTemplate(String name, String json) throws ElasticsearchClientException;
 
     /**
      * Check if an index exists
+     *
      * @param index index name
      * @return true if the index exists, false otherwise
      */
@@ -81,6 +73,7 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Check if a pipeline exists
+     *
      * @param pipeline pipeline name
      * @return true if the pipeline exists, false otherwise
      */
@@ -88,6 +81,7 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Check if a component template exists
+     *
      * @param templateName component template name
      * @return true if the component template exists, false otherwise
      */
@@ -95,6 +89,7 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Check if an index template exists
+     *
      * @param templateName index template name
      * @return true if the index template exists, false otherwise
      */
@@ -102,65 +97,74 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Refresh an index
+     *
      * @param index index name
      */
     void refresh(String index) throws ElasticsearchClientException;
 
     /**
      * Wait for an index to become at least yellow (all primaries assigned)
+     *
      * @param index index name
      */
     void waitForHealthyIndex(String index) throws ElasticsearchClientException;
 
     /**
      * Index a document (might use a BulkProcessor behind the scenes)
-     * @param index     Index name
-     * @param id        Document ID
-     * @param doc       Document to index
-     * @param pipeline  Pipeline (can be null)
+     *
+     * @param index Index name
+     * @param id Document ID
+     * @param doc Document to index
+     * @param pipeline Pipeline (can be null)
      */
     void index(String index, String id, Doc doc, String pipeline);
 
     /**
      * Index a Raw Json in Elasticsearch
-     * @param index     Index name
-     * @param id        Document ID
-     * @param json      Document to index
-     * @param pipeline  Pipeline (can be null)
+     *
+     * @param index Index name
+     * @param id Document ID
+     * @param json Document to index
+     * @param pipeline Pipeline (can be null)
      */
     void indexRawJson(String index, String id, String json, String pipeline);
 
     /**
      * Index a single document using the Index Document API
-     * @param index     Index name
-     * @param id        Document ID
-     * @param json      Document to index
-     * @param pipeline  Pipeline (can be null)
+     *
+     * @param index Index name
+     * @param id Document ID
+     * @param json Document to index
+     * @param pipeline Pipeline (can be null)
      */
     void indexSingle(String index, String id, String json, String pipeline) throws ElasticsearchClientException;
 
     /**
      * Delete a document using a BulkProcessor behind the scenes
-     * @param index     Index name
-     * @param id        Document ID
+     *
+     * @param index Index name
+     * @param id Document ID
      */
     void delete(String index, String id);
 
     /**
      * Delete a single document using the Delete Document API
-     * @param index     Index name
-     * @param id        Document ID
+     *
+     * @param index Index name
+     * @param id Document ID
      */
     void deleteSingle(String index, String id) throws ElasticsearchClientException;
 
     /**
      * Create all needed component and index templates
+     *
      * @throws Exception in case of error
      */
     void createIndexAndComponentTemplates() throws Exception;
 
     /**
      * Run a search
+     *
      * @param request Search Request
      * @return A search response object
      */
@@ -168,59 +172,66 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Remove an index
+     *
      * @param index Index name
      */
     void deleteIndex(String index) throws ElasticsearchClientException;
 
     /**
-     * Flush any pending Bulk operation. Used for tests only.
-     * Note that flushing means immediate execution of the bulk, but it does
-     * not wait for the bulk to be fully executed.
+     * Flush any pending Bulk operation. Used for tests only. Note that flushing means immediate execution of the bulk,
+     * but it does not wait for the bulk to be fully executed.
      */
     void flush();
 
     /**
      * Perform a LowLevel Request
-     * @param method        HTTP method
-     * @param endpoint      Endpoint
-     * @param jsonEntity    Json entity if any
+     *
+     * @param method HTTP method
+     * @param endpoint Endpoint
+     * @param jsonEntity Json entity if any
      * @return the response from the server
      */
     @SuppressWarnings("UnusedReturnValue")
-    String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws ElasticsearchClientException;
+    String performLowLevelRequest(String method, String endpoint, String jsonEntity)
+            throws ElasticsearchClientException;
 
     /**
      * Get a document by its ID
+     *
      * @param index Index name
-     * @param id    Document id
+     * @param id Document id
      * @return A Search Hit
      */
     ESSearchHit get(String index, String id) throws ElasticsearchClientException;
 
     /**
      * Check that a document exists
+     *
      * @param index Index name
-     * @param id    Document id
+     * @param id Document id
      * @return true if it exists, false otherwise
      */
     boolean exists(String index, String id) throws ElasticsearchClientException;
 
     /**
      * Send a _bulk request to Elasticsearch
-     * @param ndjson    the bulk content to send
-     * @return  the outcome
+     *
+     * @param ndjson the bulk content to send
+     * @return the outcome
      */
     String bulk(String ndjson) throws ElasticsearchClientException;
 
     /**
      * Generate an API key (for tests purposes only)
-     * @param keyName   the name of the key
-     * @return  the generated API key BASE64 encoded of key:value
+     *
+     * @param keyName the name of the key
+     * @return the generated API key BASE64 encoded of key:value
      */
     String generateApiKey(String keyName) throws ElasticsearchClientException;
 
     /**
      * Check if the client supports semantic search
+     *
      * @return true if semantic is supported
      */
     boolean isSemanticSupported();

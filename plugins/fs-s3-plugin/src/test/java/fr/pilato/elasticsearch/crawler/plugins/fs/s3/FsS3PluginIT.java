@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,40 +15,44 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
-
-
-@ThreadLeakFilters(filters = {
-        WindowsSpecificThreadFilter.class,
-        TestContainerThreadFilter.class,
-        JNACleanerThreadFilter.class,
-        MinioThreadFilter.class
-})
+@ThreadLeakFilters(
+        filters = {
+            WindowsSpecificThreadFilter.class,
+            TestContainerThreadFilter.class,
+            JNACleanerThreadFilter.class,
+            MinioThreadFilter.class
+        })
 public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static MinIOContainer container;
@@ -59,7 +63,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     @Before
     public void startMinioContainer() {
         // We can only run this test if Docker is available on this machine
-        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+        Assume.assumeTrue(
+                "We can only run this test if Docker is available on this machine",
+                DockerClientFactory.instance().isDockerAvailable());
 
         logger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
@@ -85,15 +91,14 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
                 .endpoint(s3Url)
                 .credentials(s3Username, s3Password)
                 .build()) {
-            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket("foo").build())) {
+            if (!minioClient.bucketExists(
+                    BucketExistsArgs.builder().bucket("foo").build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket("foo").build());
             }
-            minioClient.putObject(PutObjectArgs.builder()
-                    .contentType("text/plain")
-                    .bucket("foo")
-                    .object(objectName)
-                    .stream(IOUtils.toInputStream(object, StandardCharsets.UTF_8), object.length(), -1)
-                    .build());
+            minioClient.putObject(
+                    PutObjectArgs.builder().contentType("text/plain").bucket("foo").object(objectName).stream(
+                                    IOUtils.toInputStream(object, StandardCharsets.UTF_8), object.length(), -1)
+                            .build());
         } catch (Exception e) {
             logger.warn("Could not create bucket [{}]; [{}]: {}", objectName, object, e.getMessage());
         }
@@ -107,22 +112,23 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
-            provider.start(FsSettingsLoader.load(), "{\n" +
-                    "  \"type\": \"s3\",\n" +
-                    "  \"s3\": {\n" +
-                    "    \"url\": \"" + s3Url + "\",\n" +
-                    "    \"bucket\": \"foo\",\n" +
-                    "    \"object\": \"foo.txt\",\n" +
-                    "    \"access_key\": \"" + s3Username + "\",\n" +
-                    "    \"secret_key\": \"" + s3Password + "\"\n" +
-                    "  }\n" +
-                    "}");
+            provider.start(
+                    FsSettingsLoader.load(),
+                    "{\n" + "  \"type\": \"s3\",\n"
+                            + "  \"s3\": {\n"
+                            + "    \"url\": \""
+                            + s3Url + "\",\n" + "    \"bucket\": \"foo\",\n"
+                            + "    \"object\": \"foo.txt\",\n"
+                            + "    \"access_key\": \""
+                            + s3Username + "\",\n" + "    \"secret_key\": \""
+                            + s3Password + "\"\n" + "  }\n"
+                            + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            assertThat(object).isEqualTo(text);
+            Assertions.assertThat(object).isEqualTo(text);
             Doc doc = provider.createDocument();
-            assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
-            assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
+            Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
+            Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
         }
     }
 }

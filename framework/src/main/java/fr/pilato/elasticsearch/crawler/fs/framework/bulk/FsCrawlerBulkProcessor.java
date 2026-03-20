@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
@@ -25,9 +26,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -35,15 +33,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-/**
- * Bulk processor
- */
+/** Bulk processor */
 public class FsCrawlerBulkProcessor<
-        O extends FsCrawlerOperation<O>,
-        Req extends FsCrawlerBulkRequest<O>,
-        Res extends FsCrawlerBulkResponse<O>
-        > implements Closeable {
+                O extends FsCrawlerOperation<O>,
+                Req extends FsCrawlerBulkRequest<O>,
+                Res extends FsCrawlerBulkResponse<O>>
+        implements Closeable {
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -57,12 +55,13 @@ public class FsCrawlerBulkProcessor<
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
 
-    public FsCrawlerBulkProcessor(Engine<O, Req, Res> engine,
-                                   Listener<O, Req, Res> listener,
-                                   int bulkActions,
-                                   TimeValue flushInterval,
-                                   ByteSizeValue byteSize,
-                                   Supplier<Req> requestSupplier) {
+    public FsCrawlerBulkProcessor(
+            Engine<O, Req, Res> engine,
+            Listener<O, Req, Res> listener,
+            int bulkActions,
+            TimeValue flushInterval,
+            ByteSizeValue byteSize,
+            Supplier<Req> requestSupplier) {
         this.engine = engine;
         this.listener = listener;
         this.bulkActions = bulkActions;
@@ -97,9 +96,9 @@ public class FsCrawlerBulkProcessor<
         if (executor != null) {
             logger.debug("Closing BulkProcessor");
             executor.shutdown();
-            if(!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-                logger.warn("We waited for the bulk processor shutdown but it did not close properly. " +
-                        "We might be missing some documents.");
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                logger.warn("We waited for the bulk processor shutdown but it did not close properly. "
+                        + "We might be missing some documents.");
             }
             logger.debug("BulkProcessor is now closed");
         }
@@ -112,7 +111,8 @@ public class FsCrawlerBulkProcessor<
 
     /**
      * Add a request to the processor
-     * @param request   request to add
+     *
+     * @param request request to add
      * @return this so we can link methods.
      */
     public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(O request) {
@@ -127,7 +127,7 @@ public class FsCrawlerBulkProcessor<
             throw new IllegalStateException("bulk process already closed");
         }
     }
-    
+
     private void executeIfNeeded() {
         ensureOpen();
         if (bulkRequest.isOverTheLimit()) {
@@ -159,7 +159,9 @@ public class FsCrawlerBulkProcessor<
             listener.afterBulk(executionId, bulkRequest, bulkItemResponses);
         } catch (Exception e) {
             bulkSpan.recordException(e);
-            bulkSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+            bulkSpan.setStatus(
+                    StatusCode.ERROR,
+                    e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             if (!afterCalled) {
                 listener.afterBulk(executionId, bulkRequest, e);
             }
@@ -174,7 +176,7 @@ public class FsCrawlerBulkProcessor<
         bulkRequest.maxBulkSize(byteSize);
         return bulkRequest;
     }
-    
+
     public Listener<O, Req, Res> getListener() {
         return listener;
     }
@@ -183,7 +185,8 @@ public class FsCrawlerBulkProcessor<
         execute();
     }
 
-    public static class Builder<O extends FsCrawlerOperation<O>,
+    public static class Builder<
+            O extends FsCrawlerOperation<O>,
             Req extends FsCrawlerBulkRequest<O>,
             Res extends FsCrawlerBulkResponse<O>> {
 
@@ -209,18 +212,20 @@ public class FsCrawlerBulkProcessor<
             this.flushInterval = flushInterval;
             return this;
         }
-        
+
         public Builder<O, Req, Res> setByteSize(ByteSizeValue byteSizeValue) {
-        	this.byteSize = byteSizeValue;
-        	return this;
+            this.byteSize = byteSizeValue;
+            return this;
         }
-        
+
         public FsCrawlerBulkProcessor<O, Req, Res> build() {
-            return new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, flushInterval, byteSize, requestSupplier);
+            return new FsCrawlerBulkProcessor<>(
+                    engine, listener, bulkActions, flushInterval, byteSize, requestSupplier);
         }
     }
 
-    public interface Listener<O extends FsCrawlerOperation<O>,
+    public interface Listener<
+            O extends FsCrawlerOperation<O>,
             Req extends FsCrawlerBulkRequest<O>,
             Res extends FsCrawlerBulkResponse<O>> {
 

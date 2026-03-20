@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,14 +15,30 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs;
 
 import com.jayway.jsonpath.DocumentContext;
-import fr.pilato.elasticsearch.crawler.fs.beans.*;
+import fr.pilato.elasticsearch.crawler.fs.beans.Attributes;
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.framework.*;
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsAclsFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
+import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerMetrics;
 import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -35,13 +51,10 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -56,9 +69,10 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.asMap;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FsParser implements Runnable, AutoCloseable {
     static final Object semaphore = new Object();
@@ -76,7 +90,7 @@ public class FsParser implements Runnable, AutoCloseable {
     private static final String FULL_STACKTRACE_LOG_MESSAGE = "Full stacktrace";
 
     // Checkpoint configuration
-    private static final int CHECKPOINT_INTERVAL_FILES = 100;  // Save checkpoint every N files
+    private static final int CHECKPOINT_INTERVAL_FILES = 100; // Save checkpoint every N files
     private static final int MAX_RETRIES = 10;
     private static final long INITIAL_RETRY_DELAY_MS = 1000;
 
@@ -92,6 +106,7 @@ public class FsParser implements Runnable, AutoCloseable {
     private boolean aclHashCacheDirty;
     /** Null when loop == 0 (REST-only mode); no crawl is performed. */
     private final FsCrawlerExtensionFsProvider crawlerPlugin;
+
     private final String metadataFilename;
     private final byte[] staticMetadata;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
@@ -102,9 +117,14 @@ public class FsParser implements Runnable, AutoCloseable {
     /** Lock for serializing checkpoint file writes (close/pause/crawler threads). */
     private final Object checkpointWriteLock = new Object();
 
-    public FsParser(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
-                           FsCrawlerDocumentService documentService, Integer loop, boolean rest,
-                           FsCrawlerExtensionFsProvider crawlerPlugin) {
+    public FsParser(
+            FsSettings fsSettings,
+            Path config,
+            FsCrawlerManagementService managementService,
+            FsCrawlerDocumentService documentService,
+            Integer loop,
+            boolean rest,
+            FsCrawlerExtensionFsProvider crawlerPlugin) {
         this.fsSettings = fsSettings;
         this.checkpointHandler = new FsCrawlerCheckpointFileHandler(config);
         this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
@@ -116,7 +136,9 @@ public class FsParser implements Runnable, AutoCloseable {
 
         this.loop = loop;
         this.rest = rest;
-        logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
+        logger.debug(
+                "creating fs crawler thread [{}] for [{}] every [{}]",
+                fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
 
@@ -154,6 +176,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
     /**
      * Get the checkpoint handler for external access (e.g., REST API)
+     *
      * @return the checkpoint file handler
      */
     public FsCrawlerCheckpointFileHandler getCheckpointHandler() {
@@ -176,9 +199,7 @@ public class FsParser implements Runnable, AutoCloseable {
         return runNumber.get();
     }
 
-    /**
-     * Resume the crawler after a pause.
-     */
+    /** Resume the crawler after a pause. */
     public void resume() {
         // Update checkpoint to RUNNING before waking crawler so disk state is correct (avoids race)
         synchronized (checkpointWriteLock) {
@@ -202,7 +223,7 @@ public class FsParser implements Runnable, AutoCloseable {
         this.closed.set(true);
         this.userStopped.set(false);
         logger.trace("Closing the parser {}", this.getClass().getSimpleName());
-        
+
         // Read-modify-write checkpoint state under lock so crawler thread cannot overwrite before persist
         synchronized (checkpointWriteLock) {
             FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
@@ -211,7 +232,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 saveCheckpoint();
             }
         }
-        
+
         try {
             if (crawlerPlugin != null) {
                 crawlerPlugin.closeConnection();
@@ -223,8 +244,8 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Set the user-requested-pause flag so that getState() returns PAUSED (e.g. when REST "pause" is called
-     * while crawler is already between runs). Does not change paused/userStopped; use when already paused.
+     * Set the user-requested-pause flag so that getState() returns PAUSED (e.g. when REST "pause" is called while
+     * crawler is already between runs). Does not change paused/userStopped; use when already paused.
      */
     public void ensureUserRequestedPause() {
         this.userRequestedPause.set(true);
@@ -238,7 +259,8 @@ public class FsParser implements Runnable, AutoCloseable {
         synchronized (checkpointWriteLock) {
             FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
             // Only overwrite checkpoint when a scan is in progress; do not replace COMPLETED during sleep phase
-            if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.COMPLETED
+            if (localCheckpoint != null
+                    && localCheckpoint.getState() != CrawlerState.COMPLETED
                     && localCheckpoint.getState() != CrawlerState.ERROR) {
                 localCheckpoint.setState(CrawlerState.PAUSED);
                 saveCheckpoint();
@@ -249,7 +271,9 @@ public class FsParser implements Runnable, AutoCloseable {
 
     @Override
     public void run() {
-        logger.info("FS crawler started for [{}] for [{}] every [{}]", fsSettings.getName(),
+        logger.info(
+                "FS crawler started for [{}] for [{}] every [{}]",
+                fsSettings.getName(),
                 fsSettings.getFs().getUrl(),
                 fsSettings.getFs().getUpdateRate());
         // If close() was called before this thread ran, exit without overwriting closed
@@ -286,11 +310,13 @@ public class FsParser implements Runnable, AutoCloseable {
                 filesSinceLastCheckpoint = 0;
 
                 String url = fsSettings.getFs().getUrl();
-                if (crawlerPlugin == null || isNullOrEmpty(url)) {
+                if (crawlerPlugin == null || FsCrawlerUtil.isNullOrEmpty(url)) {
                     // REST-only (no provider) or no folder to monitor: no-op run, checkpoint completed with 0 files
-                    logger.info("Run #{}: job [{}]: skipping crawl (REST-only or no fs.url).", run, fsSettings.getName());
+                    logger.info(
+                            "Run #{}: job [{}]: skipping crawl (REST-only or no fs.url).", run, fsSettings.getName());
                     LocalDateTime scanDatenew = LocalDateTime.now().minusSeconds(2);
-                    LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
+                    LocalDateTime nextCheck =
+                            scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
                     setCurrentCheckpoint(FsCrawlerCheckpoint.newCheckpoint(""));
                     checkpoint.get().ensureConcurrentCollections();
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
@@ -320,14 +346,17 @@ public class FsParser implements Runnable, AutoCloseable {
                     if (checkpoint.get().getFilesProcessed() > 0) {
                         stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
                         stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
-                        logger.info("Resuming from checkpoint: {} files processed, {} directories pending",
-                                checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
+                        logger.info(
+                                "Resuming from checkpoint: {} files processed, {} directories pending",
+                                checkpoint.get().getFilesProcessed(),
+                                checkpoint.get().getPendingPaths().size());
                     }
 
                     // We only index the root directory once (first run)
                     // That means that we don't have a scanDate yet (checkpoint.scanDate is MIN)
                     LocalDateTime scanDate = checkpoint.get().getScanDate();
-                    if ((scanDate == null || scanDate.equals(LocalDateTime.MIN)) && fsSettings.getFs().isIndexFolders()) {
+                    if ((scanDate == null || scanDate.equals(LocalDateTime.MIN))
+                            && fsSettings.getFs().isIndexFolders()) {
                         indexDirectory(url, url);
                     }
 
@@ -356,12 +385,20 @@ public class FsParser implements Runnable, AutoCloseable {
                             scanDuration != null ? scanDuration.toMillis() : 0L);
 
                     // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
-                    LocalDateTime nextCheck = scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
-                    logger.info("Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. " +
-                                    "Started at [{}], finished at [{}], took [{}]. " +
-                                    "Will restart at [{}].", run, fsSettings.getName(),
-                            stats.getNbDocScan(), stats.getNbDocDeleted(), scanDatenew,
-                            stats.getStartTime(), stats.getEndTime(), durationToString(stats.computeDuration()),
+                    LocalDateTime nextCheck =
+                            scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
+                    logger.info(
+                            "Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. "
+                                    + "Started at [{}], finished at [{}], took [{}]. "
+                                    + "Will restart at [{}].",
+                            run,
+                            fsSettings.getName(),
+                            stats.getNbDocScan(),
+                            stats.getNbDocDeleted(),
+                            scanDatenew,
+                            stats.getStartTime(),
+                            stats.getEndTime(),
+                            FsCrawlerUtil.durationToString(stats.computeDuration()),
                             nextCheck);
 
                     // If we completed successfully, update the checkpoint with completion info.
@@ -372,10 +409,15 @@ public class FsParser implements Runnable, AutoCloseable {
                     }
                 }
             } catch (Exception e) {
-                logger.warn("Error while crawling {}: {}", fsSettings.getFs().getUrl(), e.getMessage() == null ? e.getClass().getName() : e.getMessage());
+                logger.warn(
+                        "Error while crawling {}: {}",
+                        fsSettings.getFs().getUrl(),
+                        e.getMessage() == null ? e.getClass().getName() : e.getMessage());
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
                 crawlSpan.recordException(e);
-                crawlSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+                crawlSpan.setStatus(
+                        StatusCode.ERROR,
+                        e.getMessage() != null ? e.getMessage() : e.getClass().getName());
 
                 // Only overwrite checkpoint file if we loaded/created one this run; otherwise we'd
                 // replace a valid checkpoint with the default empty instance (see High Severity bug).
@@ -407,15 +449,21 @@ public class FsParser implements Runnable, AutoCloseable {
                     return;
                 }
 
-                logger.info("FS crawler completed {} run{}, entering pause. Resume or wait for next run.", run, run > 1 ? "s" : "");
+                logger.info(
+                        "FS crawler completed {} run{}, entering pause. Resume or wait for next run.",
+                        run,
+                        run > 1 ? "s" : "");
                 userStopped.set(true);
             } else {
-                logger.debug("Run completed. Entering pause. Resume or wait {} for next run.", fsSettings.getFs().getUpdateRate());
+                logger.debug(
+                        "Run completed. Entering pause. Resume or wait {} for next run.",
+                        fsSettings.getFs().getUpdateRate());
             }
             paused.set(true);
             FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
             // Do not overwrite COMPLETED so REST /status can expose it (scanEndTime, nextCheck) between runs
-            if (localCheckpoint != null && localCheckpoint.getState() != CrawlerState.ERROR
+            if (localCheckpoint != null
+                    && localCheckpoint.getState() != CrawlerState.ERROR
                     && localCheckpoint.getState() != CrawlerState.COMPLETED) {
                 localCheckpoint.setState(CrawlerState.PAUSED);
                 saveCheckpoint();
@@ -431,14 +479,21 @@ public class FsParser implements Runnable, AutoCloseable {
                                     : Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
                             semaphore.wait(waitTime);
                             totalWaitTime += waitTime;
-                            logger.trace("Waking up after {} ms (resume or timeout). Waited {} / {} ms.", waitTime, totalWaitTime, maxWaitTime);
-                            // When not user-stopped, allow external checkpoint change (e.g. nextCheck in past) to trigger early run
+                            logger.trace(
+                                    "Waking up after {} ms (resume or timeout). Waited {} / {} ms.",
+                                    waitTime,
+                                    totalWaitTime,
+                                    maxWaitTime);
+                            // When not user-stopped, allow external checkpoint change (e.g. nextCheck in past) to
+                            // trigger early run
                             if (!userStopped.get()) {
                                 try {
                                     FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
-                                    if (savedCheckpoint == null || savedCheckpoint.getNextCheck() == null
+                                    if (savedCheckpoint == null
+                                            || savedCheckpoint.getNextCheck() == null
                                             || LocalDateTime.now().isAfter(savedCheckpoint.getNextCheck())) {
-                                        logger.debug("Fs crawler is waking up because next check time [{}] is in the past.",
+                                        logger.debug(
+                                                "Fs crawler is waking up because next check time [{}] is in the past.",
                                                 savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
                                         break;
                                     }
@@ -447,7 +502,10 @@ public class FsParser implements Runnable, AutoCloseable {
                                 }
                             }
                         }
-                        logger.debug("Exiting pause: {} (resume or {} elapsed)", paused.get() ? "timeout" : "resume", totalWaitTime);
+                        logger.debug(
+                                "Exiting pause: {} (resume or {} elapsed)",
+                                paused.get() ? "timeout" : "resume",
+                                totalWaitTime);
                     }
                 }
             } catch (InterruptedException e) {
@@ -462,18 +520,14 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Load an existing checkpoint or create a new one.
-     * Handles three cases:
-     * 1. Existing checkpoint with pending work (resume interrupted scan)
-     * 2. Existing checkpoint with COMPLETED state (use its scanEndTime as lastrun)
-     * 3. No checkpoint but legacy _status.json exists (migrate)
-     * 4. Nothing exists (fresh start)
+     * Load an existing checkpoint or create a new one. Handles three cases: 1. Existing checkpoint with pending work
+     * (resume interrupted scan) 2. Existing checkpoint with COMPLETED state (use its scanEndTime as lastrun) 3. No
+     * checkpoint but legacy _status.json exists (migrate) 4. Nothing exists (fresh start)
      *
-     * When resuming, re-adds {@link FsCrawlerCheckpoint#getCurrentPath() currentPath} to the front
-     * of pendingPaths if it is set and not already in the queue. This is required because the
-     * crawler polls a path from pendingPaths and then sets currentPath; any checkpoint saved
-     * between those points or during directory processing has currentPath set but the path
-     * absent from pendingPaths, so recovery would otherwise lose that directory.
+     * <p>When resuming, re-adds {@link FsCrawlerCheckpoint#getCurrentPath() currentPath} to the front of pendingPaths
+     * if it is set and not already in the queue. This is required because the crawler polls a path from pendingPaths
+     * and then sets currentPath; any checkpoint saved between those points or during directory processing has
+     * currentPath set but the path absent from pendingPaths, so recovery would otherwise lose that directory.
      */
     private FsCrawlerCheckpoint loadOrCreateCheckpoint(String rootPath) throws IOException {
         FsCrawlerCheckpoint existing = checkpointHandler.read(fsSettings.getName());
@@ -482,22 +536,31 @@ public class FsParser implements Runnable, AutoCloseable {
             existing.ensureConcurrentCollections();
             if (existing.getState() == CrawlerState.COMPLETED) {
                 // Previous scan completed - start fresh but use its scanEndTime as reference
-                logger.debug("Found completed checkpoint for job [{}], starting new scan with lastrun [{}]",
-                        fsSettings.getName(), existing.getScanEndTime());
+                logger.debug(
+                        "Found completed checkpoint for job [{}], starting new scan with lastrun [{}]",
+                        fsSettings.getName(),
+                        existing.getScanEndTime());
                 FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
                 newCheckpoint.setScanDate(existing.getScanEndTime());
                 return newCheckpoint;
-            } else if (existing.hasPendingWork() || (existing.getCurrentPath() != null && !existing.getCurrentPath().isEmpty())) {
+            } else if (existing.hasPendingWork()
+                    || (existing.getCurrentPath() != null
+                            && !existing.getCurrentPath().isEmpty())) {
                 // Interrupted scan - resume (either pending queue non-empty or currentPath set but path was polled out)
-                if (existing.getCurrentPath() != null && !existing.getCurrentPath().isEmpty()
+                if (existing.getCurrentPath() != null
+                        && !existing.getCurrentPath().isEmpty()
                         && !existing.isPending(existing.getCurrentPath())) {
                     existing.addPathFirst(existing.getCurrentPath());
                     logger.debug("Re-added currentPath [{}] to pending queue for resume", existing.getCurrentPath());
                 }
                 if (!existing.hasPendingWork()) {
-                    logger.info("Found existing checkpoint for job [{}] with currentPath but empty pending queue, resuming scan", fsSettings.getName());
+                    logger.info(
+                            "Found existing checkpoint for job [{}] with currentPath but empty pending queue, resuming scan",
+                            fsSettings.getName());
                 } else {
-                    logger.info("Found existing checkpoint for job [{}] with pending work, resuming scan", fsSettings.getName());
+                    logger.info(
+                            "Found existing checkpoint for job [{}] with pending work, resuming scan",
+                            fsSettings.getName());
                 }
                 // Do not clear currentPath: processDirectory() uses it to match the resumed directory and apply
                 // currentPathFilesIndexedCount so we don't double-count files after crash/restart resume.
@@ -508,7 +571,8 @@ public class FsParser implements Runnable, AutoCloseable {
                 // Checkpoint exists but no pending work and no currentPath - start fresh
                 logger.debug("Found checkpoint for job [{}] but no pending work, starting fresh", fsSettings.getName());
                 FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
-                newCheckpoint.setScanDate(existing.getScanEndTime() != null ? existing.getScanEndTime() : LocalDateTime.MIN);
+                newCheckpoint.setScanDate(
+                        existing.getScanEndTime() != null ? existing.getScanEndTime() : LocalDateTime.MIN);
                 return newCheckpoint;
             }
         }
@@ -517,9 +581,9 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Install the checkpoint for the current run. Sets {@link FsCrawlerCheckpoint#setLoadedThisRun(boolean)}
-     * so the error handler only persists when we have actually loaded/created this checkpoint (avoids
-     * overwriting a valid checkpoint file with the default empty instance on early failures).
+     * Install the checkpoint for the current run. Sets {@link FsCrawlerCheckpoint#setLoadedThisRun(boolean)} so the
+     * error handler only persists when we have actually loaded/created this checkpoint (avoids overwriting a valid
+     * checkpoint file with the default empty instance on early failures).
      */
     private void setCurrentCheckpoint(FsCrawlerCheckpoint cp) {
         cp.setLoadedThisRun(true);
@@ -527,15 +591,17 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Save the current checkpoint to disk.
-     * Synchronized so close(), pause(), and the crawler thread do not write concurrently.
+     * Save the current checkpoint to disk. Synchronized so close(), pause(), and the crawler thread do not write
+     * concurrently.
      */
     private void saveCheckpoint() {
         synchronized (checkpointWriteLock) {
             try {
                 checkpointHandler.write(fsSettings.getName(), checkpoint.get());
-                logger.trace("✅ Checkpoint saved: {} files processed, {} directories pending",
-                        checkpoint.get().getFilesProcessed(), checkpoint.get().getPendingPaths().size());
+                logger.trace(
+                        "✅ Checkpoint saved: {} files processed, {} directories pending",
+                        checkpoint.get().getFilesProcessed(),
+                        checkpoint.get().getPendingPaths().size());
             } catch (IOException e) {
                 logger.warn("Failed to save checkpoint: {}", e.getMessage());
                 logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
@@ -544,15 +610,15 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Update the checkpoint as completed with scan end time and next check time.
-     * The checkpoint is kept (not deleted) to serve as the source of truth for lastrun.
+     * Update the checkpoint as completed with scan end time and next check time. The checkpoint is kept (not deleted)
+     * to serve as the source of truth for lastrun.
      */
     private void updateCheckpointAsCompleted(LocalDateTime scanEndTime, LocalDateTime nextCheck) {
         FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
         if (localCheckpoint == null) {
             return;
         }
-        
+
         localCheckpoint.setState(CrawlerState.COMPLETED);
         localCheckpoint.setScanDate(scanEndTime);
         localCheckpoint.setScanEndTime(scanEndTime);
@@ -564,15 +630,17 @@ public class FsParser implements Runnable, AutoCloseable {
         localCheckpoint.setCurrentPathFilesIndexedCount(0);
         localCheckpoint.setLastError(null);
         localCheckpoint.resetRetryCount();
-        
+
         saveCheckpoint();
-        logger.debug("💾 Checkpoint updated as completed: scanEndTime [{}], nextCheck [{}], indexed [{}], deleted [{}]",
-                scanEndTime, nextCheck, localCheckpoint.getFilesProcessed(), localCheckpoint.getFilesDeleted());
+        logger.debug(
+                "💾 Checkpoint updated as completed: scanEndTime [{}], nextCheck [{}], indexed [{}], deleted [{}]",
+                scanEndTime,
+                nextCheck,
+                localCheckpoint.getFilesProcessed(),
+                localCheckpoint.getFilesDeleted());
     }
 
-    /**
-     * Maybe save checkpoint based on file count
-     */
+    /** Maybe save checkpoint based on file count */
     private void maybeSaveCheckpoint() {
         filesSinceLastCheckpoint++;
         if (filesSinceLastCheckpoint >= CHECKPOINT_INTERVAL_FILES) {
@@ -581,81 +649,81 @@ public class FsParser implements Runnable, AutoCloseable {
         }
     }
 
-    /**
-     * Process directories using a work queue with checkpoint support
-     */
+    /** Process directories using a work queue with checkpoint support */
     private void processDirectoriesWithCheckpoint(LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
         Span traverseSpan = FsCrawlerTracing.startSpan("fscrawler.directory.traverse");
         try (Scope traverseScope = traverseSpan.makeCurrent()) {
-        traverseSpan.setAttribute("scan.id", String.valueOf(runNumber.get()));
+            traverseSpan.setAttribute("scan.id", String.valueOf(runNumber.get()));
 
-        while (checkpoint.get().hasPendingWork() && !closed.get()) {
-            // Handle pause
-            if (paused.get()) {
-                checkpoint.get().setState(CrawlerState.PAUSED);
-                saveCheckpoint();
-                waitForResume();
-                if (closed.get()) {
-                    return;
-                }
-                checkpoint.get().setState(CrawlerState.RUNNING);
-            }
-
-            String currentPath = checkpoint.get().pollNextPath();
-            if (currentPath == null) {
-                break;
-            }
-            
-            // Skip if already completed (in case of resume with duplicates)
-            if (checkpoint.get().isCompleted(currentPath)) {
-                logger.debug("Skipping already completed directory: {}", currentPath);
-                continue;
-            }
-
-            try {
-                boolean fullyProcessed = processDirectory(currentPath, lastScanDate, stats);
-                if (fullyProcessed) {
-                    checkpoint.get().markCompleted(currentPath);
-                    checkpoint.get().resetRetryCount();
-                    maybeSaveCheckpoint();
-                } else {
-                    // Directory was interrupted (pause or close) - re-add to pending queue
-                    checkpoint.get().addPath(currentPath);
+            while (checkpoint.get().hasPendingWork() && !closed.get()) {
+                // Handle pause
+                if (paused.get()) {
+                    checkpoint.get().setState(CrawlerState.PAUSED);
                     saveCheckpoint();
-                    // Use continue so the while loop re-checks paused/closed and can call
-                    // waitForResume() directly instead of exiting to run() and triggering
-                    // a full new scan cycle (connection close/reopen, checkpoint reload).
+                    waitForResume();
+                    if (closed.get()) {
+                        return;
+                    }
+                    checkpoint.get().setState(CrawlerState.RUNNING);
+                }
+
+                String currentPath = checkpoint.get().pollNextPath();
+                if (currentPath == null) {
+                    break;
+                }
+
+                // Skip if already completed (in case of resume with duplicates)
+                if (checkpoint.get().isCompleted(currentPath)) {
+                    logger.debug("Skipping already completed directory: {}", currentPath);
                     continue;
                 }
-            } catch (Exception e) {
-                // Path already re-added in handleNetworkError; do not add again to avoid duplicate in pending queue
-                if (e instanceof NetworkErrorRecoveryException) {
-                    throw e;
-                }
-                // Network errors (including FsCrawlerPluginException with SocketException etc. cause) get retry
-                if (isNetworkError(e)) {
-                    handleNetworkError(e, currentPath);
-                } else if (e instanceof IOException && fsSettings.getFs().isContinueOnError()) {
-                    logger.warn("Error processing directory {}, continuing: {}", currentPath, e.getMessage());
-                    checkpoint.get().markCompleted(currentPath);
-                    checkpoint.get().setLastError(e.getMessage());
-                } else {
-                    checkpoint.get().addPathFirst(currentPath);
-                    saveCheckpoint();
-                    traverseSpan.recordException(e);
-                    traverseSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
-                    throw e;
+
+                try {
+                    boolean fullyProcessed = processDirectory(currentPath, lastScanDate, stats);
+                    if (fullyProcessed) {
+                        checkpoint.get().markCompleted(currentPath);
+                        checkpoint.get().resetRetryCount();
+                        maybeSaveCheckpoint();
+                    } else {
+                        // Directory was interrupted (pause or close) - re-add to pending queue
+                        checkpoint.get().addPath(currentPath);
+                        saveCheckpoint();
+                        // Use continue so the while loop re-checks paused/closed and can call
+                        // waitForResume() directly instead of exiting to run() and triggering
+                        // a full new scan cycle (connection close/reopen, checkpoint reload).
+                        continue;
+                    }
+                } catch (Exception e) {
+                    // Path already re-added in handleNetworkError; do not add again to avoid duplicate in pending queue
+                    if (e instanceof NetworkErrorRecoveryException) {
+                        throw e;
+                    }
+                    // Network errors (including FsCrawlerPluginException with SocketException etc. cause) get retry
+                    if (isNetworkError(e)) {
+                        handleNetworkError(e, currentPath);
+                    } else if (e instanceof IOException && fsSettings.getFs().isContinueOnError()) {
+                        logger.warn("Error processing directory {}, continuing: {}", currentPath, e.getMessage());
+                        checkpoint.get().markCompleted(currentPath);
+                        checkpoint.get().setLastError(e.getMessage());
+                    } else {
+                        checkpoint.get().addPathFirst(currentPath);
+                        saveCheckpoint();
+                        traverseSpan.recordException(e);
+                        traverseSpan.setStatus(
+                                StatusCode.ERROR,
+                                e.getMessage() != null
+                                        ? e.getMessage()
+                                        : e.getClass().getName());
+                        throw e;
+                    }
                 }
             }
-        }
         } finally {
             traverseSpan.end();
         }
     }
 
-    /**
-     * Wait for resume signal when paused
-     */
+    /** Wait for resume signal when paused */
     private void waitForResume() {
         logger.info("Crawler is paused. Waiting for resume...");
         synchronized (semaphore) {
@@ -674,8 +742,8 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Check if an exception is a network-related error (including when wrapped in
-     * FsCrawlerPluginException or other RuntimeException by FTP/SSH plugins).
+     * Check if an exception is a network-related error (including when wrapped in FsCrawlerPluginException or other
+     * RuntimeException by FTP/SSH plugins).
      */
     private boolean isNetworkError(Throwable e) {
         if (e instanceof java.net.SocketException
@@ -691,9 +759,8 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Handle network errors with retry and exponential backoff.
-     * On throw, the path has already been re-added; callers must not add it again
-     * (they detect this via NetworkErrorRecoveryException).
+     * Handle network errors with retry and exponential backoff. On throw, the path has already been re-added; callers
+     * must not add it again (they detect this via NetworkErrorRecoveryException).
      */
     private void handleNetworkError(Throwable e, String failedPath) {
         checkpoint.get().setLastError(e.getMessage());
@@ -706,14 +773,19 @@ public class FsParser implements Runnable, AutoCloseable {
         if (checkpoint.get().getRetryCount() > MAX_RETRIES) {
             checkpoint.get().setState(CrawlerState.ERROR);
             saveCheckpoint();
-            throw new NetworkErrorRecoveryException(
-                    "Max retries (" + MAX_RETRIES + ") exceeded for network errors", e);
+            throw new NetworkErrorRecoveryException("Max retries (" + MAX_RETRIES + ") exceeded for network errors", e);
         }
 
         // Exponential backoff (wait in chunks so we can respect shutdown; avoids blocking close() for minutes)
-        long delayMs = INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - (double) 1);
-        logger.warn("Network error on path [{}], retry {}/{} in {}ms: {}",
-                failedPath, checkpoint.get().getRetryCount(), MAX_RETRIES, delayMs, e.getMessage());
+        long delayMs =
+                INITIAL_RETRY_DELAY_MS * (long) Math.pow(2, checkpoint.get().getRetryCount() - (double) 1);
+        logger.warn(
+                "Network error on path [{}], retry {}/{} in {}ms: {}",
+                failedPath,
+                checkpoint.get().getRetryCount(),
+                MAX_RETRIES,
+                delayMs,
+                e.getMessage());
 
         try {
             crawlerPlugin.closeConnection();
@@ -732,209 +804,259 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Process a single directory (non-recursive).
-     * Subdirectories are added to the checkpoint's pending queue.
+     * Process a single directory (non-recursive). Subdirectories are added to the checkpoint's pending queue.
+     *
      * @return true if the directory was fully processed, false if interrupted by pause/close
      */
-    private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
+    private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats)
+            throws Exception {
         Span dirSpan = FsCrawlerTracing.startSpan("fscrawler.directory.process");
         dirSpan.setAttribute("fs.path", filepath);
         try (Scope dirScope = dirSpan.makeCurrent()) {
-        logger.debug("indexing [{}] content", filepath);
+            logger.debug("indexing [{}] content", filepath);
 
-        if (closed.get()) {
-            logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
-            return false;
-        }
-
-        // When resuming this path after an interrupt, skip incrementing filesProcessed for the first N files
-        // we index (we still re-index them for idempotency) so we don't double-count. Only apply skip count
-        // when this directory is the same as the one that was interrupted (checkpoint's currentPath is set on
-        // interrupt and must not be overwritten before this check; we set it below after this block).
-        FsCrawlerCheckpoint cp = checkpoint.get();
-        int skipCount = (filepath.equals(cp.getCurrentPath()) && cp.getCurrentPathFilesIndexedCount() > 0)
-                ? cp.getCurrentPathFilesIndexedCount()
-                : 0;
-        if (skipCount > 0) {
-            cp.setCurrentPathFilesIndexedCount(0);
-            logger.debug("Resuming directory [{}]: skipping count for first {} already-indexed files", filepath, skipCount);
-        }
-        cp.setCurrentPath(filepath);
-
-        // Number of files we've indexed in this pass (counted or not); used when interrupted to persist resume state.
-        int indexedInThisPass = 0;
-
-        final Collection<FileAbstractModel> children = crawlerPlugin.getFiles(filepath);
-        Collection<String> fsFiles = new ArrayList<>();
-        Collection<String> fsFolders = new ArrayList<>();
-
-        if (children != null) {
-            boolean ignoreFolder = false;
-            FileAbstractModel metadataFile = null;
-            for (FileAbstractModel child : children) {
-                // We check if we have a .fscrawlerignore file within this folder in which case
-                // we want to ignore all files and subdirs
-                if (child.getName().equalsIgnoreCase(FSCRAWLER_IGNORE_FILENAME)) {
-                    logger.debug("We found a [{}] file in folder: [{}]. Let's skip it.", FSCRAWLER_IGNORE_FILENAME, filepath);
-                    ignoreFolder = true;
-                    break;
-                }
-
-                // We check if we have a .meta.yml file (or equivalent) within this folder in which case
-                // we want to merge its content with the current file metadata
-                if (child.getName().equalsIgnoreCase(metadataFilename)) {
-                    logger.debug("We found a [{}] file in folder: [{}]", metadataFilename, filepath);
-                    metadataFile = child;
-                }
+            if (closed.get()) {
+                logger.debug("FS crawler thread [{}] is now marked as closed...", fsSettings.getName());
+                return false;
             }
 
-            if (!ignoreFolder) {
+            // When resuming this path after an interrupt, skip incrementing filesProcessed for the first N files
+            // we index (we still re-index them for idempotency) so we don't double-count. Only apply skip count
+            // when this directory is the same as the one that was interrupted (checkpoint's currentPath is set on
+            // interrupt and must not be overwritten before this check; we set it below after this block).
+            FsCrawlerCheckpoint cp = checkpoint.get();
+            int skipCount = (filepath.equals(cp.getCurrentPath()) && cp.getCurrentPathFilesIndexedCount() > 0)
+                    ? cp.getCurrentPathFilesIndexedCount()
+                    : 0;
+            if (skipCount > 0) {
+                cp.setCurrentPathFilesIndexedCount(0);
+                logger.debug(
+                        "Resuming directory [{}]: skipping count for first {} already-indexed files",
+                        filepath,
+                        skipCount);
+            }
+            cp.setCurrentPath(filepath);
+
+            // Number of files we've indexed in this pass (counted or not); used when interrupted to persist resume
+            // state.
+            int indexedInThisPass = 0;
+
+            final Collection<FileAbstractModel> children = crawlerPlugin.getFiles(filepath);
+            Collection<String> fsFiles = new ArrayList<>();
+            Collection<String> fsFolders = new ArrayList<>();
+
+            if (children != null) {
+                boolean ignoreFolder = false;
+                FileAbstractModel metadataFile = null;
                 for (FileAbstractModel child : children) {
-                    // Check for pause/close during processing
-                    if (closed.get() || paused.get()) {
-                        // Persist how many files we've indexed in this directory so on resume we skip
-                        // counting them (avoid double-count); we do not roll back filesProcessed.
-                        if (indexedInThisPass > 0) {
-                            checkpoint.get().setCurrentPathFilesIndexedCount(indexedInThisPass);
+                    // We check if we have a .fscrawlerignore file within this folder in which case
+                    // we want to ignore all files and subdirs
+                    if (child.getName().equalsIgnoreCase(FSCRAWLER_IGNORE_FILENAME)) {
+                        logger.debug(
+                                "We found a [{}] file in folder: [{}]. Let's skip it.",
+                                FSCRAWLER_IGNORE_FILENAME,
+                                filepath);
+                        ignoreFolder = true;
+                        break;
+                    }
+
+                    // We check if we have a .meta.yml file (or equivalent) within this folder in which case
+                    // we want to merge its content with the current file metadata
+                    if (child.getName().equalsIgnoreCase(metadataFilename)) {
+                        logger.debug("We found a [{}] file in folder: [{}]", metadataFilename, filepath);
+                        metadataFile = child;
+                    }
+                }
+
+                if (!ignoreFolder) {
+                    for (FileAbstractModel child : children) {
+                        // Check for pause/close during processing
+                        if (closed.get() || paused.get()) {
+                            // Persist how many files we've indexed in this directory so on resume we skip
+                            // counting them (avoid double-count); we do not roll back filesProcessed.
+                            if (indexedInThisPass > 0) {
+                                checkpoint.get().setCurrentPathFilesIndexedCount(indexedInThisPass);
+                            }
+                            saveCheckpoint();
+                            return false; // Interrupted - directory not fully processed
                         }
-                        saveCheckpoint();
-                        return false;  // Interrupted - directory not fully processed
-                    }
 
-                    logger.trace("FileAbstractModel = {}", child);
-                    String filename = child.getName();
+                        logger.trace("FileAbstractModel = {}", child);
+                        String filename = child.getName();
 
-                    // If the filename is the expected metadata file, we skip it
-                    if (filename.equalsIgnoreCase(metadataFilename)) {
-                        logger.trace("Skipping metadata file [{}]", filename);
-                        continue;
-                    }
+                        // If the filename is the expected metadata file, we skip it
+                        if (filename.equalsIgnoreCase(metadataFilename)) {
+                            logger.trace("Skipping metadata file [{}]", filename);
+                            continue;
+                        }
 
-                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, filename));
+                        String virtualFileName = FsCrawlerUtil.computeVirtualPathName(
+                                stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, filename));
 
-                    // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
-                    boolean isIndexable = isIndexable(child.isDirectory(), virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes());
+                        // https://github.com/dadoonet/fscrawler/issues/1 : Filter documents
+                        boolean isIndexable = FsCrawlerUtil.isIndexable(
+                                child.isDirectory(),
+                                virtualFileName,
+                                fsSettings.getFs().getIncludes(),
+                                fsSettings.getFs().getExcludes());
 
-                    logger.trace("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
-                    if (isIndexable) {
-                        if (child.isFile()) {
-                            logger.trace("  - file: {}", virtualFileName);
-                            fsFiles.add(filename);
-                            if (shouldIndexBecauseOfChanges(child, lastScanDate, filename, filepath)) {
-                                logger.trace("    - modified: creation date {} , file date {}, last scan date {}",
-                                        child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
+                        logger.trace("[{}] can be indexed: [{}]", virtualFileName, isIndexable);
+                        if (isIndexable) {
+                            if (child.isFile()) {
+                                logger.trace("  - file: {}", virtualFileName);
+                                fsFiles.add(filename);
+                                if (shouldIndexBecauseOfChanges(child, lastScanDate, filename, filepath)) {
+                                    logger.trace(
+                                            "    - modified: creation date {} , file date {}, last scan date {}",
+                                            child.getCreationDate(),
+                                            child.getLastModifiedDate(),
+                                            lastScanDate);
 
-                                if (isFileSizeUnderLimit(fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
-                                    InputStream inputStream = null;
-                                    InputStream metadataStream = null;
-                                    try {
-                                        if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
-                                            inputStream = crawlerPlugin.getInputStream(child);
+                                    if (FsCrawlerUtil.isFileSizeUnderLimit(
+                                            fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
+                                        InputStream inputStream = null;
+                                        InputStream metadataStream = null;
+                                        try {
+                                            if (fsSettings.getFs().isIndexContent()
+                                                    || fsSettings.getFs().isStoreSource()) {
+                                                inputStream = crawlerPlugin.getInputStream(child);
+                                            }
+                                            if (metadataFile != null) {
+                                                metadataStream = crawlerPlugin.getInputStream(metadataFile);
+                                            }
+                                            indexFile(
+                                                    child,
+                                                    stats,
+                                                    filepath,
+                                                    inputStream,
+                                                    child.getSize(),
+                                                    metadataStream);
+                                            if (skipCount > 0) {
+                                                skipCount--;
+                                            } else {
+                                                stats.addFile();
+                                                checkpoint.get().incrementFilesProcessed();
+                                            }
+                                            indexedInThisPass++;
+                                            maybeSaveCheckpoint();
+                                        } catch (Exception e) {
+                                            if (fsSettings.getFs().isContinueOnError()) {
+                                                logger.warn(
+                                                        "Unable to index {}, skipping...: {}",
+                                                        filename,
+                                                        e.getMessage());
+                                            } else {
+                                                throw e;
+                                            }
+                                        } finally {
+                                            if (metadataStream != null) {
+                                                crawlerPlugin.closeInputStream(metadataStream);
+                                            }
+                                            if (inputStream != null) {
+                                                crawlerPlugin.closeInputStream(inputStream);
+                                            }
                                         }
-                                        if (metadataFile != null) {
-                                            metadataStream = crawlerPlugin.getInputStream(metadataFile);
-                                        }
-                                        indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
-                                        if (skipCount > 0) {
-                                            skipCount--;
-                                        } else {
-                                            stats.addFile();
-                                            checkpoint.get().incrementFilesProcessed();
-                                        }
-                                        indexedInThisPass++;
-                                        maybeSaveCheckpoint();
-                                    } catch (Exception e) {
-                                        if (fsSettings.getFs().isContinueOnError()) {
-                                            logger.warn("Unable to index {}, skipping...: {}", filename, e.getMessage());
-                                        } else {
-                                            throw e;
-                                        }
-                                    } finally {
-                                        if (metadataStream != null) {
-                                            crawlerPlugin.closeInputStream(metadataStream);
-                                        }
-                                        if (inputStream != null) {
-                                            crawlerPlugin.closeInputStream(inputStream);
-                                        }
+                                    } else {
+                                        logger.debug(
+                                                "file [{}] has a size [{}] above the limit [{}]. We skip it.",
+                                                filename,
+                                                new ByteSizeValue(child.getSize()),
+                                                fsSettings.getFs().getIgnoreAbove());
                                     }
                                 } else {
-                                    logger.debug("file [{}] has a size [{}] above the limit [{}]. We skip it.", filename,
-                                            new ByteSizeValue(child.getSize()), fsSettings.getFs().getIgnoreAbove());
+                                    logger.trace(
+                                            "    - not modified: creation date {} , file date {}, last scan date {}",
+                                            child.getCreationDate(),
+                                            child.getLastModifiedDate(),
+                                            lastScanDate);
+                                }
+                            } else if (child.isDirectory()) {
+                                logger.debug("  - folder: {}", filename);
+                                if (fsSettings.getFs().isIndexFolders()) {
+                                    fsFolders.add(child.getFullpath());
+                                    indexDirectory(
+                                            child.getFullpath(),
+                                            fsSettings.getFs().getUrl());
+                                }
+                                // Add subdirectory to pending queue instead of recursive call (avoid duplicates on
+                                // resume)
+                                FsCrawlerCheckpoint cpSub = checkpoint.get();
+                                if (!cpSub.isCompleted(child.getFullpath()) && !cpSub.isPending(child.getFullpath())) {
+                                    cpSub.addPath(child.getFullpath());
                                 }
                             } else {
-                                logger.trace("    - not modified: creation date {} , file date {}, last scan date {}",
-                                        child.getCreationDate(), child.getLastModifiedDate(), lastScanDate);
-                            }
-                        } else if (child.isDirectory()) {
-                            logger.debug("  - folder: {}", filename);
-                            if (fsSettings.getFs().isIndexFolders()) {
-                                fsFolders.add(child.getFullpath());
-                                indexDirectory(child.getFullpath(), fsSettings.getFs().getUrl());
-                            }
-                            // Add subdirectory to pending queue instead of recursive call (avoid duplicates on resume)
-                            FsCrawlerCheckpoint cpSub = checkpoint.get();
-                            if (!cpSub.isCompleted(child.getFullpath()) && !cpSub.isPending(child.getFullpath())) {
-                                cpSub.addPath(child.getFullpath());
+                                logger.debug("  - other: {}", filename);
+                                logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
                             }
                         } else {
-                            logger.debug("  - other: {}", filename);
-                            logger.debug("Not a file nor a dir. Skipping {}", child.getFullpath());
+                            logger.debug("  - ignored file/dir: {}", filename);
                         }
-                    } else {
-                        logger.debug("  - ignored file/dir: {}", filename);
+                    }
+
+                    logger.trace("End of parsing the folder [{}]", filepath);
+                }
+            }
+
+            // Handle deleted files
+            if (fsSettings.getFs().isRemoveDeleted()) {
+                logger.debug("Looking for removed files in [{}]...", filepath);
+                Collection<String> esFiles = getFileDirectory(filepath);
+
+                // for the delete files
+                for (String esfile : esFiles) {
+                    logger.trace("Checking file [{}]", esfile);
+
+                    String virtualFileName = FsCrawlerUtil.computeVirtualPathName(
+                            stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, esfile));
+                    if (FsCrawlerUtil.isIndexable(
+                                    false,
+                                    virtualFileName,
+                                    fsSettings.getFs().getIncludes(),
+                                    fsSettings.getFs().getExcludes())
+                            && !fsFiles.contains(esfile)) {
+                        logger.trace("Removing file [{}] in elasticsearch", esfile);
+                        esDelete(
+                                documentService,
+                                fsSettings.getElasticsearch().getIndex(),
+                                generateIdFromFilename(esfile, filepath));
+                        stats.removeFile();
+                        checkpoint.get().incrementFilesDeleted();
                     }
                 }
 
-                logger.trace("End of parsing the folder [{}]", filepath);
-            }
-        }
+                if (fsSettings.getFs().isIndexFolders()) {
+                    logger.debug("Looking for removed directories in [{}]...", filepath);
+                    Collection<String> esFolders = getFolderDirectory(filepath);
 
-        // Handle deleted files
-        if (fsSettings.getFs().isRemoveDeleted()) {
-            logger.debug("Looking for removed files in [{}]...", filepath);
-            Collection<String> esFiles = getFileDirectory(filepath);
-
-            // for the delete files
-            for (String esfile : esFiles) {
-                logger.trace("Checking file [{}]", esfile);
-
-                String virtualFileName = computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, esfile));
-                if (isIndexable(false, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())
-                        && !fsFiles.contains(esfile)) {
-                    logger.trace("Removing file [{}] in elasticsearch", esfile);
-                    esDelete(documentService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, filepath));
-                    stats.removeFile();
-                    checkpoint.get().incrementFilesDeleted();
-                }
-            }
-
-            if (fsSettings.getFs().isIndexFolders()) {
-                logger.debug("Looking for removed directories in [{}]...", filepath);
-                Collection<String> esFolders = getFolderDirectory(filepath);
-
-                // for the delete folder
-                for (String esfolder : esFolders) {
-                    String virtualFileName = computeVirtualPathName(stats.getRootPath(), computeRealPathName(filepath, esfolder));
-                    if (isIndexable(true, virtualFileName, fsSettings.getFs().getIncludes(), fsSettings.getFs().getExcludes())) {
-                        logger.trace("Checking directory [{}]", esfolder);
-                        if (!fsFolders.contains(esfolder)) {
-                            logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
-                            removeEsDirectoryRecursively(esfolder, stats);
+                    // for the delete folder
+                    for (String esfolder : esFolders) {
+                        String virtualFileName = FsCrawlerUtil.computeVirtualPathName(
+                                stats.getRootPath(), FsCrawlerUtil.computeRealPathName(filepath, esfolder));
+                        if (FsCrawlerUtil.isIndexable(
+                                true,
+                                virtualFileName,
+                                fsSettings.getFs().getIncludes(),
+                                fsSettings.getFs().getExcludes())) {
+                            logger.trace("Checking directory [{}]", esfolder);
+                            if (!fsFolders.contains(esfolder)) {
+                                logger.trace("Removing recursively directory [{}] in elasticsearch", esfolder);
+                                removeEsDirectoryRecursively(esfolder, stats);
+                            }
                         }
                     }
                 }
             }
-        }
-        return true;  // Directory fully processed
+            return true; // Directory fully processed
         } catch (Exception e) {
             dirSpan.recordException(e);
-            dirSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+            dirSpan.setStatus(
+                    StatusCode.ERROR,
+                    e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             throw e;
         } finally {
             dirSpan.end();
         }
     }
-
 
     private Map<String, String> loadAclHashCache(String jobName) {
         if (fsAclsFileHandler == null) {
@@ -964,7 +1086,8 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     private String resolveMetadataFilename(FsSettings fsSettings) {
-        if (fsSettings.getTags() != null && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
+        if (fsSettings.getTags() != null
+                && !StringUtils.isEmpty(fsSettings.getTags().getMetaFilename())) {
             String filename = fsSettings.getTags().getMetaFilename();
             logger.debug("We are going to use [{}] as meta file if found while crawling dirs", filename);
             return filename;
@@ -973,20 +1096,25 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     private byte[] loadStaticMetadata(FsSettings fsSettings) {
-        if (fsSettings.getTags() == null || StringUtils.isEmpty(fsSettings.getTags().getStaticMetaFilename())) {
+        if (fsSettings.getTags() == null
+                || StringUtils.isEmpty(fsSettings.getTags().getStaticMetaFilename())) {
             return new byte[0];
         }
 
         File staticMetadataFile = new File(fsSettings.getTags().getStaticMetaFilename());
         if (!staticMetadataFile.exists() || !staticMetadataFile.isFile()) {
-            throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] does not exist or is not a file.");
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Static meta file [" + staticMetadataFile.getAbsolutePath() + "] does not exist or is not a file.");
         }
         try {
             byte[] data = FileUtils.readFileToByteArray(staticMetadataFile);
-            logger.debug("We are going to use [{}] as the static meta file for every document", fsSettings.getTags().getStaticMetaFilename());
+            logger.debug(
+                    "We are going to use [{}] as the static meta file for every document",
+                    fsSettings.getTags().getStaticMetaFilename());
             return data;
         } catch (IOException e) {
-            throw new FsCrawlerIllegalConfigurationException("Static meta file [" + staticMetadataFile.getAbsolutePath() + "] cannot be read.", e);
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Static meta file [" + staticMetadataFile.getAbsolutePath() + "] cannot be read.", e);
         }
     }
 
@@ -1007,7 +1135,8 @@ public class FsParser implements Runnable, AutoCloseable {
         return fsAclsFileHandler != null;
     }
 
-    private boolean hasAclChanged(String filename, String filepath, FileAbstractModel fileAbstractModel) throws NoSuchAlgorithmException {
+    private boolean hasAclChanged(String filename, String filepath, FileAbstractModel fileAbstractModel)
+            throws NoSuchAlgorithmException {
         if (!shouldTrackAclChanges()) {
             return false;
         }
@@ -1059,7 +1188,8 @@ public class FsParser implements Runnable, AutoCloseable {
         }
     }
 
-    private boolean shouldIndexBecauseOfChanges(FileAbstractModel child, LocalDateTime lastScanDate, String filename, String filepath)
+    private boolean shouldIndexBecauseOfChanges(
+            FileAbstractModel child, LocalDateTime lastScanDate, String filename, String filepath)
             throws NoSuchAlgorithmException {
         if (child.getLastModifiedDate().isAfter(lastScanDate)) {
             return true;
@@ -1074,8 +1204,7 @@ public class FsParser implements Runnable, AutoCloseable {
         return false;
     }
 
-    private Collection<String> getFileDirectory(String path)
-            throws Exception {
+    private Collection<String> getFileDirectory(String path) throws Exception {
         // If the crawler is being closed, we return
         if (closed.get()) {
             return new ArrayList<>();
@@ -1091,175 +1220,208 @@ public class FsParser implements Runnable, AutoCloseable {
         return managementService.getFolderDirectory(path);
     }
 
-    /**
-     * Index a file
-     */
-    private void indexFile(FileAbstractModel fileAbstractModel, ScanStatistic stats, String dirname, InputStream inputStream,
-                           long filesize, InputStream externalTags) throws Exception {
+    /** Index a file */
+    private void indexFile(
+            FileAbstractModel fileAbstractModel,
+            ScanStatistic stats,
+            String dirname,
+            InputStream inputStream,
+            long filesize,
+            InputStream externalTags)
+            throws Exception {
         Span fileSpan = FsCrawlerTracing.startSpan("fscrawler.file.index");
-        fileSpan.setAttribute("fs.path", fileAbstractModel.getFullpath() != null ? fileAbstractModel.getFullpath() : dirname + "/" + fileAbstractModel.getName());
+        fileSpan.setAttribute(
+                "fs.path",
+                fileAbstractModel.getFullpath() != null
+                        ? fileAbstractModel.getFullpath()
+                        : dirname + "/" + fileAbstractModel.getName());
         fileSpan.setAttribute("file.size", filesize);
         try (Scope fileScope = fileSpan.makeCurrent()) {
-        final String filename = fileAbstractModel.getName();
-        final LocalDateTime created = fileAbstractModel.getCreationDate();
-        final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
-        final LocalDateTime lastAccessed = fileAbstractModel.getAccessDate();
-        final String extension = fileAbstractModel.getExtension();
-        final long size = fileAbstractModel.getSize();
+            final String filename = fileAbstractModel.getName();
+            final LocalDateTime created = fileAbstractModel.getCreationDate();
+            final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
+            final LocalDateTime lastAccessed = fileAbstractModel.getAccessDate();
+            final String extension = fileAbstractModel.getExtension();
+            final long size = fileAbstractModel.getSize();
 
-        logger.trace("fetching content from [{}],[{}]", dirname, filename);
-        String fullFilename = computeRealPathName(dirname, filename);
+            logger.trace("fetching content from [{}],[{}]", dirname, filename);
+            String fullFilename = FsCrawlerUtil.computeRealPathName(dirname, filename);
 
-        // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't index json or xml)
-        String id = generateIdFromFilename(filename, dirname);
-        if (fsSettings.getFs().isAddAsInnerObject() || (!fsSettings.getFs().isJsonSupport() && !fsSettings.getFs().isXmlSupport())) {
-            Doc doc = new Doc();
+            // Create the Doc object (only needed when we have add_as_inner_object: true (default) or when we don't
+            // index json or xml)
+            String id = generateIdFromFilename(filename, dirname);
+            if (fsSettings.getFs().isAddAsInnerObject()
+                    || (!fsSettings.getFs().isJsonSupport()
+                            && !fsSettings.getFs().isXmlSupport())) {
+                Doc doc = new Doc();
 
-            // File
-            doc.getFile().setFilename(filename);
-            doc.getFile().setCreated(localDateTimeToDate(created));
-            doc.getFile().setLastModified(localDateTimeToDate(lastModified));
-            doc.getFile().setLastAccessed(localDateTimeToDate(lastAccessed));
-            doc.getFile().setIndexingDate(localDateTimeToDate(LocalDateTime.now()));
-            if (fsSettings.getServer() == null || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
-                doc.getFile().setUrl("file://" + fullFilename);
-            } else if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol())) {
-                doc.getFile().setUrl(String.format("ftp://%s:%d%s", fsSettings.getServer().getHostname(), fsSettings.getServer().getPort(), fullFilename));
-            }
-            doc.getFile().setExtension(extension);
-            if (fsSettings.getFs().isAddFilesize()) {
-                doc.getFile().setFilesize(size);
-            }
-            // File
-
-            // Path
-            // Encoded version of the dir this file belongs to
-            doc.getPath().setRoot(SignTool.sign(dirname));
-            // The virtual URL (not including the initial root dir)
-            doc.getPath().setVirtual(computeVirtualPathName(stats.getRootPath(), fullFilename));
-            // The real and complete filename
-            doc.getPath().setReal(fullFilename);
-            // Path
-
-            // Attributes
-            if (fsSettings.getFs().isAttributesSupport()) {
-                doc.setAttributes(new Attributes());
-                doc.getAttributes().setOwner(fileAbstractModel.getOwner());
-                doc.getAttributes().setGroup(fileAbstractModel.getGroup());
-                if (fileAbstractModel.getPermissions() >= 0) {
-                    doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
+                // File
+                doc.getFile().setFilename(filename);
+                doc.getFile().setCreated(FsCrawlerUtil.localDateTimeToDate(created));
+                doc.getFile().setLastModified(FsCrawlerUtil.localDateTimeToDate(lastModified));
+                doc.getFile().setLastAccessed(FsCrawlerUtil.localDateTimeToDate(lastAccessed));
+                doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
+                if (fsSettings.getServer() == null
+                        || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
+                    doc.getFile().setUrl("file://" + fullFilename);
+                } else if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol())) {
+                    doc.getFile()
+                            .setUrl(String.format(
+                                    "ftp://%s:%d%s",
+                                    fsSettings.getServer().getHostname(),
+                                    fsSettings.getServer().getPort(),
+                                    fullFilename));
                 }
-                if (fsSettings.getFs().isAclSupport()) {
-                    List<FileAcl> fileAcls = fileAbstractModel.getAcls();
-                    if (!fileAcls.isEmpty()) {
-                        doc.getAttributes().setAcl(fileAcls);
+                doc.getFile().setExtension(extension);
+                if (fsSettings.getFs().isAddFilesize()) {
+                    doc.getFile().setFilesize(size);
+                }
+                // File
+
+                // Path
+                // Encoded version of the dir this file belongs to
+                doc.getPath().setRoot(SignTool.sign(dirname));
+                // The virtual URL (not including the initial root dir)
+                doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename));
+                // The real and complete filename
+                doc.getPath().setReal(fullFilename);
+                // Path
+
+                // Attributes
+                if (fsSettings.getFs().isAttributesSupport()) {
+                    doc.setAttributes(new Attributes());
+                    doc.getAttributes().setOwner(fileAbstractModel.getOwner());
+                    doc.getAttributes().setGroup(fileAbstractModel.getGroup());
+                    if (fileAbstractModel.getPermissions() >= 0) {
+                        doc.getAttributes().setPermissions(fileAbstractModel.getPermissions());
+                    }
+                    if (fsSettings.getFs().isAclSupport()) {
+                        List<FileAcl> fileAcls = fileAbstractModel.getAcls();
+                        if (!fileAcls.isEmpty()) {
+                            doc.getAttributes().setAcl(fileAcls);
+                        }
                     }
                 }
-            }
-            // Attributes
+                // Attributes
 
-            // If needed, we generate the content in addition to metadata
-            if (fsSettings.getFs().isJsonSupport()) {
-                // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
-                doc.setObject(asMap(inputStream));
-            } else if (fsSettings.getFs().isXmlSupport()) {
-                // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
-                doc.setObject(XmlDocParser.generateMap(inputStream));
-            } else {
-                // Extracting content with Tika
-                TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
-            }
-
-            // Merge static metadata if available
-            Doc mergedDoc = doc;
-            if (staticMetadata.length > 0) {
-                mergedDoc = DocUtils.getMergedDoc(doc, fsSettings.getTags().getStaticMetaFilename(),
-                        new ByteArrayInputStream(staticMetadata));
-            }
-            // Merge metadata if available in the same folder
-            mergedDoc = DocUtils.getMergedDoc(mergedDoc, metadataFilename, externalTags);
-
-            // We index the data structure
-            if (isIndexable(mergedDoc.getContent(), fsSettings.getFs().getFilters())) {
-                if (!closed.get()) {
-                    FSCrawlerLogger.documentDebug(id,
-                            computeVirtualPathName(stats.getRootPath(), fullFilename),
-                            "Indexing content");
-                    documentService.index(
-                            fsSettings.getElasticsearch().getIndex(),
-                            id,
-                            mergedDoc,
-                            fsSettings.getElasticsearch().getPipeline());
-                    rememberCurrentAclHash(id, fileAbstractModel);
+                // If needed, we generate the content in addition to metadata
+                if (fsSettings.getFs().isJsonSupport()) {
+                    // https://github.com/dadoonet/fscrawler/issues/5 : Support JSon files
+                    doc.setObject(JsonUtil.asMap(inputStream));
+                } else if (fsSettings.getFs().isXmlSupport()) {
+                    // https://github.com/dadoonet/fscrawler/issues/185 : Support Xml files
+                    doc.setObject(XmlDocParser.generateMap(inputStream));
                 } else {
-                    logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                            fsSettings.getElasticsearch().getIndex(), id);
+                    // Extracting content with Tika
+                    TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
+                }
+
+                // Merge static metadata if available
+                Doc mergedDoc = doc;
+                if (staticMetadata.length > 0) {
+                    mergedDoc = DocUtils.getMergedDoc(
+                            doc,
+                            fsSettings.getTags().getStaticMetaFilename(),
+                            new ByteArrayInputStream(staticMetadata));
+                }
+                // Merge metadata if available in the same folder
+                mergedDoc = DocUtils.getMergedDoc(mergedDoc, metadataFilename, externalTags);
+
+                // We index the data structure
+                if (FsCrawlerUtil.isIndexable(
+                        mergedDoc.getContent(), fsSettings.getFs().getFilters())) {
+                    if (!closed.get()) {
+                        FSCrawlerLogger.documentDebug(
+                                id,
+                                FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
+                                "Indexing content");
+                        documentService.index(
+                                fsSettings.getElasticsearch().getIndex(),
+                                id,
+                                mergedDoc,
+                                fsSettings.getElasticsearch().getPipeline());
+                        rememberCurrentAclHash(id, fileAbstractModel);
+                    } else {
+                        logger.warn(
+                                "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                fsSettings.getElasticsearch().getIndex(),
+                                id);
+                    }
+                } else {
+                    logger.debug(
+                            "We ignore file [{}] because it does not match all the patterns {}",
+                            filename,
+                            fsSettings.getFs().getFilters());
                 }
             } else {
-                logger.debug("We ignore file [{}] because it does not match all the patterns {}", filename,
-                        fsSettings.getFs().getFilters());
-            }
-        } else {
-            if (fsSettings.getFs().isJsonSupport()) {
-                FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
-                        computeVirtualPathName(stats.getRootPath(), fullFilename),
-                        "Indexing json content");
-                // We need to check that the provided file is actually a JSON file which can be parsed
-                try {
-                    DocumentContext documentContext = JsonUtil.parseJsonAsDocumentContext(inputStream);
-                    String jsonString = documentContext.jsonString();
+                if (fsSettings.getFs().isJsonSupport()) {
+                    FSCrawlerLogger.documentDebug(
+                            generateIdFromFilename(filename, dirname),
+                            FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing json content");
+                    // We need to check that the provided file is actually a JSON file which can be parsed
+                    try {
+                        DocumentContext documentContext = JsonUtil.parseJsonAsDocumentContext(inputStream);
+                        String jsonString = documentContext.jsonString();
 
-                    // We index the json content directly
-                    if (!closed.get()) {
-                        documentService.indexRawJson(
-                                fsSettings.getElasticsearch().getIndex(),
-                                id,
-                                jsonString,
-                                fsSettings.getElasticsearch().getPipeline());
-                        rememberCurrentAclHash(id, fileAbstractModel);
-                    } else {
-                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                                fsSettings.getElasticsearch().getIndex(), id);
+                        // We index the json content directly
+                        if (!closed.get()) {
+                            documentService.indexRawJson(
+                                    fsSettings.getElasticsearch().getIndex(),
+                                    id,
+                                    jsonString,
+                                    fsSettings.getElasticsearch().getPipeline());
+                            rememberCurrentAclHash(id, fileAbstractModel);
+                        } else {
+                            logger.warn(
+                                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                    fsSettings.getElasticsearch().getIndex(),
+                                    id);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+                        logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+                    } finally {
+                        if (inputStream != null) {
+                            crawlerPlugin.closeInputStream(inputStream);
+                        }
                     }
-                } catch (Exception e) {
-                    logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
-                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
-                } finally {
-                    if (inputStream != null) {
-                        crawlerPlugin.closeInputStream(inputStream);
-                    }
-                }
-            } else if (fsSettings.getFs().isXmlSupport()) {
-                FSCrawlerLogger.documentDebug(generateIdFromFilename(filename, dirname),
-                        computeVirtualPathName(stats.getRootPath(), fullFilename),
-                        "Indexing xml content");
-                // We need to check that the provided file is actually a JSON file which can be parsed
-                try {
-                    // We index the xml content directly (after transformation to json)
-                    if (!closed.get()) {
-                        documentService.indexRawJson(
-                                fsSettings.getElasticsearch().getIndex(),
-                                id,
-                                XmlDocParser.generate(inputStream),
-                                fsSettings.getElasticsearch().getPipeline());
-                        rememberCurrentAclHash(id, fileAbstractModel);
-                    } else {
-                        logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                                fsSettings.getElasticsearch().getIndex(), id);
-                    }
-                } catch (Exception e) {
-                    logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
-                    logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
-                } finally {
-                    if (inputStream != null) {
-                        crawlerPlugin.closeInputStream(inputStream);
+                } else if (fsSettings.getFs().isXmlSupport()) {
+                    FSCrawlerLogger.documentDebug(
+                            generateIdFromFilename(filename, dirname),
+                            FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
+                            "Indexing xml content");
+                    // We need to check that the provided file is actually a JSON file which can be parsed
+                    try {
+                        // We index the xml content directly (after transformation to json)
+                        if (!closed.get()) {
+                            documentService.indexRawJson(
+                                    fsSettings.getElasticsearch().getIndex(),
+                                    id,
+                                    XmlDocParser.generate(inputStream),
+                                    fsSettings.getElasticsearch().getPipeline());
+                            rememberCurrentAclHash(id, fileAbstractModel);
+                        } else {
+                            logger.warn(
+                                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                    fsSettings.getElasticsearch().getIndex(),
+                                    id);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+                        logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+                    } finally {
+                        if (inputStream != null) {
+                            crawlerPlugin.closeInputStream(inputStream);
+                        }
                     }
                 }
             }
-        }
         } catch (Exception e) {
             fileSpan.recordException(e);
-            fileSpan.setStatus(StatusCode.ERROR, e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+            fileSpan.setStatus(
+                    StatusCode.ERROR,
+                    e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             throw e;
         } finally {
             fileSpan.end();
@@ -1269,26 +1431,33 @@ public class FsParser implements Runnable, AutoCloseable {
     private String generateIdFromFilename(String filename, String filepath) throws NoSuchAlgorithmException {
         String filepathForId = filepath.replace("\\", "/");
         String filenameForId = filename.replace("\\", "").replace("/", "");
-        String idSource = filepathForId.endsWith("/") ? filepathForId.concat(filenameForId) : filepathForId.concat("/").concat(filenameForId);
+        String idSource = filepathForId.endsWith("/")
+                ? filepathForId.concat(filenameForId)
+                : filepathForId.concat("/").concat(filenameForId);
         return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign(idSource);
     }
 
     /**
      * Index a folder object in elasticsearch
-     * @param id        id of the folder
-     * @param folder    path object
+     *
+     * @param id id of the folder
+     * @param folder path object
      */
     private void indexDirectory(String id, Folder folder) {
         if (!closed.get()) {
-            managementService.storeVisitedDirectory(fsSettings.getElasticsearch().getIndexFolder(), id, folder);
+            managementService.storeVisitedDirectory(
+                    fsSettings.getElasticsearch().getIndexFolder(), id, folder);
         } else {
-            logger.warn("trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                    fsSettings.getElasticsearch().getIndexFolder(), id);
+            logger.warn(
+                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                    fsSettings.getElasticsearch().getIndexFolder(),
+                    id);
         }
     }
 
     /**
      * Index a directory
+     *
      * @param path complete path like "/", "/path/to/subdir", "C:\\dir", "C:/dir", "/C:/dir", "//SOMEONE/dir"
      * @param rootPath the root path we started from
      */
@@ -1297,8 +1466,10 @@ public class FsParser implements Runnable, AutoCloseable {
         int lastSepIndex = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
         if (lastSepIndex < 0) {
             // Edge case: no separator found (e.g., root path like "C:")
-            logger.warn("Cannot index directory [{}]: no path separator found. " +
-                    "On Windows, please use backslashes (e.g., C:\\\\path\\\\to\\\\dir) in fs.url setting.", path);
+            logger.warn(
+                    "Cannot index directory [{}]: no path separator found. "
+                            + "On Windows, please use backslashes (e.g., C:\\\\path\\\\to\\\\dir) in fs.url setting.",
+                    path);
             return;
         }
         String name = path.substring(lastSepIndex + 1);
@@ -1306,30 +1477,36 @@ public class FsParser implements Runnable, AutoCloseable {
 
         File folderInfo = new File(path);
 
-        Folder folder = new Folder(name,
+        Folder folder = new Folder(
+                name,
                 SignTool.sign(rootdir),
                 path,
-                computeVirtualPathName(rootPath, path),
-                getCreationTime(folderInfo),
-                getModificationTime(folderInfo),
-                getLastAccessTime(folderInfo));
+                FsCrawlerUtil.computeVirtualPathName(rootPath, path),
+                FsCrawlerUtil.getCreationTime(folderInfo),
+                FsCrawlerUtil.getModificationTime(folderInfo),
+                FsCrawlerUtil.getLastAccessTime(folderInfo));
 
-        if (fsSettings.getFs().isAttributesSupport() && (fsSettings.getServer() == null || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol()))) {
+        if (fsSettings.getFs().isAttributesSupport()
+                && (fsSettings.getServer() == null
+                        || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol()))) {
             Attributes attributes = new Attributes();
-            attributes.setOwner(getOwnerName(folderInfo));
-            attributes.setGroup(getGroupName(folderInfo));
-            int permissions = getFilePermissions(folderInfo);
+            attributes.setOwner(FsCrawlerUtil.getOwnerName(folderInfo));
+            attributes.setGroup(FsCrawlerUtil.getGroupName(folderInfo));
+            int permissions = FsCrawlerUtil.getFilePermissions(folderInfo);
             if (permissions >= 0) {
                 attributes.setPermissions(permissions);
             }
             if (fsSettings.getFs().isAclSupport()) {
-                List<FileAcl> folderAcls = getFileAcls(folderInfo.toPath());
+                List<FileAcl> folderAcls = FsCrawlerUtil.getFileAcls(folderInfo.toPath());
                 if (!folderAcls.isEmpty()) {
                     attributes.setAcl(folderAcls);
                 }
             }
 
-            if (attributes.getOwner() != null || attributes.getGroup() != null || attributes.getAcl() != null || permissions >= 0) {
+            if (attributes.getOwner() != null
+                    || attributes.getGroup() != null
+                    || attributes.getAcl() != null
+                    || permissions >= 0) {
                 folder.setAttributes(attributes);
             }
         }
@@ -1337,9 +1514,7 @@ public class FsParser implements Runnable, AutoCloseable {
         indexDirectory(SignTool.sign(path), folder);
     }
 
-    /**
-     * Remove a full directory and sub dirs recursively
-     */
+    /** Remove a full directory and sub dirs recursively */
     private void removeEsDirectoryRecursively(final String path, ScanStatistic stats) throws Exception {
         logger.debug("Delete folder [{}]", path);
         Collection<String> listFile = getFileDirectory(path);
@@ -1358,29 +1533,27 @@ public class FsParser implements Runnable, AutoCloseable {
         esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
     }
 
-    /**
-     * Remove a document with the document service
-     */
+    /** Remove a document with the document service */
     private void esDelete(FsCrawlerDocumentService service, String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed.get()) {
             service.delete(index, id);
             removeStoredAclHash(id);
         } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
+            logger.warn(
+                    "trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
     }
 
-    /**
-     * Remove a document with the management service
-     */
+    /** Remove a document with the management service */
     private void esDelete(FsCrawlerManagementService service, String index, String id) {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed.get()) {
             service.delete(index, id);
             removeStoredAclHash(id);
         } else {
-            logger.warn("trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
+            logger.warn(
+                    "trying to remove a file while closing crawler. Document [{}]/[{}] has been ignored", index, id);
         }
     }
 }

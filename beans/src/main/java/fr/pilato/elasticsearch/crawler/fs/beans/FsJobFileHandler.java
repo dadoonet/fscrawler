@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,19 +15,19 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
-
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-
 /**
  * Provides utility methods to read and write job status files (_status.json)
+ *
  * @deprecated since 2.10, use {@link FsCrawlerCheckpointFileHandler} instead
  */
 @Deprecated
@@ -41,26 +41,29 @@ public class FsJobFileHandler extends MetaFileHandler {
 
     /**
      * We read settings in ~/.fscrawler/{job_name}/_status.json
+     *
      * @param jobname is the job_name
      * @return Status status file
      * @throws IOException in case of error while reading
      */
     public FsJob read(String jobname) throws IOException {
-        return prettyMapper.readValue(readFile(jobname, FILENAME), FsJob.class);
+        return JsonUtil.prettyMapper.readValue(readFile(jobname, FILENAME), FsJob.class);
     }
 
     /**
      * We write settings to ~/.fscrawler/{job_name}/_status.json
+     *
      * @param jobname is the job_name
      * @param job Status file to write
      * @throws IOException in case of error while reading
      */
     public void write(String jobname, FsJob job) throws IOException {
-        writeFile(jobname, FILENAME, prettyMapper.writeValueAsString(job));
+        writeFile(jobname, FILENAME, JsonUtil.prettyMapper.writeValueAsString(job));
     }
 
     /**
      * We clean existing settings in ~/.fscrawler/{job_name}/_status.json
+     *
      * @param jobname is the job_name
      * @throws IOException in case of error while removing
      */

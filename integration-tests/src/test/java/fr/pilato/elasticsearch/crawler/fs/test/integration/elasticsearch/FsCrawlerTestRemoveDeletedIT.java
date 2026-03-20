@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,31 +15,28 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
-/**
- * Test moving/removing/adding files
- */
+/** Test moving/removing/adding files */
 public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
@@ -50,14 +47,20 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have two docs first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
 
         // We remove a file
         logger.info("  ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have one file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
     }
 
     @Test
@@ -67,18 +70,26 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have two docs first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
 
         // We remove a file
         logger.info(" ---> Removing file deleted_roottxtfile.txt");
         Files.delete(currentTestResourceDir.resolve("deleted_roottxtfile.txt"));
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
     }
 
     /**
-     * Test case for #95: <a href="https://github.com/dadoonet/fscrawler/issues/95">https://github.com/dadoonet/fscrawler/issues/95</a> : Folder index is not getting delete on delete of folder
+     * Test case for #95: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/95">https://github.com/dadoonet/fscrawler/issues/95</a> :
+     * Folder index is not getting delete on delete of folder
      */
     @Test
     public void remove_folder_deleted_enabled() throws Exception {
@@ -87,7 +98,10 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have 7 docs first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 7L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                7L,
+                currentTestResourceDir);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -97,11 +111,16 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 4L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                4L,
+                currentTestResourceDir);
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/110">https://github.com/dadoonet/fscrawler/issues/110</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/110">https://github.com/dadoonet/fscrawler/issues/110</a>
+     *
      * @throws Exception In case something is wrong
      */
     @Test
@@ -109,24 +128,36 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
 
         // We rename the file
         logger.info(" ---> Renaming file roottxtfile.txt to renamed_roottxtfile.txt");
         // We create a copy of a file
-        Files.move(currentTestResourceDir.resolve("roottxtfile.txt"),
+        Files.move(
+                currentTestResourceDir.resolve("roottxtfile.txt"),
                 currentTestResourceDir.resolve("renamed_roottxtfile.txt"));
         // We need to "touch" the file we just moved otherwise it won't be seen as a new file
         // This might depend on the OS where the code is running though
         // Or there's a timing issue...
-        Files.setLastModifiedTime(currentTestResourceDir.resolve("renamed_roottxtfile.txt"), FileTime.from(Instant.now()));
+        Files.setLastModifiedTime(
+                currentTestResourceDir.resolve("renamed_roottxtfile.txt"), FileTime.from(Instant.now()));
 
         // We expect to have one file only with a new name
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("file.filename", "renamed_roottxtfile.txt")), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("file.filename", "renamed_roottxtfile.txt")),
+                1L,
+                currentTestResourceDir);
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/379">https://github.com/dadoonet/fscrawler/issues/379</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/379">https://github.com/dadoonet/fscrawler/issues/379</a>
+     *
      * @throws Exception In case something is wrong
      */
     @Test
@@ -134,30 +165,45 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
 
         // We move the file
         logger.info(" ---> Moving file roottxtfile.txt to a tmp dir");
-        Files.move(currentTestResourceDir.resolve("roottxtfile.txt"),
-                rootTmpDir.resolve("roottxtfile.txt"), StandardCopyOption.ATOMIC_MOVE);
+        Files.move(
+                currentTestResourceDir.resolve("roottxtfile.txt"),
+                rootTmpDir.resolve("roottxtfile.txt"),
+                StandardCopyOption.ATOMIC_MOVE);
 
         // We expect to have 0 file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 0L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                0L,
+                currentTestResourceDir);
 
         // We move the file back
         logger.info(" ---> Moving file roottxtfile.txt from the tmp dir");
-        Files.move(rootTmpDir.resolve("roottxtfile.txt"),
-                currentTestResourceDir.resolve("roottxtfile.txt"), StandardCopyOption.ATOMIC_MOVE);
+        Files.move(
+                rootTmpDir.resolve("roottxtfile.txt"),
+                currentTestResourceDir.resolve("roottxtfile.txt"),
+                StandardCopyOption.ATOMIC_MOVE);
 
         // We need to "touch" the file we just moved
         Files.setLastModifiedTime(currentTestResourceDir.resolve("roottxtfile.txt"), FileTime.from(Instant.now()));
 
         // We expect to have 1 file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir);
     }
 
     /**
-     * Test case for #136: <a href="https://github.com/dadoonet/fscrawler/issues/136">https://github.com/dadoonet/fscrawler/issues/136</a> : Moving existing files does not index new files
+     * Test case for #136: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/136">https://github.com/dadoonet/fscrawler/issues/136</a> :
+     * Moving existing files does not index new files
      */
     @Test
     public void moving_files() throws Exception {
@@ -177,7 +223,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have 1 doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
 
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
@@ -190,6 +236,6 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logContentOfDir(currentTestResourceDir, Level.DEBUG);
 
         // We expect to have 2 docs now
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
     }
 }

@@ -1,11 +1,11 @@
 /*
- * Licensed to David Pilato under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -15,18 +15,17 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
-
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -40,17 +39,18 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
 
         // Test 500 random values
         for (int i = 0; i < 500; i++) {
-            int unitNumber = randomIntBetween(0, 5);
-            ByteSizeUnit unit = switch (unitNumber) {
-                case 1 -> ByteSizeUnit.KB;
-                case 2 -> ByteSizeUnit.MB;
-                case 3 -> ByteSizeUnit.GB;
-                case 4 -> ByteSizeUnit.TB;
-                case 5 -> ByteSizeUnit.PB;
-                default -> ByteSizeUnit.BYTES;
-            };
+            int unitNumber = RandomizedTest.randomIntBetween(0, 5);
+            ByteSizeUnit unit =
+                    switch (unitNumber) {
+                        case 1 -> ByteSizeUnit.KB;
+                        case 2 -> ByteSizeUnit.MB;
+                        case 3 -> ByteSizeUnit.GB;
+                        case 4 -> ByteSizeUnit.TB;
+                        case 5 -> ByteSizeUnit.PB;
+                        default -> ByteSizeUnit.BYTES;
+                    };
 
-            long value = randomLongBetween(1, 999);
+            long value = RandomizedTest.randomLongBetween(1, 999);
             String randomByteSize = value + unit.getSuffix();
             testConversionBothWays(randomByteSize, value, unit);
         }
@@ -60,8 +60,8 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
         logger.debug("Testing [{}]", value);
 
         ByteSizeValue byteSizeValue = ByteSizeValue.parseBytesSizeValue(value);
-        assertThat(byteSizeValue).hasToString(value);
-        assertThat(byteSizeValue.getBytes()).isEqualTo(bytes);
+        Assertions.assertThat(byteSizeValue).hasToString(value);
+        Assertions.assertThat(byteSizeValue.getBytes()).isEqualTo(bytes);
     }
 
     private void testConversionBothWays(String asString, long size, ByteSizeUnit unit) {

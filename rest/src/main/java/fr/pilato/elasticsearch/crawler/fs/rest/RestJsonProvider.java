@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,24 +15,23 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import jakarta.ws.rs.ext.ContextResolver;
 import jakarta.ws.rs.ext.Provider;
 import org.apache.logging.log4j.LogManager;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
 
 @Provider
 public class RestJsonProvider implements ContextResolver<ObjectMapper> {
 
     // We initialize the object mapper depending on debug mode
-    private static final ObjectMapper jsonMapper = LogManager.getLogger(RestJsonProvider.class).isDebugEnabled() ?
-            prettyMapper : mapper;
+    private static final ObjectMapper jsonMapper =
+            LogManager.getLogger(RestJsonProvider.class).isDebugEnabled() ? JsonUtil.prettyMapper : JsonUtil.mapper;
 
     @Override
     public ObjectMapper getContext(Class<?> type) {

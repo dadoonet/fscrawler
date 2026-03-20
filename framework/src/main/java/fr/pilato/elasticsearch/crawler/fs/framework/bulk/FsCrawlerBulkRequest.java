@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,18 +15,17 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.util.ArrayList;
 import java.util.List;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
     private static final Logger logger = LogManager.getLogger();
@@ -58,7 +57,7 @@ public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
         // and only compute the size if we need to.
         if (maxBulkSize != null && maxBulkSize.getBytes() > 0) {
             // TODO may be we should just add the serialized request to the T object as an optional payload?
-            String jsonValue = serialize(request);
+            String jsonValue = JsonUtil.serialize(request);
             byte[] bytes = jsonValue.getBytes();
             totalByteSize += bytes.length;
         }
@@ -69,9 +68,13 @@ public abstract class FsCrawlerBulkRequest<T extends FsCrawlerOperation<T>> {
     }
 
     boolean isOverTheLimit() {
-        logger.trace("Checking if we need to flush the bulk processor: [{}] >= [{}] actions, [{}] >= [{}] bytes",
-                numberOfActions(), maxNumberOfActions, totalByteSize(), maxBulkSize != null ? maxBulkSize.getBytes() : null);
-        return (maxBulkSize != null && maxBulkSize.getBytes() > 0 && totalByteSize >= maxBulkSize.getBytes()) ||
-                (maxNumberOfActions > 0 && numberOfActions() >= maxNumberOfActions);
+        logger.trace(
+                "Checking if we need to flush the bulk processor: [{}] >= [{}] actions, [{}] >= [{}] bytes",
+                numberOfActions(),
+                maxNumberOfActions,
+                totalByteSize(),
+                maxBulkSize != null ? maxBulkSize.getBytes() : null);
+        return (maxBulkSize != null && maxBulkSize.getBytes() > 0 && totalByteSize >= maxBulkSize.getBytes())
+                || (maxNumberOfActions > 0 && numberOfActions() >= maxNumberOfActions);
     }
 }

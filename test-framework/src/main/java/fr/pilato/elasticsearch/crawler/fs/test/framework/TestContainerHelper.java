@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,10 +15,15 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,14 +32,7 @@ import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-/**
- * This creates a TestContainer Elasticsearch instance
- */
+/** This creates a TestContainer Elasticsearch instance */
 public class TestContainerHelper {
 
     private static final Logger log = LogManager.getLogger(TestContainerHelper.class);
@@ -48,9 +46,8 @@ public class TestContainerHelper {
     //   matches 8.0 JSON logging with no whitespace between message field and content
     //   matches 7.x JSON logging with whitespace between message field and content
     private static final String WAIT_LOGS_REGEX = ".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)";
-    private static final WaitStrategy ELASTICSEARCH_WAIT_STRATEGY = Wait
-            .forLogMessage(WAIT_LOGS_REGEX, 1)
-            .withStartupTimeout(Duration.ofMinutes(5));
+    private static final WaitStrategy ELASTICSEARCH_WAIT_STRATEGY =
+            Wait.forLogMessage(WAIT_LOGS_REGEX, 1).withStartupTimeout(Duration.ofMinutes(5));
     private final String elasticsearchVersion;
 
     private ElasticsearchContainer elasticsearch;
@@ -71,20 +68,22 @@ public class TestContainerHelper {
 
     /**
      * Start the container. If the container was already started, it will be reused.
-     * @param  keepData keep the cluster running after the test and reuse it if possible
+     *
+     * @param keepData keep the cluster running after the test and reuse it if possible
      */
     public synchronized String startElasticsearch(boolean keepData) {
         if (starting.compareAndSet(false, true)) {
             if (!started) {
                 // Start the container. This step might take some time...
-                log.info("Starting{} testcontainers with Elasticsearch [{}].",
+                log.info(
+                        "Starting{} testcontainers with Elasticsearch [{}].",
                         keepData ? " or reusing" : "",
                         elasticsearchVersion);
 
                 @SuppressWarnings("resource")
                 ElasticsearchContainer container = new ElasticsearchContainer(
-                        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
-                                .withTag(elasticsearchVersion))
+                                DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
+                                        .withTag(elasticsearchVersion))
                         // As for 7.x clusters, there's no https, api keys are disabled by default. We force it.
                         .withEnv("xpack.security.authc.api_key.enabled", "true")
                         // For semantic search tests, we need to activate a trial
@@ -100,11 +99,12 @@ public class TestContainerHelper {
                 // Try to get the https certificate if exists
                 try {
                     certAsBytes = elasticsearch.copyFileFromContainer(
-                            "/usr/share/elasticsearch/config/certs/http_ca.crt",
-                            IOUtils::toByteArray);
+                            "/usr/share/elasticsearch/config/certs/http_ca.crt", IOUtils::toByteArray);
                     log.debug("Found an https elasticsearch cert for version [{}].", elasticsearchVersion);
                 } catch (Exception e) {
-                    log.debug("We did not find the https elasticsearch cert for version [{}]. We switch to http instead.", elasticsearchVersion);
+                    log.debug(
+                            "We did not find the https elasticsearch cert for version [{}]. We switch to http instead.",
+                            elasticsearchVersion);
                     url = String.format(HTTP_URL, elasticsearch.getHttpHostAddress());
                 }
 

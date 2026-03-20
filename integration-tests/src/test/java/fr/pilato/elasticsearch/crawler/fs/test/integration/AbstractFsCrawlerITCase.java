@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,27 +15,24 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-
-import java.io.IOException;
-import java.time.Duration;
-
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
@@ -43,8 +40,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @Before
     public void cleanExistingIndex() throws ElasticsearchClientException {
         logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
-        client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-        client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+        client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
 
         // Remove existing templates if any
         String templateName = "fscrawler_" + getCrawlerName() + "_*";
@@ -59,8 +56,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             logger.debug("🧹 Removing index [{}*]", getCrawlerName());
-            client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_DOCS);
-            client.deleteIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER);
+            client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+            client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
             // Remove existing templates if any
             String templateName = "fscrawler_" + getCrawlerName() + "_*";
             logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
@@ -79,8 +76,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             // We ignore the error
         } catch (BadRequestException e) {
             // We ignore the error
-            logger.warn("Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/{}]",
-                    e.getMessage(), componentTemplateName);
+            logger.warn(
+                    "Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/{}]",
+                    e.getMessage(),
+                    componentTemplateName);
         }
     }
 
@@ -92,8 +91,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             // We ignore the error
         } catch (BadRequestException e) {
             // We ignore the error
-            logger.warn("Failed to remove index templates. Got a [{}] when calling [DELETE /_index_template/{}]",
-                    e.getMessage(), indexTemplateName);
+            logger.warn(
+                    "Failed to remove index templates. Got a [{}] when calling [DELETE /_index_template/{}]",
+                    e.getMessage(),
+                    indexTemplateName);
         }
     }
 
@@ -114,19 +115,19 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         return startCrawler(fsSettings, MAX_WAIT_FOR_SEARCH);
     }
 
-    protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, Duration duration)
-            throws Exception {
+    protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, Duration duration) throws Exception {
         logger.info("🎬 starting crawler [{}]", fsSettings.getName());
         logger.debug("⚙️ with settings [{}]", fsSettings);
 
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, LOOP_INFINITE, false);
+        crawler = new FsCrawlerImpl(metadataDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false);
         crawler.start();
 
         // Wait for the index to be healthy as we might have a race condition
         client.waitForHealthyIndex(fsSettings.getElasticsearch().getIndex());
 
         // We check that we have at least a few documents
-        countTestHelper(new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
+        countTestHelper(
+                new ESSearchRequest().withIndex(fsSettings.getElasticsearch().getIndex()), null, null, duration);
 
         // Make sure we refresh indexed docs and folders before launching tests
         refresh(fsSettings.getElasticsearch().getIndex());

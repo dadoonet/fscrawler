@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,7 +37,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.spi.json.JsonSmartJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -51,10 +51,9 @@ public class JsonUtil {
             .mappingProvider(new JsonSmartMappingProvider())
             .build();
 
-
     static {
-        SimpleModule fscrawler = new SimpleModule("FsCrawler", new Version(2, 0, 0, null,
-                "fr.pilato.elasticsearch.crawler", "fscrawler"));
+        SimpleModule fscrawler = new SimpleModule(
+                "FsCrawler", new Version(2, 0, 0, null, "fr.pilato.elasticsearch.crawler", "fscrawler"));
         fscrawler.addSerializer(new TimeValueSerializer());
         fscrawler.addDeserializer(TimeValue.class, new TimeValueDeserializer());
         fscrawler.addSerializer(new PercentageSerializer());
@@ -122,8 +121,10 @@ public class JsonUtil {
 
     /**
      * Parse a JSON Document using JSON Path and return a DocumentContext
-     * @param json  json to parse
-     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
+     *
+     * @param json json to parse
+     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String,
+     *     Predicate...)}
      */
     public static DocumentContext parseJsonAsDocumentContext(String json) {
         return JsonPath.using(configuration).parse(json);
@@ -131,8 +132,10 @@ public class JsonUtil {
 
     /**
      * Parse a JSON Document using JSON Path and return a DocumentContext
-     * @param jsonStream  json stream to parse
-     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String, Predicate...)}
+     *
+     * @param jsonStream json stream to parse
+     * @return an Object which can be used as an input for {@link com.jayway.jsonpath.DocumentContext#read(String,
+     *     Predicate...)}
      */
     public static DocumentContext parseJsonAsDocumentContext(InputStream jsonStream) {
         return JsonPath.using(configuration).parse(jsonStream);

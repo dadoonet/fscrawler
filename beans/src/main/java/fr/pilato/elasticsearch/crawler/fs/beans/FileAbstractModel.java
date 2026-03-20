@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,18 +15,18 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Abstract model representing a file or directory in a filesystem.
- * This model is used by crawler plugins to represent files regardless of
- * the underlying filesystem type (local, FTP, SSH, etc.).
+ * Abstract model representing a file or directory in a filesystem. This model is used by crawler plugins to represent
+ * files regardless of the underlying filesystem type (local, FTP, SSH, etc.).
  */
 public class FileAbstractModel {
     private final String name;
@@ -45,9 +45,21 @@ public class FileAbstractModel {
     private final List<FileAcl> acls;
     private final String aclHash;
 
-    public FileAbstractModel(String name, boolean file, LocalDateTime lastModifiedDate, LocalDateTime creationDate, LocalDateTime accessDate,
-                             String extension, String path, String fullpath, long size, String owner, String group, int permissions,
-                             List<FileAcl> acls, String aclHash) {
+    public FileAbstractModel(
+            String name,
+            boolean file,
+            LocalDateTime lastModifiedDate,
+            LocalDateTime creationDate,
+            LocalDateTime accessDate,
+            String extension,
+            String path,
+            String fullpath,
+            long size,
+            String owner,
+            String group,
+            int permissions,
+            List<FileAcl> acls,
+            String aclHash) {
         this.name = name;
         this.file = file;
         this.directory = !file;
@@ -127,21 +139,20 @@ public class FileAbstractModel {
 
     @Override
     public String toString() {
-        return "FileAbstractModel{" + "name='" + name + '\'' +
-                ", file=" + file +
-                ", directory=" + directory +
-                ", lastModifiedDate=" + lastModifiedDate +
-                ", creationDate=" + creationDate +
-                ", accessDate=" + accessDate +
-                ", path='" + path + '\'' +
-                ", owner='" + owner + '\'' +
-                ", group='" + group + '\'' +
-                ", permissions=" + permissions +
-                ", acls=" + acls +
-                ", aclHash='" + aclHash + '\'' +
-                ", extension='" + extension + '\'' +
-                ", fullpath='" + fullpath + '\'' +
-                ", size=" + size +
-                '}';
+        return "FileAbstractModel{" + "name='" + name + '\'' + ", file="
+                + file + ", directory="
+                + directory + ", lastModifiedDate="
+                + lastModifiedDate + ", creationDate="
+                + creationDate + ", accessDate="
+                + accessDate + ", path='"
+                + path + '\'' + ", owner='"
+                + owner + '\'' + ", group='"
+                + group + '\'' + ", permissions="
+                + permissions + ", acls="
+                + acls + ", aclHash='"
+                + aclHash + '\'' + ", extension='"
+                + extension + '\'' + ", fullpath='"
+                + fullpath + '\'' + ", size="
+                + size + '}';
     }
 }

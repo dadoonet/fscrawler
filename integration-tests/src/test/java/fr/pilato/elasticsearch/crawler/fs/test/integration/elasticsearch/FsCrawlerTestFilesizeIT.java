@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.DocumentContext;
@@ -26,24 +27,19 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.nio.file.Files;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import java.nio.file.Files;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-/**
- * Test filesize crawler setting
- */
+/** Test filesize crawler setting */
 public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
@@ -53,13 +49,15 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexedChars(new Percentage(7));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
 
             // Our original text should be truncated
-            assertThat((String) document.read("$.content")).isEqualTo("Novo de");
-            assertThat((Integer) document.read("$.file.indexed_chars")).isEqualTo(7);
+            Assertions.assertThat((String) document.read("$.content")).isEqualTo("Novo de");
+            Assertions.assertThat((Integer) document.read("$.file.indexed_chars"))
+                    .isEqualTo(7);
         }
     }
 
@@ -69,13 +67,15 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexedChars(Percentage.parse("0.1%"));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
 
             // Our original text should be truncated
-            assertThat((String) document.read("$.content")).isEqualTo("Novo denique");
-            assertThat((Integer) document.read("$.file.indexed_chars")).isEqualTo(12);
+            Assertions.assertThat((String) document.read("$.content")).isEqualTo("Novo denique");
+            Assertions.assertThat((Integer) document.read("$.file.indexed_chars"))
+                    .isEqualTo(12);
         }
     }
 
@@ -85,13 +85,15 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexedChars(new Percentage(-1));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
 
             // Our original text should not be truncated, so we must have its end extracted
-            assertThat((String) document.read("$.content")).contains("haecque non diu sunt perpetrata.");
-            assertThatThrownBy(() -> document.read("$.file.indexed_chars")).isInstanceOf(PathNotFoundException.class);
+            Assertions.assertThat((String) document.read("$.content")).contains("haecque non diu sunt perpetrata.");
+            Assertions.assertThatThrownBy(() -> document.read("$.file.indexed_chars"))
+                    .isInstanceOf(PathNotFoundException.class);
         }
     }
 
@@ -99,10 +101,12 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     public void filesize() throws Exception {
         crawler = startCrawler();
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         int expectedFilesize = OsValidator.WINDOWS ? 12364 : 12230;
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize")).isEqualTo(expectedFilesize);
+            Assertions.assertThat((Integer) JsonPath.read(hit.getSource(), "$.file.filesize"))
+                    .isEqualTo(expectedFilesize);
         }
     }
 
@@ -112,22 +116,27 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setAddFilesize(false);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.file.filesize")).isInstanceOf(PathNotFoundException.class);
+            Assertions.assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.file.filesize"))
+                    .isInstanceOf(PathNotFoundException.class);
         }
     }
 
     @Test
     public void filesize_limit() throws Exception {
         logger.info(" ---> Creating a smaller file small.txt");
-        Files.write(currentTestResourceDir.resolve("small.txt"), "This is a second file smaller than the previous one".getBytes());
+        Files.write(
+                currentTestResourceDir.resolve("small.txt"),
+                "This is a second file smaller than the previous one".getBytes());
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIgnoreAbove(ByteSizeValue.parseBytesSizeValue("10kb"));
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
-        assertThat(response.getTotalHits()).isEqualTo(1);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
+        Assertions.assertThat(response.getTotalHits()).isEqualTo(1);
     }
 }

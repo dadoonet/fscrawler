@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,17 +15,16 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.jayway.jsonpath.DocumentContext;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
-
 import java.util.List;
 import java.util.Map;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<ElasticsearchOperation> {
 
@@ -38,11 +37,12 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
     public ElasticsearchBulkResponse(String response) {
         exception = null;
         // We need to parse the response object
-        DocumentContext document = parseJsonAsDocumentContext(response);
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         errors = document.read("$.errors");
         List<String> ids = document.read("$.._id");
         ids.forEach(id -> {
-            Map<String, Object> jsonItemResponse = ((List<Map<String, Object>>) document.read("$..[?(@._id == '" + id + "')]")).get(0);
+            Map<String, Object> jsonItemResponse =
+                    ((List<Map<String, Object>>) document.read("$..[?(@._id == '" + id + "')]")).get(0);
             String index = (String) jsonItemResponse.get("_index");
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
             itemResponse.setOperation(new ElasticsearchIndexOperation(index, id, null, null));

@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,29 +15,26 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.util.List;
 import org.junit.Test;
 
-import java.util.List;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
-/**
- * Test filters crawler settings
- */
+/** Test filters crawler settings */
 public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
     public void filter_one_term() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of(".*foo.*"));
         crawler = startCrawler(fsSettings);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
     }
 
     @Test
@@ -45,7 +42,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}"));
         crawler = startCrawler(fsSettings);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
     }
 
     @Test
@@ -53,6 +50,6 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}", ".*foo.*"));
         crawler = startCrawler(fsSettings);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
     }
 }

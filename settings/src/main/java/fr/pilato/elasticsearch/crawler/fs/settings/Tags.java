@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,14 +15,14 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import jakarta.annotation.Nullable;
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.Objects;
+import org.github.gestalt.config.annotations.Config;
 
 @SuppressWarnings("SameParameterValue")
 public class Tags {
@@ -53,18 +53,15 @@ public class Tags {
 
     @Override
     public String toString() {
-        return "Tags{" +
-                "metaFilename='" + metaFilename + '\'' +
-                ", staticMetaFilename=" + staticMetaFilename +
-                '}';
+        return "Tags{" + "metaFilename='" + metaFilename + '\'' + ", staticMetaFilename=" + staticMetaFilename + '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Tags tags = (Tags) o;
-        return Objects.equals(metaFilename, tags.metaFilename) &&
-                Objects.equals(staticMetaFilename, tags.staticMetaFilename);
+        return Objects.equals(metaFilename, tags.metaFilename)
+                && Objects.equals(staticMetaFilename, tags.staticMetaFilename);
     }
 
     @Override

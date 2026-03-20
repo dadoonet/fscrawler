@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,26 +15,25 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
-/**
- * Test various crawler settings
- */
+/** Test various crawler settings */
 public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #83: <a href="https://github.com/dadoonet/fscrawler/issues/83">https://github.com/dadoonet/fscrawler/issues/83</a>
+     * Test for #83: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/83">https://github.com/dadoonet/fscrawler/issues/83</a>
      */
     @Test
     public void time_value() throws Exception {
@@ -43,7 +42,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have one file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
     }
 
     @Test
@@ -54,6 +53,6 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
         fsSettings.getElasticsearch().setByteSize(ByteSizeValue.parseBytesSizeValue("100b"));
         crawler = startCrawler(fsSettings);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
     }
 }

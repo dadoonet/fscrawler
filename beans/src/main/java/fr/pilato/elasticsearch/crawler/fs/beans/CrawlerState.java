@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,36 +15,25 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-/**
- * Represents the state of the crawler
- */
+/** Represents the state of the crawler */
 public enum CrawlerState {
-    /**
-     * The crawler is currently running and processing files
-     */
+    /** The crawler is currently running and processing files */
     RUNNING,
-    
-    /**
-     * The crawler has been paused and is waiting for a resume command
-     */
+
+    /** The crawler has been paused and is waiting for a resume command */
     PAUSED,
-    
-    /**
-     * The crawler has been stopped
-     */
+
+    /** The crawler has been stopped */
     STOPPED,
-    
-    /**
-     * The crawler has completed its scan successfully
-     */
+
+    /** The crawler has completed its scan successfully */
     COMPLETED,
-    
-    /**
-     * The crawler encountered an error and stopped
-     */
+
+    /** The crawler encountered an error and stopped */
     ERROR
 }

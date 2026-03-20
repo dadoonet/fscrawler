@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,35 +15,33 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import org.pf4j.ExtensionPoint;
-
 import java.io.InputStream;
 import java.util.Collection;
+import org.pf4j.ExtensionPoint;
 
 /**
  * Extension point for filesystem provider plugins.
- * <p>
- * This interface provides methods for both:
+ *
+ * <p>This interface provides methods for both:
+ *
  * <ul>
- *     <li>REST API uploads (single file operations)</li>
- *     <li>Batch crawling (directory traversal) - if {@link #supportsCrawling()} returns true</li>
+ *   <li>REST API uploads (single file operations)
+ *   <li>Batch crawling (directory traversal) - if {@link #supportsCrawling()} returns true
  * </ul>
- * </p>
- * <p>
- * Plugins that only support single file operations (like HTTP or S3) should not override
- * {@link #supportsCrawling()} and will use the default implementations that throw
- * {@link FsCrawlerPluginException}.
- * </p>
- * <p>
- * Plugins that support directory crawling (like local, FTP, SSH) must override
- * {@link #supportsCrawling()} to return true and implement all crawling methods.
- * </p>
+ *
+ * <p>Plugins that only support single file operations (like HTTP or S3) should not override {@link #supportsCrawling()}
+ * and will use the default implementations that throw {@link FsCrawlerPluginException}.
+ *
+ * <p>Plugins that support directory crawling (like local, FTP, SSH) must override {@link #supportsCrawling()} to return
+ * true and implement all crawling methods.
  */
 public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoCloseable {
 
@@ -74,8 +72,7 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     // ========== REST API methods (required) ==========
 
     /**
-     * Read the file content as an input stream.
-     * Used by REST API for single file uploads.
+     * Read the file content as an input stream. Used by REST API for single file uploads.
      *
      * @return an input stream for reading the file
      * @throws FsCrawlerPluginException if an error occurs while reading
@@ -83,8 +80,7 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     InputStream readFile() throws FsCrawlerPluginException;
 
     /**
-     * Create the document with metadata from the provider.
-     * Used by REST API for single file uploads.
+     * Create the document with metadata from the provider. Used by REST API for single file uploads.
      *
      * @return the created document
      * @throws FsCrawlerPluginException if an error occurs while creating the document
@@ -95,12 +91,10 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
 
     /**
      * Indicates whether this provider supports directory crawling.
-     * <p>
-     * Providers that return true must implement all crawling methods:
-     * {@link #openConnection()}, {@link #closeConnection()}, {@link #exists(String)},
-     * {@link #getFiles(String)}, {@link #getInputStream(FileAbstractModel)},
-     * {@link #closeInputStream(InputStream)}.
-     * </p>
+     *
+     * <p>Providers that return true must implement all crawling methods: {@link #openConnection()},
+     * {@link #closeConnection()}, {@link #exists(String)}, {@link #getFiles(String)},
+     * {@link #getInputStream(FileAbstractModel)}, {@link #closeInputStream(InputStream)}.
      *
      * @return true if this provider supports crawling, false otherwise
      */
@@ -111,8 +105,7 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     // ========== Crawling methods (optional - default throws FsCrawlerPluginException) ==========
 
     /**
-     * Open a connection to the filesystem.
-     * This method is called before starting a crawl operation.
+     * Open a connection to the filesystem. This method is called before starting a crawl operation.
      *
      * @throws FsCrawlerPluginException if the connection cannot be established or if crawling is not supported
      */
@@ -121,8 +114,7 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     }
 
     /**
-     * Close the connection to the filesystem.
-     * This method is called after a crawl operation completes.
+     * Close the connection to the filesystem. This method is called after a crawl operation completes.
      *
      * @throws FsCrawlerPluginException if an error occurs while closing the connection or if crawling is not supported
      */
@@ -165,10 +157,9 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
 
     /**
      * Close an input stream previously opened with {@link #getInputStream(FileAbstractModel)}.
-     * <p>
-     * Some implementations may need to perform additional cleanup after reading a file
-     * (e.g., FTP requires calling completePendingCommand()).
-     * </p>
+     *
+     * <p>Some implementations may need to perform additional cleanup after reading a file (e.g., FTP requires calling
+     * completePendingCommand()).
      *
      * @param inputStream the input stream to close
      * @throws FsCrawlerPluginException if an error occurs while closing the stream or if crawling is not supported

@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,18 +15,13 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import com.carrotsearch.randomizedtesting.ReproduceErrorMessageBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.util.Strings;
-import org.junit.AssumptionViolatedException;
-import org.junit.runner.Description;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunListener;
-
+import com.carrotsearch.randomizedtesting.SysGlobals;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -36,10 +31,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import static com.carrotsearch.randomizedtesting.SysGlobals.SYSPROP_ITERATIONS;
-import static com.carrotsearch.randomizedtesting.SysGlobals.SYSPROP_PREFIX;
-import static com.carrotsearch.randomizedtesting.SysGlobals.SYSPROP_TESTMETHOD;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.util.Strings;
+import org.junit.AssumptionViolatedException;
+import org.junit.runner.Description;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunListener;
 
 public class FSCrawlerReproduceInfoPrinter extends RunListener {
 
@@ -73,8 +71,8 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
     }
 
     /**
-     * Declared on test classes to add extra properties to the reproduction
-     * info. Note that this is scanned from all superclasses.
+     * Declared on test classes to add extra properties to the reproduction info. Note that this is scanned from all
+     * superclasses.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
@@ -93,8 +91,9 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
             super.appendAllOpts(description);
 
             if (description.getMethodName() != null) {
-                //prints out the raw method description instead of methodName(description) which filters out the parameters
-                super.appendOpt(SYSPROP_TESTMETHOD(), "\"" + description.getMethodName() + "\"");
+                // prints out the raw method description instead of methodName(description) which filters out the
+                // parameters
+                super.appendOpt(SysGlobals.SYSPROP_TESTMETHOD(), "\"" + description.getMethodName() + "\"");
             }
 
             List<String> properties = new ArrayList<>();
@@ -104,9 +103,8 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
         }
 
         /**
-         * Scans c and its superclasses for the {@linkplain Properties}
-         * annotations, copying all the listed properties in order from
-         * superclass to subclass.
+         * Scans c and its superclasses for the {@linkplain Properties} annotations, copying all the listed properties
+         * in order from superclass to subclass.
          */
         private void scanProperties(Class<?> c, List<String> properties) {
             if (!Object.class.equals(c)) {
@@ -124,20 +122,18 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
             return this;
         }
 
-        /**
-         * Append a single VM option.
-         */
+        /** Append a single VM option. */
         @Override
         public ReproduceErrorMessageBuilder appendOpt(String sysPropName, String value) {
-            if (sysPropName.equals(SYSPROP_ITERATIONS())) { // we don't want the iters to be in there!
+            if (sysPropName.equals(SysGlobals.SYSPROP_ITERATIONS())) { // we don't want the iters to be in there!
                 return this;
             }
-            if (sysPropName.equals(SYSPROP_TESTMETHOD())) {
-                //don't print out the test method, we print it ourselves in appendAllOpts
-                //without filtering out the parameters (needed for REST tests)
+            if (sysPropName.equals(SysGlobals.SYSPROP_TESTMETHOD())) {
+                // don't print out the test method, we print it ourselves in appendAllOpts
+                // without filtering out the parameters (needed for REST tests)
                 return this;
             }
-            if (sysPropName.equals(SYSPROP_PREFIX())) {
+            if (sysPropName.equals(SysGlobals.SYSPROP_PREFIX())) {
                 // we always use the default prefix
                 return this;
             }
@@ -164,6 +160,5 @@ public class FSCrawlerReproduceInfoPrinter extends RunListener {
             }
             return this;
         }
-
     }
 }

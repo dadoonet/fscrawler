@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.jayway.jsonpath.DocumentContext;
@@ -25,21 +26,17 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import java.nio.file.Path;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.*;
-
-/**
- * Test crawler with external metadata files
- */
+/** Test crawler with external metadata files */
 public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
@@ -48,11 +45,12 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
+            Assertions.assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -66,7 +64,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                     break;
                 default:
                     //noinspection ResultOfMethodCallIgnored
-                    fail("Unexpected file: " + filename);
+                    Assertions.fail("Unexpected file: " + filename);
             }
         }
     }
@@ -78,11 +76,12 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
+            Assertions.assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -96,7 +95,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                     break;
                 default:
                     //noinspection ResultOfMethodCallIgnored
-                    fail("Unexpected file: " + filename);
+                    Assertions.fail("Unexpected file: " + filename);
             }
         }
     }
@@ -108,11 +107,12 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
+            Assertions.assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -126,7 +126,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                     break;
                 default:
                     //noinspection ResultOfMethodCallIgnored
-                    fail("Unexpected file: " + filename);
+                    Assertions.fail("Unexpected file: " + filename);
             }
         }
     }
@@ -136,11 +136,12 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
+            Assertions.assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
@@ -154,7 +155,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
                     break;
                 default:
                     //noinspection ResultOfMethodCallIgnored
-                    fail("Unexpected file: " + filename);
+                    Assertions.fail("Unexpected file: " + filename);
             }
         }
     }
@@ -181,11 +182,12 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 1 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
         ESSearchHit hit = searchResponse.getHits().get(0);
-        DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
         String filename = document.read("$.file.filename");
-        assertThat(filename).isEqualTo("roottxtfile.txt");
+        Assertions.assertThat(filename).isEqualTo("roottxtfile.txt");
 
         // We should have the static metadata
         checkHit(document, filename, hasExternal, "Novo denique perniciosoque exemplo idem");
@@ -196,7 +198,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         Path staticMetadataFile = currentTestTagDir.resolve("static-meta.yaml");
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
-        assertThatThrownBy(() -> startCrawler(fsSettings))
+        Assertions.assertThatThrownBy(() -> startCrawler(fsSettings))
                 .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                 .hasMessageContaining("Static meta file")
                 .hasMessageContaining("does not exist or is not a file.");
@@ -210,42 +212,50 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have 3 files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse searchResponse = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(hit.getSource());
             String filename = document.read("$.file.filename");
-            assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
+            Assertions.assertThat(filename).containsAnyOf("root_dir.txt", "with_meta.txt", "without_meta.txt");
 
             switch (filename) {
                 case "root_dir.txt":
                     checkHit(document, filename, true, "This file contains some words.");
-                    assertThat((String) document.read("$.external.project")).isEqualTo("business development");
+                    Assertions.assertThat((String) document.read("$.external.project"))
+                            .isEqualTo("business development");
                     break;
                 case "with_meta.txt":
                     checkHit(document, filename, true, "This is a new content which is overwritten.");
                     // We need to check that static metadata has been overwritten by the local one
-                    assertThat((String) document.read("$.external.project")).isEqualTo("business development overwritten");
+                    Assertions.assertThat((String) document.read("$.external.project"))
+                            .isEqualTo("business development overwritten");
                     break;
                 case "without_meta.txt":
                     checkHit(document, filename, true, "it does not have a metadata file.");
-                    assertThat((String) document.read("$.external.project")).isEqualTo("business development");
+                    Assertions.assertThat((String) document.read("$.external.project"))
+                            .isEqualTo("business development");
                     break;
                 default:
                     //noinspection ResultOfMethodCallIgnored
-                    fail("Unexpected file: " + filename);
+                    Assertions.fail("Unexpected file: " + filename);
             }
         }
     }
 
     private void checkHit(DocumentContext document, String filename, boolean hasExternal, String expectedContent) {
-        logger.debug("--> Checking hit for [{}], expecting {}external data and \"{}\" as part of the content",
-                filename, hasExternal ? "" : "no ", expectedContent);
-        assertThat((String) document.read("$.content")).contains(expectedContent);
-        assertThat((String) document.read("$.file.filename")).isEqualTo(filename);
+        logger.debug(
+                "--> Checking hit for [{}], expecting {}external data and \"{}\" as part of the content",
+                filename,
+                hasExternal ? "" : "no ",
+                expectedContent);
+        Assertions.assertThat((String) document.read("$.content")).contains(expectedContent);
+        Assertions.assertThat((String) document.read("$.file.filename")).isEqualTo(filename);
         if (hasExternal) {
-            assertThat((Integer) document.read("$.external.tenantId")).isEqualTo(23);
+            Assertions.assertThat((Integer) document.read("$.external.tenantId"))
+                    .isEqualTo(23);
         } else {
-            assertThatThrownBy(() -> document.read("$.external")).isInstanceOf(PathNotFoundException.class);
+            Assertions.assertThatThrownBy(() -> document.read("$.external")).isInstanceOf(PathNotFoundException.class);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,16 +15,16 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.Objects;
+import org.github.gestalt.config.annotations.Config;
 
 public class Server {
 
@@ -37,17 +37,28 @@ public class Server {
     }
 
     @Config
-    @Nullable private String hostname;
+    @Nullable
+    private String hostname;
+
     @Config
     private int port;
+
     @Config
-    @Nullable private String username;
+    @Nullable
+    private String username;
+
     @Config
-    @JsonIgnore @Nullable private String password;
+    @JsonIgnore
+    @Nullable
+    private String password;
+
     @Config(defaultVal = PROTOCOL.LOCAL)
-    @Nullable private String protocol;
+    @Nullable
+    private String protocol;
+
     @Config
-    @Nullable private String pemPath;
+    @Nullable
+    private String pemPath;
 
     public String getHostname() {
         return hostname;
@@ -124,7 +135,6 @@ public class Server {
         // We can't really test the password as it may be obfuscated
         if (!Objects.equals(protocol, server.protocol)) return false;
         return Objects.equals(pemPath, server.pemPath);
-
     }
 
     @Override
@@ -139,11 +149,10 @@ public class Server {
 
     @Override
     public String toString() {
-        return "Server{" + "hostname='" + hostname + '\'' +
-                ", port=" + port +
-                ", username='" + username + '\'' +
-                ", protocol='" + protocol + '\'' +
-                ", pemPath='" + pemPath + '\'' +
-                '}';
+        return "Server{" + "hostname='" + hostname + '\'' + ", port="
+                + port + ", username='"
+                + username + '\'' + ", protocol='"
+                + protocol + '\'' + ", pemPath='"
+                + pemPath + '\'' + '}';
     }
 }

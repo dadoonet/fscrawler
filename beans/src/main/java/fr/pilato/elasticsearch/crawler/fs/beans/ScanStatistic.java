@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.time.Duration;
@@ -36,107 +37,78 @@ public class ScanStatistic {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    public ScanStatistic() {
-    }
+    public ScanStatistic() {}
 
     public ScanStatistic(String rootPath) {
         this.rootPath = rootPath;
     }
 
-    /**
-     * @return the nbDocScan
-     */
+    /** @return the nbDocScan */
     public int getNbDocScan() {
         return nbDocScan.get();
     }
 
-    /**
-     * @param nbDocScan the nbDocScan to set
-     */
+    /** @param nbDocScan the nbDocScan to set */
     public void setNbDocScan(int nbDocScan) {
         this.nbDocScan.set(nbDocScan);
     }
 
-    /**
-     * @return the nbDocDeleted
-     */
+    /** @return the nbDocDeleted */
     public int getNbDocDeleted() {
         return nbDocDeleted.get();
     }
 
-    /**
-     * @param nbDocDeleted the nbDocDeleted to set
-     */
+    /** @param nbDocDeleted the nbDocDeleted to set */
     public void setNbDocDeleted(int nbDocDeleted) {
         this.nbDocDeleted.set(nbDocDeleted);
     }
 
-    /**
-     * @return the rootPath
-     */
+    /** @return the rootPath */
     public String getRootPath() {
         return rootPath;
     }
 
-    /**
-     * @param rootPath the rootPath to set
-     */
+    /** @param rootPath the rootPath to set */
     public void setRootPath(String rootPath) {
         this.rootPath = rootPath;
     }
 
-    /**
-     * @return the rootPathId
-     */
+    /** @return the rootPathId */
     public String getRootPathId() {
         return rootPathId;
     }
 
-    /**
-     * @param rootPathId the rootPathId to set
-     */
+    /** @param rootPathId the rootPathId to set */
     public void setRootPathId(String rootPathId) {
         this.rootPathId = rootPathId;
     }
 
-    /**
-     * Increment statistic for new files
-     */
+    /** Increment statistic for new files */
     public void addFile() {
         this.nbDocScan.incrementAndGet();
     }
 
-    /**
-     * Increment statistic for deleted files
-     */
+    /** Increment statistic for deleted files */
     public void removeFile() {
         this.nbDocDeleted.incrementAndGet();
     }
 
-    /**
-     * @return the start time of the scan
-     */
+    /** @return the start time of the scan */
     public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    /**
-     * @param startTime the start time to set
-     */
+    /** @param startTime the start time to set */
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 
-    /**
-     * @return the end time of the scan
-     */
+    /** @return the end time of the scan */
     public LocalDateTime getEndTime() {
         return endTime;
     }
 
-    /**
-     * @param endTime the end time to set
-     */
+    /** @param endTime the end time to set */
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
     }

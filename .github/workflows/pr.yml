@@ -35,6 +35,8 @@ jobs:
     needs: get-pr-number
     steps:
     - uses: actions/checkout@v6
+    - name: Fetch base branch for Spotless ratchet
+      run: git fetch origin master --depth=1
     - name: Set up JDK 21
       uses: actions/setup-java@v5
       with:
@@ -189,6 +191,8 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v6
+      - name: Fetch base branch for Spotless ratchet
+        run: git fetch origin master --depth=1
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:

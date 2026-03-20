@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -66,8 +64,8 @@
     <build>
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
         <plugins>
@@ -87,10 +85,10 @@
                          Regenerate after a version bump: mvn generate-test-resources -pl distribution -->
                     <execution>
                         <id>filter-test-scripts</id>
-                        <phase>generate-test-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
+                        <phase>generate-test-resources</phase>
                         <configuration>
                             <outputDirectory>${project.basedir}/test-scripts</outputDirectory>
                             <resources>
@@ -111,10 +109,10 @@
                 <executions>
                     <execution>
                         <id>chmod-test-scripts</id>
-                        <phase>generate-test-resources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
+                        <phase>generate-test-resources</phase>
                         <configuration>
                             <target>
                                 <chmod file="${project.basedir}/test-scripts/test-fscrawler-cli.sh" perm="755"/>
@@ -171,10 +169,10 @@
                 <executions>
                     <execution>
                         <id>download-elastic-otel-agent</id>
-                        <phase>generate-resources</phase>
                         <goals>
                             <goal>copy</goal>
                         </goals>
+                        <phase>generate-resources</phase>
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
@@ -205,10 +203,10 @@
                 <executions>
                     <execution>
                         <id>generate-release-plugin</id>
-                        <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
+                        <phase>package</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -252,18 +250,18 @@
                     <!-- Generate the docker images during the "install" phase -->
                     <execution>
                         <id>docker-build</id>
-                        <phase>install</phase>
                         <goals>
                             <goal>build</goal>
                         </goals>
+                        <phase>install</phase>
                     </execution>
                     <!-- Push the docker images during the "deploy" phase -->
                     <execution>
                         <id>docker-push</id>
-                        <phase>deploy</phase>
                         <goals>
                             <goal>push</goal>
                         </goals>
+                        <phase>deploy</phase>
                     </execution>
                 </executions>
             </plugin>

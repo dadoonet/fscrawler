@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,6 +15,8 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
@@ -23,14 +25,15 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.pf4j.Extension;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,8 +43,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.pf4j.Extension;
 
 public class FsLocalPlugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
@@ -58,7 +62,7 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
         private String url;
 
         private static final Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
-                file -> getModificationOrCreationTime(file.toFile()),
+                file -> FsCrawlerUtil.getModificationOrCreationTime(file.toFile()),
                 Comparator.nullsLast(Comparator.naturalOrder()));
 
         @Override
@@ -104,7 +108,9 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             doc.getFile().setFilename(filename);
             doc.getFile().setFilesize(getFilesize());
             // The virtual URL (not including the initial root dir)
-            doc.getPath().setVirtual(computeVirtualPathName(fsSettings.getFs().getUrl(), filename));
+            doc.getPath()
+                    .setVirtual(FsCrawlerUtil.computeVirtualPathName(
+                            fsSettings.getFs().getUrl(), filename));
             // The real URL on the filesystem
             doc.getPath().setReal(path.toAbsolutePath().toString());
             return doc;
@@ -117,7 +123,8 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void validateSettings() throws FsCrawlerIllegalConfigurationException {
-            Path rootPath = Path.of(fsSettings.getFs().getUrl()).toAbsolutePath().normalize();
+            Path rootPath =
+                    Path.of(fsSettings.getFs().getUrl()).toAbsolutePath().normalize();
             logger.debug("Reading file {} from {}", url, rootPath);
 
             path = rootPath.resolve(url).normalize();
@@ -127,7 +134,8 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
             // Check that the url is under the rootPath
             if (!path.startsWith(rootPath)) {
-                throw new FsCrawlerIllegalConfigurationException("File " + path.toAbsolutePath() + " is not within " + rootPath);
+                throw new FsCrawlerIllegalConfigurationException(
+                        "File " + path.toAbsolutePath() + " is not within " + rootPath);
             }
         }
 
@@ -185,31 +193,30 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
             }
         }
 
-        /**
-         * Convert a File to a FileAbstractModel.
-         */
+        /** Convert a File to a FileAbstractModel. */
         private FileAbstractModel toFileAbstractModel(String path, File file) {
-            List<FileAcl> fileAcls = fsSettings.getFs().isAclSupport() && fsSettings.getFs().isAttributesSupport()
-                    ? getFileAcls(file.toPath())
-                    : Collections.emptyList();
+            List<FileAcl> fileAcls =
+                    fsSettings.getFs().isAclSupport() && fsSettings.getFs().isAttributesSupport()
+                            ? FsCrawlerUtil.getFileAcls(file.toPath())
+                            : Collections.emptyList();
 
-            String separator = getPathSeparator(fsSettings.getFs().getUrl());
+            String separator = FsCrawlerUtil.getPathSeparator(fsSettings.getFs().getUrl());
 
             return new FileAbstractModel(
                     file.getName(),
                     file.isFile(),
-                    getModificationTime(file),
-                    getCreationTime(file),
-                    getLastAccessTime(file),
-                    getFileExtension(file),
+                    FsCrawlerUtil.getModificationTime(file),
+                    FsCrawlerUtil.getCreationTime(file),
+                    FsCrawlerUtil.getLastAccessTime(file),
+                    FsCrawlerUtil.getFileExtension(file),
                     resolveSeparator(path, separator),
                     resolveSeparator(file.getAbsolutePath(), separator),
                     file.length(),
-                    getOwnerName(file),
-                    getGroupName(file),
-                    getFilePermissions(file),
+                    FsCrawlerUtil.getOwnerName(file),
+                    FsCrawlerUtil.getGroupName(file),
+                    FsCrawlerUtil.getFilePermissions(file),
                     fileAcls,
-                    computeAclHash(fileAcls));
+                    FsCrawlerUtil.computeAclHash(fileAcls));
         }
 
         private String resolveSeparator(String path, String separator) {

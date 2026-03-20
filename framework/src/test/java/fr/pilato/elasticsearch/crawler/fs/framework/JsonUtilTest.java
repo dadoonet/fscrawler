@@ -1,11 +1,11 @@
 /*
- * Licensed to David Pilato under one or more contributor
- * license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright
- * ownership. Elasticsearch licenses this file to you under
- * the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -15,23 +15,20 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.List;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
@@ -72,12 +69,14 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
                    }
                 }""";
 
-        DocumentContext context = parseJsonAsDocumentContext(json);
-        assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");
-        assertThat((Integer) context.read("$.attributes.permissions")).isEqualTo(644);
-        assertThat((Integer) context.read("$.attributes.foobar")).isNull();
-        assertThat((String) context.read("$.attributes.acl[0].principal")).isEqualTo("dpilato");
-        assertThat((String) context.read("$.attributes.acl[0].type")).isEqualTo("ALLOW");
+        DocumentContext context = JsonUtil.parseJsonAsDocumentContext(json);
+        Assertions.assertThat((String) context.read("$.attributes.owner")).isEqualTo("dpilato");
+        Assertions.assertThat((Integer) context.read("$.attributes.permissions"))
+                .isEqualTo(644);
+        Assertions.assertThat((Integer) context.read("$.attributes.foobar")).isNull();
+        Assertions.assertThat((String) context.read("$.attributes.acl[0].principal"))
+                .isEqualTo("dpilato");
+        Assertions.assertThat((String) context.read("$.attributes.acl[0].type")).isEqualTo("ALLOW");
     }
 
     public static class Country {
@@ -104,65 +103,66 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     public void mappersWithStringsArray() throws IOException {
         // We try with multiple elements in the cities field as an array
-        mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\",\"Tamassint\"]}",
+        mapperTester(
+                JsonUtil.mapper,
+                "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\",\"Tamassint\"]}",
                 List.of("Amsterdam", "Tamassint"));
-        mapperTester(JsonUtil.prettyMapper, "{\n" +
-                "  \"name\" : \"Netherlands\",\n" +
-                "  \"cities\" : [ \"Amsterdam\", \"Tamassint\" ]\n" +
-                "}",
+        mapperTester(
+                JsonUtil.prettyMapper,
+                "{\n" + "  \"name\" : \"Netherlands\",\n" + "  \"cities\" : [ \"Amsterdam\", \"Tamassint\" ]\n" + "}",
                 List.of("Amsterdam", "Tamassint"));
-        mapperTester(JsonUtil.ymlMapper, "---\n" +
-                "name: \"Netherlands\"\n" +
-                "cities:\n" +
-                "- \"Amsterdam\"\n" +
-                "- \"Tamassint\"\n",
+        mapperTester(
+                JsonUtil.ymlMapper,
+                "---\n" + "name: \"Netherlands\"\n" + "cities:\n" + "- \"Amsterdam\"\n" + "- \"Tamassint\"\n",
                 List.of("Amsterdam", "Tamassint"));
         // We try with one single element in the cities field as an array
-        mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\"]}",
+        mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\"]}", List.of("Amsterdam"));
+        mapperTester(
+                JsonUtil.prettyMapper,
+                "{\n" + "  \"name\" : \"Netherlands\",\n" + "  \"cities\" : [ \"Amsterdam\" ]\n" + "}",
                 List.of("Amsterdam"));
-        mapperTester(JsonUtil.prettyMapper, "{\n" +
-                        "  \"name\" : \"Netherlands\",\n" +
-                        "  \"cities\" : [ \"Amsterdam\" ]\n" +
-                        "}",
-                List.of("Amsterdam"));
-        mapperTester(JsonUtil.ymlMapper, "---\n" +
-                "name: \"Netherlands\"\n" +
-                "cities:\n" +
-                "- \"Amsterdam\"\n",
+        mapperTester(
+                JsonUtil.ymlMapper,
+                "---\n" + "name: \"Netherlands\"\n" + "cities:\n" + "- \"Amsterdam\"\n",
                 List.of("Amsterdam"));
         // We try with one single element in the cities field as a string and this should fail
-        assertThatThrownBy(() -> JsonUtil.mapper.readValue( "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
+        Assertions.assertThatThrownBy(() ->
+                        JsonUtil.mapper.readValue("{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
-        assertThatThrownBy(() -> JsonUtil.prettyMapper.readValue( "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
+                .hasMessageContaining(
+                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+        Assertions.assertThatThrownBy(() -> JsonUtil.prettyMapper.readValue(
+                        "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
-        assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue( "---\n" +
-                "name: \"Netherlands\"\n" +
-                "cities: \"Amsterdam\"\n", Country.class))
+                .hasMessageContaining(
+                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+        Assertions.assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue(
+                        "---\n" + "name: \"Netherlands\"\n" + "cities: \"Amsterdam\"\n", Country.class))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+                .hasMessageContaining(
+                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
     }
 
     /**
      * Helper to test a mapper with given input. We also test serialization here and we compare the input with the
      * generated output.
+     *
      * @param mapper the mapper to test
-     * @param input  the input to use
+     * @param input the input to use
      * @param expectedCities the expected cities list
      * @throws IOException in case of error
      */
     private void mapperTester(ObjectMapper mapper, String input, List<String> expectedCities) throws IOException {
         logger.debug("Testing mapper: {} with {}", mapper.version().toFullString(), input);
         Country country = mapper.readValue(input, Country.class);
-        assertThat(country.name).isEqualTo("Netherlands");
-        assertThat(country.cities).hasSize(expectedCities.size());
-        assertThat(country.cities).containsAll(expectedCities);
+        Assertions.assertThat(country.name).isEqualTo("Netherlands");
+        Assertions.assertThat(country.cities).hasSize(expectedCities.size());
+        Assertions.assertThat(country.cities).containsAll(expectedCities);
 
         String generated = mapper.writeValueAsString(country);
         logger.debug(generated);
-		/*automatically convert all \r\n (Windows) and \n (Unix) to a single \n before comparing the strings, making the test platform-independent.
-		*/
-		assertThat(generated).isEqualToNormalizingNewlines(input);
+        /*automatically convert all \r\n (Windows) and \n (Unix) to a single \n before comparing the strings, making the test platform-independent.
+         */
+        Assertions.assertThat(generated).isEqualToNormalizingNewlines(input);
     }
 }

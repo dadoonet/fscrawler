@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,20 +15,19 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-/**
- * Defines an Engine which is responsible to execute a bulk operation
- */
-public interface Engine<O extends FsCrawlerOperation<O>,
-        REQ extends FsCrawlerBulkRequest<O>,
-        RES extends FsCrawlerBulkResponse<O>> {
+/** Defines an Engine which is responsible to execute a bulk operation */
+public interface Engine<
+        O extends FsCrawlerOperation<O>, REQ extends FsCrawlerBulkRequest<O>, RES extends FsCrawlerBulkResponse<O>> {
     /**
      * Actually execute the Bulk Request behind the scene
-     * @param request   The request to execute
-     * @return          The outcome
+     *
+     * @param request The request to execute
+     * @return The outcome
      */
     RES bulk(REQ request);
 }

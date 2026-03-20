@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,20 +15,19 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import java.util.Properties;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
 
 public class Version {
     private static final String FSCRAWLER_PROPERTIES = "fscrawler.properties";
     private static final Properties properties;
 
     static {
-        properties = readPropertiesFromClassLoader(FSCRAWLER_PROPERTIES);
+        properties = FsCrawlerUtil.readPropertiesFromClassLoader(FSCRAWLER_PROPERTIES);
     }
 
     public static String getVersion() {

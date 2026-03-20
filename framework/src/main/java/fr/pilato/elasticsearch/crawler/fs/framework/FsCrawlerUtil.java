@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,14 +15,10 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.awaitility.core.ConditionTimeoutException;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,19 +27,41 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.*;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryFlag;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-
-import static org.awaitility.Awaitility.await;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 
 public class FsCrawlerUtil {
     public static final String INDEX_SUFFIX_DOCS = "_docs";
@@ -77,8 +95,14 @@ public class FsCrawlerUtil {
      * @param includes include rules, may be empty not null
      * @param excludes exclude rules, may be empty not null
      */
-    public static boolean isIndexable(final boolean directory, final String filename, final List<String> includes, final List<String> excludes) {
-        logger.trace("directory = [{}], filename = [{}], includes = [{}], excludes = [{}]", directory, filename, includes, excludes);
+    public static boolean isIndexable(
+            final boolean directory, final String filename, final List<String> includes, final List<String> excludes) {
+        logger.trace(
+                "directory = [{}], filename = [{}], includes = [{}], excludes = [{}]",
+                directory,
+                filename,
+                includes,
+                excludes);
 
         String originalFilename = filename;
 
@@ -160,8 +184,8 @@ public class FsCrawlerUtil {
      * We check if we can index the content or skip it
      *
      * @param content Content to parse
-     * @param filters regular expressions that all needs to match if we want to index. If empty
-     *                we consider it always matches.
+     * @param filters regular expressions that all needs to match if we want to index. If empty we consider it always
+     *     matches.
      */
     public static boolean isIndexable(String content, List<String> filters) {
         if (isNullOrEmpty(content)) {
@@ -224,9 +248,10 @@ public class FsCrawlerUtil {
     }
 
     private static LocalDateTime getFileTime(File file, Function<BasicFileAttributes, FileTime> timeFunction) {
-        try  {
+        try {
             Path path = Paths.get(file.getAbsolutePath());
-            BasicFileAttributes fileattr = Files.getFileAttributeView(path, BasicFileAttributeView.class).readAttributes();
+            BasicFileAttributes fileattr = Files.getFileAttributeView(path, BasicFileAttributeView.class)
+                    .readAttributes();
             return LocalDateTime.ofInstant(timeFunction.apply(fileattr).toInstant(), ZoneId.systemDefault());
         } catch (Exception e) {
             return null;
@@ -272,25 +297,20 @@ public class FsCrawlerUtil {
         return FilenameUtils.getExtension(file.getAbsolutePath()).toLowerCase();
     }
 
-    /**
-     * Determines the 'owner' of the file.
-     */
+    /** Determines the 'owner' of the file. */
     public static String getOwnerName(final File file) {
         try {
             final Path path = Paths.get(file.getAbsolutePath());
-            final FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+            final FileOwnerAttributeView ownerAttributeView =
+                    Files.getFileAttributeView(path, FileOwnerAttributeView.class);
             return ownerAttributeView != null ? ownerAttributeView.getOwner().getName() : null;
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             logger.warn("Failed to determine 'owner' of {}: {}", file, e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Determines the 'group' of the file. Please note that 'group' is not
-     * available of Windows OS.
-     */
+    /** Determines the 'group' of the file. Please note that 'group' is not available of Windows OS. */
     public static String getGroupName(final File file) {
         if (OsValidator.WINDOWS) {
             logger.debug("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
@@ -298,7 +318,9 @@ public class FsCrawlerUtil {
         }
         try {
             final Path path = Paths.get(file.getAbsolutePath());
-            final PosixFileAttributes posixFileAttributes = Files.getFileAttributeView(path, PosixFileAttributeView.class).readAttributes();
+            final PosixFileAttributes posixFileAttributes = Files.getFileAttributeView(
+                            path, PosixFileAttributeView.class)
+                    .readAttributes();
             return posixFileAttributes != null ? posixFileAttributes.group().getName() : null;
         } catch (Exception e) {
             logger.warn("Failed to determine 'group' of {}: {}", file, e.getMessage());
@@ -306,9 +328,7 @@ public class FsCrawlerUtil {
         }
     }
 
-    /**
-     * Determines file permissions.
-     */
+    /** Determines file permissions. */
     public static int getFilePermissions(final File file) {
         if (OsValidator.WINDOWS) {
             logger.trace("Determining 'group' is skipped for file [{}] on [{}]", file, OsValidator.OS);
@@ -316,7 +336,8 @@ public class FsCrawlerUtil {
         }
         try {
             final Path path = Paths.get(file.getAbsolutePath());
-            PosixFileAttributes attrs = Files.getFileAttributeView(path, PosixFileAttributeView.class).readAttributes();
+            PosixFileAttributes attrs = Files.getFileAttributeView(path, PosixFileAttributeView.class)
+                    .readAttributes();
             Set<PosixFilePermission> permissions = attrs.permissions();
             int user = toOctalPermission(
                     permissions.contains(PosixFilePermission.OWNER_READ),
@@ -332,16 +353,13 @@ public class FsCrawlerUtil {
                     permissions.contains(PosixFilePermission.OTHERS_EXECUTE));
 
             return user * 100 + group * 10 + others;
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             logger.warn("Failed to determine 'permissions' of {}: {}", file, e.getMessage());
             return -1;
         }
     }
 
-    /**
-     * Determines Access Control List entries for the given file.
-     */
+    /** Determines Access Control List entries for the given file. */
     public static List<FileAcl> getFileAcls(final Path path) {
         logger.trace("Resolving ACLs for [{}]", path);
         try {
@@ -359,16 +377,15 @@ public class FsCrawlerUtil {
 
             final List<FileAcl> result = new ArrayList<>(aclEntries.size());
             for (AclEntry entry : aclEntries) {
-                final String principal = entry.principal() != null ? entry.principal().getName() : null;
+                final String principal =
+                        entry.principal() != null ? entry.principal().getName() : null;
                 final String type = entry.type() != null ? entry.type().name() : null;
                 final List<String> permissions = entry.permissions().stream()
                         .map(AclEntryPermission::name)
                         .sorted()
                         .toList();
-                final List<String> flags = entry.flags().stream()
-                        .map(AclEntryFlag::name)
-                        .sorted()
-                        .toList();
+                final List<String> flags =
+                        entry.flags().stream().map(AclEntryFlag::name).sorted().toList();
                 result.add(new FileAcl(principal, type, permissions, flags));
             }
             logger.debug("ACL entries found for [{}]: {}", path, result);
@@ -386,8 +403,7 @@ public class FsCrawlerUtil {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             acls.stream()
-                    .sorted(Comparator
-                            .comparing(FileAcl::getPrincipal, Comparator.nullsFirst(String::compareTo))
+                    .sorted(Comparator.comparing(FileAcl::getPrincipal, Comparator.nullsFirst(String::compareTo))
                             .thenComparing(FileAcl::getType, Comparator.nullsFirst(String::compareTo))
                             .thenComparing(a -> joinAndSort(a.getPermissions()))
                             .thenComparing(a -> joinAndSort(a.getFlags())))
@@ -434,6 +450,7 @@ public class FsCrawlerUtil {
 
     /**
      * Copy a single resource file from the classpath or from a JAR.
+     *
      * @param target The target
      * @throws IOException If copying does not work
      */
@@ -444,6 +461,7 @@ public class FsCrawlerUtil {
 
     /**
      * Read a property file from the class loader
+     *
      * @param resource Resource name
      * @return The properties loaded
      */
@@ -462,8 +480,8 @@ public class FsCrawlerUtil {
     }
 
     /**
-     * Creates the given directory and any parent directories that do not exist.
-     * Does nothing if the directory already exists.
+     * Creates the given directory and any parent directories that do not exist. Does nothing if the directory already
+     * exists.
      *
      * @param root the directory to create
      * @throws RuntimeException if the directory could not be created (wraps IOException)
@@ -480,9 +498,7 @@ public class FsCrawlerUtil {
         }
     }
 
-    /**
-     * Format the double value with a single decimal points, trimming trailing '.0'.
-     */
+    /** Format the double value with a single decimal points, trimming trailing '.0'. */
     public static String format1Decimals(double value, String suffix) {
         String p = String.valueOf(value);
         int ix = p.indexOf('.') + 1;
@@ -505,6 +521,7 @@ public class FsCrawlerUtil {
 
     /**
      * Compare if a file size is strictly under a given limit
+     *
      * @param limit Limit. If null, we consider that there is no limit, and we return true.
      * @param fileSizeAsBytes File size
      * @return true if under the limit. false otherwise.
@@ -516,7 +533,10 @@ public class FsCrawlerUtil {
             ByteSizeValue fileSize = new ByteSizeValue(fileSizeAsBytes);
             int compare = fileSize.compareTo(limit);
             result = compare <= 0;
-            logger.debug("Comparing file size [{}] with current limit [{}] -> {}", fileSize, limit,
+            logger.debug(
+                    "Comparing file size [{}] with current limit [{}] -> {}",
+                    fileSize,
+                    limit,
                     result ? "under limit" : "above limit");
         }
 
@@ -538,24 +558,23 @@ public class FsCrawlerUtil {
         if (duration == null) {
             return null;
         }
-        return duration.toString()
-                .substring(2)
-                .toLowerCase();
+        return duration.toString().substring(2).toLowerCase();
     }
 
     /** Poll interval (ms) when waiting with abort check, so shutdown can complete promptly. */
     private static final long WAIT_ABORT_POLL_MS = 500;
 
     /**
-     * Waits for the given duration, checking an abort condition periodically so that
-     * callers (e.g. crawler shutdown) can exit without waiting the full duration.
+     * Waits for the given duration, checking an abort condition periodically so that callers (e.g. crawler shutdown)
+     * can exit without waiting the full duration.
      *
-     * @param duration     How long to wait
+     * @param duration How long to wait
      * @param abortCondition When true, stop waiting and return false immediately
      * @return true if the full duration was waited, false if abortCondition became true
      * @throws InterruptedException if the thread is interrupted during the wait
      */
-    public static boolean waitWithAbortCheck(Duration duration, BooleanSupplier abortCondition) throws InterruptedException {
+    public static boolean waitWithAbortCheck(Duration duration, BooleanSupplier abortCondition)
+            throws InterruptedException {
         long deadlineMs = System.currentTimeMillis() + duration.toMillis();
         while (System.currentTimeMillis() < deadlineMs) {
             if (abortCondition.getAsBoolean()) {
@@ -571,14 +590,16 @@ public class FsCrawlerUtil {
     }
 
     /**
-     * It's a util to avoid Thread.sleep() in our tests. It will wait for the given duration
-     * and then throw a ConditionTimeoutException which is caught.
+     * It's a util to avoid Thread.sleep() in our tests. It will wait for the given duration and then throw a
+     * ConditionTimeoutException which is caught.
+     *
      * @param duration The duration to wait for
      */
     public static void waitFor(Duration duration) {
         logger.trace("⏳ Waiting for {} seconds...", duration.toSeconds());
         try {
-            await().atMost(duration)
+            Awaitility.await()
+                    .atMost(duration)
                     // We must have a longer poll delay than the duration
                     .pollDelay(duration.plusMillis(1))
                     // We must have a longer timeout than the poll delay

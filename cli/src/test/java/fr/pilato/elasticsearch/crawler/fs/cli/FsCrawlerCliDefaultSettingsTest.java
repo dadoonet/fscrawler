@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,27 +15,25 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.*;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * We want to test FSCrawler main app
- */
+/** We want to test FSCrawler main app */
 public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
@@ -55,14 +53,14 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve("modify_settings_server_ftp");
         Files.createDirectories(jobDir);
 
-        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_server_ftp\"\n" +
-                        "server:\n" +
-                        "  hostname: \"mynode.mydomain.com\"\n" +
-                        "  protocol: \"ftp\"\n"
-                );
+        Files.writeString(
+                jobDir.resolve(FsSettingsLoader.SETTINGS_YAML),
+                "name: \"modify_settings_server_ftp\"\n" + "server:\n"
+                        + "  hostname: \"mynode.mydomain.com\"\n"
+                        + "  protocol: \"ftp\"\n");
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ftp");
-        assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.FTP_PORT);
-        assertThat(settings.getServer().getUsername()).isEqualTo("anonymous");
+        Assertions.assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.FTP_PORT);
+        Assertions.assertThat(settings.getServer().getUsername()).isEqualTo("anonymous");
     }
 
     @Test
@@ -71,16 +69,16 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve("modify_settings_server_ssh");
         Files.createDirectories(jobDir);
 
-        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_server_ssh\"\n" +
-                        "server:\n" +
-                        "  hostname: \"mynode.mydomain.com\"\n" +
-                        "  protocol: \"ssh\""
-                );
+        Files.writeString(
+                jobDir.resolve(FsSettingsLoader.SETTINGS_YAML),
+                "name: \"modify_settings_server_ssh\"\n" + "server:\n"
+                        + "  hostname: \"mynode.mydomain.com\"\n"
+                        + "  protocol: \"ssh\"");
 
-        logger.info("{}", Files.readString(jobDir.resolve(SETTINGS_YAML)));
+        logger.info("{}", Files.readString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML)));
 
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ssh");
-        assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.SSH_PORT);
-        assertThat(settings.getServer().getUsername()).isNull();
+        Assertions.assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.SSH_PORT);
+        Assertions.assertThat(settings.getServer().getUsername()).isNull();
     }
 }

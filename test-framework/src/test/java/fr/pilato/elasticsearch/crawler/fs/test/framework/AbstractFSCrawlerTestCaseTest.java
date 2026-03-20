@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,21 +15,22 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void toUnderscoreCase() {
-        assertThat(toUnderscoreCase("")).isEmpty();
-        assertThat(toUnderscoreCase("AbstractFSCrawlerTestCaseTest"))
+        Assertions.assertThat(toUnderscoreCase("")).isEmpty();
+        Assertions.assertThat(toUnderscoreCase("AbstractFSCrawlerTestCaseTest"))
                 .isEqualTo("abstract_f_s_crawler_test_case_test");
-        assertThat(toUnderscoreCase("abstract_f_s_crawler_test_case_test"))
+        Assertions.assertThat(toUnderscoreCase("abstract_f_s_crawler_test_case_test"))
                 .isEqualTo("abstract_f_s_crawler_test_case_test");
     }
 
@@ -39,9 +40,11 @@ public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
 
         // The test depends on the env variable "test.index.prefix" being set to something"
         if (indexPrefix.isEmpty()) {
-            assertThat(crawlerName).isEqualTo("fscrawler_abstract_f_s_crawler_test_case_test_test_crawler_name");
+            Assertions.assertThat(crawlerName)
+                    .isEqualTo("fscrawler_abstract_f_s_crawler_test_case_test_test_crawler_name");
         } else {
-            assertThat(crawlerName).isEqualTo("fscrawler_" + indexPrefix + "_abstract_f_s_crawler_test_case_test_test_crawler_name");
+            Assertions.assertThat(crawlerName)
+                    .isEqualTo("fscrawler_" + indexPrefix + "_abstract_f_s_crawler_test_case_test_test_crawler_name");
         }
     }
 }

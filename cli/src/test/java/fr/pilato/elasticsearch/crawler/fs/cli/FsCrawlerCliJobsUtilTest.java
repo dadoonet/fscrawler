@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,26 +15,23 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerMetadataTestCase;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * We want to test some utilities
- */
+/** We want to test some utilities */
 public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
@@ -49,7 +46,7 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
             String jobName = jobNamePrefix + "-" + i;
             Path jobDir = metadataDir.resolve(jobName);
             Files.createDirectories(jobDir);
-            if (randomBoolean()) {
+            if (RandomizedTest.randomBoolean()) {
                 // Yaml settings file
                 fsSettingsLoader.write(jobName, new FsSettings());
             } else {
@@ -60,6 +57,6 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
 
         // We test that we can actually see the jobs
         List<String> jobs = FsCrawlerJobsUtil.listExistingJobs(metadataDir);
-        assertThat(jobs).hasSize(numJobs);
+        Assertions.assertThat(jobs).hasSize(numJobs);
     }
 }

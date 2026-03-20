@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import org.apache.logging.log4j.LogManager;
@@ -24,25 +25,20 @@ import org.apache.logging.log4j.Logger;
 
 public class FSCrawlerLogger {
 
-    /**
-     * This logger is for the console
-     */
+    /** This logger is for the console */
     private static final Logger consoleLogger = LogManager.getLogger("fscrawler.console");
 
-    /**
-     * This logger is used to log information related to documents
-     */
+    /** This logger is used to log information related to documents */
     private static final Logger documentLogger = LogManager.getLogger("fscrawler.document");
 
-    /**
-     * This logger is used to help writing the test cases
-     */
+    /** This logger is used to help writing the test cases */
     private static final Logger metadataLogger = LogManager.getLogger("fscrawler.metadata");
 
     /**
      * Print something to the console
-     * @param message   message to print
-     * @param params    parameters if any
+     *
+     * @param message message to print
+     * @param params parameters if any
      */
     public static void console(String message, Object... params) {
         consoleLogger.info(message, params);
@@ -50,9 +46,10 @@ public class FSCrawlerLogger {
 
     /**
      * Log information in Debug Level about documents
-     * @param id        Document ID
-     * @param path      Virtual path to the document
-     * @param message   Message to display
+     *
+     * @param id Document ID
+     * @param path Virtual path to the document
+     * @param message Message to display
      */
     public static void documentDebug(String id, String path, String message) {
         documentLogger.debug("[{}][{}] {}", id, path, message);
@@ -60,9 +57,10 @@ public class FSCrawlerLogger {
 
     /**
      * Log information in Error Level about documents
-     * @param id        Document ID
-     * @param path      Virtual path to the document
-     * @param error     Error to display
+     *
+     * @param id Document ID
+     * @param path Virtual path to the document
+     * @param error Error to display
      */
     public static void documentError(String id, String path, String error) {
         documentLogger.error("[{}][{}] {}", id, path, error);
@@ -70,8 +68,9 @@ public class FSCrawlerLogger {
 
     /**
      * Print the metadata in a useful format, so they can be easily used in tests
-     * @param message   message to print
-     * @param params    parameters if any
+     *
+     * @param message message to print
+     * @param params parameters if any
      */
     public static void metadata(String message, Object... params) {
         metadataLogger.debug(message, params);

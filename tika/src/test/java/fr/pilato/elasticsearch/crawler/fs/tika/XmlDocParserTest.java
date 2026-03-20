@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,39 +15,39 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
-
 import java.io.InputStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 public class XmlDocParserTest extends DocParserTestCase {
 
     @Test
     public void xml() throws JsonProcessingException {
         String doc = extractFromFile("issue-163.xml");
-        assertThat(doc).isEqualTo("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\"," +
-                "\"last_push\":\"2016-06-03 06:21:34\",\"current_push\":\"2016-06-03 06:21:37\",\"exec\":\"0.002\"," +
-                "\"lineup\":{\"id\":\"0\",\"del\":\"no\"}}}");
+        Assertions.assertThat(doc)
+                .isEqualTo("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\","
+                        + "\"last_push\":\"2016-06-03 06:21:34\",\"current_push\":\"2016-06-03 06:21:37\",\"exec\":\"0.002\","
+                        + "\"lineup\":{\"id\":\"0\",\"del\":\"no\"}}}");
     }
 
     @Test
     public void xmlNestedObjects() throws JsonProcessingException {
         String doc = extractFromFile("issue-592.xml");
-        assertThat(doc).isEqualTo("{\"object\":[{\"id\":\"1\",\"name\":\"foo\"},{\"id\":\"2\",\"name\":\"bar\"}]}");
+        Assertions.assertThat(doc)
+                .isEqualTo("{\"object\":[{\"id\":\"1\",\"name\":\"foo\"},{\"id\":\"2\",\"name\":\"bar\"}]}");
     }
 
     @Test
     public void xmlNotReadable() throws JsonProcessingException {
         String doc = extractFromFile(null, "issue-1753.xml");
-        assertThat(doc).isEqualTo("{\"Tag\":{\"attr\":\"false\",\"$\":\"Content\"}}");
+        Assertions.assertThat(doc).isEqualTo("{\"Tag\":{\"attr\":\"false\",\"$\":\"Content\"}}");
     }
-
 
     private String extractFromFile(String root, String filename) throws JsonProcessingException {
         InputStream data = getBinaryContent(root, filename);

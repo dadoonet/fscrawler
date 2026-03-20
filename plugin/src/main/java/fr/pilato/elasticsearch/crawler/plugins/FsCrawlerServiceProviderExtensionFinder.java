@@ -1,11 +1,11 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use it except in compliance with
- * the License.  You may obtain a copy of the License at
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -15,14 +15,10 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
 package fr.pilato.elasticsearch.crawler.plugins;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.pf4j.AbstractExtensionFinder;
-import org.pf4j.PluginManager;
-import org.pf4j.PluginWrapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,20 +32,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.pf4j.AbstractExtensionFinder;
+import org.pf4j.PluginManager;
+import org.pf4j.PluginWrapper;
 
 /**
- * Extension finder that only reads the FsCrawler FsProvider SPI file
- * ({@value #SERVICE_RESOURCE}), instead of scanning all META-INF/services.
- * This avoids loading unrelated service provider classes (e.g. NetCDF GRIB)
- * that may be on the classpath and cause ClassNotFoundException.
+ * Extension finder that only reads the FsCrawler FsProvider SPI file ({@value #SERVICE_RESOURCE}), instead of scanning
+ * all META-INF/services. This avoids loading unrelated service provider classes (e.g. NetCDF GRIB) that may be on the
+ * classpath and cause ClassNotFoundException.
  */
 public class FsCrawlerServiceProviderExtensionFinder extends AbstractExtensionFinder {
 
     private static final Logger log = LogManager.getLogger(FsCrawlerServiceProviderExtensionFinder.class);
 
-    /**
-     * Only this SPI file is read (FsCrawler FsProvider implementations).
-     */
+    /** Only this SPI file is read (FsCrawler FsProvider implementations). */
     public static final String SERVICE_RESOURCE = "META-INF/services/" + FsCrawlerExtensionFsProvider.class.getName();
 
     private static final Pattern COMMENT = Pattern.compile("#.*");
@@ -113,8 +111,8 @@ public class FsCrawlerServiceProviderExtensionFinder extends AbstractExtensionFi
     }
 
     private void readServiceFile(URL url, Set<String> bucket) throws IOException {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader =
+                new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = COMMENT.matcher(line).replaceFirst("").trim();

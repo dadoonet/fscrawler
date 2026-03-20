@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import java.util.Objects;
@@ -92,7 +93,6 @@ public class FsSettings {
         if (!Objects.equals(rest, that.rest)) return false;
         if (!Objects.equals(tags, that.tags)) return false;
         return Objects.equals(elasticsearch, that.elasticsearch);
-
     }
 
     @Override
@@ -108,12 +108,11 @@ public class FsSettings {
 
     @Override
     public String toString() {
-        return "FsSettings{" + "name='" + name + '\'' +
-                ", fs=" + fs +
-                ", server=" + server +
-                ", elasticsearch=" + elasticsearch +
-                ", rest=" + rest +
-                ", tags=" + tags +
-                '}';
+        return "FsSettings{" + "name='" + name + '\'' + ", fs="
+                + fs + ", server="
+                + server + ", elasticsearch="
+                + elasticsearch + ", rest="
+                + rest + ", tags="
+                + tags + '}';
     }
 }

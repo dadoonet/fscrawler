@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,19 +15,17 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/**
- * Response object for the crawler status endpoint
- */
+/** Response object for the crawler status endpoint */
 public class CrawlerStatusResponse extends RestResponse {
 
     private CrawlerState state;

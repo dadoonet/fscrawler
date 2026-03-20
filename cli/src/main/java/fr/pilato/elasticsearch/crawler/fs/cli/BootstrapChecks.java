@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,24 +15,24 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * This class checks at startup if everything is correctly set.
- * We are using a class for it, so it's easier to track checks within a single place
+ * This class checks at startup if everything is correctly set. We are using a class for it, so it's easier to track
+ * checks within a single place
  */
 public class BootstrapChecks {
 
@@ -51,17 +51,28 @@ public class BootstrapChecks {
         ByteSizeValue heapTotalSize = new ByteSizeValue(Runtime.getRuntime().maxMemory());
         ByteSizeValue heapFreeSize = new ByteSizeValue(Runtime.getRuntime().freeMemory());
 
-        logger.info("Memory [Free/Total=Percent]: HEAP [{}/{}={}], RAM [{}/{}={}], Swap [{}/{}={}].",
-                heapFreeSize, heapTotalSize, computePercentage(heapFreeSize, heapTotalSize),
-                ramFreeSize, ramTotalSize, computePercentage(ramFreeSize, ramTotalSize),
-                swapFreeSize, swapTotalSize, computePercentage(swapFreeSize, swapTotalSize));
+        logger.info(
+                "Memory [Free/Total=Percent]: HEAP [{}/{}={}], RAM [{}/{}={}], Swap [{}/{}={}].",
+                heapFreeSize,
+                heapTotalSize,
+                computePercentage(heapFreeSize, heapTotalSize),
+                ramFreeSize,
+                ramTotalSize,
+                computePercentage(ramFreeSize, ramTotalSize),
+                swapFreeSize,
+                swapTotalSize,
+                computePercentage(swapFreeSize, swapTotalSize));
     }
 
     static Percentage computePercentage(ByteSizeValue current, ByteSizeValue max) {
         if (max.getBytes() <= 0) {
             return new Percentage();
         }
-        return new Percentage((BigDecimal.valueOf(((double) current.getBytes()) / (double) max.getBytes() * 100)).setScale(2, RoundingMode.HALF_EVEN).doubleValue(), true);
+        return new Percentage(
+                (BigDecimal.valueOf(((double) current.getBytes()) / (double) max.getBytes() * 100))
+                        .setScale(2, RoundingMode.HALF_EVEN)
+                        .doubleValue(),
+                true);
     }
 
     private static void checkUTF8() {
@@ -70,5 +81,4 @@ public class BootstrapChecks {
             logger.warn("[file.encoding] should be [{}] but is [{}]", StandardCharsets.UTF_8.name(), encoding);
         }
     }
-
 }

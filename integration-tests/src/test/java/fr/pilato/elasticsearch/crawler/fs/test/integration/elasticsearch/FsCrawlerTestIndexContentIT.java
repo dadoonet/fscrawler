@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,26 +15,25 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
-/**
- * Test all crawler settings
- */
+/** Test all crawler settings */
 public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #103: <a href="https://github.com/dadoonet/fscrawler/issues/103">https://github.com/dadoonet/fscrawler/issues/103</a>
+     * Test for #103: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/103">https://github.com/dadoonet/fscrawler/issues/103</a>
      */
     @Test
     public void index_content() throws Exception {
@@ -43,10 +42,25 @@ public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We expect to have one file
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESPrefixQuery("content", "file*")), 0L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESPrefixQuery("file.content_type", "text*")), 0L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("file.extension", "txt")), 1L, null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESPrefixQuery("content", "file*")),
+                0L,
+                null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESPrefixQuery("file.content_type", "text*")),
+                0L,
+                null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("file.extension", "txt")),
+                1L,
+                null);
     }
 }

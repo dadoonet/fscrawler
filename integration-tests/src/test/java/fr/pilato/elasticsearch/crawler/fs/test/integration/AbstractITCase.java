@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,8 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
 import com.carrotsearch.randomizedtesting.RandomizedTest;
@@ -26,65 +27,69 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
-import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Before;
-
-import javax.net.ssl.SSLHandshakeException;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import java.time.Duration;
-
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiAlphanumOfLength;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests.copyDirs;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.awaitility.Awaitility.await;
+import javax.net.ssl.SSLHandshakeException;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Assumptions;
+import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
 /**
- * Integration tests expect to have an elasticsearch instance running on <a href="https://127.0.0.1:9200">https://127.0.0.1:9200</a>.
- * Otherwise, a TestContainer instance will be started.
- * <br/>
- * Note that all existing data in this cluster might be removed
- * <br/>
- * If you want to run tests against a remote cluster, please launch tests using
- * tests.cluster.url property:
+ * Integration tests expect to have an elasticsearch instance running on <a
+ * href="https://127.0.0.1:9200">https://127.0.0.1:9200</a>. Otherwise, a TestContainer instance will be started. <br>
+ * Note that all existing data in this cluster might be removed <br>
+ * If you want to run tests against a remote cluster, please launch tests using tests.cluster.url property:
+ *
  * <pre><code>mvn verify -Dtests.cluster.url=https://127.0.0.1:9200</code></pre>
+ *
  * All integration tests might be skipped using:
+ *
  * <pre><code>mvn verify -DskipIntegTests</code></pre>
  */
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    protected static final Path DEFAULT_RESOURCES =  Paths.get(getUrl("samples", "_common"));
+    protected static final Path DEFAULT_RESOURCES = Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
     protected static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
@@ -105,10 +110,9 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static ElasticsearchClient client;
 
     /**
-     * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code
-     * more readable.
-     * The temp folder which is used as a root is automatically cleaned after the test, so we don't have to worry
-     * about it.
+     * We suppose that each test has its own set of files. Even if we duplicate them, that will make the code more
+     * readable. The temp folder which is used as a root is automatically cleaned after the test, so we don't have to
+     * worry about it.
      */
     @Before
     public void copyTestResources() throws IOException {
@@ -131,7 +135,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             from = DEFAULT_RESOURCES;
         }
 
-        copyDirs(from, currentTestResourceDir);
+        FsCrawlerUtilForTests.copyDirs(from, currentTestResourceDir);
 
         logger.debug("✅ Test resources ready in [{}]", currentTestResourceDir);
     }
@@ -151,7 +155,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
         if (Files.exists(from)) {
             logger.trace("📂 Copying test resources from [{}]", from);
-            copyDirs(from, currentTestTagDir);
+            FsCrawlerUtilForTests.copyDirs(from, currentTestTagDir);
             logger.debug("✅ Tags ready in [{}]", currentTestTagDir);
         }
     }
@@ -195,23 +199,26 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     /**
      * Copy test documents to the test dir, so we will be able to run tests against them
-     * @param target            target directory.
-     * @param sourceDirName     source subdir name where files will be copied or extracted to.
-     * @param marker            one of the filename which is available in the classpath which contains
-     *                          the test documents or within a jar
+     *
+     * @param target target directory.
+     * @param sourceDirName source subdir name where files will be copied or extracted to.
+     * @param marker one of the filename which is available in the classpath which contains the test documents or within
+     *     a jar
      * @throws IOException In case of IO problem
      */
-    private static void copyTestDocumentsToTargetDir(Path target, String sourceDirName, String marker) throws IOException, URISyntaxException {
+    private static void copyTestDocumentsToTargetDir(Path target, String sourceDirName, String marker)
+            throws IOException, URISyntaxException {
         URL resource = AbstractFSCrawlerTestCase.class.getResource(marker);
 
         switch (resource.getProtocol()) {
-            case "file" : {
+            case "file": {
                 Path finalTarget = target.resolve(sourceDirName);
                 if (Files.notExists(finalTarget)) {
                     logger.debug("⛏️ Creating test dir named [{}]", finalTarget);
                     Files.createDirectory(finalTarget);
                 }
-                // We are running our tests from the IDE most likely and documents are directly available in the classpath
+                // We are running our tests from the IDE most likely and documents are directly available in the
+                // classpath
                 Path source = Paths.get(resource.toURI()).getParent().resolve(sourceDirName);
                 if (Files.notExists(source)) {
                     logger.error("directory [{}] should be copied to [{}]", source, target);
@@ -219,15 +226,16 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 }
 
                 logger.debug("📂 Copying test documents from [{}] to [{}]", source, finalTarget);
-                copyDirs(source, finalTarget);
+                FsCrawlerUtilForTests.copyDirs(source, finalTarget);
                 break;
             }
-            case "jar" : {
+            case "jar": {
                 if (Files.notExists(target)) {
                     logger.debug("⛏️ Creating test dir named [{}]", target);
                     Files.createDirectory(target);
                 }
-                // We are  running our tests from the CLI most likely and documents are provided within a JAR as a dependency
+                // We are  running our tests from the CLI most likely and documents are provided within a JAR as a
+                // dependency
                 String fileInJar = resource.getPath();
                 int i = fileInJar.indexOf("!/");
                 String jarFileWithProtocol = fileInJar.substring(0, i);
@@ -235,8 +243,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 unzip(Path.of(jarFile), target, Charset.defaultCharset());
                 break;
             }
-            default :
-                fail("Unknown protocol for IT document sources: " + resource.getProtocol());
+            default:
+                Assertions.fail("Unknown protocol for IT document sources: " + resource.getProtocol());
                 break;
         }
     }
@@ -306,24 +314,28 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         } catch (ElasticsearchClientException e) {
             if (e.getCause() instanceof ProcessingException
                     && e.getCause().getCause() instanceof SSLHandshakeException
-                    && fsSettings.getElasticsearch().isSslVerification()
-            ) {
-                logger.fatal("❌ SSL check is on but you are probably using a self-signed certificate on [{}]." +
-                                " You can bypass this SSL check using -Dtests.cluster.check_ssl=false",
+                    && fsSettings.getElasticsearch().isSslVerification()) {
+                logger.fatal(
+                        "❌ SSL check is on but you are probably using a self-signed certificate on [{}]."
+                                + " You can bypass this SSL check using -Dtests.cluster.check_ssl=false",
                         fsSettings.getElasticsearch().getUrls().get(0));
                 throw e;
             }
 
             if (!DEFAULT_TEST_CLUSTER_URL.equals(testClusterUrl)) {
-                logger.fatal("❌ Can not connect to Elasticsearch on [{}] with ssl checks [{}]. You can " +
-                                "disable it using -Dtests.cluster.check_ssl=false",
-                        testClusterUrl, testCheckCertificate);
+                logger.fatal(
+                        "❌ Can not connect to Elasticsearch on [{}] with ssl checks [{}]. You can "
+                                + "disable it using -Dtests.cluster.check_ssl=false",
+                        testClusterUrl,
+                        testCheckCertificate);
                 throw e;
             }
             if (testContainerHelper.isStarted()) {
-                logger.fatal("❌ Elasticsearch TestContainer was previously started but we can not connect to it " +
-                                "on [{}] with ssl checks [{}].",
-                        testClusterUrl, testCheckCertificate);
+                logger.fatal(
+                        "❌ Elasticsearch TestContainer was previously started but we can not connect to it "
+                                + "on [{}] with ssl checks [{}].",
+                        testClusterUrl,
+                        testCheckCertificate);
                 logger.fatal("Full error:", e);
                 throw e;
             }
@@ -346,14 +358,14 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         elasticsearchConfiguration = fsSettings.getElasticsearch();
 
-        assumeThat(client)
+        Assumptions.assumeThat(client)
                 .as("Integration tests are skipped because we have not been able to find an Elasticsearch cluster")
                 .isNotNull();
 
         // If the Api Key is not provided, we want to generate it and use in all the tests
         if (testApiKey == null) {
             // Generate the Api-Key
-            testApiKey = client.generateApiKey("fscrawler-" + randomAsciiAlphanumOfLength(10));
+            testApiKey = client.generateApiKey("fscrawler-" + RandomizedTest.randomAsciiAlphanumOfLength(10));
 
             fsSettings.getElasticsearch().setApiKey(testApiKey);
             fsSettings.getElasticsearch().setUsername(null);
@@ -376,7 +388,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     private static ElasticsearchClient startClient(FsSettings fsSettings) throws ElasticsearchClientException {
-        logger.debug("Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
+        logger.debug(
+                "Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
                 fsSettings.getElasticsearch().getUrls().get(0),
                 fsSettings.getElasticsearch().getCaCertificate(),
                 fsSettings.getElasticsearch().isSslVerification());
@@ -403,7 +416,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     public void checkSkipIntegTests() {
         // In case we are running tests from the IDE with the skipIntegTests option, let make sure we are skipping
         // those tests
-        RandomizedTest.assumeFalse("skipIntegTests is true. So we are skipping the integration tests.",
+        RandomizedTest.assumeFalse(
+                "skipIntegTests is true. So we are skipping the integration tests.",
                 getSystemProperty("skipIntegTests", false));
     }
 
@@ -420,38 +434,46 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     /**
      * Check that we have the expected number of docs or at least one if expected is null
      *
-     * @param request   Elasticsearch request to run.
-     * @param expected  expected number of docs. Null if at least 1.
-     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
+     * @param request Elasticsearch request to run.
+     * @param expected expected number of docs. Null if at least 1.
+     * @param path Path we are supposed to scan. If we have not accurate results, we display its content
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path) throws Exception {
+    public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path)
+            throws Exception {
         return countTestHelper(request, expected, path, MAX_WAIT_FOR_SEARCH);
     }
 
     /**
      * Check that we have the expected number of docs or at least one if expected is null
      *
-     * @param request   Elasticsearch request to run.
-     * @param expected  expected number of docs. Null if at least 1.
-     * @param path      Path we are supposed to scan. If we have not accurate results, we display its content
-     * @param duration  Time before we declare a failure
+     * @param request Elasticsearch request to run.
+     * @param expected expected number of docs. Null if at least 1.
+     * @param path Path we are supposed to scan. If we have not accurate results, we display its content
+     * @param duration Time before we declare a failure
      * @return the search response if further tests are needed
      * @throws Exception in case of error
      */
-    public static ESSearchResponse countTestHelper(final ESSearchRequest request, final Long expected, final Path path, final Duration duration) throws Exception {
+    public static ESSearchResponse countTestHelper(
+            final ESSearchRequest request, final Long expected, final Path path, final Duration duration)
+            throws Exception {
 
         final ESSearchResponse[] response = new ESSearchResponse[1];
 
         // We wait before considering a failing test
-        logger.info("⏳ Waiting up to {} for {} documents in {}", durationToString(duration),
-                expected == null ? "some" : expected, request.getIndex());
+        logger.info(
+                "⏳ Waiting up to {} for {} documents in {}",
+                FsCrawlerUtil.durationToString(duration),
+                expected == null ? "some" : expected,
+                request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
 
         try {
-            await().atMost(duration)
-                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+            Awaitility.await()
+                    .atMost(duration)
+                    .pollInterval(
+                            ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                     .until(() -> {
                         long totalHits;
 
@@ -491,7 +513,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         long hits = response[0].getTotalHits();
         if (expected == null) {
-            assertThat(hits)
+            Assertions.assertThat(hits)
                     .as("checking if any document in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
@@ -500,11 +522,12 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                     .isGreaterThan(0);
 
         } else {
-            assertThat(hits)
+            Assertions.assertThat(hits)
                     .as("checking documents in %s", request.getIndex())
                     .withFailMessage(() -> {
                         logContentOfDir(path, Level.WARN);
-                        return "got " + hits + " documents in " + request.getIndex() + " while we expected exactly " + expected;
+                        return "got " + hits + " documents in " + request.getIndex() + " while we expected exactly "
+                                + expected;
                     })
                     .isEqualTo(expected);
         }
@@ -518,13 +541,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 stream.forEach(file -> {
                     try {
                         if (Files.isDirectory(file)) {
-                            logger.log(level, " * in dir [{}] [{}]",
+                            logger.log(
+                                    level,
+                                    " * in dir [{}] [{}]",
                                     path.relativize(file),
                                     Files.getLastModifiedTime(file));
                         } else {
-                            logger.log(level, "   - [{}] [{}]",
-                                    file.getFileName(),
-                                    Files.getLastModifiedTime(file));
+                            logger.log(level, "   - [{}] [{}]", file.getFileName(), Files.getLastModifiedTime(file));
                         }
                     } catch (IOException ignored) {
                         // It's just for logging purposes.
@@ -548,26 +571,26 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Split a String at the first occurrence of the delimiter.
-     * Does not include the delimiter in the result.
+     * Split a String at the first occurrence of the delimiter. Does not include the delimiter in the result.
      *
-     * @param toSplit   the string to split
+     * @param toSplit the string to split
      * @param delimiter to split the string up with
-     * @return a two element array with index 0 being before the delimiter, and
-     *         index 1 being after the delimiter (neither element includes the delimiter);
-     *         or <code>null</code> if the delimiter wasn't found in the given input String
+     * @return a two element array with index 0 being before the delimiter, and index 1 being after the delimiter
+     *     (neither element includes the delimiter); or <code>null</code> if the delimiter wasn't found in the given
+     *     input String
      */
     public static String[] split(String toSplit, String delimiter) {
         int offset = toSplit.indexOf(delimiter);
         String beforeDelimiter = toSplit.substring(0, offset);
         String afterDelimiter = toSplit.substring(offset + delimiter.length());
-        return new String[]{beforeDelimiter, afterDelimiter};
+        return new String[] {beforeDelimiter, afterDelimiter};
     }
 
     public static void deleteRecursively(Path root) throws IOException {
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
-            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs)
+                    throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
@@ -606,8 +629,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         Elasticsearch elasticsearch = clone(elasticsearchConfiguration);
 
         fsSettings.setElasticsearch(elasticsearch);
-        fsSettings.getElasticsearch().setIndex(name + INDEX_SUFFIX_DOCS);
-        fsSettings.getElasticsearch().setIndexFolder(name + INDEX_SUFFIX_FOLDER);
+        fsSettings.getElasticsearch().setIndex(name + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        fsSettings.getElasticsearch().setIndexFolder(name + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         // We explicitly set semantic search to false because IT takes too long time
         fsSettings.getElasticsearch().setSemanticSearch(false);

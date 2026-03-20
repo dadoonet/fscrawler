@@ -161,6 +161,32 @@ For example::
     -Dtests.leaveTemporary \
     -Dtests.seed=E776CE45185A6E7A
 
+Code formatting (Spotless)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The project uses `Spotless <https://github.com/diffplug/spotless>`_ to enforce consistent code formatting
+(Java via Palantir Java Format, POM sorting, JSON and YAML formatting).
+
+To check that the code you changed since ``origin/master`` is correctly formatted, run::
+
+    mvn spotless:check
+
+To check the **entire** codebase (not just files changed since ``origin/master``)::
+
+    mvn spotless:check -DratchetFrom=NONE
+
+To **automatically fix** formatting issues::
+
+    mvn spotless:apply
+
+To install a **git pre-push hook** that runs the formatting check automatically before each push::
+
+    mvn spotless:install-git-pre-push-hook
+
+.. tip::
+
+    Run ``mvn spotless:apply`` before committing to avoid CI failures due to formatting.
+
 Check for vulnerabilities (CVE)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

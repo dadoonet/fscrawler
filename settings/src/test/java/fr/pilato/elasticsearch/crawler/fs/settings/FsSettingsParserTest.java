@@ -1,6 +1,6 @@
 /*
  * Licensed to David Pilato (the "Author") under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership. Author licenses this
  * file to you under the Apache License, Version 2.0 (the
@@ -15,31 +15,31 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @ClassRule
     public static final TemporaryFolder folder = new TemporaryFolder();
+
     protected static Path rootTmpDir;
 
     @BeforeClass
@@ -62,14 +62,18 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
+            Assertions.assertThat(settings.getFs().getOcr())
+                    .as("Checking Ocr")
+                    .isEqualTo(expected.getFs().getOcr());
         }
-        assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
-        assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
-        assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
-        assertThat(settings.getElasticsearch()).as("Checking Elasticsearch").isEqualTo(expected.getElasticsearch());
-        assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
-        assertThat(settings).as("Checking whole settings").isEqualTo(expected);
+        Assertions.assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
+        Assertions.assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());
+        Assertions.assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());
+        Assertions.assertThat(settings.getElasticsearch())
+                .as("Checking Elasticsearch")
+                .isEqualTo(expected.getElasticsearch());
+        Assertions.assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        Assertions.assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
     @Test
