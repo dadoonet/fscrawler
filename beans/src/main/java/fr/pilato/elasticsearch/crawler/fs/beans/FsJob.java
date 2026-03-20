@@ -22,9 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-/**
- * Define a FS Job meta data
- */
+/** Define a FS Job meta data */
 public class FsJob {
 
     private String name;
@@ -33,8 +31,7 @@ public class FsJob {
     private long indexed;
     private long deleted;
 
-    public FsJob() {
-    }
+    public FsJob() {}
 
     public FsJob(String name, LocalDateTime lastrun, LocalDateTime nextCheck, long indexed, long deleted) {
         this.name = name;

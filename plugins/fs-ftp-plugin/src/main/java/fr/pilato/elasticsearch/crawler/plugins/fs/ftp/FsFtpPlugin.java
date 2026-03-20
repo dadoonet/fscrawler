@@ -18,21 +18,12 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.toOctalPermission;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.net.PrintCommandListener;
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.io.IoBuilder;
-import org.pf4j.Extension;
-
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,8 +41,16 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.toOctalPermission;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.net.PrintCommandListener;
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPReply;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.io.IoBuilder;
+import org.pf4j.Extension;
 
 public class FsFtpPlugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
@@ -68,8 +67,10 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
                 file -> {
                     var timestamp = file.getTimestamp();
-                    return timestamp != null ? LocalDateTime.ofInstant(
-                            Instant.ofEpochMilli(timestamp.getTimeInMillis()), ZoneId.systemDefault()) : null;
+                    return timestamp != null
+                            ? LocalDateTime.ofInstant(
+                                    Instant.ofEpochMilli(timestamp.getTimeInMillis()), ZoneId.systemDefault())
+                            : null;
                 },
                 Comparator.nullsLast(Comparator.naturalOrder()));
 
@@ -104,28 +105,29 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 // rather than listFiles() which returns directory contents when given a directory
                 String ftpPath = encodePathForFtp(remotePath);
                 fileInfo = ftp.mlistFile(ftpPath);
-                
+
                 if (fileInfo == null) {
                     // mlistFile() may not be supported by all FTP servers (requires MLST command)
                     // Fall back to listing the parent directory and finding the entry
                     fileInfo = getFileInfoFromParentListing();
                 }
-                
+
                 if (fileInfo == null) {
                     throw new FsCrawlerPluginException("File [" + remotePath + "] does not exist on FTP server");
                 }
-                
+
                 if (fileInfo.isDirectory()) {
                     throw new FsCrawlerPluginException("Path [" + remotePath + "] is a directory, not a file");
                 }
             } catch (IOException e) {
-                throw new FsCrawlerPluginException("Failed to access file [" + remotePath + "] via FTP: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException(
+                        "Failed to access file [" + remotePath + "] via FTP: " + e.getMessage(), e);
             }
         }
-        
+
         /**
-         * Get file info by listing the parent directory and finding the matching entry.
-         * This is a fallback when mlistFile() is not supported by the FTP server.
+         * Get file info by listing the parent directory and finding the matching entry. This is a fallback when
+         * mlistFile() is not supported by the FTP server.
          *
          * @return the FTPFile info, or null if not found
          * @throws IOException if an I/O error occurs
@@ -142,22 +144,22 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 parentDir = remotePath.substring(0, lastSlash);
                 filename = remotePath.substring(lastSlash + 1);
             }
-            
+
             // List the parent directory
             String encodedParentDir = encodePathForFtp(parentDir);
             FTPFile[] files = ftp.listFiles(encodedParentDir);
-            
+
             if (files == null) {
                 return null;
             }
-            
+
             // Find the entry matching our filename
             for (FTPFile file : files) {
                 if (filename.equals(file.getName())) {
                     return file;
                 }
             }
-            
+
             return null;
         }
 
@@ -176,13 +178,14 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                     throw new FsCrawlerPluginException("FTP client cannot retrieve stream for [" + remotePath + "]");
                 }
             } catch (IOException e) {
-                throw new FsCrawlerPluginException("IOException caught while reading FTP file [" + remotePath + "]: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException(
+                        "IOException caught while reading FTP file [" + remotePath + "]: " + e.getMessage(), e);
             }
         }
 
         /**
-         * Wrapper InputStream that ensures FTP completePendingCommand() is called when the stream is closed.
-         * This is required by the FTP protocol after using retrieveFileStream().
+         * Wrapper InputStream that ensures FTP completePendingCommand() is called when the stream is closed. This is
+         * required by the FTP protocol after using retrieveFileStream().
          */
         private static class FtpInputStream extends FilterInputStream {
             private final FTPClient ftpClient;
@@ -209,9 +212,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             }
         }
 
-        /**
-         * Encode the path with the appropriate encoding for FTP.
-         */
+        /** Encode the path with the appropriate encoding for FTP. */
         private String encodePathForFtp(String path) throws UnsupportedEncodingException {
             if (isUtf8) {
                 return new String(path.getBytes(StandardCharsets.UTF_8), FTP.DEFAULT_CONTROL_ENCODING);
@@ -227,9 +228,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             try {
                 ftp = new FTPClient();
                 if (logger.isTraceEnabled() || logger.isDebugEnabled()) {
-                    ftp.addProtocolCommandListener(
-                            new PrintCommandListener(
-                                    new PrintWriter(IoBuilder.forLogger(logger).buildOutputStream())));
+                    ftp.addProtocolCommandListener(new PrintCommandListener(
+                            new PrintWriter(IoBuilder.forLogger(logger).buildOutputStream())));
                 }
                 // Send a safe command (NOOP) over the control connection to reset the router's idle timer
                 ftp.setControlKeepAliveTimeout(Duration.ofSeconds(300));
@@ -248,7 +248,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 if (!FTPReply.isPositiveCompletion(reply)) {
                     ftp.disconnect();
                     logger.warn("Cannot connect with FTP to {}@{}", effectiveUsername, effectiveHostname);
-                    throw new FsCrawlerPluginException("Can not connect to " + effectiveUsername + "@" + effectiveHostname);
+                    throw new FsCrawlerPluginException(
+                            "Can not connect to " + effectiveUsername + "@" + effectiveHostname);
                 }
 
                 if (!ftp.login(effectiveUsername, effectivePassword)) {
@@ -265,7 +266,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
 
                 logger.debug("FTP connection successful");
             } catch (IOException e) {
-                throw new FsCrawlerPluginException("IOException caught while opening FTP connection: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException(
+                        "IOException caught while opening FTP connection: " + e.getMessage(), e);
             }
         }
 
@@ -319,7 +321,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 logger.debug("{} files found", result.size());
                 return result;
             } catch (IOException e) {
-                throw new FsCrawlerPluginException("IOException caught while listing FTP directory [" + dir + "]: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException(
+                        "IOException caught while listing FTP directory [" + dir + "]: " + e.getMessage(), e);
             }
         }
 
@@ -332,10 +335,14 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 if (inputStream != null) {
                     return inputStream;
                 } else {
-                    throw new FsCrawlerPluginException(String.format("FTP client can not retrieve stream for [%s]", file.getFullpath()));
+                    throw new FsCrawlerPluginException(
+                            String.format("FTP client can not retrieve stream for [%s]", file.getFullpath()));
                 }
             } catch (IOException e) {
-                throw new FsCrawlerPluginException("IOException caught while getting FTP file stream for [" + file.getFullpath() + "]: " + e.getMessage(), e);
+                throw new FsCrawlerPluginException(
+                        "IOException caught while getting FTP file stream for [" + file.getFullpath() + "]: "
+                                + e.getMessage(),
+                        e);
             }
         }
 
@@ -350,9 +357,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             }
         }
 
-        /**
-         * Convert an FTPFile to a FileAbstractModel.
-         */
+        /** Convert an FTPFile to a FileAbstractModel. */
         private FileAbstractModel toFileAbstractModel(String path, FTPFile file) {
             String filename = file.getName();
             String extension = FilenameUtils.getExtension(filename);
@@ -371,7 +376,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                     filename,
                     file.isFile(),
                     // Using local TimeZone as reference
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(file.getTimestamp().getTimeInMillis()), ZoneId.systemDefault()),
+                    LocalDateTime.ofInstant(
+                            Instant.ofEpochMilli(file.getTimestamp().getTimeInMillis()), ZoneId.systemDefault()),
                     // Creation date not available
                     null,
                     // Access date not available
@@ -387,9 +393,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                     null);
         }
 
-        /**
-         * Determines FTPFile permissions.
-         */
+        /** Determines FTPFile permissions. */
         private static int getFilePermissions(final FTPFile file) {
             try {
                 int user = toOctalPermission(

@@ -19,19 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.DocumentContext;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.List;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.DocumentContext;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
 public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
@@ -104,51 +103,52 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     public void mappersWithStringsArray() throws IOException {
         // We try with multiple elements in the cities field as an array
-        mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\",\"Tamassint\"]}",
+        mapperTester(
+                JsonUtil.mapper,
+                "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\",\"Tamassint\"]}",
                 List.of("Amsterdam", "Tamassint"));
-        mapperTester(JsonUtil.prettyMapper, "{\n" +
-                "  \"name\" : \"Netherlands\",\n" +
-                "  \"cities\" : [ \"Amsterdam\", \"Tamassint\" ]\n" +
-                "}",
+        mapperTester(
+                JsonUtil.prettyMapper,
+                "{\n" + "  \"name\" : \"Netherlands\",\n" + "  \"cities\" : [ \"Amsterdam\", \"Tamassint\" ]\n" + "}",
                 List.of("Amsterdam", "Tamassint"));
-        mapperTester(JsonUtil.ymlMapper, "---\n" +
-                "name: \"Netherlands\"\n" +
-                "cities:\n" +
-                "- \"Amsterdam\"\n" +
-                "- \"Tamassint\"\n",
+        mapperTester(
+                JsonUtil.ymlMapper,
+                "---\n" + "name: \"Netherlands\"\n" + "cities:\n" + "- \"Amsterdam\"\n" + "- \"Tamassint\"\n",
                 List.of("Amsterdam", "Tamassint"));
         // We try with one single element in the cities field as an array
-        mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\"]}",
+        mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\"]}", List.of("Amsterdam"));
+        mapperTester(
+                JsonUtil.prettyMapper,
+                "{\n" + "  \"name\" : \"Netherlands\",\n" + "  \"cities\" : [ \"Amsterdam\" ]\n" + "}",
                 List.of("Amsterdam"));
-        mapperTester(JsonUtil.prettyMapper, "{\n" +
-                        "  \"name\" : \"Netherlands\",\n" +
-                        "  \"cities\" : [ \"Amsterdam\" ]\n" +
-                        "}",
-                List.of("Amsterdam"));
-        mapperTester(JsonUtil.ymlMapper, "---\n" +
-                "name: \"Netherlands\"\n" +
-                "cities:\n" +
-                "- \"Amsterdam\"\n",
+        mapperTester(
+                JsonUtil.ymlMapper,
+                "---\n" + "name: \"Netherlands\"\n" + "cities:\n" + "- \"Amsterdam\"\n",
                 List.of("Amsterdam"));
         // We try with one single element in the cities field as a string and this should fail
-        assertThatThrownBy(() -> JsonUtil.mapper.readValue( "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
+        assertThatThrownBy(() ->
+                        JsonUtil.mapper.readValue("{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
-        assertThatThrownBy(() -> JsonUtil.prettyMapper.readValue( "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
+                .hasMessageContaining(
+                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+        assertThatThrownBy(() -> JsonUtil.prettyMapper.readValue(
+                        "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
-        assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue( "---\n" +
-                "name: \"Netherlands\"\n" +
-                "cities: \"Amsterdam\"\n", Country.class))
+                .hasMessageContaining(
+                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+        assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue(
+                        "---\n" + "name: \"Netherlands\"\n" + "cities: \"Amsterdam\"\n", Country.class))
                 .isInstanceOf(IOException.class)
-                .hasMessageContaining("Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+                .hasMessageContaining(
+                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
     }
 
     /**
      * Helper to test a mapper with given input. We also test serialization here and we compare the input with the
      * generated output.
+     *
      * @param mapper the mapper to test
-     * @param input  the input to use
+     * @param input the input to use
      * @param expectedCities the expected cities list
      * @throws IOException in case of error
      */
@@ -161,8 +161,8 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
         String generated = mapper.writeValueAsString(country);
         logger.debug(generated);
-		/*automatically convert all \r\n (Windows) and \n (Unix) to a single \n before comparing the strings, making the test platform-independent.
-		*/
-		assertThat(generated).isEqualToNormalizingNewlines(input);
+        /*automatically convert all \r\n (Windows) and \n (Unix) to a single \n before comparing the strings, making the test platform-independent.
+         */
+        assertThat(generated).isEqualToNormalizingNewlines(input);
     }
 }

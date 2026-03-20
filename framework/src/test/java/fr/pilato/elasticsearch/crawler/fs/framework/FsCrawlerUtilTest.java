@@ -19,19 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeFalse;
+
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,11 +31,16 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
-
-import static com.carrotsearch.randomizedtesting.RandomizedTest.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
+import java.util.TimeZone;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -88,7 +85,9 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         if (OsValidator.WINDOWS) {
             assertThat(aclEntries).as("ACL entries should exist on Windows").isNotEmpty();
         } else {
-            assertThat(aclEntries).as("ACL entries should be empty when ACL view is not supported").isEmpty();
+            assertThat(aclEntries)
+                    .as("ACL entries should be empty when ACL view is not supported")
+                    .isEmpty();
         }
     }
 
@@ -117,10 +116,14 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void isFileSizeUnderLimit() {
-        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1)).isTrue();
-        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576)).isTrue();
-        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"),
-                new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes())).isFalse();
+        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1))
+                .isTrue();
+        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576))
+                .isTrue();
+        assertThat(FsCrawlerUtil.isFileSizeUnderLimit(
+                        ByteSizeValue.parseBytesSizeValue("1mb"),
+                        new ByteSizeValue(randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()))
+                .isFalse();
     }
 
     @Test
@@ -205,7 +208,6 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("/tmp", "/tmp/file.txt", "/file.txt");
         testVirtualPath("/tmp", "/tmp/dir/file.txt", "/dir/file.txt");
         testVirtualPath("/tmp", "/tmp/dir/subdir/file.txt", "/dir/subdir/file.txt");
-
     }
 
     @Test
@@ -227,7 +229,6 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("C:", "C:\\file.txt", "\\file.txt");
         testVirtualPath("C:", "C:\\dir\\file.txt", "\\dir\\file.txt");
         testVirtualPath("C:", "C:\\dir\\subdir\\file.txt", "\\dir\\subdir\\file.txt");
-
     }
 
     @Test
@@ -238,7 +239,6 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("C:\\tmp", "C:\\tmp\\file.txt", "\\file.txt");
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir\\file.txt", "\\dir\\file.txt");
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir\\subdir\\file.txt", "\\dir\\subdir\\file.txt");
-
     }
 
     @Test
@@ -249,7 +249,6 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("C:/tmp", "C:/tmp/file.txt", "/file.txt");
         testVirtualPath("C:/tmp", "C:/tmp/dir/file.txt", "/dir/file.txt");
         testVirtualPath("C:/tmp", "C:/tmp/dir/subdir/file.txt", "/dir/subdir/file.txt");
-
     }
 
     @Test
@@ -260,7 +259,6 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         testVirtualPath("/C:/tmp", "/C:/tmp/file.txt", "/file.txt");
         testVirtualPath("/C:/tmp", "/C:/tmp/dir/file.txt", "/dir/file.txt");
         testVirtualPath("/C:/tmp", "/C:/tmp/dir/subdir/file.txt", "/dir/subdir/file.txt");
-
     }
 
     @Test
@@ -288,16 +286,17 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     public void localDateToDate() {
         LocalDateTime now = LocalDateTime.now();
         Date date = FsCrawlerUtil.localDateTimeToDate(now);
-        logger.info("Current Time [{}] in [{}] is actually [{}]", 
-                now, 
+        logger.info(
+                "Current Time [{}] in [{}] is actually [{}]",
+                now,
                 TimeZone.getDefault().getDisplayName(),
                 date);
         assertThat(date).isNotNull();
     }
 
     /**
-     * Test for getPathSeparator with various path formats.
-     * This is related to <a href="https://github.com/dadoonet/fscrawler/issues/2134">#2134</a>
+     * Test for getPathSeparator with various path formats. This is related to <a
+     * href="https://github.com/dadoonet/fscrawler/issues/2134">#2134</a>
      */
     @Test
     public void getPathSeparator() {
@@ -331,7 +330,8 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(59))).isEqualTo("59m");
         assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(60))).isEqualTo("1h");
         assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(61))).isEqualTo("1h1m");
-        assertThat(FsCrawlerUtil.durationToString(Duration.ofMillis(randomLongBetween(0, 999999999L)))).isNotEmpty();
+        assertThat(FsCrawlerUtil.durationToString(Duration.ofMillis(randomLongBetween(0, 999999999L))))
+                .isNotEmpty();
     }
 
     @Test

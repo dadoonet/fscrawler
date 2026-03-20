@@ -25,13 +25,13 @@ import io.opentelemetry.api.trace.Tracer;
 
 /**
  * Thin wrapper around the OpenTelemetry API for FSCrawler instrumentation.
- * <p>
- * Uses {@link GlobalOpenTelemetry} so that when the elastic-otel-javaagent is attached
- * it automatically picks up the configured SDK. Without the agent the noop implementation
- * bundled inside {@code opentelemetry-api} is used, which has zero overhead.
- * </p>
- * <p>
- * Typical usage:
+ *
+ * <p>Uses {@link GlobalOpenTelemetry} so that when the elastic-otel-javaagent is attached it automatically picks up the
+ * configured SDK. Without the agent the noop implementation bundled inside {@code opentelemetry-api} is used, which has
+ * zero overhead.
+ *
+ * <p>Typical usage:
+ *
  * <pre>{@code
  * Span span = FsCrawlerTracing.startSpan("fscrawler.file.index");
  * try (Scope scope = span.makeCurrent()) {
@@ -45,7 +45,6 @@ import io.opentelemetry.api.trace.Tracer;
  *     span.end();
  * }
  * }</pre>
- * </p>
  */
 public final class FsCrawlerTracing {
 
@@ -57,17 +56,16 @@ public final class FsCrawlerTracing {
     }
 
     /**
-     * Returns the shared {@link Tracer} for FSCrawler instrumentation.
-     * The instance is resolved lazily from {@link GlobalOpenTelemetry} on each call; the OTel
-     * SDK caches it internally so there is no performance penalty.
+     * Returns the shared {@link Tracer} for FSCrawler instrumentation. The instance is resolved lazily from
+     * {@link GlobalOpenTelemetry} on each call; the OTel SDK caches it internally so there is no performance penalty.
      */
     public static Tracer tracer() {
         return GlobalOpenTelemetry.getTracer(INSTRUMENTATION_NAME);
     }
 
     /**
-     * Starts a new span with the given name as a child of the current active span (if any).
-     * The caller is responsible for calling {@link Span#end()} in a {@code finally} block.
+     * Starts a new span with the given name as a child of the current active span (if any). The caller is responsible
+     * for calling {@link Span#end()} in a {@code finally} block.
      */
     public static Span startSpan(String spanName) {
         return tracer().spanBuilder(spanName).startSpan();

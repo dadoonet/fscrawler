@@ -19,6 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
@@ -30,14 +35,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-/**
- * Test crawler default settings
- */
+/** Test crawler default settings */
 public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
@@ -45,11 +43,13 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have one file
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // The default configuration should not add file attributes
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.attributes")).isInstanceOf(PathNotFoundException.class);
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.attributes"))
+                    .isInstanceOf(PathNotFoundException.class);
         }
     }
 
@@ -57,7 +57,8 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
     public void default_metadata() throws Exception {
         crawler = startCrawler();
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             assertThatThrownBy(() -> document.read("$.attachment")).isInstanceOf(PathNotFoundException.class);
@@ -80,13 +81,20 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We should have one doc
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")), 1L, null);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("file.filename", "roottxtfile.txt")),
+                1L,
+                null);
         assertThat(response.getTotalHits()).isEqualTo(1);
     }
 
     /**
-     * Test case for #183: <a href="https://github.com/dadoonet/fscrawler/issues/183">https://github.com/dadoonet/fscrawler/issues/183</a> : Optimize document and folder mappings
-     * We want to make sure we can highlight documents even if we don't store fields
+     * Test case for #183: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/183">https://github.com/dadoonet/fscrawler/issues/183</a> :
+     * Optimize document and folder mappings We want to make sure we can highlight documents even if we don't store
+     * fields
      */
     @Test
     public void highlight_documents() throws Exception {

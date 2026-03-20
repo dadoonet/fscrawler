@@ -19,21 +19,21 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.Test;
-
-import java.io.InputStream;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.InputStream;
+import org.junit.Test;
 
 public class XmlDocParserTest extends DocParserTestCase {
 
     @Test
     public void xml() throws JsonProcessingException {
         String doc = extractFromFile("issue-163.xml");
-        assertThat(doc).isEqualTo("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\"," +
-                "\"last_push\":\"2016-06-03 06:21:34\",\"current_push\":\"2016-06-03 06:21:37\",\"exec\":\"0.002\"," +
-                "\"lineup\":{\"id\":\"0\",\"del\":\"no\"}}}");
+        assertThat(doc)
+                .isEqualTo("{\"version\":\"1.0\",\"subscription-update\":{\"subscriptionid\":\"0\",\"requestid\":\"0\","
+                        + "\"last_push\":\"2016-06-03 06:21:34\",\"current_push\":\"2016-06-03 06:21:37\",\"exec\":\"0.002\","
+                        + "\"lineup\":{\"id\":\"0\",\"del\":\"no\"}}}");
     }
 
     @Test
@@ -47,7 +47,6 @@ public class XmlDocParserTest extends DocParserTestCase {
         String doc = extractFromFile(null, "issue-1753.xml");
         assertThat(doc).isEqualTo("{\"Tag\":{\"attr\":\"false\",\"$\":\"Content\"}}");
     }
-
 
     private String extractFromFile(String root, String filename) throws JsonProcessingException {
         InputStream data = getBinaryContent(root, filename);

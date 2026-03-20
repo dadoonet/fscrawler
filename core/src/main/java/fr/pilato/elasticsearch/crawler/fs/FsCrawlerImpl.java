@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import static org.awaitility.Awaitility.await;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -31,19 +33,14 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
-
-import static org.awaitility.Awaitility.await;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.awaitility.core.ConditionTimeoutException;
 
-/**
- * @author dadoonet (David Pilato)
- */
+/** @author dadoonet (David Pilato) */
 public class FsCrawlerImpl implements AutoCloseable {
 
     private static final Logger logger = LogManager.getLogger();
@@ -78,7 +75,8 @@ public class FsCrawlerImpl implements AutoCloseable {
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
         if (FsCrawlerValidator.validateSettings(logger, settings)) {
-            throw new RuntimeException("Settings are incorrect and should have been verified with FsCrawlerValidator.validateSettings before.");
+            throw new RuntimeException(
+                    "Settings are incorrect and should have been verified with FsCrawlerValidator.validateSettings before.");
         }
 
         // Generate the directory where we write status and other files
@@ -114,9 +112,8 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     /**
      * Determine the provider type from settings.
-     * <p>
-     * Uses fs.provider if specified, otherwise falls back to server.protocol (deprecated).
-     * </p>
+     *
+     * <p>Uses fs.provider if specified, otherwise falls back to server.protocol (deprecated).
      *
      * @param settings the FSCrawler settings
      * @return the provider type string (e.g., "local", "ftp", "ssh")
@@ -136,8 +133,10 @@ public class FsCrawlerImpl implements AutoCloseable {
         if (settings.getServer() != null) {
             String protocol = settings.getServer().getProtocol();
             if (protocol != null && !Server.PROTOCOL.LOCAL.equals(protocol)) {
-                logger.warn("Setting server.protocol is deprecated and will be removed in a future version. " +
-                        "Please use fs.provider: \"{}\" instead.", protocol);
+                logger.warn(
+                        "Setting server.protocol is deprecated and will be removed in a future version. "
+                                + "Please use fs.provider: \"{}\" instead.",
+                        protocol);
                 return protocol;
             }
         }
@@ -160,7 +159,8 @@ public class FsCrawlerImpl implements AutoCloseable {
                 throw new FsCrawlerIllegalConfigurationException(
                         "Provider [" + provider + "] requires server settings (hostname, username, etc.)");
             }
-            if (settings.getServer().getHostname() == null || settings.getServer().getHostname().isEmpty()) {
+            if (settings.getServer().getHostname() == null
+                    || settings.getServer().getHostname().isEmpty()) {
                 throw new FsCrawlerIllegalConfigurationException(
                         "Provider [" + provider + "] requires server.hostname to be set");
             }
@@ -208,7 +208,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         if (fsParser != null) {
             fsParser.close();
 
-            synchronized(fsParser.getSemaphore()) {
+            synchronized (fsParser.getSemaphore()) {
                 fsParser.getSemaphore().notifyAll();
             }
         }
@@ -221,8 +221,7 @@ public class FsCrawlerImpl implements AutoCloseable {
                 // handles it and exits cleanly when closed==true.
                 fsCrawlerThread.interrupt();
 
-                await()
-                        .pollInterval(Duration.ofMillis(500))
+                await().pollInterval(Duration.ofMillis(500))
                         .atMost(Duration.ofSeconds(30))
                         .until(() -> {
                             if (fsCrawlerThread.isAlive()) {
@@ -237,7 +236,8 @@ public class FsCrawlerImpl implements AutoCloseable {
                         });
                 logger.debug("FS crawler thread is now stopped");
             } catch (ConditionTimeoutException e) {
-                logger.warn("FS crawler thread [{}] did not stop within 30 seconds, proceeding with cleanup anyway",
+                logger.warn(
+                        "FS crawler thread [{}] did not stop within 30 seconds, proceeding with cleanup anyway",
                         settings.getName());
             }
         }

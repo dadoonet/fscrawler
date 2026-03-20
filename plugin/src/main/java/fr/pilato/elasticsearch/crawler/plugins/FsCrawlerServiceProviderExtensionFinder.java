@@ -18,12 +18,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.pf4j.AbstractExtensionFinder;
-import org.pf4j.PluginManager;
-import org.pf4j.PluginWrapper;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,20 +30,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.pf4j.AbstractExtensionFinder;
+import org.pf4j.PluginManager;
+import org.pf4j.PluginWrapper;
 
 /**
- * Extension finder that only reads the FsCrawler FsProvider SPI file
- * ({@value #SERVICE_RESOURCE}), instead of scanning all META-INF/services.
- * This avoids loading unrelated service provider classes (e.g. NetCDF GRIB)
- * that may be on the classpath and cause ClassNotFoundException.
+ * Extension finder that only reads the FsCrawler FsProvider SPI file ({@value #SERVICE_RESOURCE}), instead of scanning
+ * all META-INF/services. This avoids loading unrelated service provider classes (e.g. NetCDF GRIB) that may be on the
+ * classpath and cause ClassNotFoundException.
  */
 public class FsCrawlerServiceProviderExtensionFinder extends AbstractExtensionFinder {
 
     private static final Logger log = LogManager.getLogger(FsCrawlerServiceProviderExtensionFinder.class);
 
-    /**
-     * Only this SPI file is read (FsCrawler FsProvider implementations).
-     */
+    /** Only this SPI file is read (FsCrawler FsProvider implementations). */
     public static final String SERVICE_RESOURCE = "META-INF/services/" + FsCrawlerExtensionFsProvider.class.getName();
 
     private static final Pattern COMMENT = Pattern.compile("#.*");
@@ -113,8 +109,8 @@ public class FsCrawlerServiceProviderExtensionFinder extends AbstractExtensionFi
     }
 
     private void readServiceFile(URL url, Set<String> bucket) throws IOException {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader =
+                new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = COMMENT.matcher(line).replaceFirst("").trim();

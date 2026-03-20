@@ -19,21 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.carrotsearch.randomizedtesting.annotations.Timeout;
-import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
-import com.jayway.jsonpath.DocumentContext;
-import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
-import fr.pilato.elasticsearch.crawler.fs.client.*;
-import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiLettersOfLengthBetween;
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLongBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
@@ -42,9 +27,21 @@ import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsD
 import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Test crawler with subdirs
- */
+import com.carrotsearch.randomizedtesting.annotations.Timeout;
+import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
+import com.jayway.jsonpath.DocumentContext;
+import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
+import fr.pilato.elasticsearch.crawler.fs.client.*;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
+
+/** Test crawler with subdirs */
 @TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
@@ -54,7 +51,8 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have two files
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
 
         // We check that the subdir document has his meta path data correctly set
         String expectedVirtual1;
@@ -67,17 +65,24 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
             expectedVirtual2 = "/roottxtfile.txt";
         }
 
-        assertThat(searchResponse.getHits())
-                .isNotEmpty()
-                .allSatisfy(hit -> {
-                    DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
-                    assertThat((String) document.read("$.path.virtual"))
-                            .containsAnyOf(expectedVirtual1, expectedVirtual2);
-                });
+        assertThat(searchResponse.getHits()).isNotEmpty().allSatisfy(hit -> {
+            DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
+            assertThat((String) document.read("$.path.virtual")).containsAnyOf(expectedVirtual1, expectedVirtual2);
+        });
 
         // Try to search within part of the full path, ie subdir
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("path.virtual.fulltext", "subdir")), 1L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("path.real.fulltext", "subdir")), 1L, null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("path.virtual.fulltext", "subdir")),
+                1L,
+                null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("path.real.fulltext", "subdir")),
+                1L,
+                null);
     }
 
     @Test
@@ -92,9 +97,9 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         // Run aggs
         ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                        .withSize(0)
-                        .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withSize(0)
+                .withAggregation(new ESTermsAggregation("folders", "path.virtual.tree")));
         assertThat(response.getTotalHits()).isEqualTo(7L);
 
         // aggregations
@@ -104,7 +109,9 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         assertThat(buckets).hasSize(10);
 
         // Check files
-        response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withSort("path.virtual"));
+        response = client.search(new ESSearchRequest()
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                .withSort("path.virtual"));
         assertThat(response.getTotalHits()).isEqualTo(7L);
 
         DocumentContext document = parseJsonAsDocumentContext(response.getJson());
@@ -112,24 +119,74 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         int i = 0;
         if (OsValidator.WINDOWS) {
             pathHitTester(document, i++, "\\subdirs_deep_tree\\roottxtfile.txt", "\\roottxtfile.txt");
-            pathHitTester(document, i++, "\\subdirs_deep_tree\\subdir1\\roottxtfile_multi_feed.txt", "\\subdir1\\roottxtfile_multi_feed.txt");
-            pathHitTester(document, i++, "\\subdirs_deep_tree\\subdir1\\subdir11\\roottxtfile.txt", "\\subdir1\\subdir11\\roottxtfile.txt");
-            pathHitTester(document, i++, "\\subdirs_deep_tree\\subdir1\\subdir12\\roottxtfile.txt", "\\subdir1\\subdir12\\roottxtfile.txt");
-            pathHitTester(document, i++, "\\subdirs_deep_tree\\subdir2\\roottxtfile_multi_feed.txt", "\\subdir2\\roottxtfile_multi_feed.txt");
-            pathHitTester(document, i++, "\\subdirs_deep_tree\\subdir2\\subdir21\\roottxtfile.txt", "\\subdir2\\subdir21\\roottxtfile.txt");
-            pathHitTester(document, i, "\\subdirs_deep_tree\\subdir2\\subdir22\\roottxtfile.txt", "\\subdir2\\subdir22\\roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "\\subdirs_deep_tree\\subdir1\\roottxtfile_multi_feed.txt",
+                    "\\subdir1\\roottxtfile_multi_feed.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "\\subdirs_deep_tree\\subdir1\\subdir11\\roottxtfile.txt",
+                    "\\subdir1\\subdir11\\roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "\\subdirs_deep_tree\\subdir1\\subdir12\\roottxtfile.txt",
+                    "\\subdir1\\subdir12\\roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "\\subdirs_deep_tree\\subdir2\\roottxtfile_multi_feed.txt",
+                    "\\subdir2\\roottxtfile_multi_feed.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "\\subdirs_deep_tree\\subdir2\\subdir21\\roottxtfile.txt",
+                    "\\subdir2\\subdir21\\roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i,
+                    "\\subdirs_deep_tree\\subdir2\\subdir22\\roottxtfile.txt",
+                    "\\subdir2\\subdir22\\roottxtfile.txt");
         } else {
             pathHitTester(document, i++, "/subdirs_deep_tree/roottxtfile.txt", "/roottxtfile.txt");
-            pathHitTester(document, i++, "/subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt", "/subdir1/roottxtfile_multi_feed.txt");
-            pathHitTester(document, i++, "/subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt", "/subdir1/subdir11/roottxtfile.txt");
-            pathHitTester(document, i++, "/subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt", "/subdir1/subdir12/roottxtfile.txt");
-            pathHitTester(document, i++, "/subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt", "/subdir2/roottxtfile_multi_feed.txt");
-            pathHitTester(document, i++, "/subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt", "/subdir2/subdir21/roottxtfile.txt");
-            pathHitTester(document, i, "/subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt", "/subdir2/subdir22/roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "/subdirs_deep_tree/subdir1/roottxtfile_multi_feed.txt",
+                    "/subdir1/roottxtfile_multi_feed.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "/subdirs_deep_tree/subdir1/subdir11/roottxtfile.txt",
+                    "/subdir1/subdir11/roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "/subdirs_deep_tree/subdir1/subdir12/roottxtfile.txt",
+                    "/subdir1/subdir12/roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "/subdirs_deep_tree/subdir2/roottxtfile_multi_feed.txt",
+                    "/subdir2/roottxtfile_multi_feed.txt");
+            pathHitTester(
+                    document,
+                    i++,
+                    "/subdirs_deep_tree/subdir2/subdir21/roottxtfile.txt",
+                    "/subdir2/subdir21/roottxtfile.txt");
+            pathHitTester(
+                    document,
+                    i,
+                    "/subdirs_deep_tree/subdir2/subdir22/roottxtfile.txt",
+                    "/subdir2/subdir22/roottxtfile.txt");
         }
 
         // Check folders
-        response = client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER).withSort("path.virtual"));
+        response = client.search(new ESSearchRequest()
+                .withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)
+                .withSort("path.virtual"));
         assertThat(response.getTotalHits()).isEqualTo(7L);
 
         document = parseJsonAsDocumentContext(response.getJson());
@@ -177,9 +234,17 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(createTestSettings(), MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // We expect to have x files (<- whoa that's funny Mulder!)
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), subdirs + 1, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS),
+                subdirs + 1,
+                null,
+                MAX_WAIT_FOR_SEARCH_LONG_TESTS);
         // Wait also for the folders to be fully indexed (they may not be immediately visible)
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER), subdirs + 2, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER),
+                subdirs + 2,
+                null,
+                MAX_WAIT_FOR_SEARCH_LONG_TESTS);
 
         // Run aggs
         ESSearchResponse response = client.search(new ESSearchRequest()
@@ -226,11 +291,19 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         deleteRecursively(mainDir);
 
         // We expect to have 1 doc now but this could take some time to happen
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS),
+                1L,
+                currentTestResourceDir,
+                MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
-    private void folderHitTester(DocumentContext document, int position, String expectedReal, String expectedVirtual,
-                                 String expectedFilename) {
+    private void folderHitTester(
+            DocumentContext document,
+            int position,
+            String expectedReal,
+            String expectedVirtual,
+            String expectedFilename) {
         pathHitTester(document, position, expectedReal, expectedVirtual);
         assertThat((String) document.read("$.hits.hits[" + position + "]._source.file.filename"))
                 .isEqualTo(expectedFilename);
@@ -242,23 +315,16 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
         logger.trace(" - {}, {}", real, virtual);
-        assertThat(real)
-                .as("path.real[%s]", position)
-                .endsWith(expectedReal);
-        assertThat(virtual)
-                .as("path.virtual[%s]", position)
-                .isEqualTo(expectedVirtual);
+        assertThat(real).as("path.real[%s]", position).endsWith(expectedReal);
+        assertThat(virtual).as("path.virtual[%s]", position).isEqualTo(expectedVirtual);
     }
 
-    private void pathHitTesterEndWith(DocumentContext document, int position, String expectedReal, String expectedVirtual) {
+    private void pathHitTesterEndWith(
+            DocumentContext document, int position, String expectedReal, String expectedVirtual) {
         String real = document.read("$.hits.hits[" + position + "]._source.path.real");
         String virtual = document.read("$.hits.hits[" + position + "]._source.path.virtual");
         logger.trace(" - {}, {}", real, virtual);
-        assertThat(real)
-                .as("path.real[%s]", position)
-                .endsWith(expectedReal);
-        assertThat(virtual)
-                .as("path.virtual[%s]", position)
-                .endsWith(expectedVirtual);
+        assertThat(real).as("path.real[%s]", position).endsWith(expectedReal);
+        assertThat(virtual).as("path.virtual[%s]", position).endsWith(expectedVirtual);
     }
 }

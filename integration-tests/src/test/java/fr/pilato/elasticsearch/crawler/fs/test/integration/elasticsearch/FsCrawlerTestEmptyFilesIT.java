@@ -19,6 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -26,15 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-/**
- * Test crawler with empty files.
- * Issue <a href="https://github.com/dadoonet/fscrawler/issues/1798">#1798</a>
- */
+/** Test crawler with empty files. Issue <a href="https://github.com/dadoonet/fscrawler/issues/1798">#1798</a> */
 public class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
 
     @Test
@@ -42,13 +39,20 @@ public class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler();
 
         // We expect to have 2 files
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withSort("file.filename"), 2L, null);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withSort("file.filename"),
+                2L,
+                null);
 
-        DocumentContext doc01 = parseJsonAsDocumentContext(response.getHits().get(0).getSource());
+        DocumentContext doc01 =
+                parseJsonAsDocumentContext(response.getHits().get(0).getSource());
         assertThat((String) doc01.read("$.file.filename")).isEqualTo("01-not-empty.txt");
         assertThat((String) doc01.read("$.content")).contains("Hello World");
 
-        DocumentContext doc02 = parseJsonAsDocumentContext(response.getHits().get(1).getSource());
+        DocumentContext doc02 =
+                parseJsonAsDocumentContext(response.getHits().get(1).getSource());
         assertThat((String) doc02.read("$.file.filename")).isEqualTo("02-empty.txt");
         assertThatThrownBy(() -> doc02.read("$.content")).isInstanceOf(PathNotFoundException.class);
     }

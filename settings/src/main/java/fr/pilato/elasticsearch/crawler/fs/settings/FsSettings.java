@@ -92,7 +92,6 @@ public class FsSettings {
         if (!Objects.equals(rest, that.rest)) return false;
         if (!Objects.equals(tags, that.tags)) return false;
         return Objects.equals(elasticsearch, that.elasticsearch);
-
     }
 
     @Override
@@ -108,12 +107,11 @@ public class FsSettings {
 
     @Override
     public String toString() {
-        return "FsSettings{" + "name='" + name + '\'' +
-                ", fs=" + fs +
-                ", server=" + server +
-                ", elasticsearch=" + elasticsearch +
-                ", rest=" + rest +
-                ", tags=" + tags +
-                '}';
+        return "FsSettings{" + "name='" + name + '\'' + ", fs="
+                + fs + ", server="
+                + server + ", elasticsearch="
+                + elasticsearch + ", rest="
+                + rest + ", tags="
+                + tags + '}';
     }
 }

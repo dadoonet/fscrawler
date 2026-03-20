@@ -18,28 +18,26 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
+
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
+import java.io.IOException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.computeVirtualPathName;
-
 /**
  * Abstract base class for remote filesystem providers (SSH, FTP, etc.).
- * <p>
- * This class provides common functionality for providers that connect to remote servers,
- * including:
+ *
+ * <p>This class provides common functionality for providers that connect to remote servers, including:
+ *
  * <ul>
- *     <li>Server connection settings (hostname, port, username, password)</li>
- *     <li>Remote path handling and normalization</li>
- *     <li>Common document creation logic</li>
+ *   <li>Server connection settings (hostname, port, username, password)
+ *   <li>Remote path handling and normalization
+ *   <li>Common document creation logic
  * </ul>
- * </p>
  */
 public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawlerExtensionFsProviderAbstract {
     private static final Logger logger = LogManager.getLogger();
@@ -52,16 +50,15 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     protected String password;
 
     /**
-     * Get the file size of the remote file.
-     * Each provider implements this based on how they retrieve file metadata.
+     * Get the file size of the remote file. Each provider implements this based on how they retrieve file metadata.
      *
      * @return the file size in bytes
      */
     protected abstract long getFilesize();
 
     /**
-     * Hook for parsing protocol-specific settings from JSON.
-     * Override this method to parse additional settings specific to the protocol.
+     * Hook for parsing protocol-specific settings from JSON. Override this method to parse additional settings specific
+     * to the protocol.
      *
      * @throws PathNotFoundException if a required setting is missing
      */
@@ -71,8 +68,7 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     }
 
     /**
-     * Validate the remote file exists and is accessible.
-     * This method is called after the connection is opened.
+     * Validate the remote file exists and is accessible. This method is called after the connection is opened.
      * Implementations should check if the file exists and store any file metadata needed.
      *
      * @throws FsCrawlerPluginException if the file doesn't exist or is not accessible
@@ -119,14 +115,18 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
         } catch (FsCrawlerPluginException e) {
             throw e;
         } catch (Exception e) {
-            throw new FsCrawlerPluginException("Failed to connect to " + getType().toUpperCase() + " server: " + e.getMessage(), e);
+            throw new FsCrawlerPluginException(
+                    "Failed to connect to " + getType().toUpperCase() + " server: " + e.getMessage(), e);
         } finally {
             if (!success) {
                 // Close connection on validation failure to prevent resource leak
                 try {
                     closeConnection();
                 } catch (Exception e) {
-                    logger.warn("Error closing {} connection after validation failure: {}", getType().toUpperCase(), e.getMessage());
+                    logger.warn(
+                            "Error closing {} connection after validation failure: {}",
+                            getType().toUpperCase(),
+                            e.getMessage());
                 }
             }
         }
@@ -181,8 +181,8 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
             // Relative path - need to resolve against root URL
             String rootPath = fsSettings.getFs() != null ? fsSettings.getFs().getUrl() : null;
             if (rootPath == null || rootPath.isEmpty()) {
-                throw new IOException("Cannot resolve relative path [" + path + "]: fs.url is not configured. " +
-                        "Please use an absolute path starting with '/' or configure fs.url in the job settings.");
+                throw new IOException("Cannot resolve relative path [" + path + "]: fs.url is not configured. "
+                        + "Please use an absolute path starting with '/' or configure fs.url in the job settings.");
             }
             return rootPath.endsWith("/") ? rootPath + path : rootPath + "/" + path;
         }

@@ -18,9 +18,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
-/**
- * Exception thrown when a plugin operation fails or is not supported.
- */
+/** Exception thrown when a plugin operation fails or is not supported. */
 public class FsCrawlerPluginException extends RuntimeException {
 
     public FsCrawlerPluginException(String message) {

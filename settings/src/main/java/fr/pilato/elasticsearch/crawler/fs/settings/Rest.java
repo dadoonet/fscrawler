@@ -1,13 +1,13 @@
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.Objects;
+import org.github.gestalt.config.annotations.Config;
 
 public class Rest {
 
     @Config(defaultVal = Defaults.REST_URL_DEFAULT)
     private String url;
+
     @Config(defaultVal = "false")
     private boolean enableCors;
 
@@ -32,8 +32,7 @@ public class Rest {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Rest rest = (Rest) o;
-        return enableCors == rest.enableCors &&
-                Objects.equals(url, rest.url);
+        return enableCors == rest.enableCors && Objects.equals(url, rest.url);
     }
 
     @Override
@@ -43,8 +42,6 @@ public class Rest {
 
     @Override
     public String toString() {
-        return "Rest{" + "url='" + url + '\'' +
-                ", enableCors=" + enableCors +
-                '}';
+        return "Rest{" + "url='" + url + '\'' + ", enableCors=" + enableCors + '}';
     }
 }

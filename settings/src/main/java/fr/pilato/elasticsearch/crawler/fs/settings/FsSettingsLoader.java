@@ -21,6 +21,13 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.Gestalt;
@@ -29,21 +36,10 @@ import org.github.gestalt.config.source.ClassPathConfigSourceBuilder;
 import org.github.gestalt.config.source.EnvironmentConfigSourceBuilder;
 import org.github.gestalt.config.source.FileConfigSourceBuilder;
 import org.github.gestalt.config.source.SystemPropertiesConfigSourceBuilder;
-
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Stream;
-
-/**
- * Provides utility methods to read and write settings files
- */
+/** Provides utility methods to read and write settings files */
 public class FsSettingsLoader extends MetaFileHandler {
 
     private static final Logger logger = LogManager.getLogger();
@@ -51,7 +47,8 @@ public class FsSettingsLoader extends MetaFileHandler {
     public static final String SETTINGS_JSON = "_settings.json";
     public static final String SETTINGS_YAML = "_settings.yaml";
     public static final String SETTINGS_DIR = "_settings";
-    public static final String DEFAULT_SETTINGS = "/fr/pilato/elasticsearch/crawler/fs/settings/fscrawler-default.properties";
+    public static final String DEFAULT_SETTINGS =
+            "/fr/pilato/elasticsearch/crawler/fs/settings/fscrawler-default.properties";
     public static final String EXAMPLE_SETTINGS = "/fr/pilato/elasticsearch/crawler/fs/settings/fscrawler-default.yaml";
 
     public FsSettingsLoader(Path root) {
@@ -60,6 +57,7 @@ public class FsSettingsLoader extends MetaFileHandler {
 
     /**
      * We read settings in ~/.fscrawler/{job_name}/_settings.[json|yml]
+     *
      * @param jobName is the job_name
      * @return Settings settings
      * @throws IOException in case of error while reading
@@ -80,13 +78,16 @@ public class FsSettingsLoader extends MetaFileHandler {
         if (Files.exists(configDir)) {
             return load(readDir(configDir).toArray(new Path[0]));
         }
-        logger.debug("Can not read settings from [{}] with either /_settings.yaml, /_settings.json, /_settings/*." +
-                        " Falling back to default settings.", root.resolve(jobName).toAbsolutePath());
+        logger.debug(
+                "Can not read settings from [{}] with either /_settings.yaml, /_settings.json, /_settings/*."
+                        + " Falling back to default settings.",
+                root.resolve(jobName).toAbsolutePath());
         return load();
     }
 
     /**
      * We write settings to ~/.fscrawler/{job_name}/_settings.yaml
+     *
      * @param name the job_name
      * @param settings Settings to write (settings.getName() contains the job name)
      * @throws IOException in case of error while reading
@@ -97,6 +98,7 @@ public class FsSettingsLoader extends MetaFileHandler {
 
     /**
      * Read all files in ~/.fscrawler/{job_name}/_settings directory
+     *
      * @param settingsDir is _settings directory
      * @return The list of setting files
      */
@@ -108,6 +110,7 @@ public class FsSettingsLoader extends MetaFileHandler {
 
     /**
      * Load settings from files. It could be both json or yaml files
+     *
      * @param configFiles list of files to read
      * @return The settings
      * @throws FsCrawlerIllegalConfigurationException when we can not read settings
@@ -122,7 +125,8 @@ public class FsSettingsLoader extends MetaFileHandler {
                     new Yaml().compose(new InputStreamReader(is));
                 } catch (YAMLException e) {
                     throw new FsCrawlerIllegalConfigurationException(
-                            "Syntax error in configuration file [" + configFile.getFileName() + "]: " + e.getMessage(), e);
+                            "Syntax error in configuration file [" + configFile.getFileName() + "]: " + e.getMessage(),
+                            e);
                 } catch (IOException e) {
                     // Let Gestalt handle file I/O errors
                 }
@@ -131,18 +135,22 @@ public class FsSettingsLoader extends MetaFileHandler {
 
         try {
             GestaltBuilder builder = new GestaltBuilder()
-                .addSource(ClassPathConfigSourceBuilder.builder().setResource(DEFAULT_SETTINGS).build());
+                    .addSource(ClassPathConfigSourceBuilder.builder()
+                            .setResource(DEFAULT_SETTINGS)
+                            .build());
 
             // This allows automatic configuration using System properties like -Dname=foobar or -Dfs.url=/tmp
             builder.addSource(SystemPropertiesConfigSourceBuilder.builder().build());
-            // This allows automatic configuration using Env variables like FSCRAWLER_NAME=foobar or FSCRAWLER_FS_URL=/tmp
+            // This allows automatic configuration using Env variables like FSCRAWLER_NAME=foobar or
+            // FSCRAWLER_FS_URL=/tmp
             builder.addSource(EnvironmentConfigSourceBuilder.builder()
                     .setPrefix("FSCRAWLER_")
                     .setRemovePrefix(true)
                     .build());
 
             for (Path configFile : configFiles) {
-                builder.addSource(FileConfigSourceBuilder.builder().setPath(configFile).build());
+                builder.addSource(
+                        FileConfigSourceBuilder.builder().setPath(configFile).build());
             }
 
             Gestalt gestalt = builder.build();
@@ -154,19 +162,22 @@ public class FsSettingsLoader extends MetaFileHandler {
 
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
             settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
-            settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class).orElse(null));
+            settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class)
+                    .orElse(null));
             settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(null));
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
 
-            logger.debug("Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",
+            logger.debug(
+                    "Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",
                     (Object) configFiles);
             logger.trace("Loaded settings [{}]", settings);
 
             return settings;
         } catch (Exception e) {
-            throw new FsCrawlerIllegalConfigurationException("Can not load settings. " +
-                    "Please make sure that your setting file(s) are properly formatted.", e);
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Can not load settings. " + "Please make sure that your setting file(s) are properly formatted.",
+                    e);
         }
     }
 }

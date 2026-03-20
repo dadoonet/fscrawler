@@ -19,29 +19,29 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Test crawler with zip files
- */
+/** Test crawler with zip files */
 public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for #230: <a href="https://github.com/dadoonet/fscrawler/issues/230">https://github.com/dadoonet/fscrawler/issues/230</a> : Add support for compressed files
-     * It's a long job, so we let it run up to 2 minutes
+     * Test case for #230: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/230">https://github.com/dadoonet/fscrawler/issues/230</a> :
+     * Add support for compressed files It's a long job, so we let it run up to 2 minutes
      */
     @Test
     public void zip() throws Exception {
         crawler = startCrawler(createTestSettings());
 
         // We expect to have one file
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse response =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 }

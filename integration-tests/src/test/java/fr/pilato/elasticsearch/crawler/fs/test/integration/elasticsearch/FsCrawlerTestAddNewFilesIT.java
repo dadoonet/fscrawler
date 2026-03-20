@@ -19,6 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -29,23 +34,15 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-
-/**
- * Test moving/removing/adding files
- */
+/** Test moving/removing/adding files */
 public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
@@ -57,18 +54,22 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
 
         // We add a file
         logger.info("  ---> Adding file new_roottxtfile.txt");
-        Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes(StandardCharsets.UTF_8));
+        Files.write(
+                currentTestResourceDir.resolve("new_roottxtfile.txt"),
+                "This is a second file".getBytes(StandardCharsets.UTF_8));
 
         // Forcing a rescan by modifying the next scan date
         logger.info("  ---> changing next check date to now manually");
         waitForFsJobAndSetDate(fsSettings.getName(), LocalDateTime.now());
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
     }
 
     @Test
@@ -79,22 +80,28 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
 
         // We add a file
         logger.info("  ---> Adding file new_roottxtfile.txt");
-        Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes(StandardCharsets.UTF_8));
+        Files.write(
+                currentTestResourceDir.resolve("new_roottxtfile.txt"),
+                "This is a second file".getBytes(StandardCharsets.UTF_8));
 
         // Forcing a rescan by modifying the next scan date
         logger.info("  ---> removing next check date to force a manual rescan");
         waitForFsJobAndSetDate(fsSettings.getName(), null);
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
     }
 
     /**
-     * Test case for issue #60: <a href="https://github.com/dadoonet/fscrawler/issues/60">https://github.com/dadoonet/fscrawler/issues/60</a> : new files are not added
+     * Test case for issue #60: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/60">https://github.com/dadoonet/fscrawler/issues/60</a> : new
+     * files are not added
      */
     @Test
     public void add_new_file() throws Exception {
@@ -103,19 +110,22 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         FsCrawlerUtil.waitFor(Duration.ofSeconds(2));
 
         FsSettings fsSettings = createTestSettings();
-        // We change the update rate to 5 seconds because the FsParser last scan date is set to 2 seconds less than the current time
+        // We change the update rate to 5 seconds because the FsParser last scan date is set to 2 seconds less than the
+        // current time
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(5));
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
         checkDocVersions(response, 1L);
 
         logger.info(" ---> Creating a new file new_roottxtfile.txt");
         Files.write(currentTestResourceDir.resolve("new_roottxtfile.txt"), "This is a second file".getBytes());
 
         // We expect to have two files
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
 
         // It should be only version <= 2 for both docs
         checkDocVersions(response, 2L);
@@ -124,7 +134,8 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         Files.write(currentTestResourceDir.resolve("new_new_roottxtfile.txt"), "This is a third file".getBytes());
 
         // We expect to have three files
-        response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, currentTestResourceDir);
+        response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, currentTestResourceDir);
 
         // It should be only version <= 2 for all docs
         checkDocVersions(response, 2L);
@@ -132,35 +143,34 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
 
     /**
      * Iterate other response hits and check that _version is at most a given version
+     *
      * @param response The search response object
      * @param maxVersion Maximum version number we can have
      */
     private void checkDocVersions(ESSearchResponse response, long maxVersion) {
         // It should be only version <= maxVersion for all docs
-       assertThat(response.getHits())
-               .isNotEmpty()
-               .allSatisfy(hit -> {
-           ESSearchHit getHit = client.get(hit.getIndex(), hit.getId());
-           assertThat(getHit.getVersion()).isLessThanOrEqualTo(maxVersion);
-       });
+        assertThat(response.getHits()).isNotEmpty().allSatisfy(hit -> {
+            ESSearchHit getHit = client.get(hit.getIndex(), hit.getId());
+            assertThat(getHit.getVersion()).isLessThanOrEqualTo(maxVersion);
+        });
     }
 
     private void waitForFsJobAndSetDate(String jobName, LocalDateTime dateTime) {
-        await()
-                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+        await().pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .atMost(10, SECONDS)
                 .until(() -> {
-            try {
-                FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(metadataDir);
-                FsCrawlerCheckpoint checkpoint = checkpointHandler.read(jobName);
-                checkpoint.setNextCheck(dateTime);
-                checkpointHandler.write(jobName, checkpoint);
-                return true;
-            } catch (Exception e) {
-                logger.warn("Checkpoint is not available yet: [{}] : {}", jobName, e.getMessage());
-                logger.debug("Error while reading checkpoint", e);
-                return false;
-            }
-        });
+                    try {
+                        FsCrawlerCheckpointFileHandler checkpointHandler =
+                                new FsCrawlerCheckpointFileHandler(metadataDir);
+                        FsCrawlerCheckpoint checkpoint = checkpointHandler.read(jobName);
+                        checkpoint.setNextCheck(dateTime);
+                        checkpointHandler.write(jobName, checkpoint);
+                        return true;
+                    } catch (Exception e) {
+                        logger.warn("Checkpoint is not available yet: [{}] : {}", jobName, e.getMessage());
+                        logger.debug("Error while reading checkpoint", e);
+                        return false;
+                    }
+                });
     }
 }

@@ -21,9 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.util.Date;
 
-/**
- * Represents File attributes
- */
+/** Represents File attributes */
 public class File {
 
     private String extension;

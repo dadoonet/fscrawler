@@ -19,11 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @SuppressWarnings("CanBeFinal")
 public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
@@ -59,7 +58,10 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
             if (item.failed) {
                 if (logger.isTraceEnabled()) {
                     sbf.append(item.getOperation());
-                    sbf.append(":").append(item.getOperation().toString()).append(":").append(item.getFailureMessage());
+                    sbf.append(":")
+                            .append(item.getOperation().toString())
+                            .append(":")
+                            .append(item.getFailureMessage());
                 }
                 failures++;
             }
@@ -103,15 +105,15 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
         @Override
         public String toString() {
-            return "BulkItemResponse{" + "failed=" + failed +
-                    ", operation='" + operation + '\'' +
-                    ", failureMessage='" + failureMessage + '\'' +
-                    '}';
+            return "BulkItemResponse{" + "failed=" + failed + ", operation='"
+                    + operation + '\'' + ", failureMessage='"
+                    + failureMessage + '\'' + '}';
         }
     }
 
     @Override
     public String toString() {
-        return "BulkResponse{" + "items=" + (items == null ? "null" : List.of(items).toString()) + '}';
+        return "BulkResponse{" + "items="
+                + (items == null ? "null" : List.of(items).toString()) + '}';
     }
 }

@@ -19,9 +19,5 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-/**
- * Main entry point to launch FsCrawler
- */
-public class FsCrawler extends FsCrawlerCli {
-
-}
+/** Main entry point to launch FsCrawler */
+public class FsCrawler extends FsCrawlerCli {}

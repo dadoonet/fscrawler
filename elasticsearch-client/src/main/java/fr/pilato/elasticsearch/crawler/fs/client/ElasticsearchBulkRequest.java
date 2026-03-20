@@ -21,5 +21,4 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkRequest;
 
-public class ElasticsearchBulkRequest extends FsCrawlerBulkRequest<ElasticsearchOperation> {
-}
+public class ElasticsearchBulkRequest extends FsCrawlerBulkRequest<ElasticsearchOperation> {}

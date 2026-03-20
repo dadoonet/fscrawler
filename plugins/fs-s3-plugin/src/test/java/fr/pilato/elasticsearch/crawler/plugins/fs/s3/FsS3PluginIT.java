@@ -18,6 +18,9 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
+
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
@@ -27,6 +30,8 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,19 +41,13 @@ import org.junit.Test;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
-
-
-@ThreadLeakFilters(filters = {
-        WindowsSpecificThreadFilter.class,
-        TestContainerThreadFilter.class,
-        JNACleanerThreadFilter.class,
-        MinioThreadFilter.class
-})
+@ThreadLeakFilters(
+        filters = {
+            WindowsSpecificThreadFilter.class,
+            TestContainerThreadFilter.class,
+            JNACleanerThreadFilter.class,
+            MinioThreadFilter.class
+        })
 public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static MinIOContainer container;
@@ -59,7 +58,9 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     @Before
     public void startMinioContainer() {
         // We can only run this test if Docker is available on this machine
-        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+        assumeTrue(
+                "We can only run this test if Docker is available on this machine",
+                DockerClientFactory.instance().isDockerAvailable());
 
         logger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
@@ -85,15 +86,14 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
                 .endpoint(s3Url)
                 .credentials(s3Username, s3Password)
                 .build()) {
-            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket("foo").build())) {
+            if (!minioClient.bucketExists(
+                    BucketExistsArgs.builder().bucket("foo").build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket("foo").build());
             }
-            minioClient.putObject(PutObjectArgs.builder()
-                    .contentType("text/plain")
-                    .bucket("foo")
-                    .object(objectName)
-                    .stream(IOUtils.toInputStream(object, StandardCharsets.UTF_8), object.length(), -1)
-                    .build());
+            minioClient.putObject(
+                    PutObjectArgs.builder().contentType("text/plain").bucket("foo").object(objectName).stream(
+                                    IOUtils.toInputStream(object, StandardCharsets.UTF_8), object.length(), -1)
+                            .build());
         } catch (Exception e) {
             logger.warn("Could not create bucket [{}]; [{}]: {}", objectName, object, e.getMessage());
         }
@@ -107,16 +107,17 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
-            provider.start(FsSettingsLoader.load(), "{\n" +
-                    "  \"type\": \"s3\",\n" +
-                    "  \"s3\": {\n" +
-                    "    \"url\": \"" + s3Url + "\",\n" +
-                    "    \"bucket\": \"foo\",\n" +
-                    "    \"object\": \"foo.txt\",\n" +
-                    "    \"access_key\": \"" + s3Username + "\",\n" +
-                    "    \"secret_key\": \"" + s3Password + "\"\n" +
-                    "  }\n" +
-                    "}");
+            provider.start(
+                    FsSettingsLoader.load(),
+                    "{\n" + "  \"type\": \"s3\",\n"
+                            + "  \"s3\": {\n"
+                            + "    \"url\": \""
+                            + s3Url + "\",\n" + "    \"bucket\": \"foo\",\n"
+                            + "    \"object\": \"foo.txt\",\n"
+                            + "    \"access_key\": \""
+                            + s3Username + "\",\n" + "    \"secret_key\": \""
+                            + s3Password + "\"\n" + "  }\n"
+                            + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);

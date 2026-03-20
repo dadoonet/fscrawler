@@ -19,13 +19,12 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
-
 import java.util.List;
 import java.util.Map;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<ElasticsearchOperation> {
 
@@ -42,7 +41,8 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
         errors = document.read("$.errors");
         List<String> ids = document.read("$.._id");
         ids.forEach(id -> {
-            Map<String, Object> jsonItemResponse = ((List<Map<String, Object>>) document.read("$..[?(@._id == '" + id + "')]")).get(0);
+            Map<String, Object> jsonItemResponse =
+                    ((List<Map<String, Object>>) document.read("$..[?(@._id == '" + id + "')]")).get(0);
             String index = (String) jsonItemResponse.get("_index");
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
             itemResponse.setOperation(new ElasticsearchIndexOperation(index, id, null, null));

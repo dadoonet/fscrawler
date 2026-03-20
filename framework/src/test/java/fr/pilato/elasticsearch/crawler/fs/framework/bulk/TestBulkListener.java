@@ -3,7 +3,8 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class TestBulkListener extends FsCrawlerSimpleBulkProcessorListener<TestOperation, TestBulkRequest, TestBulkResponse> {
+public class TestBulkListener
+        extends FsCrawlerSimpleBulkProcessorListener<TestOperation, TestBulkRequest, TestBulkResponse> {
     private static final Logger logger = LogManager.getLogger();
     TestBulkRequest latestRequest;
     int nbSuccessfulExecutions = 0;

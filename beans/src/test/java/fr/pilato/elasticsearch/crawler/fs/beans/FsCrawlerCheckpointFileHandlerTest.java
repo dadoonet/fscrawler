@@ -19,17 +19,16 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.junit.Before;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
 
@@ -57,15 +56,15 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     @Test
     public void testWriteAndRead() throws IOException {
         String jobName = getCurrentTestName();
-        
+
         FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint("/test/path");
         checkpoint.setFilesProcessed(42);
         checkpoint.setState(CrawlerState.PAUSED);
-        
+
         handler.write(jobName, checkpoint);
-        
+
         assertThat(handler.exists(jobName)).isTrue();
-        
+
         FsCrawlerCheckpoint read = handler.read(jobName);
         assertThat(read).isNotNull();
         assertThat(read.getScanId()).isEqualTo(checkpoint.getScanId());
@@ -76,14 +75,14 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     @Test
     public void testClean() throws IOException {
         String jobName = getCurrentTestName();
-        
+
         FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint("/test/path");
         handler.write(jobName, checkpoint);
-        
+
         assertThat(handler.exists(jobName)).isTrue();
-        
+
         handler.clean(jobName);
-        
+
         assertThat(handler.exists(jobName)).isFalse();
         assertThat(handler.read(jobName)).isNull();
     }
@@ -97,15 +96,15 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     @Test
     public void testOverwrite() throws IOException {
         String jobName = getCurrentTestName();
-        
+
         FsCrawlerCheckpoint checkpoint1 = FsCrawlerCheckpoint.newCheckpoint("/path1");
         checkpoint1.setFilesProcessed(10);
         handler.write(jobName, checkpoint1);
-        
+
         FsCrawlerCheckpoint checkpoint2 = FsCrawlerCheckpoint.newCheckpoint("/path2");
         checkpoint2.setFilesProcessed(20);
         handler.write(jobName, checkpoint2);
-        
+
         FsCrawlerCheckpoint read = handler.read(jobName);
         assertThat(read.getFilesProcessed()).isEqualTo(20);
     }
@@ -113,7 +112,7 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     @Test
     public void testCompleteCheckpointRoundTrip() throws IOException {
         String jobName = getCurrentTestName();
-        
+
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId("test-scan-id");
         checkpoint.setScanStartTime(LocalDateTime.now());
@@ -128,11 +127,11 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
         checkpoint.setRetryCount(3);
         checkpoint.setLastError("Some error");
         checkpoint.setScanDate(LocalDateTime.now().minusDays(1));
-        
+
         handler.write(jobName, checkpoint);
-        
+
         FsCrawlerCheckpoint read = handler.read(jobName);
-        
+
         assertThat(read.getScanId()).isEqualTo("test-scan-id");
         assertThat(read.getCurrentPath()).isEqualTo("/current");
         assertThat(read.getPendingPaths()).hasSize(2);

@@ -43,5 +43,4 @@ public class SignTool {
 
         return key.toString();
     }
-
 }

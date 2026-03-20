@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,100 +29,81 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Represents a checkpoint for the crawler, allowing pause/resume functionality.
- * This is persisted to disk to enable recovery after crashes or manual stops.
+ * Represents a checkpoint for the crawler, allowing pause/resume functionality. This is persisted to disk to enable
+ * recovery after crashes or manual stops.
  */
 public class FsCrawlerCheckpoint {
 
-    /**
-     * Unique identifier for this scan session
-     */
+    /** Unique identifier for this scan session */
     private String scanId;
 
-    /**
-     * When this scan started
-     */
+    /** When this scan started */
     private LocalDateTime scanStartTime;
 
-    /**
-     * The directory currently being processed
-     */
+    /** The directory currently being processed */
     private String currentPath;
 
-    /**
-     * Directories waiting to be processed (FIFO queue)
-     */
+    /** Directories waiting to be processed (FIFO queue) */
     private Deque<String> pendingPaths;
 
     /**
-     * Set of paths in {@link #pendingPaths} for O(1) membership checks during crawl.
-     * Not persisted; rebuilt from pendingPaths in {@link #ensureConcurrentCollections()}.
+     * Set of paths in {@link #pendingPaths} for O(1) membership checks during crawl. Not persisted; rebuilt from
+     * pendingPaths in {@link #ensureConcurrentCollections()}.
      */
     @JsonIgnore
     private Set<String> pendingPathsSet;
 
-    /**
-     * Directories that have been fully processed
-     */
+    /** Directories that have been fully processed */
     private Set<String> completedPaths;
 
     /**
-     * Number of files indexed during this scan.
-     * Atomic to allow concurrent increments by the crawler thread and reads by REST/checkpoint.
+     * Number of files indexed during this scan. Atomic to allow concurrent increments by the crawler thread and reads
+     * by REST/checkpoint.
      */
     private final AtomicLong filesProcessed = new AtomicLong(0);
 
     /**
-     * Number of files deleted during this scan.
-     * Atomic to allow concurrent increments by the crawler thread and reads by REST/checkpoint.
+     * Number of files deleted during this scan. Atomic to allow concurrent increments by the crawler thread and reads
+     * by REST/checkpoint.
      */
     private final AtomicLong filesDeleted = new AtomicLong(0);
 
     /**
-     * Current state of the crawler.
-     * Atomic to allow writes by the crawler thread and reads by REST/other threads (visibility).
+     * Current state of the crawler. Atomic to allow writes by the crawler thread and reads by REST/other threads
+     * (visibility).
      */
     private final AtomicReference<CrawlerState> state = new AtomicReference<>(CrawlerState.STOPPED);
 
     /**
-     * Number of retry attempts after network errors.
-     * Atomic to allow concurrent increments by the crawler thread and reads by REST/checkpoint.
+     * Number of retry attempts after network errors. Atomic to allow concurrent increments by the crawler thread and
+     * reads by REST/checkpoint.
      */
     private final AtomicInteger retryCount = new AtomicInteger(0);
 
-    /**
-     * Last error message encountered
-     */
+    /** Last error message encountered */
     private String lastError;
 
-    /**
-     * The scan date used for comparison (to detect modified files)
-     */
+    /** The scan date used for comparison (to detect modified files) */
     private LocalDateTime scanDate;
 
-    /**
-     * When this scan was completed (replaces FsJob.lastrun)
-     */
+    /** When this scan was completed (replaces FsJob.lastrun) */
     private LocalDateTime scanEndTime;
 
-    /**
-     * When the next scan should run (replaces FsJob.nextCheck)
-     */
+    /** When the next scan should run (replaces FsJob.nextCheck) */
     private LocalDateTime nextCheck;
 
     /**
-     * When the crawler was interrupted (pause/close) while processing {@link #currentPath},
-     * this is the number of files already indexed in that directory. On resume we re-process
-     * the directory from scratch (idempotent re-index) but skip incrementing {@link #filesProcessed}
-     * for the first this-many files to avoid double-counting.
+     * When the crawler was interrupted (pause/close) while processing {@link #currentPath}, this is the number of files
+     * already indexed in that directory. On resume we re-process the directory from scratch (idempotent re-index) but
+     * skip incrementing {@link #filesProcessed} for the first this-many files to avoid double-counting.
      */
     private int currentPathFilesIndexedCount;
 
     /**
      * True if this instance was loaded or created for the current run and installed via
-     * FsParser.setCurrentCheckpoint(). Not persisted; ensures the error handler only overwrites
-     * the checkpoint file when we actually loaded/created one this run (avoids overwriting a
-     * valid checkpoint with the default empty instance).
+     * FsParser.setCurrentCheckpoint(). Not persisted; ensures the error handler only overwrites the checkpoint file
+     * when we actually loaded/created one this run (avoids overwriting a valid checkpoint with the default empty
+     * instance).
      */
     @JsonIgnore
     private boolean loadedThisRun;
@@ -139,10 +119,9 @@ public class FsCrawlerCheckpoint {
     }
 
     /**
-     * Ensure pending and completed paths use thread-safe collections so that
-     * saveCheckpoint() can serialize while the crawler thread modifies them
-     * (avoids ConcurrentModificationException). Call after deserializing from
-     * JSON, since Jackson may create LinkedList/ArrayDeque and HashSet.
+     * Ensure pending and completed paths use thread-safe collections so that saveCheckpoint() can serialize while the
+     * crawler thread modifies them (avoids ConcurrentModificationException). Call after deserializing from JSON, since
+     * Jackson may create LinkedList/ArrayDeque and HashSet.
      */
     public void ensureConcurrentCollections() {
         if (pendingPaths == null) {
@@ -168,6 +147,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Create a new checkpoint for a fresh scan
+     *
      * @param rootPath the root path to start scanning from
      * @return a new checkpoint initialized for scanning
      */
@@ -337,6 +317,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Check if there are more directories to process
+     *
      * @return true if there are pending directories
      */
     public boolean hasPendingWork() {
@@ -345,6 +326,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Get the next directory to process without removing it
+     *
      * @return the next directory path or null if empty
      */
     public String peekNextPath() {
@@ -353,6 +335,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Get and remove the next directory to process
+     *
      * @return the next directory path or null if empty
      */
     public String pollNextPath() {
@@ -365,6 +348,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Add a directory to the front of the queue (for retry)
+     *
      * @param path the directory path to add
      */
     public void addPathFirst(String path) {
@@ -376,6 +360,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Add a directory to the end of the queue
+     *
      * @param path the directory path to add
      */
     public void addPath(String path) {
@@ -386,8 +371,9 @@ public class FsCrawlerCheckpoint {
     }
 
     /**
-     * Check if a path is in the pending queue (O(1)).
-     * Use this instead of {@code getPendingPaths().contains(path)} to avoid O(n) scan.
+     * Check if a path is in the pending queue (O(1)). Use this instead of {@code getPendingPaths().contains(path)} to
+     * avoid O(n) scan.
+     *
      * @param path the directory path to check
      * @return true if the path is pending
      */
@@ -403,9 +389,7 @@ public class FsCrawlerCheckpoint {
         return pendingPathsSet.contains(path);
     }
 
-    /**
-     * Clear the pending queue and its lookup set (e.g. when marking scan completed).
-     */
+    /** Clear the pending queue and its lookup set (e.g. when marking scan completed). */
     public void clearPendingPaths() {
         pendingPaths.clear();
         if (pendingPathsSet != null) {
@@ -415,6 +399,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Mark a directory as completed
+     *
      * @param path the directory path that was completed
      */
     public void markCompleted(String path) {
@@ -423,6 +408,7 @@ public class FsCrawlerCheckpoint {
 
     /**
      * Check if a directory has already been processed
+     *
      * @param path the directory path to check
      * @return true if the directory was already processed
      */
@@ -431,9 +417,8 @@ public class FsCrawlerCheckpoint {
     }
 
     /**
-     * Compare pending paths by content and order so that equality holds after
-     * round-trip serialization (Jackson may deserialize Deque to ArrayDeque
-     * while we initialize as LinkedList, and LinkedList.equals(ArrayDeque) is false).
+     * Compare pending paths by content and order so that equality holds after round-trip serialization (Jackson may
+     * deserialize Deque to ArrayDeque while we initialize as LinkedList, and LinkedList.equals(ArrayDeque) is false).
      */
     private static boolean pendingPathsEqual(Deque<String> a, Deque<String> b) {
         if (a == b) return true;
@@ -452,45 +437,54 @@ public class FsCrawlerCheckpoint {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FsCrawlerCheckpoint that = (FsCrawlerCheckpoint) o;
-        return filesProcessed.get() == that.filesProcessed.get() &&
-                filesDeleted.get() == that.filesDeleted.get() &&
-                retryCount.get() == that.retryCount.get() &&
-                Objects.equals(scanId, that.scanId) &&
-                Objects.equals(scanStartTime, that.scanStartTime) &&
-                Objects.equals(currentPath, that.currentPath) &&
-                pendingPathsEqual(pendingPaths, that.pendingPaths) &&
-                Objects.equals(completedPaths, that.completedPaths) &&
-                Objects.equals(state.get(), that.state.get()) &&
-                Objects.equals(lastError, that.lastError) &&
-                Objects.equals(scanDate, that.scanDate) &&
-                Objects.equals(scanEndTime, that.scanEndTime) &&
-                Objects.equals(nextCheck, that.nextCheck) &&
-                currentPathFilesIndexedCount == that.currentPathFilesIndexedCount;
+        return filesProcessed.get() == that.filesProcessed.get()
+                && filesDeleted.get() == that.filesDeleted.get()
+                && retryCount.get() == that.retryCount.get()
+                && Objects.equals(scanId, that.scanId)
+                && Objects.equals(scanStartTime, that.scanStartTime)
+                && Objects.equals(currentPath, that.currentPath)
+                && pendingPathsEqual(pendingPaths, that.pendingPaths)
+                && Objects.equals(completedPaths, that.completedPaths)
+                && Objects.equals(state.get(), that.state.get())
+                && Objects.equals(lastError, that.lastError)
+                && Objects.equals(scanDate, that.scanDate)
+                && Objects.equals(scanEndTime, that.scanEndTime)
+                && Objects.equals(nextCheck, that.nextCheck)
+                && currentPathFilesIndexedCount == that.currentPathFilesIndexedCount;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(scanId, scanStartTime, currentPath,
+        return Objects.hash(
+                scanId,
+                scanStartTime,
+                currentPath,
                 pendingPaths == null ? null : new ArrayList<>(pendingPaths),
                 completedPaths,
-                filesProcessed.get(), filesDeleted.get(), state.get(), retryCount.get(), lastError, scanDate,
-                scanEndTime, nextCheck, currentPathFilesIndexedCount);
+                filesProcessed.get(),
+                filesDeleted.get(),
+                state.get(),
+                retryCount.get(),
+                lastError,
+                scanDate,
+                scanEndTime,
+                nextCheck,
+                currentPathFilesIndexedCount);
     }
 
     @Override
     public String toString() {
-        return "FsCrawlerCheckpoint{" +
-                "scanId='" + scanId + '\'' +
-                ", state=" + state.get() +
-                ", currentPath='" + currentPath + '\'' +
-                ", pendingPaths=" + (pendingPaths != null ? pendingPaths.size() : 0) +
-                ", completedPaths=" + (completedPaths != null ? completedPaths.size() : 0) +
-                ", filesProcessed=" + filesProcessed.get() +
-                ", filesDeleted=" + filesDeleted.get() +
-                ", retryCount=" + retryCount.get() +
-                ", scanEndTime=" + scanEndTime +
-                ", nextCheck=" + nextCheck +
-                ", currentPathFilesIndexedCount=" + currentPathFilesIndexedCount +
-                '}';
+        return "FsCrawlerCheckpoint{" + "scanId='"
+                + scanId + '\'' + ", state="
+                + state.get() + ", currentPath='"
+                + currentPath + '\'' + ", pendingPaths="
+                + (pendingPaths != null ? pendingPaths.size() : 0) + ", completedPaths="
+                + (completedPaths != null ? completedPaths.size() : 0) + ", filesProcessed="
+                + filesProcessed.get() + ", filesDeleted="
+                + filesDeleted.get() + ", retryCount="
+                + retryCount.get() + ", scanEndTime="
+                + scanEndTime + ", nextCheck="
+                + nextCheck + ", currentPathFilesIndexedCount="
+                + currentPathFilesIndexedCount + '}';
     }
 }

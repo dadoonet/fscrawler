@@ -19,13 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs;
 
+import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
-
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     @SuppressWarnings("resource")
@@ -33,11 +33,14 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     public void checksum_non_existing_algorithm() {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("FSCRAWLER");
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
     }
 
     /**
-     * Test case for issue #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> : Add xml_support setting
+     * Test case for issue #185: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a> :
+     * Add xml_support setting
      */
     @SuppressWarnings("resource")
     @Test
@@ -45,6 +48,7 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setXmlSupport(true);
         fsSettings.getFs().setJsonSupport(true);
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, LOOP_INFINITE, false));
     }
 }

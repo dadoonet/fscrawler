@@ -19,27 +19,24 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeFalse;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.junit.Test;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.Test;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.assumeFalse;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
-/**
- * Test with symlinks
- */
+/** Test with symlinks */
 public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void follow_symlinks_disabled() throws Exception {
         // We create a symlink (but not on Windows)
-       assumeFalse("We cannot create symlink on Windows OS", OsValidator.WINDOWS);
+        assumeFalse("We cannot create symlink on Windows OS", OsValidator.WINDOWS);
         Path source = currentTestResourceDir.resolve("roottxtfile.txt");
         Path link = currentTestResourceDir.resolve("link_roottxtfile.txt");
         Files.createSymbolicLink(link, source);
@@ -49,7 +46,8 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have two docs first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
     }
 
     @Test
@@ -65,6 +63,7 @@ public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have two docs first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
     }
 }

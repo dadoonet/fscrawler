@@ -24,68 +24,75 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
-
 import java.io.IOException;
 
 public interface FsCrawlerDocumentService extends FsCrawlerService {
     /**
-     * Create a schema (templates + index) for the dataset. This is called when the service starts.
-     * This creates both data structures when needed for documents and folders
+     * Create a schema (templates + index) for the dataset. This is called when the service starts. This creates both
+     * data structures when needed for documents and folders
+     *
      * @throws Exception in case of error
      */
     void createSchema() throws Exception;
 
     /**
      * Send a document to the target service
-     * @param index     Index name
-     * @param id        Document id
-     * @param doc       Document to index
-     * @param pipeline  Pipeline (can be null)
+     *
+     * @param index Index name
+     * @param id Document id
+     * @param doc Document to index
+     * @param pipeline Pipeline (can be null)
      */
     void index(String index, String id, Doc doc, String pipeline);
 
     /**
      * Send a Raw Json to the target service
-     * @param index     Index name
-     * @param id        Document ID
-     * @param json      Document to index
-     * @param pipeline  Pipeline (can be null)
+     *
+     * @param index Index name
+     * @param id Document ID
+     * @param json Document to index
+     * @param pipeline Pipeline (can be null)
      */
     void indexRawJson(String index, String id, String json, String pipeline);
 
     /**
      * Remove a document from the target service (could be asynchronous)
-     * @param index     Index name
-     * @param id        Document ID
+     *
+     * @param index Index name
+     * @param id Document ID
      */
     void delete(String index, String id);
 
     /**
      * Remove a document from the target service
-     * @param index     Index name
-     * @param id        Document ID
+     *
+     * @param index Index name
+     * @param id Document ID
      */
     void deleteSingle(String index, String id) throws ElasticsearchClientException;
 
     /**
      * Search for information
-     * @param request   The request
+     *
+     * @param request The request
      * @return a response from the document service
      */
     ESSearchResponse search(ESSearchRequest request) throws IOException, ElasticsearchClientException;
 
     /**
      * Remove a document from the target service
-     * @param index     Index name
-     * @param id        Document ID
+     *
+     * @param index Index name
+     * @param id Document ID
      * @return true if the document exists
      */
     boolean exists(String index, String id) throws IOException, ElasticsearchClientException;
 
     /**
      * Get a document from the target service
-     * @param index     Index name
-     * @param id        Document ID
+     *
+     * @param index Index name
+     * @param id Document ID
      * @return the document or null
      */
     ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException;

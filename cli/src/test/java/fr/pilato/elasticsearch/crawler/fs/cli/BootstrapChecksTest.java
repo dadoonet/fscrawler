@@ -23,9 +23,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.Test;
 
-/**
- * We want to test the bootstrap checks
- */
+/** We want to test the bootstrap checks */
 public class BootstrapChecksTest extends AbstractFSCrawlerTestCase {
 
     @Test
@@ -34,6 +32,7 @@ public class BootstrapChecksTest extends AbstractFSCrawlerTestCase {
         BootstrapChecks.check();
 
         // Some platforms report 0 sometimes. Let's check that it does not fail.
-        BootstrapChecks.computePercentage(ByteSizeValue.parseBytesSizeValue("0b"), ByteSizeValue.parseBytesSizeValue("0b"));
+        BootstrapChecks.computePercentage(
+                ByteSizeValue.parseBytesSizeValue("0b"), ByteSizeValue.parseBytesSizeValue("0b"));
     }
 }

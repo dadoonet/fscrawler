@@ -21,9 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 class RestResponse {
 
-    public RestResponse() {
-
-    }
+    public RestResponse() {}
 
     public RestResponse(boolean ok, String message) {
         this.ok = ok;

@@ -19,15 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 public abstract class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();

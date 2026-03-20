@@ -19,20 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * Provides utility methods to read and write checkpoint files (_checkpoint.json).
- * The checkpoint file allows the crawler to resume from where it left off after
- * an interruption (crash, manual stop, network error, etc.).
+ * Provides utility methods to read and write checkpoint files (_checkpoint.json). The checkpoint file allows the
+ * crawler to resume from where it left off after an interruption (crash, manual stop, network error, etc.).
  */
 public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
@@ -45,6 +43,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
     /**
      * Read checkpoint from ~/.fscrawler/{job_name}/_checkpoint.json
+     *
      * @param jobname the job name
      * @return the checkpoint or null if no checkpoint exists
      * @throws IOException in case of error while reading (other than file not found)
@@ -60,6 +59,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
     /**
      * Check if a checkpoint exists for the given job
+     *
      * @param jobname the job name
      * @return true if a checkpoint file exists
      */
@@ -73,6 +73,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
     /**
      * Write checkpoint to ~/.fscrawler/{job_name}/_checkpoint.json
+     *
      * @param jobname the job name
      * @param checkpoint the checkpoint to write
      * @throws IOException in case of error while writing
@@ -83,6 +84,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
 
     /**
      * Remove checkpoint file from ~/.fscrawler/{job_name}/_checkpoint.json
+     *
      * @param jobname the job name
      * @throws IOException in case of error while removing
      */
@@ -90,9 +92,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
         removeFile(jobname, FILENAME);
     }
 
-    /**
-     * Migrate from legacy _status.json file if it exists.
-     */
+    /** Migrate from legacy _status.json file if it exists. */
     public void migrateLegacyStatus(String jobname) {
         try {
             FsJobFileHandler legacyJobFileHandler = new FsJobFileHandler(this.root);
@@ -126,5 +126,4 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
             logger.warn("Error migrating legacy {}: {}", FsJobFileHandler.FILENAME, e.getMessage());
         }
     }
-
 }

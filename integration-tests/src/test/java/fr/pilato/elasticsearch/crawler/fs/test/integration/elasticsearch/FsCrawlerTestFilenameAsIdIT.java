@@ -19,29 +19,28 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.awaitility.Awaitility.await;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.nio.file.Files;
+import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import java.nio.file.Files;
-import java.time.Duration;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.awaitility.Awaitility.await;
-
-/**
- * Test filename_as_id crawler setting
- */
+/** Test filename_as_id crawler setting */
 public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**
-     * Test case for issue #7: <a href="https://github.com/dadoonet/fscrawler/issues/7">https://github.com/dadoonet/fscrawler/issues/7</a> : Use filename as ID
+     * Test case for issue #7: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/7">https://github.com/dadoonet/fscrawler/issues/7</a> : Use
+     * filename as ID
      */
     @Test
     public void filename_as_id() throws Exception {
@@ -62,7 +61,8 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #336: <a href="https://github.com/dadoonet/fscrawler/issues/336">https://github.com/dadoonet/fscrawler/issues/336</a>
+     * Test case for #336: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/336">https://github.com/dadoonet/fscrawler/issues/336</a>
      */
     @Test
     public void remove_deleted_with_filename_as_id() throws Exception {
@@ -72,7 +72,8 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have two docs first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, currentTestResourceDir);
 
         await().atMost(Duration.ofSeconds(10))
                 .alias("Document should exists with [id1.txt] id...")
@@ -100,6 +101,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
         Files.delete(currentTestResourceDir.resolve("id2.txt"));
 
         // We expect to have two files
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
     }
 }

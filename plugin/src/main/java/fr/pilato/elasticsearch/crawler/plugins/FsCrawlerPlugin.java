@@ -22,9 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.Plugin;
 
-/**
- * Defines a FSCrawler plugin as an extension point
- */
+/** Defines a FSCrawler plugin as an extension point */
 public abstract class FsCrawlerPlugin extends Plugin {
 
     private final Logger logger = LogManager.getLogger();

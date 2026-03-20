@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static org.awaitility.Awaitility.await;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
@@ -28,6 +31,14 @@ import fr.pilato.elasticsearch.crawler.fs.framework.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
+import java.io.Console;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.List;
+import java.util.Scanner;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -40,21 +51,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 
-import java.io.Console;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.List;
-import java.util.Scanner;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static org.awaitility.Awaitility.await;
-
-/**
- * Main entry point to launch FsCrawler
- */
+/** Main entry point to launch FsCrawler */
 public class FsCrawlerCli {
 
     private static final Duration CLOSE_POLLING_WAIT_TIME = Duration.ofMillis(100);
@@ -70,27 +67,35 @@ public class FsCrawlerCli {
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         String configDir = null;
 
-        @Parameter(names = "--api_key", description = "Elasticsearch api key. (Deprecated - use " +
-                "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
+        @Parameter(
+                names = "--api_key",
+                description = "Elasticsearch api key. (Deprecated - use "
+                        + "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
         @Deprecated
         String apiKey = null;
 
-        @Parameter(names = "--username", description = "Elasticsearch username. (Deprecated - use " +
-                "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
+        @Parameter(
+                names = "--username",
+                description = "Elasticsearch username. (Deprecated - use "
+                        + "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
         @Deprecated
         String username = null;
 
         @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
         Integer loop = -1;
 
-        @Parameter(names = "--restart", description = "Restart fscrawler job like if it never ran before. " +
-                "This does not clean elasticsearch indices.")
+        @Parameter(
+                names = "--restart",
+                description = "Restart fscrawler job like if it never ran before. "
+                        + "This does not clean elasticsearch indices.")
         boolean restart = false;
 
         @Parameter(names = "--rest", description = "Start REST Layer")
         boolean rest = false;
 
-        @Parameter(names = "--upgrade", description = "Upgrade elasticsearch indices from one old version to the last version.")
+        @Parameter(
+                names = "--upgrade",
+                description = "Upgrade elasticsearch indices from one old version to the last version.")
         boolean upgrade = false;
 
         @Parameter(names = "--setup", description = "Setup FSCrawler and associated services for a given job name.")
@@ -100,11 +105,15 @@ public class FsCrawlerCli {
         boolean list = false;
 
         @Deprecated
-        @Parameter(names = "--debug", description = "Debug mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead)")
+        @Parameter(
+                names = "--debug",
+                description = "Debug mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead)")
         boolean debug = false;
 
         @Deprecated
-        @Parameter(names = "--trace", description = "Trace mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" instead)")
+        @Parameter(
+                names = "--trace",
+                description = "Trace mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" instead)")
         boolean trace = false;
 
         @Parameter(names = "--silent", description = "Silent mode")
@@ -113,7 +122,6 @@ public class FsCrawlerCli {
         @Parameter(names = "--help", description = "display current help", help = true)
         boolean help;
     }
-
 
     public static void main(String[] args) throws Exception {
         FsCrawlerCommand command = commandParser(args);
@@ -148,7 +156,8 @@ public class FsCrawlerCli {
         if (commands.silent) {
             if (commands.jobName == null) {
                 banner();
-                logger.warn("--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
+                logger.warn(
+                        "--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
                 jCommander.usage();
                 throw new FsCrawlerIllegalConfigurationException("No job specified while in silent mode.");
             }
@@ -173,7 +182,10 @@ public class FsCrawlerCli {
             if (command.silent) {
                 // We don't write anything on the console anymore
                 if (console != null) {
-                    console.addFilter(LevelMatchFilter.newBuilder().setLevel(Level.ALL).setOnMatch(Filter.Result.DENY).build());
+                    console.addFilter(LevelMatchFilter.newBuilder()
+                            .setLevel(Level.ALL)
+                            .setOnMatch(Filter.Result.DENY)
+                            .build());
                 }
             } else {
                 if (console != null) {
@@ -190,9 +202,7 @@ public class FsCrawlerCli {
         }
     }
 
-    /**
-     * Reinit the logger context to remove all filters
-     */
+    /** Reinit the logger context to remove all filters */
     static void reinitLoggerContext() {
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         Configuration config = ctx.getConfiguration();
@@ -210,6 +220,7 @@ public class FsCrawlerCli {
 
     /**
      * Create a job if needed
+     *
      * @param jobName the job name
      * @param configDir the config dir
      * @throws IOException In case of IO problem
@@ -223,7 +234,8 @@ public class FsCrawlerCli {
             logger.debug("Job [{}] already exists, skipping creation", jobName);
         } else {
             // Write the example config files from the classpath FsSettingsLoader.EXAMPLE_SETTINGS
-            logger.debug("Creating [{}] from the classloader [{}] file.", configFile, FsSettingsLoader.EXAMPLE_SETTINGS);
+            logger.debug(
+                    "Creating [{}] from the classloader [{}] file.", configFile, FsSettingsLoader.EXAMPLE_SETTINGS);
             copyResourceFile(FsSettingsLoader.EXAMPLE_SETTINGS, configFile);
         }
     }
@@ -291,27 +303,33 @@ public class FsCrawlerCli {
         }
 
         if (command.username != null) {
-            logger.fatal("We don't support reading elasticsearch username from the command line anymore. " +
-                            "Please use either FS_JAVA_OPTS=\"-Delasticsearch.username={}\" or set the env variable as " +
-                            "follows: FSCRAWLER_ELASTICSEARCH_USERNAME={} ",
-                    command.username, command.username);
+            logger.fatal(
+                    "We don't support reading elasticsearch username from the command line anymore. "
+                            + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.username={}\" or set the env variable as "
+                            + "follows: FSCRAWLER_ELASTICSEARCH_USERNAME={} ",
+                    command.username,
+                    command.username);
             return;
         }
 
         if (command.apiKey != null) {
-            logger.fatal("We don't support reading elasticsearch API Key from the command line anymore. " +
-                            "Please use either FS_JAVA_OPTS=\"-Delasticsearch.api-key={}\" or set the env variable as " +
-                            "follows: FSCRAWLER_ELASTICSEARCH_API-KEY={} ",
-                    command.apiKey, command.apiKey);
+            logger.fatal(
+                    "We don't support reading elasticsearch API Key from the command line anymore. "
+                            + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.api-key={}\" or set the env variable as "
+                            + "follows: FSCRAWLER_ELASTICSEARCH_API-KEY={} ",
+                    command.apiKey,
+                    command.apiKey);
             return;
         }
 
-        if (fsSettings.getElasticsearch().getUsername() != null && fsSettings.getElasticsearch().getPassword() == null && scanner != null) {
-            logger.fatal("We don't support reading elasticsearch password from the command line anymore. " +
-                    "Please use either FS_JAVA_OPTS=\"-Delasticsearch.password=YOUR_PASS\" or set the env variable as " +
-                    "follows: FSCRAWLER_ELASTICSEARCH_PASSWORD=YOUR_PASS.");
-            logger.warn("Using username and password is deprecated. Please use API Keys instead. See " +
-                            "https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#api-key");
+        if (fsSettings.getElasticsearch().getUsername() != null
+                && fsSettings.getElasticsearch().getPassword() == null
+                && scanner != null) {
+            logger.fatal("We don't support reading elasticsearch password from the command line anymore. "
+                    + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.password=YOUR_PASS\" or set the env variable as "
+                    + "follows: FSCRAWLER_ELASTICSEARCH_PASSWORD=YOUR_PASS.");
+            logger.warn("Using username and password is deprecated. Please use API Keys instead. See "
+                    + "https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#api-key");
             return;
         }
 
@@ -339,9 +357,10 @@ public class FsCrawlerCli {
 
                 // Start the REST Server if needed
                 if (command.rest) {
-                    restServer = new RestServer(fsSettings, 
-                            fsCrawler.getManagementService(), 
-                            fsCrawler.getDocumentService(), 
+                    restServer = new RestServer(
+                            fsSettings,
+                            fsCrawler.getManagementService(),
+                            fsCrawler.getDocumentService(),
                             pluginsManager,
                             fsCrawler.getFsParser());
                     restServer.start();
@@ -351,8 +370,7 @@ public class FsCrawlerCli {
                 Runtime.getRuntime().addShutdownHook(new FSCrawlerShutdownHook(fsCrawler, pluginsManager, restServer));
 
                 // We just have to wait until the process is stopped
-                await()
-                        .forever()
+                await().forever()
                         .pollInterval(CLOSE_POLLING_WAIT_TIME)
                         .until(() -> fsCrawler.getFsParser().isClosed());
             }
@@ -367,7 +385,7 @@ public class FsCrawlerCli {
         List<String> files = FsCrawlerJobsUtil.listExistingJobs(configDir);
         if (!files.isEmpty()) {
             for (int i = 0; i < files.size(); i++) {
-                FSCrawlerLogger.console("[{}] - {}", i+1, files.get(i));
+                FSCrawlerLogger.console("[{}] - {}", i + 1, files.get(i));
             }
         } else {
             FSCrawlerLogger.console("No job exists in [{}].", configDir);
@@ -379,8 +397,8 @@ public class FsCrawlerCli {
         logger.debug("Entering setup mode for [{}]...", jobName);
         createJob(jobName, configDir);
 
-        FSCrawlerLogger.console("You can edit the settings in [{}]. Then, you can run again fscrawler " +
-                        "without the --setup option.",
+        FSCrawlerLogger.console(
+                "You can edit the settings in [{}]. Then, you can run again fscrawler " + "without the --setup option.",
                 configDir.resolve(jobName).resolve(FsSettingsLoader.SETTINGS_YAML));
     }
 
@@ -397,33 +415,33 @@ public class FsCrawlerCli {
     private static final int BANNER_LENGTH = 100;
 
     /**
-     * This is coming from: <a href="https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler">https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler</a>
+     * This is coming from: <a
+     * href="https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler">https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler</a>
      */
     private static final String ASCII_ART =
-            "    ,---,.  .--.--.     ,----..                                     ,--,                      \n" +
-            "  ,'  .' | /  /    '.  /   /   \\                                  ,--.'|                      \n" +
-            ",---.'   ||  :  /`. / |   :     :  __  ,-.                   .---.|  | :               __  ,-.\n" +
-            "|   |   .';  |  |--`  .   |  ;. /,' ,'/ /|                  /. ./|:  : '             ,' ,'/ /|\n" +
-            ":   :  :  |  :  ;_    .   ; /--` '  | |' | ,--.--.       .-'-. ' ||  ' |      ,---.  '  | |' |\n" +
-            ":   |  |-, \\  \\    `. ;   | ;    |  |   ,'/       \\     /___/ \\: |'  | |     /     \\ |  |   ,'\n" +
-            "|   :  ;/|  `----.   \\|   : |    '  :  / .--.  .-. | .-'.. '   ' .|  | :    /    /  |'  :  /  \n" +
-            "|   |   .'  __ \\  \\  |.   | '___ |  | '   \\__\\/: . ./___/ \\:     ''  : |__ .    ' / ||  | '   \n" +
-            "'   :  '   /  /`--'  /'   ; : .'|;  : |   ,\" .--.; |.   \\  ' .\\   |  | '.'|'   ;   /|;  : |   \n" +
-            "|   |  |  '--'.     / '   | '/  :|  , ;  /  /  ,.  | \\   \\   ' \\ |;  :    ;'   |  / ||  , ;   \n" +
-            "|   :  \\    `--'---'  |   :    /  ---'  ;  :   .'   \\ \\   \\  |--\" |  ,   / |   :    | ---'    \n" +
-            "|   | ,'               \\   \\ .'         |  ,     .-./  \\   \\ |     ---`-'   \\   \\  /          \n" +
-            "`----'                  `---`            `--`---'       '---\"                `----'           \n";
+            "    ,---,.  .--.--.     ,----..                                     ,--,                      \n"
+                    + "  ,'  .' | /  /    '.  /   /   \\                                  ,--.'|                      \n"
+                    + ",---.'   ||  :  /`. / |   :     :  __  ,-.                   .---.|  | :               __  ,-.\n"
+                    + "|   |   .';  |  |--`  .   |  ;. /,' ,'/ /|                  /. ./|:  : '             ,' ,'/ /|\n"
+                    + ":   :  :  |  :  ;_    .   ; /--` '  | |' | ,--.--.       .-'-. ' ||  ' |      ,---.  '  | |' |\n"
+                    + ":   |  |-, \\  \\    `. ;   | ;    |  |   ,'/       \\     /___/ \\: |'  | |     /     \\ |  |   ,'\n"
+                    + "|   :  ;/|  `----.   \\|   : |    '  :  / .--.  .-. | .-'.. '   ' .|  | :    /    /  |'  :  /  \n"
+                    + "|   |   .'  __ \\  \\  |.   | '___ |  | '   \\__\\/: . ./___/ \\:     ''  : |__ .    ' / ||  | '   \n"
+                    + "'   :  '   /  /`--'  /'   ; : .'|;  : |   ,\" .--.; |.   \\  ' .\\   |  | '.'|'   ;   /|;  : |   \n"
+                    + "|   |  |  '--'.     / '   | '/  :|  , ;  /  /  ,.  | \\   \\   ' \\ |;  :    ;'   |  / ||  , ;   \n"
+                    + "|   :  \\    `--'---'  |   :    /  ---'  ;  :   .'   \\ \\   \\  |--\" |  ,   / |   :    | ---'    \n"
+                    + "|   | ,'               \\   \\ .'         |  ,     .-./  \\   \\ |     ---`-'   \\   \\  /          \n"
+                    + "`----'                  `---`            `--`---'       '---\"                `----'           \n";
 
     private static void banner() {
-        FSCrawlerLogger.console(
-                separatorLine(",", ".") +
-                centerAsciiArt() +
-                separatorLine("+", "+") +
-                bannerLine("You know, for Files!") +
-                bannerLine("Made from France with Love") +
-                bannerLine("Source: https://github.com/dadoonet/fscrawler/") +
-                bannerLine("Documentation: https://fscrawler.readthedocs.io/") +
-                separatorLine("`", "'"));
+        FSCrawlerLogger.console(separatorLine(",", ".")
+                + centerAsciiArt()
+                + separatorLine("+", "+")
+                + bannerLine("You know, for Files!")
+                + bannerLine("Made from France with Love")
+                + bannerLine("Source: https://github.com/dadoonet/fscrawler/")
+                + bannerLine("Documentation: https://fscrawler.readthedocs.io/")
+                + separatorLine("`", "'"));
     }
 
     private static String centerAsciiArt() {

@@ -19,7 +19,6 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
@@ -28,12 +27,9 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-
 import java.io.IOException;
 
-/**
- * Root resource (exposed at "/" path)
- */
+/** Root resource (exposed at "/" path) */
 @Path("/")
 public class ServerStatusApi extends RestApi {
 
@@ -55,5 +51,4 @@ public class ServerStatusApi extends RestApi {
         status.setSettings(settings);
         return status;
     }
-
 }

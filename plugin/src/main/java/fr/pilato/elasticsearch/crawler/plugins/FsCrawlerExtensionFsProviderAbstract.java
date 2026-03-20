@@ -18,16 +18,15 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
 
 public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerExtensionFsProvider {
     private static final Logger logger = LogManager.getLogger();
@@ -35,6 +34,7 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
     protected FsSettings fsSettings;
 
     protected abstract void parseSettings() throws PathNotFoundException, IOException;
+
     protected abstract void validateSettings() throws PathNotFoundException, IOException;
 
     @Override
@@ -53,14 +53,13 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         try {
             parseSettings();
             validateSettings();
-        } catch (PathNotFoundException|IOException e) {
+        } catch (PathNotFoundException | IOException e) {
             throw new FsCrawlerIllegalConfigurationException(e.getMessage());
         }
     }
 
     @Override
-    public void stop() throws FsCrawlerPluginException {
-    }
+    public void stop() throws FsCrawlerPluginException {}
 
     @Override
     public void close() throws Exception {

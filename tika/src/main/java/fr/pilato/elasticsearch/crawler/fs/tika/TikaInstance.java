@@ -19,9 +19,17 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
+import static org.apache.tika.langdetect.optimaize.OptimaizeLangDetector.getDefaultLanguageDetector;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
@@ -48,19 +56,7 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
 import org.xml.sax.SAXException;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.apache.tika.langdetect.optimaize.OptimaizeLangDetector.getDefaultLanguageDetector;
-
-/**
- *
- */
+/** */
 public class TikaInstance {
 
     private static final Logger logger = LogManager.getLogger();
@@ -91,6 +87,7 @@ public class TikaInstance {
 
     /**
      * This initializes if needed a parser and a parse context for tika
+     *
      * @param fs fs settings
      */
     private static void initTika(Fs fs) {
@@ -98,16 +95,16 @@ public class TikaInstance {
         ocrActivated = ocrEnabled;
         // Restore the cached (parser, context) pair for this OCR state; null means not yet built.
         // initContext and initParser are no-ops when their field is already non-null.
-        parser  = ocrEnabled ? parserOcrOn  : parserOcrOff;
+        parser = ocrEnabled ? parserOcrOn : parserOcrOff;
         context = ocrEnabled ? contextOcrOn : contextOcrOff;
         initContext(fs);
         initParser(fs);
         // Persist the now-built pair so future calls with the same OCR state skip the rebuild.
         if (ocrEnabled) {
-            parserOcrOn  = parser;
+            parserOcrOn = parser;
             contextOcrOn = context;
         } else {
-            parserOcrOff  = parser;
+            parserOcrOff = parser;
             contextOcrOff = context;
         }
     }
@@ -122,7 +119,7 @@ public class TikaInstance {
                 TikaConfig config = null;
                 try {
                     config = new TikaConfig(fs.getTikaConfigPath());
-                } catch (TikaException|IOException|SAXException e) {
+                } catch (TikaException | IOException | SAXException e) {
                     logger.error("Can not configure Tika: {}", e.getMessage());
                     logger.debug("Fullstack trace error for Tika", e);
                 }
@@ -144,7 +141,7 @@ public class TikaInstance {
                 // PDF content might be extracted multiple times.
                 pdfParser.getPDFParserConfig().setExtractBookmarksText(false);
 
-                 if (ocrActivated) {
+                if (ocrActivated) {
                     logger.debug("OCR is activated.");
                     ocrParser = new TesseractOCRParser();
                     if (fs.getOcr().getPath() != null) {
@@ -152,12 +149,15 @@ public class TikaInstance {
                         ocrParser.setTesseractPath(fs.getOcr().getPath());
                     }
                     if (fs.getOcr().getDataPath() != null) {
-                        logger.debug("Tesseract Data Path set to [{}].", fs.getOcr().getDataPath());
+                        logger.debug(
+                                "Tesseract Data Path set to [{}].", fs.getOcr().getDataPath());
                         ocrParser.setTessdataPath(fs.getOcr().getDataPath());
                     }
                     try {
                         if (ocrParser.hasTesseract()) {
-                            logger.debug("OCR strategy for PDF documents is [{}] and tesseract was found.", fs.getOcr().getPdfStrategy());
+                            logger.debug(
+                                    "OCR strategy for PDF documents is [{}] and tesseract was found.",
+                                    fs.getOcr().getPdfStrategy());
                             pdfParser.setOcrStrategy(fs.getOcr().getPdfStrategy());
                         } else {
                             logger.debug("But Tesseract is not installed so we won't run OCR.");
@@ -165,7 +165,8 @@ public class TikaInstance {
                             pdfParser.setOcrStrategy("no_ocr");
                         }
                     } catch (TikaConfigException e) {
-                        logger.debug("Tesseract is not correctly set up so we won't run OCR. Error is: {}", e.getMessage());
+                        logger.debug(
+                                "Tesseract is not correctly set up so we won't run OCR. Error is: {}", e.getMessage());
                         logger.debug("Fullstack trace error for Tesseract", e);
                         ocrActivated = false;
                         pdfParser.setOcrStrategy("no_ocr");
@@ -192,7 +193,10 @@ public class TikaInstance {
                             new ServiceLoader(),
                             Arrays.asList(PDFParser.class, TesseractOCRParser.class));
                 }
-                parser = new AutoDetectParser(defaultParser, pdfParser, gdalParser,
+                parser = new AutoDetectParser(
+                        defaultParser,
+                        pdfParser,
+                        gdalParser,
                         new BPGParser(),
                         new TiffParser(),
                         new HeifParser(),
@@ -212,15 +216,19 @@ public class TikaInstance {
                 logger.debug("Tesseract Language set to [{}].", fs.getOcr().getLanguage());
                 config.setLanguage(fs.getOcr().getLanguage());
                 if (fs.getOcr().getPageSegMode() != null) {
-                    logger.debug("Tesseract PageSegMode set to [{}].", fs.getOcr().getPageSegMode());
+                    logger.debug(
+                            "Tesseract PageSegMode set to [{}].", fs.getOcr().getPageSegMode());
                     config.setPageSegMode("" + fs.getOcr().getPageSegMode());
                 }
                 if (fs.getOcr().getPreserveInterwordSpacing() != null) {
-                    logger.debug("Tesseract preserveInterwordSpacing set to [{}].", fs.getOcr().getPreserveInterwordSpacing());
+                    logger.debug(
+                            "Tesseract preserveInterwordSpacing set to [{}].",
+                            fs.getOcr().getPreserveInterwordSpacing());
                     config.setPreserveInterwordSpacing(fs.getOcr().getPreserveInterwordSpacing());
                 }
                 if (fs.getOcr().getOutputType() != null) {
-                    logger.debug("Tesseract Output Type set to [{}].", fs.getOcr().getOutputType());
+                    logger.debug(
+                            "Tesseract Output Type set to [{}].", fs.getOcr().getOutputType());
                     config.setOutputType(fs.getOcr().getOutputType());
                 }
                 context.set(TesseractOCRConfig.class, config);
@@ -228,8 +236,8 @@ public class TikaInstance {
         }
     }
 
-    static String extractText(FsSettings fsSettings, int indexedChars, InputStream stream, Metadata metadata) throws IOException,
-            TikaException {
+    static String extractText(FsSettings fsSettings, int indexedChars, InputStream stream, Metadata metadata)
+            throws IOException, TikaException {
         initTika(fsSettings.getFs());
         WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
         try {

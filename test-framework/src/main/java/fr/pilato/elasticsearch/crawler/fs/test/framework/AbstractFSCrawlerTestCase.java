@@ -18,10 +18,23 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
+import static org.apache.commons.lang3.StringUtils.split;
+
 import com.carrotsearch.randomizedtesting.RandomizedContext;
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.annotations.*;
 import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.Locale;
+import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -32,29 +45,12 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.Locale;
-import java.util.TimeZone;
-
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomLocale;
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomTimeZone;
-import static org.apache.commons.lang3.StringUtils.split;
-
 @RunWith(RandomizedRunner.class)
 @Listeners({FSCrawlerReproduceInfoPrinter.class})
 @ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
 @ThreadLeakLingering(linger = 5000) // 5 sec lingering
-@ThreadLeakFilters(filters = {
-        WindowsSpecificThreadFilter.class,
-        TestContainerThreadFilter.class,
-        JNACleanerThreadFilter.class
-})
+@ThreadLeakFilters(
+        filters = {WindowsSpecificThreadFilter.class, TestContainerThreadFilter.class, JNACleanerThreadFilter.class})
 public abstract class AbstractFSCrawlerTestCase {
 
     public static final int TIMEOUT_MINUTE_AS_MS = 60 * 1000;
@@ -65,14 +61,12 @@ public abstract class AbstractFSCrawlerTestCase {
     private static final TimeZone savedTimeZone = TimeZone.getDefault();
     protected static final String indexPrefix = getSystemProperty("tests.index.prefix", "");
 
-    /**
-     * For tests only: maximum time to wait for a search when we want to be sure that something is in the index.
-     */
+    /** For tests only: maximum time to wait for a search when we want to be sure that something is in the index. */
     public static final Duration MAX_WAIT_FOR_SEARCH = Duration.ofMinutes(5);
 
     /**
-     * For tests only: maximum time to wait for a search when we want to be sure that something is in the index,
-     * but we are running long tests (like with Tika OCR for instance).
+     * For tests only: maximum time to wait for a search when we want to be sure that something is in the index, but we
+     * are running long tests (like with Tika OCR for instance).
      */
     public static final Duration MAX_WAIT_FOR_SEARCH_LONG_TESTS = Duration.ofMinutes(10);
 
@@ -81,6 +75,7 @@ public abstract class AbstractFSCrawlerTestCase {
 
     @ClassRule
     public static final TemporaryFolder folder = new TemporaryFolder();
+
     protected static Path rootTmpDir;
 
     @BeforeClass
@@ -92,7 +87,9 @@ public abstract class AbstractFSCrawlerTestCase {
     @BeforeClass
     public static void setLocale() {
         String testLocale = getSystemProperty("tests.locale", RANDOM);
-        Locale locale = testLocale.equals(RANDOM) ? randomLocale() : new Locale.Builder().setLanguageTag(testLocale).build();
+        Locale locale = testLocale.equals(RANDOM)
+                ? randomLocale()
+                : new Locale.Builder().setLanguageTag(testLocale).build();
         logger.debug("Running test suite with Locale [{}]", locale);
         Locale.setDefault(locale);
     }
@@ -120,9 +117,10 @@ public abstract class AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Get the crawler name which is also used as the index name.
-     * This is a combination of the index prefix, the current class name and the current test name.
-     * Note that the index prefix might be empty. It's normally the pull request number if set with -Dtests.index.prefix
+     * Get the crawler name which is also used as the index name. This is a combination of the index prefix, the current
+     * class name and the current test name. Note that the index prefix might be empty. It's normally the pull request
+     * number if set with -Dtests.index.prefix
+     *
      * @return the crawler name to use
      */
     protected String getCrawlerName() {
@@ -131,6 +129,7 @@ public abstract class AbstractFSCrawlerTestCase {
 
     /**
      * Get the crawler name from a class and a method name.
+     *
      * @param clazz the class to use
      * @param methodName the method name
      * @return the crawler name to use
@@ -138,9 +137,17 @@ public abstract class AbstractFSCrawlerTestCase {
     protected static String getCrawlerName(Class<?> clazz, String methodName) {
         String testName;
         if (indexPrefix.isEmpty()) {
-            testName = "fscrawler_".concat(toUnderscoreCase(clazz.getSimpleName())).concat("_").concat(methodName);
+            testName = "fscrawler_"
+                    .concat(toUnderscoreCase(clazz.getSimpleName()))
+                    .concat("_")
+                    .concat(methodName);
         } else {
-            testName = "fscrawler_".concat(indexPrefix).concat("_").concat(toUnderscoreCase(clazz.getSimpleName())).concat("_").concat(methodName);
+            testName = "fscrawler_"
+                    .concat(indexPrefix)
+                    .concat("_")
+                    .concat(toUnderscoreCase(clazz.getSimpleName()))
+                    .concat("_")
+                    .concat(methodName);
         }
         return testName.contains(" ") ? split(testName, " ")[0] : testName;
     }
@@ -184,17 +191,17 @@ public abstract class AbstractFSCrawlerTestCase {
     public static File URLtoFile(URL url) {
         try {
             return new File(url.toURI());
-        } catch(URISyntaxException e) {
+        } catch (URISyntaxException e) {
             return new File(url.getPath());
         }
     }
 
     /**
-     * Get a System Property. If it does not exist or if it's empty, the
-     * fallback value will be returned.
-     * @param envName       The system property name
-     * @param defaultValue  The fallback value
-     * @return              The property value or its default value
+     * Get a System Property. If it does not exist or if it's empty, the fallback value will be returned.
+     *
+     * @param envName The system property name
+     * @param defaultValue The fallback value
+     * @return The property value or its default value
      */
     protected static String getSystemProperty(String envName, String defaultValue) {
         String property = System.getProperty(envName);
@@ -206,11 +213,11 @@ public abstract class AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Get a System Property. If it does not exist or if it's empty, the
-     * fallback value will be returned.
-     * @param envName       The system property name
-     * @param defaultValue  The fallback value
-     * @return              The property value or its default value
+     * Get a System Property. If it does not exist or if it's empty, the fallback value will be returned.
+     *
+     * @param envName The system property name
+     * @param defaultValue The fallback value
+     * @return The property value or its default value
      */
     protected static int getSystemProperty(String envName, int defaultValue) {
         String property = System.getProperty(envName);
@@ -222,11 +229,11 @@ public abstract class AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Get a System Property. If it does not exist or if it's empty, the
-     * fallback value will be returned.
-     * @param envName       The system property name
-     * @param defaultValue  The fallback value
-     * @return              The property value or its default value
+     * Get a System Property. If it does not exist or if it's empty, the fallback value will be returned.
+     *
+     * @param envName The system property name
+     * @param defaultValue The fallback value
+     * @return The property value or its default value
      */
     protected static boolean getSystemProperty(String envName, boolean defaultValue) {
         String property = System.getProperty(envName);

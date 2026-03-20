@@ -21,15 +21,14 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 import com.carrotsearch.randomizedtesting.ThreadFilter;
 
 /**
- * Thread filter for WireMock Jetty threads.
- * WireMock uses Jetty internally and may leave threads running after tests.
+ * Thread filter for WireMock Jetty threads. WireMock uses Jetty internally and may leave threads running after tests.
  */
 public class WireMockThreadFilter implements ThreadFilter {
     @Override
     public boolean reject(Thread t) {
         // WireMock uses Jetty threads with names like "qtp123456789-42"
-        return t.getName().startsWith("qtp") ||
-                t.getName().contains("WireMock") ||
-                t.getName().contains("Jetty");
+        return t.getName().startsWith("qtp")
+                || t.getName().contains("WireMock")
+                || t.getName().contains("Jetty");
     }
 }

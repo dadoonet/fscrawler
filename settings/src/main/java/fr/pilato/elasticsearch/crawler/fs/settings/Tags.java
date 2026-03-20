@@ -20,9 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import jakarta.annotation.Nullable;
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.Objects;
+import org.github.gestalt.config.annotations.Config;
 
 @SuppressWarnings("SameParameterValue")
 public class Tags {
@@ -53,18 +52,15 @@ public class Tags {
 
     @Override
     public String toString() {
-        return "Tags{" +
-                "metaFilename='" + metaFilename + '\'' +
-                ", staticMetaFilename=" + staticMetaFilename +
-                '}';
+        return "Tags{" + "metaFilename='" + metaFilename + '\'' + ", staticMetaFilename=" + staticMetaFilename + '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Tags tags = (Tags) o;
-        return Objects.equals(metaFilename, tags.metaFilename) &&
-                Objects.equals(staticMetaFilename, tags.staticMetaFilename);
+        return Objects.equals(metaFilename, tags.metaFilename)
+                && Objects.equals(staticMetaFilename, tags.staticMetaFilename);
     }
 
     @Override

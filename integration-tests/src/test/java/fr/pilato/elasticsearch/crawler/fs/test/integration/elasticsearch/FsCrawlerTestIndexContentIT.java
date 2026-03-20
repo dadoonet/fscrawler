@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESPrefixQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
@@ -26,15 +28,12 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
-/**
- * Test all crawler settings
- */
+/** Test all crawler settings */
 public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #103: <a href="https://github.com/dadoonet/fscrawler/issues/103">https://github.com/dadoonet/fscrawler/issues/103</a>
+     * Test for #103: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/103">https://github.com/dadoonet/fscrawler/issues/103</a>
      */
     @Test
     public void index_content() throws Exception {
@@ -45,8 +44,23 @@ public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
         // We expect to have one file
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESPrefixQuery("content", "file*")), 0L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESPrefixQuery("file.content_type", "text*")), 0L, null);
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS).withESQuery(new ESTermQuery("file.extension", "txt")), 1L, null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESPrefixQuery("content", "file*")),
+                0L,
+                null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESPrefixQuery("file.content_type", "text*")),
+                0L,
+                null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("file.extension", "txt")),
+                1L,
+                null);
     }
 }

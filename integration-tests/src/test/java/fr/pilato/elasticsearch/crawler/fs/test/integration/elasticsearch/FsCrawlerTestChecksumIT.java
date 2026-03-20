@@ -19,6 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThatCode;
+
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -26,17 +30,10 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.security.MessageDigest;
 import org.junit.Test;
 
-import java.security.MessageDigest;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThatCode;
-
-/**
- * Test checksum crawler settings
- */
+/** Test checksum crawler settings */
 public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
 
     @Test
@@ -46,10 +43,13 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setChecksum("MD5");
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
-        String expectedChecksum = OsValidator.WINDOWS ? "89421a18ae16e3bfe7c04a4946b7250a" : "caa71e1914ecbcf5ae4f46cf85de8648";
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        String expectedChecksum =
+                OsValidator.WINDOWS ? "89421a18ae16e3bfe7c04a4946b7250a" : "caa71e1914ecbcf5ae4f46cf85de8648";
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.file.checksum")).isEqualTo(expectedChecksum);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.checksum"))
+                    .isEqualTo(expectedChecksum);
         }
     }
 
@@ -60,10 +60,14 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setChecksum("SHA-1");
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
-        String expectedChecksum = OsValidator.WINDOWS ? "5916fb8f87be8d54c4323981af7c27f243c82b96" : "81bf7dba781a1efbea6d9f2ad638ffe772ba4eab";
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        String expectedChecksum = OsValidator.WINDOWS
+                ? "5916fb8f87be8d54c4323981af7c27f243c82b96"
+                : "81bf7dba781a1efbea6d9f2ad638ffe772ba4eab";
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.file.checksum")).isEqualTo(expectedChecksum);
+            assertThat((String) JsonPath.read(hit.getSource(), "$.file.checksum"))
+                    .isEqualTo(expectedChecksum);
         }
     }
 }

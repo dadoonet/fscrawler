@@ -21,13 +21,10 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/**
- * Response object for the crawler status endpoint
- */
+/** Response object for the crawler status endpoint */
 public class CrawlerStatusResponse extends RestResponse {
 
     private CrawlerState state;

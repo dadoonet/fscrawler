@@ -18,13 +18,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerUtilForTests {
     private static final Logger logger = LogManager.getLogger();
@@ -34,8 +33,8 @@ public class FsCrawlerUtilForTests {
     }
 
     /**
-     * Copy files from a source to a target
-     * under a _default subdirectory.
+     * Copy files from a source to a target under a _default subdirectory.
+     *
      * @param source The source dir
      * @param target The target dir
      * @param options Potential options
@@ -51,7 +50,10 @@ public class FsCrawlerUtilForTests {
             throw new RuntimeException(source + " doesn't seem to exist.");
         }
 
-        Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+        Files.walkFileTree(
+                source,
+                EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                Integer.MAX_VALUE,
                 new InternalFileVisitor(source, target, options));
 
         logger.debug("  --> Resources ready in [{}]", target);
@@ -73,7 +75,7 @@ public class FsCrawlerUtilForTests {
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 
             Path targetPath = toPath.resolve(fromPath.relativize(dir));
-            if(!Files.exists(targetPath)){
+            if (!Files.exists(targetPath)) {
                 Files.createDirectory(targetPath);
             }
             return FileVisitResult.CONTINUE;

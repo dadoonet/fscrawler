@@ -1,11 +1,32 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.pilato.elasticsearch.crawler</groupId>
     <artifactId>fscrawler-parent</artifactId>
-    <packaging>pom</packaging>
     <version>2.10-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>FSCrawler</name>
+    <description>FS Crawler offers a simple way to index binary files into elasticsearch.</description>
+    <url>https://github.com/dadoonet/fscrawler/</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>dadoonet</id>
+            <name>David Pilato</name>
+            <email>david@pilato.fr</email>
+            <url>https://david.pilato.fr/</url>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+
     <modules>
         <module>framework</module>
         <module>test-framework</module>
@@ -24,17 +45,17 @@
         <module>docs</module>
         <module>contrib</module>
     </modules>
-    <name>FSCrawler</name>
-    <url>https://github.com/dadoonet/fscrawler/</url>
-    <description>FS Crawler offers a simple way to index binary files into elasticsearch.</description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+    <scm>
+        <connection>scm:git:git@github.com:dadoonet/fscrawler.git</connection>
+        <developerConnection>scm:git:git@github.com:dadoonet/fscrawler.git</developerConnection>
+        <url>scm:git:git@github.com:dadoonet/fscrawler.git</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/dadoonet/fscrawler/issues/</url>
+    </issueManagement>
 
     <!--suppress CheckTagEmptyBody -->
     <properties>
@@ -70,10 +91,10 @@
         <contrib.dir>${project.basedir}/contrib</contrib.dir>
         <integ.elasticsearch.version>${elasticsearch.version}</integ.elasticsearch.version>
         <integ.elasticsearch.port>9200</integ.elasticsearch.port>
-        <tests.cluster.url></tests.cluster.url>
-        <tests.cluster.apiKey></tests.cluster.apiKey>
+        <tests.cluster.url/>
+        <tests.cluster.apiKey/>
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
-        <tests.index.prefix></tests.index.prefix>
+        <tests.index.prefix/>
         <tests.rest.port>0</tests.rest.port>
         <testcontainers.version>2.0.4</testcontainers.version>
 
@@ -85,21 +106,21 @@
         <tests.leaveTemporary>false</tests.leaveTemporary>
         <tests.parallelism>auto</tests.parallelism>
         <tests.heartbeat>10</tests.heartbeat>
-        <tests.seed></tests.seed>
+        <tests.seed/>
         <!-- Running the tests with Tesseract OCR might take time -->
         <tests.timeoutSuite>180000</tests.timeoutSuite>
         <tests.timeout>120000</tests.timeout>
         <!-- When we want to run tests which could take a lot of time - ie semantic search -->
-        <tests.nightly></tests.nightly>
+        <tests.nightly/>
 
         <!-- For CVE Audit with Sonatype -->
-        <env.SONATYPE_USER></env.SONATYPE_USER>
-        <env.SONATYPE_PASS></env.SONATYPE_PASS>
+        <env.SONATYPE_USER/>
+        <env.SONATYPE_PASS/>
         <sonatype.username>${env.SONATYPE_USER}</sonatype.username>
         <sonatype.password>${env.SONATYPE_PASS}</sonatype.password>
         <ossindex.score>7.0</ossindex.score>
         <!-- When we need to disable a specific CVE -->
-        <ossindex.exclude />
+        <ossindex.exclude/>
 
         <!-- OpenTelemetry API (instrumentation only; SDK provided by elastic-otel-javaagent at runtime) -->
         <opentelemetry.version>1.60.1</opentelemetry.version>
@@ -110,310 +131,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
-
-    <developers>
-        <developer>
-            <id>dadoonet</id>
-            <name>David Pilato</name>
-            <email>david@pilato.fr</email>
-            <url>https://david.pilato.fr/</url>
-            <timezone>+1</timezone>
-        </developer>
-    </developers>
-
-    <scm>
-        <connection>scm:git:git@github.com:dadoonet/fscrawler.git</connection>
-        <url>scm:git:git@github.com:dadoonet/fscrawler.git</url>
-        <developerConnection>scm:git:git@github.com:dadoonet/fscrawler.git</developerConnection>
-    </scm>
-
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/dadoonet/fscrawler/issues/</url>
-    </issueManagement>
-
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.15.0</version>
-                    <configuration>
-                        <release>${java.compiler.version}</release>
-                        <encoding>UTF-8</encoding>
-                        <showDeprecation>true</showDeprecation>
-                        <showWarnings>true</showWarnings>
-                        <compilerArgument>-Xlint:all,-serial,-path,-rawtypes,-unchecked</compilerArgument>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-help-plugin</artifactId>
-                    <version>3.5.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.4</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.5.0</version>
-                    <configuration>
-                        <propertiesEncoding>UTF-8</propertiesEncoding>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.21.0</version>
-                    <configuration>
-                        <generateBackupPoms>false</generateBackupPoms>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.5.0</version>
-                    <configuration>
-                        <skipIfEmpty>true</skipIfEmpty>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.10.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>com.carrotsearch.randomizedtesting</groupId>
-                    <artifactId>junit4-maven-plugin</artifactId>
-                    <version>2.8.4</version>
-                    <configuration>
-                        <heartbeat>${tests.heartbeat}</heartbeat>
-                        <jvmOutputAction>pipe,ignore</jvmOutputAction>
-                        <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
-                        <ifNoTests>warn</ifNoTests>
-                        <parallelism>${tests.parallelism}</parallelism>
-                        <listeners>
-                            <report-text showThrowable="true" showStackTraces="true" showOutput="${tests.output}"
-                                         showStatusOk="${tests.verbose}" showStatusError="true" showStatusFailure="true"
-                                         showStatusIgnored="true" showSuiteSummary="${tests.verbose}" />
-                        </listeners>
-                        <seed>${tests.seed}</seed>
-                        <systemProperties combine.children="append">
-                            <arg.common>arg.common</arg.common>
-                            <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
-                            <tests.timeout>${tests.timeout}</tests.timeout>
-                            <tests.locale>${tests.locale}</tests.locale>
-                            <tests.timezone>${tests.timezone}</tests.timezone>
-                            <tests.nightly>${tests.nightly}</tests.nightly>
-                            <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
-                            <java.awt.headless>true</java.awt.headless>
-                            <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
-                            <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
-                            <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
-                            <tests.index.prefix>${tests.index.prefix}</tests.index.prefix>
-                            <tests.rest.port>${tests.rest.port}</tests.rest.port>
-                            <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
-                            <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
-                        </systemProperties>
-                    </configuration>
-
-                    <executions>
-                        <execution>
-                            <id>unit-tests</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>junit4</goal>
-                            </goals>
-                            <inherited>true</inherited>
-                            <configuration>
-                                <skipTests>${skipUnitTests}</skipTests>
-                                <includes>
-                                    <include>**/*Test.class</include>
-                                </includes>
-                                <excludes>
-                                    <exclude>**/*$*</exclude>
-                                </excludes>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>integration-tests</id>
-                            <phase>integration-test</phase>
-                            <goals>
-                                <goal>junit4</goal>
-                            </goals>
-                            <inherited>true</inherited>
-                            <configuration>
-                                <skipTests>${skipIntegTests}</skipTests>
-                                <includes>
-                                    <include>**/*IT.class</include>
-                                </includes>
-                                <excludes>
-                                    <exclude>**/*$*</exclude>
-                                </excludes>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <!-- Disable surefire so we can use randomize testing framework -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.5</version>
-                    <executions>
-                        <execution>
-                            <id>default-test</id>
-                            <phase>none</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <!-- To build and publish our docker images -->
-                <plugin>
-                    <groupId>io.fabric8</groupId>
-                    <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.48.1</version>
-                </plugin>
-
-                <!-- Generate the release zip file (run during package step) -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.8.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.6.2</version>
-                    <configuration>
-                        <rules>
-                            <requireJavaVersion>
-                                <version>${java.compiler.version}</version>
-                            </requireJavaVersion>
-                            <dependencyConvergence/>
-                            <requireMavenVersion>
-                                <version>3.3</version>
-                            </requireMavenVersion>
-                        </rules>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>enforce</id>
-                            <goals>
-                                <goal>enforce</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.4</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.ossindex.maven</groupId>
-                    <artifactId>ossindex-maven-plugin</artifactId>
-                    <version>3.2.0</version>
-                    <executions>
-                        <execution>
-                            <id>audit-dependencies</id>
-                            <phase>verify</phase>
-                            <goals>
-                                <goal>audit</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.central</groupId>
-                    <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>0.10.0</version>
-                    <extensions>true</extensions>
-                    <configuration>
-                        <autoPublish>true</autoPublish>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-changes-plugin</artifactId>
-                    <version>2.12.1</version>
-                    <configuration>
-                        <smtpHost>auth.smtp.1and1.fr</smtpHost>
-                        <smtpPort implementation="java.lang.Integer">465</smtpPort>
-                        <sslMode>true</sslMode>
-                        <fromDeveloperId>dadoonet</fromDeveloperId>
-                        <toAddresses>
-                            <toAddress implementation="java.lang.String">discuss+community-plugins@elastic.co</toAddress>
-                        </toAddresses>
-                        <issueManagementSystems>
-                            <issueManagementSystem>GitHub</issueManagementSystem>
-                        </issueManagementSystems>
-                        <issueTypes>
-                            <add>new,doc</add>
-                            <fix>bug</fix>
-                            <update>update</update>
-                            <remove>remove</remove>
-                        </issueTypes>
-                        <onlyCurrentVersion>true</onlyCurrentVersion>
-                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es7/${project.version}</urlDownload>
-                        <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.2.8</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.12.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>3.4.0</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <plugins>
-            <!-- By default, We don't deploy our IT artifact to maven central -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <!-- By default, We don't deploy our IT artifact to maven central -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <!-- By default, We don't deploy our IT artifact to maven central -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <!-- By default, we don't publish anything unless set explicitly -->
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <configuration>
-                    <skipPublishing>true</skipPublishing>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencyManagement>
         <dependencies>
@@ -557,8 +274,8 @@
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>${jackson.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <dependency>
@@ -921,27 +638,318 @@
         </dependencies>
     </dependencyManagement>
 
-    <repositories>
-        <!-- This repository is used to test with x-pack -->
-        <repository>
-            <id>elastic-download-service</id>
-            <name>Elastic Download Service</name>
-            <url>https://artifacts.elastic.co/maven/</url>
-            <releases><enabled>true</enabled></releases>
-            <snapshots><enabled>false</enabled></snapshots>
-        </repository>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.15.0</version>
+                    <configuration>
+                        <release>${java.compiler.version}</release>
+                        <encoding>UTF-8</encoding>
+                        <showDeprecation>true</showDeprecation>
+                        <showWarnings>true</showWarnings>
+                        <compilerArgument>-Xlint:all,-serial,-path,-rawtypes,-unchecked</compilerArgument>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-help-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.5.0</version>
+                    <configuration>
+                        <propertiesEncoding>UTF-8</propertiesEncoding>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.21.0</version>
+                    <configuration>
+                        <generateBackupPoms>false</generateBackupPoms>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.5.0</version>
+                    <configuration>
+                        <skipIfEmpty>true</skipIfEmpty>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.10.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.carrotsearch.randomizedtesting</groupId>
+                    <artifactId>junit4-maven-plugin</artifactId>
+                    <version>2.8.4</version>
+                    <configuration>
+                        <heartbeat>${tests.heartbeat}</heartbeat>
+                        <jvmOutputAction>pipe,ignore</jvmOutputAction>
+                        <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
+                        <ifNoTests>warn</ifNoTests>
+                        <parallelism>${tests.parallelism}</parallelism>
+                        <listeners>
+                            <report-text showOutput="${tests.output}" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="${tests.verbose}" showSuiteSummary="${tests.verbose}" showThrowable="true"/>
+                        </listeners>
+                        <seed>${tests.seed}</seed>
+                        <systemProperties combine.children="append">
+                            <arg.common>arg.common</arg.common>
+                            <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
+                            <tests.timeout>${tests.timeout}</tests.timeout>
+                            <tests.locale>${tests.locale}</tests.locale>
+                            <tests.timezone>${tests.timezone}</tests.timezone>
+                            <tests.nightly>${tests.nightly}</tests.nightly>
+                            <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                            <java.awt.headless>true</java.awt.headless>
+                            <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
+                            <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
+                            <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
+                            <tests.index.prefix>${tests.index.prefix}</tests.index.prefix>
+                            <tests.rest.port>${tests.rest.port}</tests.rest.port>
+                            <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
+                            <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
+                        </systemProperties>
+                    </configuration>
 
-        <!-- Only used for Tika release candidates -->
-        <!--
-        <repository>
-            <id>tika-rc</id>
-            <name>Tika Release Candidates</name>
-            <url>https://repository.apache.org/content/repositories/orgapachetika-1061/</url>
-            <releases><enabled>true</enabled></releases>
-            <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-        -->
-    </repositories>
+                    <executions>
+                        <execution>
+                            <id>unit-tests</id>
+                            <goals>
+                                <goal>junit4</goal>
+                            </goals>
+                            <phase>test</phase>
+                            <inherited>true</inherited>
+                            <configuration>
+                                <skipTests>${skipUnitTests}</skipTests>
+                                <includes>
+                                    <include>**/*Test.class</include>
+                                </includes>
+                                <excludes>
+                                    <exclude>**/*$*</exclude>
+                                </excludes>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>integration-tests</id>
+                            <goals>
+                                <goal>junit4</goal>
+                            </goals>
+                            <phase>integration-test</phase>
+                            <inherited>true</inherited>
+                            <configuration>
+                                <skipTests>${skipIntegTests}</skipTests>
+                                <includes>
+                                    <include>**/*IT.class</include>
+                                </includes>
+                                <excludes>
+                                    <exclude>**/*$*</exclude>
+                                </excludes>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <!-- Disable surefire so we can use randomize testing framework -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.5</version>
+                    <executions>
+                        <execution>
+                            <id>default-test</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- To build and publish our docker images -->
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>0.48.1</version>
+                </plugin>
+
+                <!-- Generate the release zip file (run during package step) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.8.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.6.2</version>
+                    <configuration>
+                        <rules>
+                            <requireJavaVersion>
+                                <version>${java.compiler.version}</version>
+                            </requireJavaVersion>
+                            <dependencyConvergence/>
+                            <requireMavenVersion>
+                                <version>3.3</version>
+                            </requireMavenVersion>
+                        </rules>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>enforce</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.ossindex.maven</groupId>
+                    <artifactId>ossindex-maven-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>audit-dependencies</id>
+                            <goals>
+                                <goal>audit</goal>
+                            </goals>
+                            <phase>verify</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>0.10.0</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <autoPublish>true</autoPublish>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-changes-plugin</artifactId>
+                    <version>2.12.1</version>
+                    <configuration>
+                        <smtpHost>auth.smtp.1and1.fr</smtpHost>
+                        <smtpPort implementation="java.lang.Integer">465</smtpPort>
+                        <sslMode>true</sslMode>
+                        <fromDeveloperId>dadoonet</fromDeveloperId>
+                        <toAddresses>
+                            <toAddress implementation="java.lang.String">discuss+community-plugins@elastic.co</toAddress>
+                        </toAddresses>
+                        <issueManagementSystems>
+                            <issueManagementSystem>GitHub</issueManagementSystem>
+                        </issueManagementSystems>
+                        <issueTypes>
+                            <add>new,doc</add>
+                            <fix>bug</fix>
+                            <update>update</update>
+                            <remove>remove</remove>
+                        </issueTypes>
+                        <onlyCurrentVersion>true</onlyCurrentVersion>
+                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-es7/${project.version}</urlDownload>
+                        <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>3.2.8</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.12.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>3.4.0</version>
+                    <configuration>
+                        <!-- optional: limit format enforcement to just the files changed by this feature branch -->
+                        <ratchetFrom>origin/master</ratchetFrom>
+                        <java>
+                            <palantirJavaFormat>
+                                <version>2.89.0</version>
+                                <formatJavadoc>true</formatJavadoc>
+                            </palantirJavaFormat>
+                        </java>
+                        <pom>
+                            <sortPom>
+                                <nrOfIndentSpace>4</nrOfIndentSpace>
+                            </sortPom>
+                        </pom>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, We don't deploy our IT artifact to maven central -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- By default, we don't publish anything unless set explicitly -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <configuration>
+                    <skipPublishing>true</skipPublishing>
+                </configuration>
+            </plugin>
+            <!-- By default, we call spotless -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
     <profiles>
         <!-- Profile for ES8 -->
@@ -1051,49 +1059,35 @@
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
-                                <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <phase>verify</phase>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
             </build>
         </profile>
-        <!-- Profile for Spotless code formatting -->
+        <!-- Only used for Tika release candidates tests -->
         <profile>
-            <id>spotless</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.diffplug.spotless</groupId>
-                        <artifactId>spotless-maven-plugin</artifactId>
-                        <version>2.44.4</version>
-                        <configuration>
-                            <!-- optional: limit format enforcement to just the files changed by this feature branch -->
-                            <ratchetFrom>origin/master</ratchetFrom>
-                            <java>
-                                <palantirJavaFormat>
-                                    <version>2.89.0</version>
-                                </palantirJavaFormat>
-                            </java>
-                            <pom>
-                                <sortPom>
-                                    <nrOfIndentSpace>4</nrOfIndentSpace>
-                                </sortPom>
-                            </pom>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
+            <id>tika-rc</id>
+            <properties>
+                <tika.version>4.0.0-SNAPSHOT</tika.version>
+            </properties>
+            <repositories>
+                <repository>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>tika-rc</id>
+                    <name>Tika Release Candidates</name>
+                    <url>https://repository.apache.org/content/repositories/orgapachetika-1061/</url>
+                </repository>
+            </repositories>
         </profile>
     </profiles>
 </project>

@@ -24,9 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Represents document metadata
- */
+/** Represents document metadata */
 public class Meta {
 
     private String author;
@@ -239,6 +237,7 @@ public class Meta {
     public void setLatitude(String latitude) {
         this.latitude = latitude;
     }
+
     public String getLongitude() {
         return longitude;
     }

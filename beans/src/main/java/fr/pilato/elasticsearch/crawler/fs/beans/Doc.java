@@ -21,9 +21,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.util.Map;
 
-/**
- * Represents a document we indexed
- */
+/** Represents a document we indexed */
 public class Doc {
 
     private String content;

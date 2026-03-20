@@ -19,10 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-
-/**
- * Represents a Path
- */
+/** Represents a Path */
 public class Path {
 
     private String root;

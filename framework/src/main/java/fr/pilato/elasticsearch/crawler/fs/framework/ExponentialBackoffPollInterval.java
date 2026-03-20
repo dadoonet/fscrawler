@@ -1,14 +1,13 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import java.time.Duration;
 import org.awaitility.pollinterval.PollInterval;
 
-import java.time.Duration;
-
 /**
- * An implementation of {@link PollInterval} that provides an exponential backoff strategy.
- * The wait time starts at a specified duration and doubles with each poll, up to a defined maximum duration.
- * This is useful for scenarios where you want to gradually increase the wait time between polling attempts,
- * such as when waiting for a resource to become available without going above a max duration.
+ * An implementation of {@link PollInterval} that provides an exponential backoff strategy. The wait time starts at a
+ * specified duration and doubles with each poll, up to a defined maximum duration. This is useful for scenarios where
+ * you want to gradually increase the wait time between polling attempts, such as when waiting for a resource to become
+ * available without going above a max duration.
  */
 public class ExponentialBackoffPollInterval implements PollInterval {
 
@@ -23,8 +22,8 @@ public class ExponentialBackoffPollInterval implements PollInterval {
     /**
      * Syntactic sugar for creating a {@link ExponentialBackoffPollInterval}.
      *
-     * @param startDuration      The start duration (initial function value)
-     * @param maxDuration        The max duration (we don't go beyond this value)
+     * @param startDuration The start duration (initial function value)
+     * @param maxDuration The max duration (we don't go beyond this value)
      * @return A new instance of {@link ExponentialBackoffPollInterval}
      */
     public static ExponentialBackoffPollInterval exponential(Duration startDuration, Duration maxDuration) {

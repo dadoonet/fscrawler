@@ -18,6 +18,8 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
+import static org.assertj.core.api.Assertions.*;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
@@ -25,18 +27,15 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
-import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import static org.assertj.core.api.Assertions.*;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
 public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -62,12 +61,13 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(rootTmpDir.toString());
-            provider.start(fsSettings, "{\n" +
-                    "  \"type\": \"local\",\n" +
-                    "  \"local\": {\n" +
-                    "    \"url\": \"" + fileName.toString().replace("\\", "\\\\") + "\"\n" +
-                    "  }\n" +
-                    "}");
+            provider.start(
+                    fsSettings,
+                    "{\n" + "  \"type\": \"local\",\n"
+                            + "  \"local\": {\n"
+                            + "    \"url\": \""
+                            + fileName.toString().replace("\\", "\\\\") + "\"\n" + "  }\n"
+                            + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);
@@ -79,7 +79,8 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
             } else {
                 assertThat(doc.getPath().getVirtual()).isEqualTo("/");
             }
-            assertThat(doc.getPath().getReal()).isEqualTo(fileName.toAbsolutePath().toString());
+            assertThat(doc.getPath().getReal())
+                    .isEqualTo(fileName.toAbsolutePath().toString());
         }
     }
 
@@ -92,12 +93,13 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(rootTmpDir.toString());
-            provider.start(fsSettings, "{\n" +
-                    "  \"type\": \"local\",\n" +
-                    "  \"local\": {\n" +
-                    "    \"url\": \"foo.txt\"\n" +
-                    "  }\n" +
-                    "}");
+            provider.start(
+                    fsSettings,
+                    "{\n" + "  \"type\": \"local\",\n"
+                            + "  \"local\": {\n"
+                            + "    \"url\": \"foo.txt\"\n"
+                            + "  }\n"
+                            + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).isEqualTo(text);
@@ -109,7 +111,8 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
             } else {
                 assertThat(doc.getPath().getVirtual()).isEqualTo("/");
             }
-            assertThat(doc.getPath().getReal()).isEqualTo(fileName.toAbsolutePath().toString());
+            assertThat(doc.getPath().getReal())
+                    .isEqualTo(fileName.toAbsolutePath().toString());
         }
     }
 
@@ -127,12 +130,13 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(rootDir.toString());
-            assertThatThrownBy(() -> provider.start(fsSettings, "{\n" +
-                    "  \"type\": \"local\",\n" +
-                    "  \"local\": {\n" +
-                    "    \"url\": \"" + fileName.toString().replace("\\", "\\\\") + "\"\n" +
-                    "  }\n" +
-                    "}"))
+            assertThatThrownBy(() -> provider.start(
+                            fsSettings,
+                            "{\n" + "  \"type\": \"local\",\n"
+                                    + "  \"local\": {\n"
+                                    + "    \"url\": \""
+                                    + fileName.toString().replace("\\", "\\\\") + "\"\n" + "  }\n"
+                                    + "}"))
                     .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                     .hasMessageContaining("is not within");
         }

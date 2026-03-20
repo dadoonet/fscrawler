@@ -19,18 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-/**
- * Provides utility methods to read and write metadata and settings files
- */
+/** Provides utility methods to read and write metadata and settings files */
 public class MetaFileHandler {
 
     private static final Logger logger = LogManager.getLogger();
@@ -44,6 +40,7 @@ public class MetaFileHandler {
 
     /**
      * Read a file in ~/.fscrawler/{subdir} dir
+     *
      * @param subdir subdir where we can read the file (null if we read in the root dir)
      * @param filename filename
      * @return The String UTF-8 content
@@ -60,6 +57,7 @@ public class MetaFileHandler {
 
     /**
      * Write a file in ~/.fscrawler/{subdir} dir
+     *
      * @param subdir subdir where we can read the file (null if we read in the root dir)
      * @param filename filename
      * @param content The String UTF-8 content to write
@@ -81,6 +79,7 @@ public class MetaFileHandler {
 
     /**
      * Remove a file from ~/.fscrawler/{subdir} dir
+     *
      * @param subdir subdir where we can read the file (null if we read in the root dir)
      * @param filename filename
      * @throws IOException in case of error while reading

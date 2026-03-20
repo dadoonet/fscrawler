@@ -19,19 +19,16 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-
-/**
- * Stores ACL hashes per document so we can detect ACL-only changes.
- */
+/** Stores ACL hashes per document so we can detect ACL-only changes. */
 public class FsAclsFileHandler extends MetaFileHandler {
 
     private static final String FILENAME = "_acl_cache.json";
@@ -42,7 +39,9 @@ public class FsAclsFileHandler extends MetaFileHandler {
 
     public Map<String, String> read(String jobName) throws IOException {
         try {
-            return prettyMapper.readValue(readFile(jobName, FILENAME), prettyMapper.getTypeFactory().constructMapType(HashMap.class, String.class, String.class));
+            return prettyMapper.readValue(
+                    readFile(jobName, FILENAME),
+                    prettyMapper.getTypeFactory().constructMapType(HashMap.class, String.class, String.class));
         } catch (NoSuchFileException e) {
             return new HashMap<>();
         }

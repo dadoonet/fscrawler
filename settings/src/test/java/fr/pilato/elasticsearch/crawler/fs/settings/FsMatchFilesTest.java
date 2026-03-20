@@ -19,21 +19,24 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.junit.Test;
-
-import java.util.ArrayList;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.isIndexable;
 import static fr.pilato.elasticsearch.crawler.fs.settings.Defaults.DEFAULT_EXCLUDED;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.util.ArrayList;
+import org.junit.Test;
+
 public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     @Test
     public void default_ignored_file() {
-        assertThat(isIndexable(false, "/~mydoc", new ArrayList<>(), DEFAULT_EXCLUDED)).isFalse();
-        assertThat(isIndexable(false, "/~", new ArrayList<>(), DEFAULT_EXCLUDED)).isFalse();
-        assertThat(isIndexable(false, "/adoc.doc", new ArrayList<>(), DEFAULT_EXCLUDED)).isTrue();
-        assertThat(isIndexable(false, "/mydoc~", new ArrayList<>(), DEFAULT_EXCLUDED)).isTrue();
+        assertThat(isIndexable(false, "/~mydoc", new ArrayList<>(), DEFAULT_EXCLUDED))
+                .isFalse();
+        assertThat(isIndexable(false, "/~", new ArrayList<>(), DEFAULT_EXCLUDED))
+                .isFalse();
+        assertThat(isIndexable(false, "/adoc.doc", new ArrayList<>(), DEFAULT_EXCLUDED))
+                .isTrue();
+        assertThat(isIndexable(false, "/mydoc~", new ArrayList<>(), DEFAULT_EXCLUDED))
+                .isTrue();
     }
 }

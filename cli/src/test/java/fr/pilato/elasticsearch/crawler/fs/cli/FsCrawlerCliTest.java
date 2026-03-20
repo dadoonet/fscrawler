@@ -19,6 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
@@ -29,25 +34,17 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Defaults;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-
-import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-
-/**
- * We want to test FSCrawler main app
- */
+/** We want to test FSCrawler main app */
 public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
@@ -104,7 +101,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).exists();
         assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).exists();
 
-        String[] args = { "--config_dir", metadataDir.toString(), "--loop", "0", "--restart", jobName };
+        String[] args = {"--config_dir", metadataDir.toString(), "--loop", "0", "--restart", jobName};
 
         FsCrawlerCli.main(args);
 
@@ -119,16 +116,15 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
         // Wrong indentation
-        Files.writeString(jobDir.resolve(SETTINGS_YAML),
-                """
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), """
                         name: "fscrawler_wrong_settings"
                         fs:
                           url: "/path/to/docs"
                          follow_symlinks: false
                         """);
         String[] args = {"--config_dir", metadataDir.toString(), "--loop", "1", jobName};
-        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
-                FsCrawlerCli.main(args));
+        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+                .isThrownBy(() -> FsCrawlerCli.main(args));
     }
 
     @Test
@@ -137,14 +133,13 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
-        Files.writeString(jobDir.resolve(SETTINGS_YAML),
-                """
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), """
                 name: "${MY_JOB_NAME}"
                 fs:
                   url: "${FSCRAWLER_FS_URL:=/tmp/test}"
                 """);
 
-        String[] args = { "--config_dir", metadataDir.toString(), jobName };
+        String[] args = {"--config_dir", metadataDir.toString(), jobName};
         // Create an environment variable
         System.setProperty("MY_JOB_NAME", "fscrawler_env_variables");
 
@@ -163,7 +158,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
 
-        String[] args = { "--config_dir", metadataDir.toString(), jobName };
+        String[] args = {"--config_dir", metadataDir.toString(), jobName};
         // Create an environment variable
         System.setProperty("FSCRAWLER_NAME", "fscrawler_env_variables_default");
         System.setProperty("FSCRAWLER_FS_URL", "/foo/bar");
@@ -182,15 +177,14 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         String jobName = "fscrawler_env_variables";
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
-        Files.writeString(jobDir.resolve(SETTINGS_YAML),
-                    """
+        Files.writeString(jobDir.resolve(SETTINGS_YAML), """
                     name: "${MY_JOB_NAME}"
                     fs:
                       url: "${FSCRAWLER_FS_URL:=/tmp/test}"
                     """);
         String[] args = {"--config_dir", metadataDir.toString(), jobName};
-        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class).isThrownBy(() ->
-                FsCrawlerCli.main(args));
+        assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
+                .isThrownBy(() -> FsCrawlerCli.main(args));
     }
 
     @Test
@@ -200,7 +194,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Files.createDirectories(jobDir);
         Files.writeString(jobDir.resolve(SETTINGS_YAML), "");
 
-        String[] args = { "--config_dir", metadataDir.toString(), jobName };
+        String[] args = {"--config_dir", metadataDir.toString(), jobName};
 
         assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
@@ -211,7 +205,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Files.createDirectories(jobDir);
         Files.writeString(jobDir.resolve(SETTINGS_YAML), "");
 
-        String[] args = { "--config_dir", metadataDir.toString() };
+        String[] args = {"--config_dir", metadataDir.toString()};
 
         assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
@@ -219,7 +213,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     @Test
     public void testSetupJob() throws Exception {
         String jobName = "fscrawler_setup_job";
-        String[] args = { "--config_dir", metadataDir.toString(), "--setup", jobName };
+        String[] args = {"--config_dir", metadataDir.toString(), "--setup", jobName};
         FsCrawlerCli.main(args);
 
         Path jobDir = metadataDir.resolve(jobName);
@@ -229,12 +223,12 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void testListJobs() throws Exception {
-        String[] argsJob1 = { "--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_1" };
+        String[] argsJob1 = {"--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_1"};
         FsCrawlerCli.main(argsJob1);
-        String[] argsJob2 = { "--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_2" };
+        String[] argsJob2 = {"--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_2"};
         FsCrawlerCli.main(argsJob2);
 
-        String[] argsListJobs = { "--config_dir", metadataDir.toString(), "--list" };
+        String[] argsListJobs = {"--config_dir", metadataDir.toString(), "--list"};
         assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(argsListJobs));
     }
 
@@ -265,7 +259,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).exists();
         assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME)).doesNotExist();
 
-        String[] args = { "--config_dir", metadataDir.toString(), "--loop", "0", jobName };
+        String[] args = {"--config_dir", metadataDir.toString(), "--loop", "0", jobName};
         FsCrawlerCli.main(args);
 
         // Both files should be cleaned

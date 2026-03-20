@@ -19,23 +19,20 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.settings.*;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader.SETTINGS_YAML;
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * We want to test FSCrawler main app
- */
+/** We want to test FSCrawler main app */
 public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
@@ -55,11 +52,11 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve("modify_settings_server_ftp");
         Files.createDirectories(jobDir);
 
-        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_server_ftp\"\n" +
-                        "server:\n" +
-                        "  hostname: \"mynode.mydomain.com\"\n" +
-                        "  protocol: \"ftp\"\n"
-                );
+        Files.writeString(
+                jobDir.resolve(SETTINGS_YAML),
+                "name: \"modify_settings_server_ftp\"\n" + "server:\n"
+                        + "  hostname: \"mynode.mydomain.com\"\n"
+                        + "  protocol: \"ftp\"\n");
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ftp");
         assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.FTP_PORT);
         assertThat(settings.getServer().getUsername()).isEqualTo("anonymous");
@@ -71,11 +68,11 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve("modify_settings_server_ssh");
         Files.createDirectories(jobDir);
 
-        Files.writeString(jobDir.resolve(SETTINGS_YAML), "name: \"modify_settings_server_ssh\"\n" +
-                        "server:\n" +
-                        "  hostname: \"mynode.mydomain.com\"\n" +
-                        "  protocol: \"ssh\""
-                );
+        Files.writeString(
+                jobDir.resolve(SETTINGS_YAML),
+                "name: \"modify_settings_server_ssh\"\n" + "server:\n"
+                        + "  hostname: \"mynode.mydomain.com\"\n"
+                        + "  protocol: \"ssh\"");
 
         logger.info("{}", Files.readString(jobDir.resolve(SETTINGS_YAML)));
 

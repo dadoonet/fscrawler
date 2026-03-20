@@ -19,31 +19,28 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.assertj.core.api.Assumptions.assumeThat;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
-/**
- * Test crawler with unparsable files
- */
+/** Test crawler with unparsable files */
 public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**
-     * Test for #105: <a href="https://github.com/dadoonet/fscrawler/issues/105">https://github.com/dadoonet/fscrawler/issues/105</a>
+     * Test for #105: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/105">https://github.com/dadoonet/fscrawler/issues/105</a>
      */
     @Test
     public void unparsable() throws Exception {
@@ -54,7 +51,9 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/362">https://github.com/dadoonet/fscrawler/issues/362</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/362">https://github.com/dadoonet/fscrawler/issues/362</a>
+     *
      * @throws Exception In case something is wrong
      */
     @Test
@@ -62,8 +61,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         // We change the attributes of the file
         logger.info(" ---> Changing attributes for file roottxtfile.txt");
 
-        boolean isPosix =
-                FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+        boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
 
         assumeThat(isPosix)
                 .describedAs("This test can only run on Posix systems")
@@ -77,6 +75,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
         crawler = startCrawler(fsSettings);
 
         // We should have one doc first
-        countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, currentTestResourceDir);
     }
 }

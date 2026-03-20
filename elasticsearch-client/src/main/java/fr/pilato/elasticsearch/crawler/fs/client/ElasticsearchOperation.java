@@ -57,9 +57,8 @@ public abstract class ElasticsearchOperation implements FsCrawlerOperation<Elast
 
     @Override
     public String toString() {
-        return "ElasticsearchOperation{" + "operation=" + operation +
-                ", index='" + index + '\'' +
-                ", id='" + id + '\'' +
-                '}';
+        return "ElasticsearchOperation{" + "operation=" + operation + ", index='"
+                + index + '\'' + ", id='"
+                + id + '\'' + '}';
     }
 }

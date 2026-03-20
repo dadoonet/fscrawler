@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -30,14 +32,11 @@ import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerManagementService {
 
@@ -77,8 +76,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public Collection<String> getFileDirectory(String path)
-            throws Exception {
+    public Collection<String> getFileDirectory(String path) throws Exception {
 
         if (logger.isTraceEnabled()) {
             logger.trace("Querying elasticsearch for files in dir [path.root:{}]", SignTool.sign(path));
@@ -89,31 +87,33 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
         try {
             // This call is just to avoid errors if the index is not fully allocated yet
             client.waitForHealthyIndex(settings.getElasticsearch().getIndex());
-            ESSearchResponse response = client.search(
-                    new ESSearchRequest()
-                            .withIndex(settings.getElasticsearch().getIndex())
-                            .withSize(REQUEST_SIZE)
-                            .addStoredField("file.filename")
-                            .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
+            ESSearchResponse response = client.search(new ESSearchRequest()
+                    .withIndex(settings.getElasticsearch().getIndex())
+                    .withSize(REQUEST_SIZE)
+                    .addStoredField("file.filename")
+                    .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
             if (response.getHits() != null) {
                 for (ESSearchHit hit : response.getHits()) {
                     String name;
-                    if (hit.getStoredFields() != null
-                            && hit.getStoredFields().get("file.filename") != null) {
+                    if (hit.getStoredFields() != null && hit.getStoredFields().get("file.filename") != null) {
                         // In case someone disabled _source which is not recommended
                         name = hit.getStoredFields().get("file.filename").get(0);
                     } else {
                         // Houston, we have a problem ! We can't get the old files from ES
-                        logger.warn("Can't find stored field name to check existing filenames in path [{}]. " +
-                                "Please set store: true on field [file.filename]", path);
-                        throw new RuntimeException("Mapping is incorrect: please set stored: true on field [file.filename].");
+                        logger.warn(
+                                "Can't find stored field name to check existing filenames in path [{}]. "
+                                        + "Please set store: true on field [file.filename]",
+                                path);
+                        throw new RuntimeException(
+                                "Mapping is incorrect: please set stored: true on field [file.filename].");
                     }
                     files.add(name);
                 }
             }
         } catch (ElasticsearchClientException e) {
-            logger.debug("Index [{}] doesn't exist.", settings.getElasticsearch().getIndex());
+            logger.debug(
+                    "Index [{}] doesn't exist.", settings.getElasticsearch().getIndex());
         }
 
         logger.trace("We found: {}", files);
@@ -128,11 +128,10 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
         try {
             // This call is just to avoid errors if the index is not fully allocated yet
             client.waitForHealthyIndex(settings.getElasticsearch().getIndexFolder());
-            ESSearchResponse response = client.search(
-                    new ESSearchRequest()
-                            .withIndex(settings.getElasticsearch().getIndexFolder())
-                            .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                            .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
+            ESSearchResponse response = client.search(new ESSearchRequest()
+                    .withIndex(settings.getElasticsearch().getIndexFolder())
+                    .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                    .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
             if (response.getHits() != null) {
                 for (ESSearchHit hit : response.getHits()) {
@@ -140,7 +139,9 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                 }
             }
         } catch (ElasticsearchClientException e) {
-            logger.debug("Index [{}] doesn't exist yet. We just return an empty list.", settings.getElasticsearch().getIndexFolder());
+            logger.debug(
+                    "Index [{}] doesn't exist yet. We just return an empty list.",
+                    settings.getElasticsearch().getIndexFolder());
         }
 
         return files;

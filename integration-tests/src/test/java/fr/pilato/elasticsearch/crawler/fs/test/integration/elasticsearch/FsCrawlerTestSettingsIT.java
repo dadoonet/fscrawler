@@ -19,6 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -26,15 +28,12 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-
-/**
- * Test various crawler settings
- */
+/** Test various crawler settings */
 public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test for #83: <a href="https://github.com/dadoonet/fscrawler/issues/83">https://github.com/dadoonet/fscrawler/issues/83</a>
+     * Test for #83: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/83">https://github.com/dadoonet/fscrawler/issues/83</a>
      */
     @Test
     public void time_value() throws Exception {

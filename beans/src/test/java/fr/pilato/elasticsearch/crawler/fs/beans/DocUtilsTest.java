@@ -1,16 +1,15 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
+import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.prettyPrint;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-
-import static fr.pilato.elasticsearch.crawler.fs.beans.DocUtils.prettyPrint;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
 public class DocUtilsTest {
     private static final Logger logger = LogManager.getLogger(DocUtilsTest.class);
@@ -38,7 +37,8 @@ public class DocUtilsTest {
 
     @Test
     public void mergeDocsWithEmptyJsonFile() {
-        Doc mergedDoc = DocUtils.getMergedDoc(getDocSample(), "empty.json", new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)));
+        Doc mergedDoc = DocUtils.getMergedDoc(
+                getDocSample(), "empty.json", new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)));
         logger.trace("Merged doc: {}", prettyPrint(mergedDoc));
 
         assertThat(mergedDoc.getContent()).isEqualTo("This is a test");

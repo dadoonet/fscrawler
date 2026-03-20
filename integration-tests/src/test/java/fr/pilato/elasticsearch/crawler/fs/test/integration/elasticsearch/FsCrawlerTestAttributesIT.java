@@ -19,6 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assume.assumeTrue;
+
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -29,8 +37,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,25 +52,17 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assume.assumeTrue;
-
-/**
- * Test attributes crawler settings
- */
+/** Test attributes crawler settings */
 public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
     @Test
     public void attributes() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAttributesSupport(true);
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             DocumentContext document = parseJsonAsDocumentContext(hit.getSource());
             assertThat((String) document.read("$.attributes.owner")).isNotEmpty();
@@ -99,11 +97,17 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
             }
 
             if (OsValidator.WINDOWS) {
-                assertThat(aclEntries).as("ACL metadata should be collected on Windows").isNotNull().isNotEmpty();
-                assertThat((String) document.read("$.attributes.acl[0].principal")).isNotBlank();
+                assertThat(aclEntries)
+                        .as("ACL metadata should be collected on Windows")
+                        .isNotNull()
+                        .isNotEmpty();
+                assertThat((String) document.read("$.attributes.acl[0].principal"))
+                        .isNotBlank();
                 assertThat((String) document.read("$.attributes.acl[0].type")).isNotBlank();
             } else {
-                assertThat(aclEntries).as("ACL metadata should not be present when the platform does not expose ACLs").isNullOrEmpty();
+                assertThat(aclEntries)
+                        .as("ACL metadata should not be present when the platform does not expose ACLs")
+                        .isNullOrEmpty();
             }
         }
     }

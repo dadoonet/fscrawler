@@ -19,16 +19,15 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -53,6 +52,7 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
 
     /**
      * We check that the date which is generated on disk does not change when we read it again
+     *
      * @throws IOException In case of serialization problem
      */
     @Test

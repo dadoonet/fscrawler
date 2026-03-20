@@ -30,14 +30,13 @@ import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.errors.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.pf4j.Extension;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.pf4j.Extension;
 
 public class FsS3Plugin extends FsCrawlerPlugin {
     private static final Logger logger = LogManager.getLogger();
@@ -111,25 +110,23 @@ public class FsS3Plugin extends FsCrawlerPlugin {
         @Override
         public InputStream readFile() throws FsCrawlerPluginException {
             logger.debug("Reading S3 file [{}] from bucket [{}/{}]", object, url, bucket);
-            GetObjectArgs getObjectArgs = GetObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(object)
-                    .build();
+            GetObjectArgs getObjectArgs =
+                    GetObjectArgs.builder().bucket(bucket).object(object).build();
             try {
                 return minioClient.getObject(getObjectArgs);
             } catch (MinioException | IOException | InvalidKeyException | NoSuchAlgorithmException e) {
                 logger.debug("Failed to read file", e);
-                throw new FsCrawlerPluginException("IOException caught while getting object "
-                        + object + " from bucket " + bucket + ":" + e.getMessage(), e);
+                throw new FsCrawlerPluginException(
+                        "IOException caught while getting object " + object + " from bucket " + bucket + ":"
+                                + e.getMessage(),
+                        e);
             }
         }
 
         private long getFilesize() throws FsCrawlerPluginException {
             logger.debug("Reading S3 filesize for file [{}] from bucket [{}/{}]", object, url, bucket);
-            GetObjectArgs getObjectArgs = GetObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(object)
-                    .build();
+            GetObjectArgs getObjectArgs =
+                    GetObjectArgs.builder().bucket(bucket).object(object).build();
             try (GetObjectResponse response = minioClient.getObject(getObjectArgs)) {
                 logger.trace("S3 response headers [{}]", response.headers());
                 return Long.parseLong(response.headers().get("Content-Length"));
@@ -137,8 +134,8 @@ public class FsS3Plugin extends FsCrawlerPlugin {
                 logger.debug("Failed to read file", e);
                 throw new FsCrawlerIllegalConfigurationException(e.getMessage());
             } catch (MinioException | IOException e) {
-                throw new FsCrawlerPluginException("Can not get file size for object "
-                        + object + " of bucket " + bucket, e);
+                throw new FsCrawlerPluginException(
+                        "Can not get file size for object " + object + " of bucket " + bucket, e);
             }
         }
 

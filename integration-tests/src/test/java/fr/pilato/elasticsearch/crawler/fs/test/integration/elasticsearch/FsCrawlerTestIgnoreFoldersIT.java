@@ -19,24 +19,24 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-/**
- * Test index_folders crawler setting
- */
+/** Test index_folders crawler setting */
 public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for #155: <a href="https://github.com/dadoonet/fscrawler/issues/155">https://github.com/dadoonet/fscrawler/issues/155</a> : New option: do not index folders
+     * Test case for #155: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/155">https://github.com/dadoonet/fscrawler/issues/155</a> :
+     * New option: do not index folders
      */
     @Test
     public void ignore_folders() throws Exception {
@@ -49,7 +49,9 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
 
         // The folder index should not exist
         assertThatThrownBy(() -> client.search(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_FOLDER)))
-                .isInstanceOfSatisfying(ElasticsearchClientException.class, e ->
-                        assertThat(e.getMessage()).isEqualTo("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist."));
+                .isInstanceOfSatisfying(
+                        ElasticsearchClientException.class,
+                        e -> assertThat(e.getMessage())
+                                .isEqualTo("index " + getCrawlerName() + INDEX_SUFFIX_FOLDER + " does not exist."));
     }
 }

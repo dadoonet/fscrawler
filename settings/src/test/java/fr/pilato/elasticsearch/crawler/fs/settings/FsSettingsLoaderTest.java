@@ -1,17 +1,16 @@
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
 
 public class FsSettingsLoaderTest {
 
@@ -194,7 +193,9 @@ public class FsSettingsLoaderTest {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
+            assertThat(settings.getFs().getOcr())
+                    .as("Checking Ocr")
+                    .isEqualTo(expected.getFs().getOcr());
         }
         assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
         assertThat(settings.getServer()).as("Checking Server").isEqualTo(expected.getServer());

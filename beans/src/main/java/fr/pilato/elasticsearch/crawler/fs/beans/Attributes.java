@@ -22,9 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
 import java.util.List;
 
-/**
- * Represents additional file attributes.
- */
+/** Represents additional file attributes. */
 public class Attributes {
 
     private String owner;

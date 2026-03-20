@@ -19,22 +19,19 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerMetadataTestCase;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.junit.Test;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * We want to test some utilities
- */
+/** We want to test some utilities */
 public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test

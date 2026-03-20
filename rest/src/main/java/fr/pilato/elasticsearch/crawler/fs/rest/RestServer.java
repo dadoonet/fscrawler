@@ -24,6 +24,7 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
+import java.net.URI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -31,8 +32,6 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-
-import java.net.URI;
 
 public class RestServer implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
@@ -45,17 +44,19 @@ public class RestServer implements AutoCloseable {
 
     /**
      * Create the Rest Server, but it does not start it.
+     *
      * @param settings FSCrawler settings
      * @param managementService The management service
      * @param documentService The document service
      * @param pluginsManager The plugins manager instance
      * @param fsParser The file system parser (for crawler control)
      */
-    public RestServer(FsSettings settings,
-                      FsCrawlerManagementService managementService,
-                      FsCrawlerDocumentService documentService,
-                      FsCrawlerPluginsManager pluginsManager,
-                      FsParser fsParser) {
+    public RestServer(
+            FsSettings settings,
+            FsCrawlerManagementService managementService,
+            FsCrawlerDocumentService documentService,
+            FsCrawlerPluginsManager pluginsManager,
+            FsParser fsParser) {
         this.settings = settings;
         this.managementService = managementService;
         this.documentService = documentService;
@@ -63,9 +64,7 @@ public class RestServer implements AutoCloseable {
         this.fsParser = fsParser;
     }
 
-    /**
-     * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
-     */
+    /** Starts Grizzly HTTP server exposing JAX-RS resources defined in this application. */
     public void start() {
         // We create the service only one
         if (httpServer == null) {
@@ -84,8 +83,10 @@ public class RestServer implements AutoCloseable {
 
             // create and start a new instance of grizzly http server
             // exposing the Jersey application at BASE_URI
-            httpServer = GrizzlyHttpServerFactory.createHttpServer(URI.create(settings.getRest().getUrl()), rc);
-            logger.info("FSCrawler Rest service started on [{}]", settings.getRest().getUrl());
+            httpServer = GrizzlyHttpServerFactory.createHttpServer(
+                    URI.create(settings.getRest().getUrl()), rc);
+            logger.info(
+                    "FSCrawler Rest service started on [{}]", settings.getRest().getUrl());
         } else {
             logger.warn("FSCrawler Rest service already started. This might indicate a bug.");
         }

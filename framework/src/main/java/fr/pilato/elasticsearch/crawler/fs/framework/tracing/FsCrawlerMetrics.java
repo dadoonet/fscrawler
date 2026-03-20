@@ -27,19 +27,19 @@ import io.opentelemetry.api.metrics.LongHistogram;
 
 /**
  * OTel metrics for FSCrawler functional counters.
- * <p>
- * Emits per-run metrics that complement the {@code fscrawler.crawl} span attributes:
+ *
+ * <p>Emits per-run metrics that complement the {@code fscrawler.crawl} span attributes:
+ *
  * <ul>
- *   <li>{@code fscrawler.docs.added}   — documents indexed during a run</li>
- *   <li>{@code fscrawler.docs.deleted} — documents deleted during a run</li>
- *   <li>{@code fscrawler.scan.duration} — wall-clock duration of a run (ms)</li>
+ *   <li>{@code fscrawler.docs.added} — documents indexed during a run
+ *   <li>{@code fscrawler.docs.deleted} — documents deleted during a run
+ *   <li>{@code fscrawler.scan.duration} — wall-clock duration of a run (ms)
  * </ul>
+ *
  * All instruments carry a {@code job.name} attribute for per-job breakdown.
- * </p>
- * <p>
- * Uses {@link GlobalOpenTelemetry} so that the noop implementation is used
- * when no OTel agent is present (zero overhead).
- * </p>
+ *
+ * <p>Uses {@link GlobalOpenTelemetry} so that the noop implementation is used when no OTel agent is present (zero
+ * overhead).
  */
 public final class FsCrawlerMetrics {
 
@@ -79,10 +79,10 @@ public final class FsCrawlerMetrics {
     /**
      * Records the outcome of a completed crawl run as OTel metrics.
      *
-     * @param jobName     FSCrawler job name (used as {@code job.name} attribute)
-     * @param docsAdded   number of documents indexed during this run
+     * @param jobName FSCrawler job name (used as {@code job.name} attribute)
+     * @param docsAdded number of documents indexed during this run
      * @param docsDeleted number of documents deleted during this run
-     * @param durationMs  wall-clock duration of the run in milliseconds
+     * @param durationMs wall-clock duration of the run in milliseconds
      */
     public static void recordScanCompletion(String jobName, int docsAdded, int docsDeleted, long durationMs) {
         if (docsAddedCounter == null) {

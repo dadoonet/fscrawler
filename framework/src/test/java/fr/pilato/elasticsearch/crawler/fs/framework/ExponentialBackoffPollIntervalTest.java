@@ -19,12 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import org.awaitility.pollinterval.PollInterval;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.awaitility.pollinterval.PollInterval;
+import org.junit.Test;
 
 public class ExponentialBackoffPollIntervalTest {
 

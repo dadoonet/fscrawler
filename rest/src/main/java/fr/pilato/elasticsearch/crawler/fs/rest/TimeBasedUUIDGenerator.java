@@ -29,9 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * This code is an adaptation from elasticsearch codebase.
  *
- * These are essentially flake ids (<a href="http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang">http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang</a>) but
- *  we use 6 (not 8) bytes for timestamp, and use 3 (not 2) bytes for sequence number. */
-
+ * <p>These are essentially flake ids (<a
+ * href="http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang">http://boundary.com/blog/2012/01/12/flake-a-decentralized-k-ordered-unique-id-generator-in-erlang</a>)
+ * but we use 6 (not 8) bytes for timestamp, and use 3 (not 2) bytes for sequence number.
+ */
 public class TimeBasedUUIDGenerator {
 
     private static final SecureRandom INSTANCE = new SecureRandom();
@@ -95,7 +96,8 @@ public class TimeBasedUUIDGenerator {
         return dummy;
     }
 
-    // We only use bottom 3 bytes for the sequence number.  Paranoia: init with random int so that if JVM/OS/machine goes down, clock slips
+    // We only use bottom 3 bytes for the sequence number.  Paranoia: init with random int so that if JVM/OS/machine
+    // goes down, clock slips
     // backwards, and JVM comes back up, we are less likely to be on the same sequenceNumber at the same time:
     private final AtomicInteger sequenceNumber = new AtomicInteger(INSTANCE.nextInt());
 
@@ -110,23 +112,26 @@ public class TimeBasedUUIDGenerator {
 
     /** Puts the lower numberOfLongBytes from l into the array, starting index pos. */
     private static void putLong(byte[] array, long l, int pos, int numberOfLongBytes) {
-        for (int i=0; i<numberOfLongBytes; ++i) {
-            array[pos+numberOfLongBytes-i-1] = (byte) (l >>> (i*8));
+        for (int i = 0; i < numberOfLongBytes; ++i) {
+            array[pos + numberOfLongBytes - i - 1] = (byte) (l >>> (i * 8));
         }
     }
 
-    public String getBase64UUID()  {
+    public String getBase64UUID() {
         final int sequenceId = sequenceNumber.incrementAndGet() & 0xffffff;
         long timestamp = System.currentTimeMillis();
 
         synchronized (this) {
-            // Don't let timestamp go backwards, at least "on our watch" (while this JVM is running).  We are still vulnerable if we are
-            // shut down, clock goes backwards, and we restart... for this we randomize the sequenceNumber on init to decrease chance of
+            // Don't let timestamp go backwards, at least "on our watch" (while this JVM is running).  We are still
+            // vulnerable if we are
+            // shut down, clock goes backwards, and we restart... for this we randomize the sequenceNumber on init to
+            // decrease chance of
             // collision:
             timestamp = Math.max(lastTimestamp, timestamp);
 
             if (sequenceId == 0) {
-                // Always force the clock to increment whenever sequence number is 0, in case we have a long time-slip backwards:
+                // Always force the clock to increment whenever sequence number is 0, in case we have a long time-slip
+                // backwards:
                 timestamp++;
             }
 

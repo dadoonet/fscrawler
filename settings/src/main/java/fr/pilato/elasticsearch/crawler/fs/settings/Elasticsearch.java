@@ -19,68 +19,95 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import static fr.pilato.elasticsearch.crawler.fs.settings.Defaults.ELASTICSEARCH_URL_DEFAULT;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.List;
 import java.util.Objects;
-
-import static fr.pilato.elasticsearch.crawler.fs.settings.Defaults.ELASTICSEARCH_URL_DEFAULT;
+import org.github.gestalt.config.annotations.Config;
 
 public class Elasticsearch {
 
     @Config(defaultVal = ELASTICSEARCH_URL_DEFAULT)
-    @Nullable private List<String> urls;
+    @Nullable
+    private List<String> urls;
+
     @Config
-    @Nullable private String index;
+    @Nullable
+    private String index;
+
     @Config
-    @Nullable private String indexFolder;
+    @Nullable
+    private String indexFolder;
+
     @Config(defaultVal = "100")
-    @Nullable private Integer bulkSize;
+    @Nullable
+    private Integer bulkSize;
+
     @Config(defaultVal = "5s")
-    @Nullable private TimeValue flushInterval;
+    @Nullable
+    private TimeValue flushInterval;
+
     @Config(defaultVal = "10mb")
-    @Nullable private ByteSizeValue byteSize;
+    @Nullable
+    private ByteSizeValue byteSize;
+
     @Config
-    @Nullable private String apiKey;
+    @Nullable
+    private String apiKey;
 
     /**
      * Username
+     *
      * @deprecated Use apiKey or accessToken instead
      */
     @Config
     @Deprecated
-    @Nullable private String username;
+    @Nullable
+    private String username;
     /**
      * Password
+     *
      * @deprecated Use apiKey or accessToken instead
      */
     @Config
     @Deprecated
     @JsonIgnore
-    @Nullable private String password;
+    @Nullable
+    private String password;
+
     @Config
-    @Nullable private String caCertificate;
+    @Nullable
+    private String caCertificate;
+
     @Config
-    @Nullable private String pipeline;
+    @Nullable
+    private String pipeline;
+
     @Config
-    @Nullable private String pathPrefix;
+    @Nullable
+    private String pathPrefix;
+
     @Config(defaultVal = "true")
     private boolean sslVerification;
+
     @Config(defaultVal = "true")
     private boolean pushTemplates;
+
     @Config(defaultVal = "false")
     private boolean forcePushTemplates;
+
     @Config(defaultVal = "true")
     private boolean semanticSearch;
 
     @Deprecated
     @Config
-    @Nullable private List<ServerUrl> nodes;
+    @Nullable
+    private List<ServerUrl> nodes;
 
     @Nullable
     public List<String> getUrls() {
@@ -145,6 +172,7 @@ public class Elasticsearch {
 
     /**
      * Provide the username to connect to Elasticsearch
+     *
      * @param username The username
      * @deprecated Use {@link #setApiKey(String)} instead
      */
@@ -160,6 +188,7 @@ public class Elasticsearch {
 
     /**
      * Provide the password to connect to Elasticsearch
+     *
      * @param password The password
      * @deprecated Use {@link #setApiKey(String)} instead
      */
@@ -246,7 +275,6 @@ public class Elasticsearch {
         if (!Objects.equals(pushTemplates, that.pushTemplates)) return false;
         if (!Objects.equals(forcePushTemplates, that.forcePushTemplates)) return false;
         return Objects.equals(flushInterval, that.flushInterval);
-
     }
 
     @Override
@@ -261,29 +289,28 @@ public class Elasticsearch {
         result = 31 * result + bulkSize;
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         result = 31 * result + (caCertificate != null ? caCertificate.hashCode() : 0);
-        result = 31 * result + (sslVerification? 1: 0);
-        result = 31 * result + (pushTemplates? 1: 0);
-        result = 31 * result + (forcePushTemplates? 1: 0);
+        result = 31 * result + (sslVerification ? 1 : 0);
+        result = 31 * result + (pushTemplates ? 1 : 0);
+        result = 31 * result + (forcePushTemplates ? 1 : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "Elasticsearch{" +
-                "urls=" + urls +
-                ", index='" + index + '\'' +
-                ", indexFolder='" + indexFolder + '\'' +
-                ", bulkSize=" + bulkSize +
-                ", flushInterval=" + flushInterval +
-                ", byteSize=" + byteSize +
-                ", apiKey='" + apiKey + '\'' +
-                ", username='" + username + '\'' +
-                ", pipeline='" + pipeline + '\'' +
-                ", pathPrefix='" + pathPrefix + '\'' +
-                ", sslVerification=" + sslVerification +
-                ", caCertificate='" + caCertificate + '\'' +
-                ", pushTemplates=" + pushTemplates +
-                ", forcePushTemplates=" + forcePushTemplates +
-                '}';
+        return "Elasticsearch{" + "urls="
+                + urls + ", index='"
+                + index + '\'' + ", indexFolder='"
+                + indexFolder + '\'' + ", bulkSize="
+                + bulkSize + ", flushInterval="
+                + flushInterval + ", byteSize="
+                + byteSize + ", apiKey='"
+                + apiKey + '\'' + ", username='"
+                + username + '\'' + ", pipeline='"
+                + pipeline + '\'' + ", pathPrefix='"
+                + pathPrefix + '\'' + ", sslVerification="
+                + sslVerification + ", caCertificate='"
+                + caCertificate + '\'' + ", pushTemplates="
+                + pushTemplates + ", forcePushTemplates="
+                + forcePushTemplates + '}';
     }
 }

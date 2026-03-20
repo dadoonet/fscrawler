@@ -44,5 +44,4 @@ public final class ESRangeQuery extends ESQuery {
     public Integer getLt() {
         return lt;
     }
-
 }

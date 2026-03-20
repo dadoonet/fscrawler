@@ -18,12 +18,22 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 // SshTestHelper is in the same package
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.sshd.server.SshServer;
@@ -36,17 +46,6 @@ import org.assertj.core.groups.Tuple;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.Collections;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 
 public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -110,7 +109,8 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         SftpSubsystemFactory factory = new SftpSubsystemFactory.Builder()
                 .withFileSystemAccessor(new SftpFileSystemAccessor() {
                     @Override
-                    public Path resolveLocalFilePath(SftpSubsystemProxy subsystem, Path rootDir, String remotePath) throws InvalidPathException {
+                    public Path resolveLocalFilePath(SftpSubsystemProxy subsystem, Path rootDir, String remotePath)
+                            throws InvalidPathException {
                         String path = remotePath;
                         if (remotePath.startsWith("/")) {
                             path = remotePath.substring(1);
@@ -126,8 +126,8 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         sshd = SshServer.setUpDefaultServer();
         sshd.setHost("localhost");
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(rootTmpDir.resolve("host.ser")));
-        sshd.setPasswordAuthenticator((username, password, session) ->
-                SSH_USERNAME.equals(username) && SSH_PASSWORD.equals(password));
+        sshd.setPasswordAuthenticator(
+                (username, password, session) -> SSH_USERNAME.equals(username) && SSH_PASSWORD.equals(password));
         sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(rootTmpDir.resolve("public.key")));
         sshd.setSubsystemFactories(Collections.singletonList(factory));
         sshd.start();
@@ -161,21 +161,49 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
             assertThat(sshPlugin.exists("/ThisPathDoesNotExist")).isFalse();
 
             testFilesInDir(sshPlugin, "/ThisPathDoesNotExist");
-            testFilesInDir(sshPlugin, "/",
+            testFilesInDir(
+                    sshPlugin,
+                    "/",
                     tuple(false, true, "nested", "", "/", "/nested", 0L, 16877, "0", "0"),
-                    tuple(false, true,"permission", "", "/", "/permission", 0L, 16877, "0", "0"),
-                    tuple(false, true,"subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 16877, "0", "0"),
+                    tuple(false, true, "permission", "", "/", "/permission", 0L, 16877, "0", "0"),
+                    tuple(false, true, "subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 16877, "0", "0"),
                     tuple(true, false, "testfile.txt", "txt", "/", "/testfile.txt", 15L, 33188, "0", "0"));
-            testFilesInDir(sshPlugin, "/nested",
-                    tuple(false, true,"buzz", "", "/nested", "/nested/buzz", 0L, 16877, "0", "0"),
+            testFilesInDir(
+                    sshPlugin,
+                    "/nested",
+                    tuple(false, true, "buzz", "", "/nested", "/nested/buzz", 0L, 16877, "0", "0"),
                     tuple(true, false, "foo.txt", "txt", "/nested", "/nested/foo.txt", 24L, 33188, "0", "0"),
                     tuple(true, false, "bar.txt", "txt", "/nested", "/nested/bar.txt", 8L, 33188, "0", "0"));
-            testFilesInDir(sshPlugin, "/permission",
+            testFilesInDir(
+                    sshPlugin,
+                    "/permission",
                     tuple(true, false, "all.txt", "txt", "/permission", "/permission/all.txt", 3L, 33279, "0", "0"),
                     tuple(true, false, "none.txt", "txt", "/permission", "/permission/none.txt", 3L, 32768, "0", "0"));
-            testFilesInDir(sshPlugin, "/subdir_with_space ",
-                    tuple(true, false, "hello.txt", "txt", "/subdir_with_space ", "/subdir_with_space /hello.txt", 33L, 33188, "0", "0"),
-                    tuple(true, false, "world.txt", "txt", "/subdir_with_space ", "/subdir_with_space /world.txt", 33L, 33188, "0", "0"));
+            testFilesInDir(
+                    sshPlugin,
+                    "/subdir_with_space ",
+                    tuple(
+                            true,
+                            false,
+                            "hello.txt",
+                            "txt",
+                            "/subdir_with_space ",
+                            "/subdir_with_space /hello.txt",
+                            33L,
+                            33188,
+                            "0",
+                            "0"),
+                    tuple(
+                            true,
+                            false,
+                            "world.txt",
+                            "txt",
+                            "/subdir_with_space ",
+                            "/subdir_with_space /world.txt",
+                            33L,
+                            33188,
+                            "0",
+                            "0"));
         } finally {
             sshPlugin.closeConnection();
         }
@@ -191,7 +219,8 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         assertThat(plugin.exists(path)).isEqualTo(values.length > 0);
         Collection<FileAbstractModel> files = plugin.getFiles(path);
         assertThat(files).hasSize(values.length);
-        assertThat(files).extracting(
+        assertThat(files)
+                .extracting(
                         FileAbstractModel::isFile,
                         FileAbstractModel::isDirectory,
                         FileAbstractModel::getName,

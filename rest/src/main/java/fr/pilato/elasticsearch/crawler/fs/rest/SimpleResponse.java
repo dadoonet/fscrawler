@@ -19,9 +19,7 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-/**
- * Simple response for operations
- */
+/** Simple response for operations */
 public class SimpleResponse extends RestResponse {
 
     public SimpleResponse() {

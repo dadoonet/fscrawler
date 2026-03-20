@@ -23,9 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Represents a single Access Control List entry for a file.
- */
+/** Represents a single Access Control List entry for a file. */
 public class FileAcl {
 
     private String principal;

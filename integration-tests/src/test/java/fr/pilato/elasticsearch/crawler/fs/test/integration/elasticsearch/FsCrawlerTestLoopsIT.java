@@ -19,26 +19,25 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
-import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
-import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.junit.Test;
-
-import java.time.Duration;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-/**
- * Test loop crawler settings
- */
+import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.time.Duration;
+import org.junit.Test;
+
+/** Test loop crawler settings */
 public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
+     * Test case for #227: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> :
+     * Add support for run only once
      */
     @Test
     public void single_loop() throws Exception {
@@ -48,8 +47,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Make sure that we wait enough for the crawler to be closed
-        await()
-                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+        await().pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .atMost(10, SECONDS)
                 .until(() -> crawler.getFsParser().isClosed());
 
@@ -57,7 +55,9 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for #227: <a href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> : Add support for run only once
+     * Test case for #227: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/227">https://github.com/dadoonet/fscrawler/issues/227</a> :
+     * Add support for run only once
      */
     @Test
     public void two_loops() throws Exception {
@@ -67,8 +67,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
 
         // Make sure that we wait enough for the crawler to be closed
-        await()
-                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+        await().pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .atMost(10, SECONDS)
                 .until(() -> crawler.getFsParser().isClosed());
 

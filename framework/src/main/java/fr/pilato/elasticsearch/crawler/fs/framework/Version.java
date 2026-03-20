@@ -19,9 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import java.util.Properties;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.readPropertiesFromClassLoader;
+
+import java.util.Properties;
 
 public class Version {
     private static final String FSCRAWLER_PROPERTIES = "fscrawler.properties";

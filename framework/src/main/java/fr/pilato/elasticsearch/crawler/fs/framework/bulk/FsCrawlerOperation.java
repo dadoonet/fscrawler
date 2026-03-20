@@ -19,5 +19,4 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-public interface FsCrawlerOperation<T extends FsCrawlerOperation<T>> extends Comparable<T> {
-}
+public interface FsCrawlerOperation<T extends FsCrawlerOperation<T>> extends Comparable<T> {}

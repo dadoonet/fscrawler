@@ -19,32 +19,20 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-/**
- * Represents the state of the crawler
- */
+/** Represents the state of the crawler */
 public enum CrawlerState {
-    /**
-     * The crawler is currently running and processing files
-     */
+    /** The crawler is currently running and processing files */
     RUNNING,
-    
-    /**
-     * The crawler has been paused and is waiting for a resume command
-     */
+
+    /** The crawler has been paused and is waiting for a resume command */
     PAUSED,
-    
-    /**
-     * The crawler has been stopped
-     */
+
+    /** The crawler has been stopped */
     STOPPED,
-    
-    /**
-     * The crawler has completed its scan successfully
-     */
+
+    /** The crawler has completed its scan successfully */
     COMPLETED,
-    
-    /**
-     * The crawler encountered an error and stopped
-     */
+
+    /** The crawler encountered an error and stopped */
     ERROR
 }

@@ -19,13 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import java.time.LocalDateTime;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
 
-/**
- * Represents a folder we have visited
- */
+import java.time.LocalDateTime;
+
+/** Represents a folder we have visited */
 public class Folder {
 
     public static final String CONTENT_TYPE = "text/directory";
@@ -42,16 +40,23 @@ public class Folder {
 
     /**
      * Build a folder with a single ctor call
-     * @param name      The folder name
-     * @param root      Root of the folder
-     * @param real      The full path to the folder
-     * @param virtual   The virtual path from the root
-     * @param creation  Creation time of the forlder
+     *
+     * @param name The folder name
+     * @param root Root of the folder
+     * @param real The full path to the folder
+     * @param virtual The virtual path from the root
+     * @param creation Creation time of the forlder
      * @param modification Modification time of the folder
      * @param lastAccess Last access time for the folder
      */
-    public Folder(String name, String root, String real, String virtual, LocalDateTime creation, LocalDateTime modification,
-                  LocalDateTime lastAccess) {
+    public Folder(
+            String name,
+            String root,
+            String real,
+            String virtual,
+            LocalDateTime creation,
+            LocalDateTime modification,
+            LocalDateTime lastAccess) {
         path = new Path();
         path.setRoot(root);
         path.setReal(real);

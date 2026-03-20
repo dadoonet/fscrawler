@@ -19,20 +19,20 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.ext.ContextResolver;
 import jakarta.ws.rs.ext.Provider;
 import org.apache.logging.log4j.LogManager;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.prettyMapper;
-
 @Provider
 public class RestJsonProvider implements ContextResolver<ObjectMapper> {
 
     // We initialize the object mapper depending on debug mode
-    private static final ObjectMapper jsonMapper = LogManager.getLogger(RestJsonProvider.class).isDebugEnabled() ?
-            prettyMapper : mapper;
+    private static final ObjectMapper jsonMapper =
+            LogManager.getLogger(RestJsonProvider.class).isDebugEnabled() ? prettyMapper : mapper;
 
     @Override
     public ObjectMapper getContext(Class<?> type) {

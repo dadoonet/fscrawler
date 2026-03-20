@@ -19,14 +19,24 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeFalse;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.plugins.fs.ssh.SshTestHelper;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import fr.pilato.elasticsearch.crawler.plugins.fs.ssh.SshTestHelper;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.sshd.server.SshServer;
@@ -39,20 +49,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
-
-/**
- * Test crawler with SSH
- */
+/** Test crawler with SSH */
 public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String SSH_USERNAME = "USERNAME";
@@ -65,7 +62,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         SftpSubsystemFactory factory = new SftpSubsystemFactory.Builder()
                 .withFileSystemAccessor(new SftpFileSystemAccessor() {
                     @Override
-                    public Path resolveLocalFilePath(SftpSubsystemProxy subsystem, Path rootDir, String remotePath) throws InvalidPathException {
+                    public Path resolveLocalFilePath(SftpSubsystemProxy subsystem, Path rootDir, String remotePath)
+                            throws InvalidPathException {
                         String path = remotePath;
                         if (remotePath.startsWith("/")) {
                             path = remotePath.substring(1);
@@ -81,8 +79,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         sshd = SshServer.setUpDefaultServer();
         sshd.setHost("localhost");
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(rootTmpDir.resolve("host.ser")));
-        sshd.setPasswordAuthenticator((username, password, session) ->
-                SSH_USERNAME.equals(username) && SSH_PASSWORD.equals(password));
+        sshd.setPasswordAuthenticator(
+                (username, password, session) -> SSH_USERNAME.equals(username) && SSH_PASSWORD.equals(password));
         sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(rootTmpDir.resolve("public.key")));
 
         sshd.setSubsystemFactories(Collections.singletonList(factory));
@@ -112,7 +110,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
+        ESSearchResponse response =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
         assertThat(response.getTotalHits()).isEqualTo(2L);
     }
 
@@ -125,16 +124,20 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setPort(sshd.getPort());
         fsSettings.getServer().setUsername(SSH_USERNAME);
         fsSettings.getServer().setPassword(SSH_PASSWORD);
-        fsSettings.getServer().setPemPath(rootTmpDir.resolve("private.key").toFile().getAbsolutePath());
+        fsSettings
+                .getServer()
+                .setPemPath(rootTmpDir.resolve("private.key").toFile().getAbsolutePath());
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
 
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse response =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         assertThat(response.getTotalHits()).isEqualTo(1L);
     }
 
     /**
-     * Test for #1952: <a href="https://github.com/dadoonet/fscrawler/issues/1952">https://github.com/dadoonet/fscrawler/issues/1952</a>:
+     * Test for #1952: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/1952">https://github.com/dadoonet/fscrawler/issues/1952</a>:
      * When a directory has a space at the end, files inside are not indexed
      */
     @Test
@@ -156,7 +159,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setPassword(SSH_PASSWORD);
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
-        ESSearchResponse response = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse response =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         assertThat(response.getTotalHits()).isEqualTo(3L);
     }
 }

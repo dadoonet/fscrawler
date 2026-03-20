@@ -18,21 +18,20 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FsLocalPluginTest {
 
@@ -76,7 +75,8 @@ public class FsLocalPluginTest {
     public void exists() throws Exception {
         Path tempDir = Files.createTempDirectory("testExists");
         assertThat(localPlugin.exists(tempDir.toString())).isTrue();
-        assertThat(localPlugin.exists(tempDir.resolve("nonexistent").toString())).isFalse();
+        assertThat(localPlugin.exists(tempDir.resolve("nonexistent").toString()))
+                .isFalse();
 
         // Clean up
         Files.delete(tempDir);

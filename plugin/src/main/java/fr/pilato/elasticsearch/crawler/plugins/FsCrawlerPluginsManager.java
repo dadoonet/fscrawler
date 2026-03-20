@@ -19,14 +19,13 @@
 package fr.pilato.elasticsearch.crawler.plugins;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.DefaultExtensionFinder;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.ExtensionFinder;
 import org.pf4j.PluginManager;
-
-import java.util.HashMap;
 
 public class FsCrawlerPluginsManager implements AutoCloseable {
 
@@ -56,8 +55,10 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
         pluginManager.startPlugins();
 
         for (FsCrawlerExtensionFsProvider extension : pluginManager.getExtensions(FsCrawlerExtensionFsProvider.class)) {
-            logger.debug("Found FsCrawlerExtensionFsProvider extension for type [{}], supportsCrawling=[{}]",
-                    extension.getType(), extension.supportsCrawling());
+            logger.debug(
+                    "Found FsCrawlerExtensionFsProvider extension for type [{}], supportsCrawling=[{}]",
+                    extension.getType(),
+                    extension.supportsCrawling());
             fsProviders.put(extension.getType(), extension);
         }
     }
@@ -94,9 +95,8 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
 
     /**
      * Find a filesystem provider for directory crawling operations.
-     * <p>
-     * This method finds a provider and validates that it supports crawling.
-     * </p>
+     *
+     * <p>This method finds a provider and validates that it supports crawling.
      *
      * @param type the provider type (e.g., "local", "ftp", "ssh")
      * @return the provider for the given type (guaranteed to support crawling)
@@ -107,8 +107,8 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
         if (!provider.supportsCrawling()) {
             logger.warn("FsProvider [{}] does not support directory crawling", type);
             throw new FsCrawlerIllegalConfigurationException(
-                    "Provider [" + type + "] does not support directory crawling. " +
-                    "Only local, ftp, and ssh providers support crawling.");
+                    "Provider [" + type + "] does not support directory crawling. "
+                            + "Only local, ftp, and ssh providers support crawling.");
         }
         return provider;
     }

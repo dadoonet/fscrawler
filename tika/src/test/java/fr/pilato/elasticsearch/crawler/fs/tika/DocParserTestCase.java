@@ -20,7 +20,6 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-
 import java.io.InputStream;
 
 public class DocParserTestCase extends AbstractFSCrawlerTestCase {

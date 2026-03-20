@@ -19,28 +19,27 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
-import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-
-import java.io.IOException;
-
-import java.time.Duration;
-
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomIntBetween;
 import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
+import java.time.Duration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
+
 public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final TestBean PAYLOAD = new TestBean("bar");
-    private static final int PAYLOAD_SIZE = serialize(PAYLOAD).getBytes().length + 12 /* for the JSON payload field overhead */;
+    private static final int PAYLOAD_SIZE =
+            serialize(PAYLOAD).getBytes().length + 12 /* for the JSON payload field overhead */;
 
     @Test
     public void bulkProcessorMaxActions() throws IOException {
@@ -69,13 +68,7 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         int maxActions = randomIntBetween(1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(
-                        new TestEngine(),
-                        listener,
-                        maxActions,
-                        null,
-                        null,
-                        TestBulkRequest::new);
+                new FsCrawlerBulkProcessor<>(new TestEngine(), listener, maxActions, null, null, TestBulkRequest::new);
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -149,17 +142,18 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         assertThat(listener.nbSuccessfulExecutions).isZero();
 
         // Wait for the flush to happen
-        await()
-                .atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> assertThat(listener.nbSuccessfulExecutions).isEqualTo(1));
         bulkProcessor.close();
     }
 
-    private void generatePayload(FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor, int start, int size) {
+    private void generatePayload(
+            FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor,
+            int start,
+            int size) {
         for (int i = start; i < start + size; i++) {
             logger.trace("Adding a new operation [{}]", i);
             bulkProcessor.add(new TestOperation(PAYLOAD));
         }
     }
-
 }

@@ -19,6 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
@@ -28,36 +31,33 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.junit.Test;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 /**
- * Test crawler behavior with MockParser files that simulate erratic parser behaviors.
- * See <a href="https://cwiki.apache.org/confluence/display/tika/MockParser">Tika MockParser</a>
- * <p>
- * This test verifies that FSCrawler:
+ * Test crawler behavior with MockParser files that simulate erratic parser behaviors. See <a
+ * href="https://cwiki.apache.org/confluence/display/tika/MockParser">Tika MockParser</a>
+ *
+ * <p>This test verifies that FSCrawler:
+ *
  * <ul>
- *     <li>Continues crawling after a parsing error</li>
- *     <li>Successfully indexes files that can be parsed</li>
- *     <li>Does not crash when encountering problematic files</li>
+ *   <li>Continues crawling after a parsing error
+ *   <li>Successfully indexes files that can be parsed
+ *   <li>Does not crash when encountering problematic files
  * </ul>
  */
 public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test that the crawler continues processing files even when one file causes
-     * a parser exception via MockParser.
-     * <p>
-     * The test directory (mock_parser) contains:
+     * Test that the crawler continues processing files even when one file causes a parser exception via MockParser.
+     *
+     * <p>The test directory (mock_parser) contains:
+     *
      * <ul>
-     *     <li>valid.txt - A valid text file</li>
-     *     <li>mock-exception.xml - A file that triggers a RuntimeException via MockParser</li>
-     *     <li>valid2.txt - Another valid text file</li>
+     *   <li>valid.txt - A valid text file
+     *   <li>mock-exception.xml - A file that triggers a RuntimeException via MockParser
+     *   <li>valid2.txt - Another valid text file
      * </ul>
-     * <p>
-     * Expected: Both valid files should be indexed (2 documents),
-     * the mock-exception.xml might also be indexed but with empty content.
-     * This test also verifies that valid content remains searchable.
+     *
+     * <p>Expected: Both valid files should be indexed (2 documents), the mock-exception.xml might also be indexed but
+     * with empty content. This test also verifies that valid content remains searchable.
      */
     @Test
     public void mock_parser() throws Exception {
@@ -68,19 +68,29 @@ public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
 
         // Verify that the content from valid files is searchable
-        countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                .withESQuery(new ESMatchQuery("content", "valid")), 2L, null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESMatchQuery("content", "valid")),
+                2L,
+                null);
 
         // Verify content from valid2.txt specifically - it contains "continue"
-        countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                .withESQuery(new ESMatchQuery("content", "continue")), 1L, null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESMatchQuery("content", "continue")),
+                1L,
+                null);
 
         // Verify content from the xml file specifically. It should be empty
-        ESSearchResponse response = countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                .withESQuery(new ESTermQuery("file.extension", "xml")), 1L, null);
-        assertThatThrownBy(() -> JsonPath.read(response.getHits().get(0).getSource(), "$.content")).isInstanceOf(PathNotFoundException.class);
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("file.extension", "xml")),
+                1L,
+                null);
+        assertThatThrownBy(() -> JsonPath.read(response.getHits().get(0).getSource(), "$.content"))
+                .isInstanceOf(PathNotFoundException.class);
     }
 }

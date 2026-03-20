@@ -19,6 +19,11 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
@@ -37,18 +42,6 @@ import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.awaitility.core.ConditionTimeoutException;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.logging.LoggingFeature;
-
-import javax.net.ssl.*;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
 import java.io.*;
 import java.net.ConnectException;
 import java.security.*;
@@ -62,14 +55,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.StreamSupport;
+import javax.net.ssl.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.awaitility.core.ConditionTimeoutException;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.logging.LoggingFeature;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.*;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
-
-/**
- * Elasticsearch Client
- */
+/** Elasticsearch Client */
 public class ElasticsearchClient implements IElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger();
@@ -90,7 +85,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration RETRY_429_MAX_DELAY = Duration.ofSeconds(30);
 
     private Client client = null;
-    private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> bulkProcessor = null;
+    private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
+            bulkProcessor = null;
     private final List<String> hosts;
     private final List<String> initialHosts;
 
@@ -108,7 +104,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public ElasticsearchClient(FsSettings settings) {
         this.settings = settings;
         this.hosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
-        this.initialHosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
+        this.initialHosts =
+                new ArrayList<>(settings.getElasticsearch().getUrls().size());
         settings.getElasticsearch().getUrls().forEach(url -> {
             hosts.add(url);
             initialHosts.add(url);
@@ -172,7 +169,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         client = clientBuilder.build();
         if (logger.isTraceEnabled()) {
             client
-//                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT, ElasticsearchClient.class.getName())
+                    //                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT,
+                    // ElasticsearchClient.class.getName())
                     .property(LoggingFeature.LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, Level.FINEST.getName())
                     .property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
                     .property(LoggingFeature.LOGGING_FEATURE_MAX_ENTITY_SIZE_CLIENT, 8000);
@@ -185,7 +183,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 logger.warn("We are not doing SSL verification. It's not recommended for production.");
             }
         } catch (Exception e) {
-            logger.warn("Failed to create elasticsearch client on {}. Message: {}.",
+            logger.warn(
+                    "Failed to create elasticsearch client on {}. Message: {}.",
                     settings.getElasticsearch(),
                     e.getMessage());
             throw e;
@@ -194,38 +193,44 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // Check that the pipeline exists when one is defined
         if (settings.getElasticsearch().getPipeline() != null
                 && !isExistingPipeline(settings.getElasticsearch().getPipeline())) {
-                throw new ElasticsearchClientException("You defined pipeline:" + settings.getElasticsearch().getPipeline() +
-                        ", but it does not exist.");
+            throw new ElasticsearchClientException(
+                    "You defined pipeline:" + settings.getElasticsearch().getPipeline() + ", but it does not exist.");
         }
 
         if (semanticSearch) {
             // Check the version we are running or if it's using serverless
             if ((majorVersion >= 8 && minorVersion >= 17) || serverless || (majorVersion >= 9)) {
-                logger.debug("Semantic search is enabled and we are running on a version of Elasticsearch {} " +
-                        "which is 8.17 or higher. We will try to use the semantic search features.", version);
+                logger.debug(
+                        "Semantic search is enabled and we are running on a version of Elasticsearch {} "
+                                + "which is 8.17 or higher. We will try to use the semantic search features.",
+                        version);
                 license = getLicense();
                 if (!"enterprise".equals(license) && !"trial".equals(license)) {
-                    logger.warn("Semantic search is enabled but we are running Elasticsearch with a {} " +
-                            "license although we need either an enterprise or trial license. " +
-                            "We will not be able to use the semantic search features ATM. We might switch later to " +
-                            "a vector embeddings generation.", license);
+                    logger.warn(
+                            "Semantic search is enabled but we are running Elasticsearch with a {} "
+                                    + "license although we need either an enterprise or trial license. "
+                                    + "We will not be able to use the semantic search features ATM. We might switch later to "
+                                    + "a vector embeddings generation.",
+                            license);
                     semanticSearch = false;
                     vectorSearch = true;
                 } else {
                     logger.debug("Semantic search is enabled");
                 }
             } else {
-                logger.warn("Semantic search is enabled but we are running on a version of Elasticsearch {} " +
-                        "which is lower than 8.17. We will not be able to use the semantic search features.", version);
+                logger.warn(
+                        "Semantic search is enabled but we are running on a version of Elasticsearch {} "
+                                + "which is lower than 8.17. We will not be able to use the semantic search features.",
+                        version);
                 semanticSearch = false;
             }
         }
 
         // Create the BulkProcessor instance
         bulkProcessor = new FsCrawlerBulkProcessor.Builder<>(
-                new ElasticsearchEngine(this),
-                new FsCrawlerRetryBulkProcessorListener<>("es_rejected_execution_exception"),
-                ElasticsearchBulkRequest::new)
+                        new ElasticsearchEngine(this),
+                        new FsCrawlerRetryBulkProcessorListener<>("es_rejected_execution_exception"),
+                        ElasticsearchBulkRequest::new)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(settings.getElasticsearch().getFlushInterval())
                 .setByteSize(settings.getElasticsearch().getByteSize())
@@ -233,7 +238,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     private static SSLContext sslContextFromHttpCaCrt(File file) {
-        try(InputStream in = new FileInputStream(file)) {
+        try (InputStream in = new FileInputStream(file)) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             Certificate certificate = cf.generateCertificate(in);
 
@@ -247,7 +252,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, tmf.getTrustManagers(), null);
             return sslContext;
-        } catch (CertificateException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
+        } catch (CertificateException
+                | NoSuchAlgorithmException
+                | KeyManagementException
+                | KeyStoreException
+                | IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -281,9 +290,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
         } catch (PathNotFoundException e) {
             // We are not running an official Elasticsearch version
-            logger.info("FSCrawler only supports Elasticsearch official distribution. " +
-                    "You are running another custom distribution. We will not be able to use some features like " +
-                    "semantic search.");
+            logger.info("FSCrawler only supports Elasticsearch official distribution. "
+                    + "You are running another custom distribution. We will not be able to use some features like "
+                    + "semantic search.");
         }
         logger.debug("get version returns {} and {} as the major version number", version, majorVersion);
         return version;
@@ -297,17 +306,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         // License endpoint might not be ready in IT so we retry with exponential wait time up to 1 minute
         try {
-            return await()
-                    .atMost(Duration.ofMinutes(1))
-                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofSeconds(1), Duration.ofSeconds(10)))
-                    .until(() -> {
-                        try {
-                            return getLicenseInternal();
-                        } catch (NotFoundException e) {
-                            logger.warn("License endpoint is not ready yet. Retrying...");
-                            return null;
-                        }
-                    }, Objects::nonNull);
+            return await().atMost(Duration.ofMinutes(1))
+                    .pollInterval(
+                            ExponentialBackoffPollInterval.exponential(Duration.ofSeconds(1), Duration.ofSeconds(10)))
+                    .until(
+                            () -> {
+                                try {
+                                    return getLicenseInternal();
+                                } catch (NotFoundException e) {
+                                    logger.warn("License endpoint is not ready yet. Retrying...");
+                                    return null;
+                                }
+                            },
+                            Objects::nonNull);
         } catch (ConditionTimeoutException e) {
             throw new ElasticsearchClientException("License endpoint is not ready after 1 minute");
         }
@@ -354,13 +365,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
             String errorMessage = e.getResponse().readEntity(String.class);
             logger.error("Error while creating index template [{}]: {}", name, errorMessage);
             logger.error("PUT {}\n{}", url, json);
-            throw new ElasticsearchClientException("Error while creating index template " + name +
-                    ". Response is: " + errorMessage, e);
+            throw new ElasticsearchClientException(
+                    "Error while creating index template " + name + ". Response is: " + errorMessage, e);
         }
     }
 
     /**
      * Check if an index exists
+     *
      * @param index index name
      * @return true if the index exists, false otherwise
      */
@@ -379,6 +391,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Check if a pipeline exists
+     *
      * @param pipelineName pipeline name
      * @return true if the pipeline exists, false otherwise
      */
@@ -397,6 +410,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Check if a component template exists
+     *
      * @param templateName component template name
      * @return true if the component template exists, false otherwise
      */
@@ -415,6 +429,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Check if an index template exists
+     *
      * @param templateName index template name
      * @return true if the index template exists, false otherwise
      */
@@ -433,6 +448,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Refresh an index (only used in tests)
+     *
      * @param index index name
      * @throws ElasticsearchClientException In case of error
      */
@@ -458,31 +474,31 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Wait for an index to become at least yellow (all primaries assigned), up to 10 seconds
+     *
      * @param index index name
      */
     @Override
     public void waitForHealthyIndex(String index) throws ElasticsearchClientException {
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
         try {
-            await()
-                    .atMost(10, SECONDS)
-                    .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+            await().atMost(10, SECONDS)
+                    .pollInterval(
+                            ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                     .until(() -> {
-                try {
-                    String health = catIndicesHealth(index);
-                    errorWhileWaiting.set(null);
-                    return "green".equals(health) || "yellow".equals(health);
-                } catch (Exception e) {
-                    errorWhileWaiting.set(e);
-                    return false;
-                }
-            });
+                        try {
+                            String health = catIndicesHealth(index);
+                            errorWhileWaiting.set(null);
+                            return "green".equals(health) || "yellow".equals(health);
+                        } catch (Exception e) {
+                            errorWhileWaiting.set(e);
+                            return false;
+                        }
+                    });
         } catch (ConditionTimeoutException e) {
             // If we caught an exception during waiting, throw it instead of the timeout
             if (errorWhileWaiting.get() != null) {
                 Exception cause = errorWhileWaiting.get();
-                throw new ElasticsearchClientException("Error while waiting for healthy index [" +
-                        index + "]", cause);
+                throw new ElasticsearchClientException("Error while waiting for healthy index [" + index + "]", cause);
             }
             logger.warn("Index [{}] did not become healthy within 10 seconds", index);
         }
@@ -490,8 +506,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     private String catIndicesHealth(String index) throws ElasticsearchClientException {
         try {
-            String response = httpGet("_cat/indices/" + index,
-                    new AbstractMap.SimpleImmutableEntry<>("h", "health"));
+            String response = httpGet("_cat/indices/" + index, new AbstractMap.SimpleImmutableEntry<>("h", "health"));
             DocumentContext document = parseJsonAsDocumentContext(response);
             String health = document.read("$[0].health");
             logger.trace("index [{}] health: [{}]", index, health);
@@ -505,14 +520,24 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    private static final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-        @Override public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-        @Override public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-        @Override public X509Certificate[] getAcceptedIssuers() { return null; }
-    }};
+    private static final TrustManager[] trustAllCerts = new TrustManager[] {
+        new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        }
+    };
 
     public static class NullHostNameVerifier implements HostnameVerifier {
-        @Override public boolean verify(String urlHostName, SSLSession session) {
+        @Override
+        public boolean verify(String urlHostName, SSLSession session) {
             if (!urlHostName.equalsIgnoreCase(session.getPeerHost())) {
                 logger.warn("URL host [{}] is different to SSLSession host [{}].", urlHostName, session.getPeerHost());
             }
@@ -556,7 +581,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
             DocumentContext document = parseJsonAsDocumentContext(response);
             String result = document.read("$.result");
             if (!result.equals("deleted")) {
-                throw new ElasticsearchClientException("Can not remove document " + index + "/" + id + " cause: " + response);
+                throw new ElasticsearchClientException(
+                        "Can not remove document " + index + "/" + id + " cause: " + response);
             }
 
             logger.debug("Document {}/{} has been removed", index, id);
@@ -583,68 +609,154 @@ public class ElasticsearchClient implements IElasticsearchClient {
             boolean forcePush = settings.getElasticsearch().isForcePushTemplates();
 
             // Check if the index template already exists for docs
-            String docsIndexTemplateName = "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs";
+            String docsIndexTemplateName =
+                    "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs";
             if (semanticSearch) {
-                docsIndexTemplateName = "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs_semantic";
+                docsIndexTemplateName =
+                        "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs_semantic";
             }
 
             boolean docsIndexTemplateExists = isExistingIndexTemplate(docsIndexTemplateName);
 
             if (docsIndexTemplateExists && !forcePush) {
-                logger.debug("Index template [{}] already exists. Skipping templates management for docs. " +
-                        "Use force_push_templates: true to override.", docsIndexTemplateName);
+                logger.debug(
+                        "Index template [{}] already exists. Skipping templates management for docs. "
+                                + "Use force_push_templates: true to override.",
+                        docsIndexTemplateName);
             } else {
                 List<String> componentTemplates = new ArrayList<>();
 
-                logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndex());
-                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_alias", settings.getElasticsearch().getIndex(), settings.getName(), forcePush));
-                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_settings_total_fields", settings.getElasticsearch().getIndex(), null, forcePush));
-                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndex(), null, forcePush));
-                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndex(), null, forcePush));
-                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndex(), null, forcePush));
-                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_attachment", settings.getElasticsearch().getIndex(), null, forcePush));
+                logger.debug(
+                        "Creating/updating component templates for [{}]",
+                        settings.getElasticsearch().getIndex());
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                        majorVersion,
+                        "fscrawler_alias",
+                        settings.getElasticsearch().getIndex(),
+                        settings.getName(),
+                        forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                        majorVersion,
+                        "fscrawler_settings_total_fields",
+                        settings.getElasticsearch().getIndex(),
+                        null,
+                        forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                        majorVersion,
+                        "fscrawler_mapping_attributes",
+                        settings.getElasticsearch().getIndex(),
+                        null,
+                        forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                        majorVersion,
+                        "fscrawler_mapping_file",
+                        settings.getElasticsearch().getIndex(),
+                        null,
+                        forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                        majorVersion,
+                        "fscrawler_mapping_path",
+                        settings.getElasticsearch().getIndex(),
+                        null,
+                        forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                        majorVersion,
+                        "fscrawler_mapping_attachment",
+                        settings.getElasticsearch().getIndex(),
+                        null,
+                        forcePush));
                 if (semanticSearch) {
-                    componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_content_semantic", settings.getElasticsearch().getIndex(), null, forcePush));
+                    componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                            majorVersion,
+                            "fscrawler_mapping_content_semantic",
+                            settings.getElasticsearch().getIndex(),
+                            null,
+                            forcePush));
                 } else {
-                    componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_content", settings.getElasticsearch().getIndex(), null, forcePush));
+                    componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                            majorVersion,
+                            "fscrawler_mapping_content",
+                            settings.getElasticsearch().getIndex(),
+                            null,
+                            forcePush));
                 }
-                componentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_meta", settings.getElasticsearch().getIndex(), null, forcePush));
+                componentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                        majorVersion,
+                        "fscrawler_mapping_meta",
+                        settings.getElasticsearch().getIndex(),
+                        null,
+                        forcePush));
 
                 // Wait for all component templates to be available before creating index templates
                 waitForComponentTemplates(componentTemplates);
 
-                logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndex());
+                logger.debug(
+                        "Creating/updating index templates for [{}]",
+                        settings.getElasticsearch().getIndex());
                 // If needed, we create the new settings for this files index
-                if (!settings.getFs().isAddAsInnerObject() || (!settings.getFs().isJsonSupport() && !settings.getFs().isXmlSupport())) {
+                if (!settings.getFs().isAddAsInnerObject()
+                        || (!settings.getFs().isJsonSupport()
+                                && !settings.getFs().isXmlSupport())) {
                     if (semanticSearch) {
-                        loadAndPushIndexTemplate(majorVersion, "fscrawler_docs_semantic", settings.getElasticsearch().getIndex());
+                        loadAndPushIndexTemplate(
+                                majorVersion,
+                                "fscrawler_docs_semantic",
+                                settings.getElasticsearch().getIndex());
                     } else {
-                        loadAndPushIndexTemplate(majorVersion, "fscrawler_docs", settings.getElasticsearch().getIndex());
+                        loadAndPushIndexTemplate(
+                                majorVersion,
+                                "fscrawler_docs",
+                                settings.getElasticsearch().getIndex());
                     }
                 }
             }
 
             // If needed, we create the component and index templates for the folder index
             if (settings.getFs().isIndexFolders()) {
-                String folderIndexTemplateName = "fscrawler_" + settings.getElasticsearch().getIndexFolder() + "_folders";
+                String folderIndexTemplateName =
+                        "fscrawler_" + settings.getElasticsearch().getIndexFolder() + "_folders";
                 boolean folderIndexTemplateExists = isExistingIndexTemplate(folderIndexTemplateName);
 
                 if (folderIndexTemplateExists && !forcePush) {
-                    logger.debug("Index template [{}] already exists. Skipping templates management for folders. " +
-                            "Use force_push_templates: true to override.", folderIndexTemplateName);
+                    logger.debug(
+                            "Index template [{}] already exists. Skipping templates management for folders. "
+                                    + "Use force_push_templates: true to override.",
+                            folderIndexTemplateName);
                 } else {
                     List<String> folderComponentTemplates = new ArrayList<>();
 
-                    logger.debug("Creating/updating component templates for [{}]", settings.getElasticsearch().getIndexFolder());
-                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_attributes", settings.getElasticsearch().getIndexFolder(), null, forcePush));
-                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_file", settings.getElasticsearch().getIndexFolder(), null, forcePush));
-                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(majorVersion, "fscrawler_mapping_path", settings.getElasticsearch().getIndexFolder(), null, forcePush));
+                    logger.debug(
+                            "Creating/updating component templates for [{}]",
+                            settings.getElasticsearch().getIndexFolder());
+                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                            majorVersion,
+                            "fscrawler_mapping_attributes",
+                            settings.getElasticsearch().getIndexFolder(),
+                            null,
+                            forcePush));
+                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                            majorVersion,
+                            "fscrawler_mapping_file",
+                            settings.getElasticsearch().getIndexFolder(),
+                            null,
+                            forcePush));
+                    folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(
+                            majorVersion,
+                            "fscrawler_mapping_path",
+                            settings.getElasticsearch().getIndexFolder(),
+                            null,
+                            forcePush));
 
                     // Wait for all folder component templates to be available before creating index template
                     waitForComponentTemplates(folderComponentTemplates);
 
-                    logger.debug("Creating/updating index templates for [{}]", settings.getElasticsearch().getIndexFolder());
-                    loadAndPushIndexTemplate(majorVersion, "fscrawler_folders", settings.getElasticsearch().getIndexFolder());
+                    logger.debug(
+                            "Creating/updating index templates for [{}]",
+                            settings.getElasticsearch().getIndexFolder());
+                    loadAndPushIndexTemplate(
+                            majorVersion,
+                            "fscrawler_folders",
+                            settings.getElasticsearch().getIndexFolder());
                 }
             }
         }
@@ -652,6 +764,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Wait for all component templates to be available
+     *
      * @param templateNames list of component template names to wait for
      * @throws ElasticsearchClientException if a component template does not become available within timeout
      */
@@ -659,35 +772,41 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.debug("Waiting for component templates to be available: {}", templateNames);
         for (String templateName : templateNames) {
             try {
-                await()
-                        .atMost(30, SECONDS)
-                        .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(100), Duration.ofSeconds(5)))
+                await().atMost(30, SECONDS)
+                        .pollInterval(ExponentialBackoffPollInterval.exponential(
+                                Duration.ofMillis(100), Duration.ofSeconds(5)))
                         .until(() -> {
                             try {
                                 return isExistingComponentTemplate(templateName);
                             } catch (Exception e) {
-                                logger.debug("Error while checking component template [{}]: {}", templateName, e.getMessage());
+                                logger.debug(
+                                        "Error while checking component template [{}]: {}",
+                                        templateName,
+                                        e.getMessage());
                                 return false;
                             }
                         });
                 logger.debug("Component template [{}] is now available", templateName);
             } catch (ConditionTimeoutException e) {
-                throw new ElasticsearchClientException("Component template [" + templateName + 
-                        "] did not become available within 30 seconds");
+                throw new ElasticsearchClientException(
+                        "Component template [" + templateName + "] did not become available within 30 seconds");
             }
         }
     }
 
     /**
      * Load and push a component template only if it doesn't already exist (unless forcePush is true)
-     * @param version   the Elasticsearch major version
-     * @param name      the component template name (without the index prefix)
-     * @param index     the index name to use as prefix
-     * @param alias     the alias to replace in the template (can be null)
+     *
+     * @param version the Elasticsearch major version
+     * @param name the component template name (without the index prefix)
+     * @param index the index name to use as prefix
+     * @param alias the alias to replace in the template (can be null)
      * @param forcePush if true, always push the template even if it exists
      * @return the component template name
      */
-    private String loadAndPushComponentTemplateIfMissing(int version, String name, String index, String alias, boolean forcePush) throws IOException, ElasticsearchClientException {
+    private String loadAndPushComponentTemplateIfMissing(
+            int version, String name, String index, String alias, boolean forcePush)
+            throws IOException, ElasticsearchClientException {
         String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
 
         if (!forcePush && isExistingComponentTemplate(componentTemplateName)) {
@@ -707,7 +826,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return componentTemplateName;
     }
 
-    private void loadAndPushIndexTemplate(int version, String name, String index) throws IOException, ElasticsearchClientException {
+    private void loadAndPushIndexTemplate(int version, String name, String index)
+            throws IOException, ElasticsearchClientException {
         logger.trace("Loading index template [{}]", name);
         String json = loadResourceFile(version + "/_index_templates/" + name + ".json");
 
@@ -720,12 +840,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Reads a resource file from the classpath or from a JAR.
+     *
      * @param source The target
      * @return The content of the file
      */
     private static String loadResourceFile(String source) throws IOException {
-        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(
-                ElasticsearchClient.class.getResourceAsStream(source)))) {
+        try (BufferedReader buffer =
+                new BufferedReader(new InputStreamReader(ElasticsearchClient.class.getResourceAsStream(source)))) {
             return StreamSupport.stream(buffer.lines().spliterator(), false)
                     .reduce((a, b) -> a + "\n" + b)
                     .orElse(null);
@@ -789,7 +910,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 if (moreFields.getAndSet(true)) {
                     body.getAndUpdate(s -> s + ",");
                 }
-                body.getAndUpdate(s -> s + ("\"" + a.getName() + "\":{\"terms\": {\"field\": \"" + a.getField() + "\"}}"));
+                body.getAndUpdate(
+                        s -> s + ("\"" + a.getName() + "\":{\"terms\": {\"field\": \"" + a.getField() + "\"}}"));
             });
             body.getAndUpdate(s -> s + "}");
         }
@@ -862,12 +984,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
             throw new ElasticsearchClientException("index " + request.getIndex() + " does not exist.");
         } catch (ServiceUnavailableException e) {
             if (serverless) {
-                logger.debug("on serverless this might happen if we just created the index as shards may not be " +
-                        "fully allocated for index [{}].", request.getIndex());
-                throw new ElasticsearchClientException("index " + request.getIndex() + " might not be fully allocated on serverless.");
+                logger.debug(
+                        "on serverless this might happen if we just created the index as shards may not be "
+                                + "fully allocated for index [{}].",
+                        request.getIndex());
+                throw new ElasticsearchClientException(
+                        "index " + request.getIndex() + " might not be fully allocated on serverless.");
             }
-            logger.error("search on index [{}] thrown a [{}] error but we are not on serverless.",
-                    request.getIndex(), e.getResponse().getStatus());
+            logger.error(
+                    "search on index [{}] thrown a [{}] error but we are not on serverless.",
+                    request.getIndex(),
+                    e.getResponse().getStatus());
             logger.error("full stack trace", e);
             throw e;
         }
@@ -875,16 +1002,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     private String toElasticsearchQuery(ESQuery query) {
         if (query instanceof ESTermQuery esQuery) {
-            return "\"term\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
+            return "\"term\": { \"" + esQuery.getField() + "\": \"" + esQuery.getValue() + "\"}";
         }
         if (query instanceof ESMatchQuery esQuery) {
-            return "\"match\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
+            return "\"match\": { \"" + esQuery.getField() + "\": \"" + esQuery.getValue() + "\"}";
         }
         if (query instanceof ESSemanticQuery esQuery) {
-            return "\"semantic\": { \"field\":\"" + esQuery.getField() +  "\", \"query\":\"" + esQuery.getValue() + "\"}";
+            return "\"semantic\": { \"field\":\"" + esQuery.getField() + "\", \"query\":\"" + esQuery.getValue()
+                    + "\"}";
         }
         if (query instanceof ESPrefixQuery esQuery) {
-            return "\"prefix\": { \"" + esQuery.getField() +  "\": \"" + esQuery.getValue() + "\"}";
+            return "\"prefix\": { \"" + esQuery.getField() + "\": \"" + esQuery.getValue() + "\"}";
         }
         if (query instanceof ESRangeQuery esQuery) {
             String localQuery = "\"range\": { \"" + esQuery.getField() + "\": {";
@@ -926,7 +1054,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
             DocumentContext document = parseJsonAsDocumentContext(response);
             boolean acknowledged = document.read("$.acknowledged");
             if (!acknowledged) {
-                throw new ElasticsearchClientException("Can not remove index " + index + " : " + document.read("$.error.reason"));
+                throw new ElasticsearchClientException(
+                        "Can not remove index " + index + " : " + document.read("$.error.reason"));
             }
         } catch (NotFoundException e) {
             logger.debug("Index [{}] was not found", index);
@@ -939,7 +1068,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public String performLowLevelRequest(String method, String endpoint, String jsonEntity) throws ElasticsearchClientException {
+    public String performLowLevelRequest(String method, String endpoint, String jsonEntity)
+            throws ElasticsearchClientException {
         return httpCall(method, endpoint, jsonEntity);
     }
 
@@ -1001,10 +1131,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Read a field from a JSON document as a JSON String content
-     * @param context   the document context
-     * @param path      path to access the field. Like "$.field"
-     * @return          the JSON as a String
-     * @see fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil#parseJsonAsDocumentContext(String) to get a document context
+     *
+     * @param context the document context
+     * @param path path to access the field. Like "$.field"
+     * @return the JSON as a String
+     * @see fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil#parseJsonAsDocumentContext(String) to get a document
+     *     context
      */
     private static String extractJsonFromPath(DocumentContext context, String path) {
         Map<String, Object> jsonMap = context.read(path);
@@ -1021,13 +1153,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @SafeVarargs
-    final String httpPost(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    final String httpPost(String path, Object data, Map.Entry<String, Object>... params)
+            throws ElasticsearchClientException {
         return httpCall("POST", path, data, params);
     }
 
     @SuppressWarnings("UnusedReturnValue")
     @SafeVarargs
-    final String httpPut(String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    final String httpPut(String path, Object data, Map.Entry<String, Object>... params)
+            throws ElasticsearchClientException {
         return httpCall("PUT", path, data, params);
     }
 
@@ -1039,41 +1173,47 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final String SUCCESS_MARKER = "__SUCCESS__";
 
     /**
-     * Execute an HTTP call with retry logic for GET and HEAD methods.
-     * This method will retry the call with exponential backoff when a 5xx server error
-     * or a 429 (Too Many Requests) rate limiting error is received.
-     * <p>
-     * For 5xx errors, uses short retry intervals (500ms to 5s, max 10s total).
-     * For 429 errors, uses longer retry intervals (1s to 30s, max 5 minutes total) to allow server recovery.
+     * Execute an HTTP call with retry logic for GET and HEAD methods. This method will retry the call with exponential
+     * backoff when a 5xx server error or a 429 (Too Many Requests) rate limiting error is received.
+     *
+     * <p>For 5xx errors, uses short retry intervals (500ms to 5s, max 10s total). For 429 errors, uses longer retry
+     * intervals (1s to 30s, max 5 minutes total) to allow server recovery.
      *
      * @param method HTTP method (should be GET or HEAD for retry to be applied)
-     * @param path   the path to call
-     * @param data   the data to send (should be null for GET/HEAD)
+     * @param path the path to call
+     * @param data the data to send (should be null for GET/HEAD)
      * @param params optional query parameters
      * @return the response body as a String (null for HEAD requests)
      * @throws ElasticsearchClientException if all retries fail or a non-retryable error occurs
      */
     @SafeVarargs
-    private String httpCallWithRetry(String method, String path, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    private String httpCallWithRetry(String method, String path, Object data, Map.Entry<String, Object>... params)
+            throws ElasticsearchClientException {
         // First try with standard retry config (handles 5xx errors)
         // If we get a 429, we switch to longer retry intervals
         try {
-            return executeWithRetry(method, path, data, 
-                    RETRY_MAX_DURATION, RETRY_INITIAL_DELAY, RETRY_MAX_DELAY, 
-                    false, params);
+            return executeWithRetry(
+                    method, path, data, RETRY_MAX_DURATION, RETRY_INITIAL_DELAY, RETRY_MAX_DELAY, false, params);
         } catch (RateLimitedException e) {
             // Got 429 on first attempt, switch to longer retry config
-            logger.info("Rate limited (429) on {} {}. Switching to longer retry intervals (up to {})...",
-                    method, path == null ? "" : path, RETRY_429_MAX_DURATION);
-            return executeWithRetry(method, path, data,
-                    RETRY_429_MAX_DURATION, RETRY_429_INITIAL_DELAY, RETRY_429_MAX_DELAY,
-                    true, params);
+            logger.info(
+                    "Rate limited (429) on {} {}. Switching to longer retry intervals (up to {})...",
+                    method,
+                    path == null ? "" : path,
+                    RETRY_429_MAX_DURATION);
+            return executeWithRetry(
+                    method,
+                    path,
+                    data,
+                    RETRY_429_MAX_DURATION,
+                    RETRY_429_INITIAL_DELAY,
+                    RETRY_429_MAX_DELAY,
+                    true,
+                    params);
         }
     }
 
-    /**
-     * Internal exception to signal rate limiting (429) so we can switch retry configuration.
-     */
+    /** Internal exception to signal rate limiting (429) so we can switch retry configuration. */
     private static class RateLimitedException extends RuntimeException {
         RateLimitedException(WebApplicationException cause) {
             super(cause);
@@ -1081,65 +1221,85 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @SafeVarargs
-    private String executeWithRetry(String method, String path, Object data,
-                                    Duration maxDuration, Duration initialDelay, Duration maxDelay,
-                                    boolean handle429,
-                                    Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    private String executeWithRetry(
+            String method,
+            String path,
+            Object data,
+            Duration maxDuration,
+            Duration initialDelay,
+            Duration maxDelay,
+            boolean handle429,
+            Map.Entry<String, Object>... params)
+            throws ElasticsearchClientException {
         AtomicReference<WebApplicationException> lastServerError = new AtomicReference<>();
 
         try {
-            String result = await()
-                    .atMost(maxDuration)
+            String result = await().atMost(maxDuration)
                     .pollInterval(ExponentialBackoffPollInterval.exponential(initialDelay, maxDelay))
-                    .until(() -> {
-                        try {
-                            String response = httpCall(method, path, data, params);
-                            // HEAD requests return null on success, use marker to distinguish from retry signal
-                            return response == null ? SUCCESS_MARKER : response;
-                        } catch (WebApplicationException e) {
-                            int status = e.getResponse().getStatus();
-                            boolean isServerError = e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR;
-                            boolean isTooManyRequests = status == Response.Status.TOO_MANY_REQUESTS.getStatusCode();
+                    .until(
+                            () -> {
+                                try {
+                                    String response = httpCall(method, path, data, params);
+                                    // HEAD requests return null on success, use marker to distinguish from retry signal
+                                    return response == null ? SUCCESS_MARKER : response;
+                                } catch (WebApplicationException e) {
+                                    int status = e.getResponse().getStatus();
+                                    boolean isServerError =
+                                            e.getResponse().getStatusInfo().getFamily()
+                                                    == Response.Status.Family.SERVER_ERROR;
+                                    boolean isTooManyRequests =
+                                            status == Response.Status.TOO_MANY_REQUESTS.getStatusCode();
 
-                            // Handle server errors (5xx) - always retry
-                            if (isServerError) {
-                                logger.warn("Server error {} on {} {}. Retrying...",
-                                        status, method, path == null ? "" : path);
-                                lastServerError.set(e);
-                                return null;
-                            }
+                                    // Handle server errors (5xx) - always retry
+                                    if (isServerError) {
+                                        logger.warn(
+                                                "Server error {} on {} {}. Retrying...",
+                                                status,
+                                                method,
+                                                path == null ? "" : path);
+                                        lastServerError.set(e);
+                                        return null;
+                                    }
 
-                            // Handle rate limiting (429)
-                            if (isTooManyRequests) {
-                                if (handle429) {
-                                    // We're already in 429 retry mode, continue retrying
-                                    logger.warn("Rate limited (429) on {} {}. Retrying in up to {}...",
-                                            method, path == null ? "" : path, maxDelay);
-                                    lastServerError.set(e);
-                                    return null;
-                                } else {
-                                    // Signal to switch to 429 retry mode
-                                    throw new RateLimitedException(e);
+                                    // Handle rate limiting (429)
+                                    if (isTooManyRequests) {
+                                        if (handle429) {
+                                            // We're already in 429 retry mode, continue retrying
+                                            logger.warn(
+                                                    "Rate limited (429) on {} {}. Retrying in up to {}...",
+                                                    method,
+                                                    path == null ? "" : path,
+                                                    maxDelay);
+                                            lastServerError.set(e);
+                                            return null;
+                                        } else {
+                                            // Signal to switch to 429 retry mode
+                                            throw new RateLimitedException(e);
+                                        }
+                                    }
+
+                                    // Other client errors (4xx) should not be retried
+                                    throw new RuntimeException(e);
+                                } catch (ElasticsearchClientException e) {
+                                    // Connection errors should not be retried (httpCall already handles node failover)
+                                    throw new RuntimeException(e);
                                 }
-                            }
-
-                            // Other client errors (4xx) should not be retried
-                            throw new RuntimeException(e);
-                        } catch (ElasticsearchClientException e) {
-                            // Connection errors should not be retried (httpCall already handles node failover)
-                            throw new RuntimeException(e);
-                        }
-                    }, Objects::nonNull);
+                            },
+                            Objects::nonNull);
             // Convert marker back to null for HEAD requests
             return SUCCESS_MARKER.equals(result) ? null : result;
         } catch (ConditionTimeoutException e) {
-            logger.error("Retries exhausted for {} {} after {}. Last error: {}",
-                    method, path == null ? "" : path, maxDuration,
+            logger.error(
+                    "Retries exhausted for {} {} after {}. Last error: {}",
+                    method,
+                    path == null ? "" : path,
+                    maxDuration,
                     lastServerError.get() != null ? lastServerError.get().getMessage() : "unknown");
             if (lastServerError.get() != null) {
                 throw lastServerError.get();
             }
-            throw new ElasticsearchClientException("Retries exhausted for " + method + " " + (path == null ? "" : path), e);
+            throw new ElasticsearchClientException(
+                    "Retries exhausted for " + method + " " + (path == null ? "" : path), e);
         } catch (RateLimitedException e) {
             // Propagate to switch retry configuration
             throw e;
@@ -1156,7 +1316,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @SafeVarargs
-    private String httpCall(String method, String localPath, Object data, Map.Entry<String, Object>... params) throws ElasticsearchClientException {
+    private String httpCall(String method, String localPath, Object data, Map.Entry<String, Object>... params)
+            throws ElasticsearchClientException {
         String node = getNode();
         String path = localPath;
         if (settings.getElasticsearch().getPathPrefix() != null) {
@@ -1175,12 +1336,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return response;
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.error("Error on server side. {} -> {} / {}",
+                logger.error(
+                        "Error on server side. {} -> {} / {}",
                         e.getResponse().getStatus(),
                         e.getResponse().getStatusInfo().getReasonPhrase(),
                         e.getResponse().readEntity(String.class));
             } else {
-                logger.trace("Error while running {} {}/{}: {}", method, node, path == null ? "" : path, e.getResponse().readEntity(String.class));
+                logger.trace(
+                        "Error while running {} {}/{}: {}",
+                        method,
+                        node,
+                        path == null ? "" : path,
+                        e.getResponse().readEntity(String.class));
             }
             throw e;
         } catch (ProcessingException e) {
@@ -1191,15 +1358,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 removeNode();
                 return httpCall(method, path, data, params);
             } else {
-                throw new ElasticsearchClientException("Can not execute " + method + " " +
-                        node + "/" + (path == null ? "" : path) + " : " +
-                        e.getCause().getMessage(), e);
+                throw new ElasticsearchClientException(
+                        "Can not execute " + method + " " + node
+                                + "/" + (path == null ? "" : path) + " : "
+                                + e.getCause().getMessage(),
+                        e);
             }
         }
     }
 
     /**
      * Choose a node
+     *
      * @return the selected node
      * @throws ElasticsearchClientException if no node is running
      */
@@ -1208,8 +1378,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (hosts.isEmpty()) {
             // We don't have any running node available
             // TODO Our last chance is to try to ping again the original list of nodes
-            throw new ElasticsearchClientException("All nodes are failing. You need to check your configuration and " +
-                    "your Elasticsearch cluster which should be running at " + initialHosts);
+            throw new ElasticsearchClientException("All nodes are failing. You need to check your configuration and "
+                    + "your Elasticsearch cluster which should be running at " + initialHosts);
         }
 
         if (hosts.size() > 1) {
@@ -1220,7 +1390,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
 
             String node = hosts.get(currentNode);
-            logger.debug("More than one node is available so we pick node number {} from {}: {}.", currentNode, hosts, node);
+            logger.debug(
+                    "More than one node is available so we pick node number {} from {}: {}.", currentNode, hosts, node);
             return node;
         }
 
@@ -1259,9 +1430,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
             target = target.queryParam(param.getKey(), param.getValue());
         }
 
-        Invocation.Builder builder = target
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.CONTENT_TYPE, "application/json");
+        Invocation.Builder builder =
+                target.request(MediaType.APPLICATION_JSON).header(HttpHeaders.CONTENT_TYPE, "application/json");
         builder.header(HttpHeaders.USER_AGENT, USER_AGENT);
         if (authorizationHeader != null) {
             builder.header(HttpHeaders.AUTHORIZATION, authorizationHeader);

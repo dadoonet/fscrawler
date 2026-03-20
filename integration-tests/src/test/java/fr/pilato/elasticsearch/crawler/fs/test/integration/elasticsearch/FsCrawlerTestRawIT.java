@@ -19,6 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.assertj.core.api.Assertions.*;
+
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -29,17 +33,13 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assertions.*;
-
-/**
- * Test json support crawler setting
- */
+/** Test json support crawler setting */
 public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     /**
-     * Test case for issue #439: <a href="https://github.com/dadoonet/fscrawler/issues/439">https://github.com/dadoonet/fscrawler/issues/439</a> : Date Mapping issue in RAW field
+     * Test case for issue #439: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/439">https://github.com/dadoonet/fscrawler/issues/439</a> :
+     * Date Mapping issue in RAW field
      */
     @Test
     public void mapping() throws Exception {
@@ -50,22 +50,20 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
         // Let's add manually some documents
         // The 1st document simulates that we are indexing a String field which contains something like a date
-        String json1 = "{\n" +
-                "  \"meta\": {\n" +
-                "    \"raw\": {\n" +
-                "      \"fscrawler_date\": \"1971-12-26\"\n" +
-                "    }\n" +
-                "  }\n" +
-                "}\n";
+        String json1 = "{\n" + "  \"meta\": {\n"
+                + "    \"raw\": {\n"
+                + "      \"fscrawler_date\": \"1971-12-26\"\n"
+                + "    }\n"
+                + "  }\n"
+                + "}\n";
 
         // The 2nd document index a String to the same field
-        String json2 = "{\n" +
-                "  \"meta\": {\n" +
-                "    \"raw\": {\n" +
-                "      \"fscrawler_date\": \"David\"\n" +
-                "    }\n" +
-                "  }\n" +
-                "}\n";
+        String json2 = "{\n" + "  \"meta\": {\n"
+                + "    \"raw\": {\n"
+                + "      \"fscrawler_date\": \"David\"\n"
+                + "    }\n"
+                + "  }\n"
+                + "}\n";
 
         // This should not raise any exception even if the String is not a Date
         // because of the default mapping we are applying defines all meta raw fields as text
@@ -74,7 +72,8 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         client.indexRawJson(getCrawlerName() + INDEX_SUFFIX_DOCS, "2", json2, null);
         client.flush();
 
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 3L, null);
         assertThat(searchResponse.getHits())
                 .anySatisfy(hit -> assertThat(hit.getId()).containsAnyOf("1", "2"));
     }
@@ -87,9 +86,11 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
             fsSettings.getFs().setRawMetadata(false);
         }
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
-            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta.raw")).isInstanceOf(PathNotFoundException.class);
+            assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.meta.raw"))
+                    .isInstanceOf(PathNotFoundException.class);
         }
     }
 
@@ -98,7 +99,8 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRawMetadata(true);
         crawler = startCrawler(fsSettings);
-        ESSearchResponse searchResponse = countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
+        ESSearchResponse searchResponse =
+                countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 1L, null);
         for (ESSearchHit hit : searchResponse.getHits()) {
             assertThat((Object) JsonPath.read(hit.getSource(), "$.meta.raw"))
                     .asInstanceOf(InstanceOfAssertFactories.MAP)

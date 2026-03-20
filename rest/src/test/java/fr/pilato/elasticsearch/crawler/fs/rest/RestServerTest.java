@@ -19,24 +19,22 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import java.net.Socket;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import org.assertj.core.api.Assertions;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Test;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-
-import java.net.Socket;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-
 /**
- * Test for REST server behaviour, including issue #474: hostname with underscore
- * in the Host header causes URISyntaxException in Jersey/Grizzly.
+ * Test for REST server behaviour, including issue #474: hostname with underscore in the Host header causes
+ * URISyntaxException in Jersey/Grizzly.
  *
  * @see <a href="https://github.com/dadoonet/fscrawler/issues/474">Issue 474</a>
  * @see <a href="https://github.com/eclipse-ee4j/jersey/issues/728>Issue 728 in Jersey</a>
@@ -47,22 +45,18 @@ public class RestServerTest {
     // Then we could remove this test class.
 
     /**
-     * Reproduces issue #474: when a client sends a request with a Host header
-     * containing an underscore (e.g. Docker service name "fscrawler_rest"),
-     * Jersey's GrizzlyHttpContainer.getBaseUri() parses the request URI and
-     * throws URISyntaxException because java.net.URI treats underscore as
-     * illegal in hostnames.
-     * <p>
-     * We do not need to bind the server to a hostname with underscore. We
-     * start the server on localhost and send a request with a custom Host
-     * header to trigger the same code path.
+     * Reproduces issue #474: when a client sends a request with a Host header containing an underscore (e.g. Docker
+     * service name "fscrawler_rest"), Jersey's GrizzlyHttpContainer.getBaseUri() parses the request URI and throws
+     * URISyntaxException because java.net.URI treats underscore as illegal in hostnames.
+     *
+     * <p>We do not need to bind the server to a hostname with underscore. We start the server on localhost and send a
+     * request with a custom Host header to trigger the same code path.
      */
     @Test
     public void requestWithHostHeaderContainingUnderscoreReturnsServerError() throws Exception {
         // Bind to localhost with random port (0 = assign any free port)
         URI baseUri = URI.create("http://127.0.0.1:0");
-        ResourceConfig rc = new ResourceConfig()
-                .register(new RootResource());
+        ResourceConfig rc = new ResourceConfig().register(new RootResource());
         HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, rc);
         try {
             int port = server.getListeners().iterator().next().getPort();
@@ -92,9 +86,7 @@ public class RestServerTest {
                 response2 = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             }
 
-            Assertions.assertThat(response2)
-                    .startsWith("HTTP/1.1 200 OK")
-                    .contains("ok");
+            Assertions.assertThat(response2).startsWith("HTTP/1.1 200 OK").contains("ok");
         } finally {
             server.shutdownNow();
         }

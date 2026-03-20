@@ -22,12 +22,9 @@ package fr.pilato.elasticsearch.crawler.fs.cli;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
-
 import java.io.IOException;
 
-/**
- * Shutdown hook so we make sure we close everything
- */
+/** Shutdown hook so we make sure we close everything */
 class FSCrawlerShutdownHook extends Thread {
 
     private final FsCrawlerImpl fsCrawler;

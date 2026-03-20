@@ -19,43 +19,53 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static org.assertj.core.api.Assumptions.assumeThat;
+
 import fr.pilato.elasticsearch.crawler.fs.client.ESMatchQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.util.List;
 import org.junit.Test;
 
-import java.util.List;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
-/**
- * Test tika config path crawler setting
- */
+/** Test tika config path crawler setting */
 public class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
 
     @Test
     public void tika_config_path() throws Exception {
         assumeThat(false)
-                .as("We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549")
+                .as(
+                        "We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549")
                 .isTrue();
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setTikaConfigPath(currentTestResourceDir.resolve("config/tikaConfig.xml").toString());
+        fsSettings
+                .getFs()
+                .setTikaConfigPath(
+                        currentTestResourceDir.resolve("config/tikaConfig.xml").toString());
         fsSettings.getFs().setExcludes(List.of("/config/*"));
         crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS), 2L, null);
-        countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                .withESQuery(new ESMatchQuery("content", "Tika")), 2L, null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESMatchQuery("content", "Tika")),
+                2L,
+                null);
         // HTML parsed as TXT will contain all tags in content
         // XHTML parsed as XML will remove tags from content
-        countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                .withESQuery(new ESMatchQuery("content", "div")), 1L, null);
-        countTestHelper(new ESSearchRequest()
-                .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
-                .withESQuery(new ESMatchQuery("meta.title", "Test Tika title")), 0L, null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESMatchQuery("content", "div")),
+                1L,
+                null);
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESMatchQuery("meta.title", "Test Tika title")),
+                0L,
+                null);
     }
 }

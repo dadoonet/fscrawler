@@ -19,6 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
+import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
+
 import com.carrotsearch.randomizedtesting.annotations.Timeout;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.jayway.jsonpath.DocumentContext;
@@ -30,6 +38,9 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.parser.external.ExternalParser;
@@ -38,21 +49,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-
-import static fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl.LOOP_INFINITE;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.parseJsonAsDocumentContext;
-import static fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
-
-/**
- * Test all type of documents we have
- */
+/** Test all type of documents we have */
 @TimeoutSuite(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 @Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
 public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
@@ -112,7 +109,11 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         crawler.start();
 
         // We wait until we have all docs up to 10 minutes
-        countTestHelper(new ESSearchRequest().withIndex(JOB_NAME + INDEX_SUFFIX_DOCS), numFiles, null, MAX_WAIT_FOR_SEARCH_LONG_TESTS);
+        countTestHelper(
+                new ESSearchRequest().withIndex(JOB_NAME + INDEX_SUFFIX_DOCS),
+                numFiles,
+                null,
+                MAX_WAIT_FOR_SEARCH_LONG_TESTS);
     }
 
     @AfterClass
@@ -147,7 +148,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
     public void xmlIssue163() throws ElasticsearchClientException {
@@ -220,7 +222,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/229">https://github.com/dadoonet/fscrawler/issues/229</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/229">https://github.com/dadoonet/fscrawler/issues/229</a>
      */
     @Test
     public void protectedDocument229() throws ElasticsearchClientException {
@@ -228,7 +231,8 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
     public void protectedDocument221() throws ElasticsearchClientException {
@@ -240,15 +244,18 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     public void languageDetection() throws ElasticsearchClientException {
         ESSearchResponse response = runSearch("test-fr.txt", "fichier");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language")).isEqualTo("fr");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
+                    .isEqualTo("fr");
         }
         response = runSearch("test-de.txt", "Datei");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language")).isEqualTo("de");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
+                    .isEqualTo("de");
         }
         response = runSearch("test.txt", "contains");
         for (ESSearchHit hit : response.getHits()) {
-            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language")).isEqualTo("en");
+            assertThat((String) JsonPath.read(hit.getSource(), "$.meta.language"))
+                    .isEqualTo("en");
         }
     }
 
@@ -281,15 +288,16 @@ public class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     private ESSearchResponse runSearch(String filename, String content) throws ElasticsearchClientException {
-        logger.info(" -> Testing if file [{}] has been indexed correctly{}.", filename,
+        logger.info(
+                " -> Testing if file [{}] has been indexed correctly{}.",
+                filename,
                 content == null ? "" : " and contains [" + content + "]");
         ESBoolQuery query = new ESBoolQuery().addMust(new ESTermQuery("file.filename", filename));
         if (content != null) {
             query.addMust(new ESMatchQuery("content", content));
         }
-        ESSearchResponse response = client.search(new ESSearchRequest()
-                        .withIndex(JOB_NAME + INDEX_SUFFIX_DOCS)
-                        .withESQuery(query));
+        ESSearchResponse response = client.search(
+                new ESSearchRequest().withIndex(JOB_NAME + INDEX_SUFFIX_DOCS).withESQuery(query));
         assertThat(response.getTotalHits()).isEqualTo(1L);
         return response;
     }

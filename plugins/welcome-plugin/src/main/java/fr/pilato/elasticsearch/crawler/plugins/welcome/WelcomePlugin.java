@@ -25,5 +25,4 @@ public class WelcomePlugin extends FsCrawlerPlugin {
     protected String getName() {
         return "welcome";
     }
-
 }

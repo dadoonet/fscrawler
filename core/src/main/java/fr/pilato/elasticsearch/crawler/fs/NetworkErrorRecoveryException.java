@@ -20,8 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs;
 
 /**
- * Thrown when network error recovery fails (max retries exceeded or reconnect failed).
- * The failed path has already been re-added to the checkpoint; callers must not add it again.
+ * Thrown when network error recovery fails (max retries exceeded or reconnect failed). The failed path has already been
+ * re-added to the checkpoint; callers must not add it again.
  */
 public class NetworkErrorRecoveryException extends RuntimeException {
 

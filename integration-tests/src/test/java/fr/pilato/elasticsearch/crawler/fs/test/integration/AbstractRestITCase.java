@@ -19,16 +19,19 @@
 
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
-import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
-import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
@@ -37,17 +40,6 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilt
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.MediaType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.junit.AfterClass;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Before;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URLEncoder;
@@ -55,19 +47,25 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.carrotsearch.randomizedtesting.RandomizedTest.rarely;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
 @SuppressWarnings("ALL")
-@ThreadLeakFilters(filters = {
-        WindowsSpecificThreadFilter.class,
-        TestContainerThreadFilter.class,
-        JNACleanerThreadFilter.class,
-        MinioThreadFilter.class
-})
+@ThreadLeakFilters(
+        filters = {
+            WindowsSpecificThreadFilter.class,
+            TestContainerThreadFilter.class,
+            JNACleanerThreadFilter.class,
+            MinioThreadFilter.class
+        })
 public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final int DEFAULT_TEST_REST_PORT = 0;
@@ -82,8 +80,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private FsCrawlerImpl restCrawler;
 
     /**
-     * Get the Rest Port. It could be set externally. If 0,
-     * we will try to find a free port randomly
+     * Get the Rest Port. It could be set externally. If 0, we will try to find a free port randomly
+     *
      * @return the rest port to use
      */
     protected static int getRestPort() throws IOException {
@@ -114,7 +112,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         this.managementService = (FsCrawlerManagementServiceElasticsearchImpl) restCrawler.getManagementService();
         this.documentService = restCrawler.getDocumentService();
 
-        restServer = new RestServer(fsSettings, managementService, documentService, pluginsManager, restCrawler.getFsParser());
+        restServer = new RestServer(
+                fsSettings, managementService, documentService, pluginsManager, restCrawler.getFsParser());
         restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
@@ -148,29 +147,34 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         return target.path(path).request().get(clazz);
     }
 
-    public static <T> T post(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+    public static <T> T post(
+            WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
         WebTarget targetPath = target.path(path);
         // TODO check this as it does not seem to produce anything
         params.forEach(targetPath::queryParam);
 
-        return targetPath.request(MediaType.MULTIPART_FORM_DATA)
+        return targetPath
+                .request(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(mp, mp.getMediaType()), clazz);
     }
 
     public static <T> T post(WebTarget target, String path, String json, Class<T> clazz) {
         WebTarget targetPath = target.path(path);
-        return targetPath.request(MediaType.APPLICATION_JSON)
+        return targetPath
+                .request(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(json, MediaType.APPLICATION_JSON), clazz);
     }
 
-    public static <T> T put(WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
+    public static <T> T put(
+            WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
         WebTarget targetPath = target.path(path);
         // TODO check this as it does not seem to produce anything
         params.forEach(targetPath::queryParam);
 
-        return targetPath.request(MediaType.MULTIPART_FORM_DATA)
+        return targetPath
+                .request(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.APPLICATION_JSON)
                 .put(Entity.entity(mp, mp.getMediaType()), clazz);
     }
@@ -178,7 +182,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     public static <T> T delete(WebTarget target, String path, Class<T> clazz, Map<String, Object> params) {
         WebTarget targetPath = target.path(path);
         Invocation.Builder builder = targetPath.request();
-        // Sadly headers by default only support ISO-8859-1 and not UTF-8: https://www.jmix.io/cuba-blog/utf-8-in-http-headers/
+        // Sadly headers by default only support ISO-8859-1 and not UTF-8:
+        // https://www.jmix.io/cuba-blog/utf-8-in-http-headers/
         // So we need to hack around this and support rfc6266 https://datatracker.ietf.org/doc/html/rfc6266#section-5
         params.forEach((k, v) -> {
             builder.header(k, v);
@@ -248,7 +253,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         return uploadFileUsingApi(target, file, tagsFile, index, null, null);
     }
 
-    public static UploadResponse uploadFileUsingApi(WebTarget target, Path file, Path tagsFile, String index, String api, String id) {
+    public static UploadResponse uploadFileUsingApi(
+            WebTarget target, Path file, Path tagsFile, String index, String api, String id) {
         assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
@@ -258,7 +264,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         }
 
         // MediaType of the body part will be derived from the file.
-        FileDataBodyPart filePart = new FileDataBodyPart("file", file.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FileDataBodyPart filePart =
+                new FileDataBodyPart("file", file.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         FormDataMultiPart mp = new FormDataMultiPart();
         mp.bodyPart(filePart);
 
@@ -291,7 +298,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         }
 
         if (tagsFile != null) {
-            FileDataBodyPart tagsFilePart = new FileDataBodyPart("tags", tagsFile.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            FileDataBodyPart tagsFilePart =
+                    new FileDataBodyPart("tags", tagsFile.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
             mp.bodyPart(tagsFilePart);
         }
 
@@ -308,7 +316,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         Map<String, Object> params = new HashMap<>();
 
         // MediaType of the body part will be derived from the file.
-        FileDataBodyPart filePart = new FileDataBodyPart("file", file.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FileDataBodyPart filePart =
+                new FileDataBodyPart("file", file.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         FormDataMultiPart mp = new FormDataMultiPart();
         mp.bodyPart(filePart);
 
@@ -323,14 +332,16 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         }
 
         if (tagsFile != null) {
-            FileDataBodyPart tagsFilePart = new FileDataBodyPart("tags", tagsFile.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            FileDataBodyPart tagsFilePart =
+                    new FileDataBodyPart("tags", tagsFile.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE);
             mp.bodyPart(tagsFilePart);
         }
 
         return put(target, "/_document/" + id, mp, UploadResponse.class, params);
     }
 
-    public static DeleteResponse deleteDocument(WebTarget target, String index, String id, String filename, String api) {
+    public static DeleteResponse deleteDocument(
+            WebTarget target, String index, String id, String filename, String api) {
         if (id != null) {
             api = api + "/" + id;
             logger.info("Using id {}. Api is now {}", id, api);

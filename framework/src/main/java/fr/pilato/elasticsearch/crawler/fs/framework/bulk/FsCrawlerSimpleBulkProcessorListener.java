@@ -23,10 +23,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerSimpleBulkProcessorListener<
-        O extends FsCrawlerOperation<O>,
-        REQ extends FsCrawlerBulkRequest<O>,
-        RES extends FsCrawlerBulkResponse<O>
-        > implements FsCrawlerBulkProcessor.Listener<O, REQ, RES> {
+                O extends FsCrawlerOperation<O>,
+                REQ extends FsCrawlerBulkRequest<O>,
+                RES extends FsCrawlerBulkResponse<O>>
+        implements FsCrawlerBulkProcessor.Listener<O, REQ, RES> {
     private static final Logger logger = LogManager.getLogger();
 
     protected FsCrawlerBulkProcessor<O, REQ, RES> bulkProcessor;
@@ -48,9 +48,11 @@ public class FsCrawlerSimpleBulkProcessorListener<
                     }
                 }
             } else {
-                logger.warn("There was failures while executing bulk. If you want to see the details, " +
-                        "please activate DEBUG mode with FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\". " +
-                        "See https://fscrawler.readthedocs.io/en/latest/admin/logger.html for more details.", response.buildFailureMessage());
+                logger.warn(
+                        "There was failures while executing bulk. If you want to see the details, "
+                                + "please activate DEBUG mode with FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\". "
+                                + "See https://fscrawler.readthedocs.io/en/latest/admin/logger.html for more details.",
+                        response.buildFailureMessage());
             }
         }
     }

@@ -19,7 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.BeforeClass;
@@ -27,19 +34,12 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @ClassRule
     public static final TemporaryFolder folder = new TemporaryFolder();
+
     protected static Path rootTmpDir;
 
     @BeforeClass
@@ -62,7 +62,9 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         logger.debug("Settings expected: {}", expected);
 
         if (expected.getFs() != null) {
-            assertThat(settings.getFs().getOcr()).as("Checking Ocr").isEqualTo(expected.getFs().getOcr());
+            assertThat(settings.getFs().getOcr())
+                    .as("Checking Ocr")
+                    .isEqualTo(expected.getFs().getOcr());
         }
         assertThat(settings.getFs()).as("Checking Fs").isEqualTo(expected.getFs());
         assertThat(settings.getTags()).as("Checking Tags").isEqualTo(expected.getTags());

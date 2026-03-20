@@ -18,10 +18,19 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,16 +39,6 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -54,7 +53,9 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     @Test
     public void readFileFromNginx() throws Exception {
         // We can only run this test if Docker is available on this machine
-        assumeTrue("We can only run this test if Docker is available on this machine", DockerClientFactory.instance().isDockerAvailable());
+        assumeTrue(
+                "We can only run this test if Docker is available on this machine",
+                DockerClientFactory.instance().isDockerAvailable());
 
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
@@ -72,12 +73,13 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
             logger.info("Starting Test");
             try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-                provider.start(FsSettingsLoader.load(), "{\n" +
-                        "  \"type\": \"http\",\n" +
-                        "  \"http\": {\n" +
-                        "    \"url\": \"" + url + "/foo.txt\"\n" +
-                        "  }\n" +
-                        "}");
+                provider.start(
+                        FsSettingsLoader.load(),
+                        "{\n" + "  \"type\": \"http\",\n"
+                                + "  \"http\": {\n"
+                                + "    \"url\": \""
+                                + url + "/foo.txt\"\n" + "  }\n"
+                                + "}");
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 assertThat(object).isEqualTo(text);
@@ -92,12 +94,13 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     public void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-            provider.start(FsSettingsLoader.load(), "{\n" +
-                    "  \"type\": \"http\",\n" +
-                    "  \"http\": {\n" +
-                    "    \"url\": \"https://david.pilato.fr/robots.txt\"\n" +
-                    "  }\n" +
-                    "}");
+            provider.start(
+                    FsSettingsLoader.load(),
+                    "{\n" + "  \"type\": \"http\",\n"
+                            + "  \"http\": {\n"
+                            + "    \"url\": \"https://david.pilato.fr/robots.txt\"\n"
+                            + "  }\n"
+                            + "}");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             assertThat(object).contains("User-agent: *");

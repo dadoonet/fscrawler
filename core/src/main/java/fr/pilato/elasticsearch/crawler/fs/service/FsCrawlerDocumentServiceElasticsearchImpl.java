@@ -19,15 +19,14 @@
 
 package fr.pilato.elasticsearch.crawler.fs.service;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.client.*;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocumentService {
 
@@ -106,5 +105,4 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
         logger.debug("Getting {}/{}", index, id);
         return client.get(index, id);
     }
-
 }

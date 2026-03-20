@@ -19,7 +19,13 @@
 
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import static fr.pilato.elasticsearch.crawler.fs.cli.FsCrawlerCli.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,20 +37,11 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static fr.pilato.elasticsearch.crawler.fs.cli.FsCrawlerCli.*;
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * We want to test FSCrawler main app
- */
+/** We want to test FSCrawler main app */
 public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
@@ -69,7 +66,8 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
             if (Files.isDirectory(path)) {
                 try {
                     printLs(path);
-                } catch (IOException ignored) { }
+                } catch (IOException ignored) {
+                }
             } else {
                 logger.debug("{}", path);
             }
@@ -77,9 +75,8 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * We want to make sure that we can run several times the same test
-     * without having any error due to the fact that the logger context
-     * has already been initialized.
+     * We want to make sure that we can run several times the same test without having any error due to the fact that
+     * the logger context has already been initialized.
      */
     @Before
     public void resetLogger() {
@@ -88,10 +85,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void changeLoggerContextForDebug() {
-        String[] args = {
-                "--debug",
-                "jobName"
-        };
+        String[] args = {"--debug", "jobName"};
         FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         assertThat(command).isNotNull();
         changeLoggerContext(command);
@@ -112,10 +106,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void changeLoggerContextForTrace() {
-        String[] args = {
-                "--trace",
-                "jobName"
-        };
+        String[] args = {"--trace", "jobName"};
         FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         assertThat(command).isNotNull();
         changeLoggerContext(command);
@@ -136,10 +127,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void changeLoggerContextForSilent() {
-        String[] args = {
-                "--silent",
-                "jobName"
-        };
+        String[] args = {"--silent", "jobName"};
         FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         assertThat(command).isNotNull();
         changeLoggerContext(command);
@@ -159,9 +147,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
 
     @Test
     public void changeLoggerContextByDefault() {
-        String[] args = {
-                "jobName"
-        };
+        String[] args = {"jobName"};
         FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         assertThat(command).isNotNull();
         changeLoggerContext(command);

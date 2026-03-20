@@ -21,12 +21,9 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-
 import java.io.IOException;
 
-/**
- * Jackson Deserializer for ByteSizeValue object
- */
+/** Jackson Deserializer for ByteSizeValue object */
 public class ByteSizeValueDeserializer extends StdDeserializer<ByteSizeValue> {
     public ByteSizeValueDeserializer() {
         super(TimeValue.class);

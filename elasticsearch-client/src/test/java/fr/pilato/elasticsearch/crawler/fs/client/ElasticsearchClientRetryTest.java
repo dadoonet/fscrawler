@@ -19,33 +19,32 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
 import jakarta.ws.rs.ServiceUnavailableException;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 /**
- * Integration tests for the retry mechanism on GET/HEAD requests.
- * Uses WireMock to simulate server errors (503) and verify retry behavior.
+ * Integration tests for the retry mechanism on GET/HEAD requests. Uses WireMock to simulate server errors (503) and
+ * verify retry behavior.
  */
 @ThreadLeakFilters(filters = {WireMockThreadFilter.class})
 public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
@@ -86,29 +85,25 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Test that the client retries on 503 errors and eventually succeeds.
-     * The mock is configured to return 503 twice, then succeed on the third attempt.
-     * Since start() calls getVersion(), this tests the retry mechanism during client initialization.
+     * Test that the client retries on 503 errors and eventually succeeds. The mock is configured to return 503 twice,
+     * then succeed on the third attempt. Since start() calls getVersion(), this tests the retry mechanism during client
+     * initialization.
      */
     @Test
     public void testRetryOnServerError() throws IOException, ElasticsearchClientException {
         // Setup: First 2 calls return 503, third call succeeds
         wireMockServer.resetAll();
-        
+
         stubFor(get(urlEqualTo("/"))
                 .inScenario("Retry Test")
                 .whenScenarioStateIs(Scenario.STARTED)
-                .willReturn(aResponse()
-                        .withStatus(503)
-                        .withBody("{\"error\": \"Service Unavailable\"}"))
+                .willReturn(aResponse().withStatus(503).withBody("{\"error\": \"Service Unavailable\"}"))
                 .willSetStateTo("First Failure"));
 
         stubFor(get(urlEqualTo("/"))
                 .inScenario("Retry Test")
                 .whenScenarioStateIs("First Failure")
-                .willReturn(aResponse()
-                        .withStatus(503)
-                        .withBody("{\"error\": \"Service Unavailable\"}"))
+                .willReturn(aResponse().withStatus(503).withBody("{\"error\": \"Service Unavailable\"}"))
                 .willSetStateTo("Second Failure"));
 
         stubFor(get(urlEqualTo("/"))
@@ -131,23 +126,18 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: retry mechanism worked correctly after 2 failures");
     }
 
-    /**
-     * Test that the client throws an exception after all retries are exhausted.
-     */
+    /** Test that the client throws an exception after all retries are exhausted. */
     @Test
     public void testRetryExhausted() throws IOException {
         // Setup: All calls return 503
         wireMockServer.resetAll();
-        
+
         stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(503)
-                        .withBody("{\"error\": \"Service Unavailable\"}")));
+                .willReturn(aResponse().withStatus(503).withBody("{\"error\": \"Service Unavailable\"}")));
 
         try (ElasticsearchClient client = createClient()) {
             // start() calls getVersion() which should fail after retries are exhausted
-            assertThatThrownBy(client::start)
-                    .isInstanceOf(ServiceUnavailableException.class);
+            assertThatThrownBy(client::start).isInstanceOf(ServiceUnavailableException.class);
         }
 
         // Verify that multiple retry attempts were made
@@ -155,9 +145,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: exception thrown after retries exhausted");
     }
 
-    /**
-     * Test that 4xx errors are not retried (only 5xx server errors should be retried).
-     */
+    /** Test that 4xx errors are not retried (only 5xx server errors should be retried). */
     @Test
     public void testNoRetryOn4xxErrors() throws IOException, ElasticsearchClientException {
         // Setup: Root endpoint works, but specific endpoint returns 404
@@ -169,7 +157,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
-        
+
         // isExistingIndex calls httpGet(index), so it's a GET on /test-index
         stubFor(get(urlEqualTo("/test-index"))
                 .willReturn(aResponse()
@@ -180,10 +168,10 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         try (ElasticsearchClient client = createClient()) {
             // Initialize the client first
             client.start();
-            
+
             // Reset the count after initialization
             wireMockServer.resetRequests();
-            
+
             // This should fail immediately without retry (404 is a client error)
             boolean exists = client.isExistingIndex("test-index");
             assertThat(exists).isFalse();
@@ -195,14 +183,13 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Test that 429 (Too Many Requests) errors trigger retry.
-     * This is important for handling Elasticsearch rate limiting.
-     * See: https://github.com/dadoonet/fscrawler/issues/2119
+     * Test that 429 (Too Many Requests) errors trigger retry. This is important for handling Elasticsearch rate
+     * limiting. See: https://github.com/dadoonet/fscrawler/issues/2119
      */
     @Test
     public void testRetryOn429TooManyRequests() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
-        
+
         // Use WireMock Scenarios to simulate: 429 -> 429 -> Success
         stubFor(get(urlEqualTo("/"))
                 .inScenario("429 Retry")
@@ -240,14 +227,12 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: retry mechanism worked correctly on 429");
     }
 
-    /**
-     * Test that successful requests don't trigger any retry.
-     */
+    /** Test that successful requests don't trigger any retry. */
     @Test
     public void testImmediateSuccessNoRetry() throws IOException, ElasticsearchClientException {
         // Setup: First call succeeds immediately
         wireMockServer.resetAll();
-        
+
         stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -265,8 +250,8 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Test that HEAD requests work correctly (they return null body but should not retry).
-     * This tests the exists() method which uses httpHead().
+     * Test that HEAD requests work correctly (they return null body but should not retry). This tests the exists()
+     * method which uses httpHead().
      */
     @Test
     public void testHeadRequestSuccess() throws IOException, ElasticsearchClientException {
@@ -280,9 +265,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                         .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
 
         // HEAD request returns 200 with no body (document exists)
-        stubFor(head(urlEqualTo("/test-index/_doc/doc1"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
+        stubFor(head(urlEqualTo("/test-index/_doc/doc1")).willReturn(aResponse().withStatus(200)));
 
         try (ElasticsearchClient client = createClient()) {
             client.start();
@@ -298,9 +281,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: HEAD request works correctly without infinite retry");
     }
 
-    /**
-     * Test that HEAD requests with 503 errors are retried correctly.
-     */
+    /** Test that HEAD requests with 503 errors are retried correctly. */
     @Test
     public void testHeadRequestRetryOnServerError() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
@@ -316,15 +297,13 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         stubFor(head(urlEqualTo("/test-index/_doc/doc1"))
                 .inScenario("HEAD Retry")
                 .whenScenarioStateIs(Scenario.STARTED)
-                .willReturn(aResponse()
-                        .withStatus(503))
+                .willReturn(aResponse().withStatus(503))
                 .willSetStateTo("Recovered"));
 
         stubFor(head(urlEqualTo("/test-index/_doc/doc1"))
                 .inScenario("HEAD Retry")
                 .whenScenarioStateIs("Recovered")
-                .willReturn(aResponse()
-                        .withStatus(200)));
+                .willReturn(aResponse().withStatus(200)));
 
         try (ElasticsearchClient client = createClient()) {
             client.start();
@@ -340,8 +319,8 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Test that connection errors are propagated immediately without silent retry.
-     * This ensures the original error message is preserved.
+     * Test that connection errors are propagated immediately without silent retry. This ensures the original error
+     * message is preserved.
      */
     @Test
     public void testConnectionErrorNotSilentlyRetried() throws IOException {

@@ -18,11 +18,15 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import java.util.Collection;
 import org.assertj.core.groups.Tuple;
 import org.junit.After;
 import org.junit.Before;
@@ -34,11 +38,6 @@ import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.Permissions;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
-
-import java.util.Collection;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 
 public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
     private FakeFtpServer fakeFtpServer;
@@ -120,21 +119,59 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
             ftpPlugin.openConnection();
 
             testFilesInDir(ftpPlugin, "/ThisPathDoesNotExist");
-            testFilesInDir(ftpPlugin, "/",
+            testFilesInDir(
+                    ftpPlugin,
+                    "/",
                     tuple(false, true, "nested", "", "/", "/nested", 0L, 777, "none", "none"),
-                    tuple(false, true,"permission", "", "/", "/permission", 0L, 777, "none", "none"),
-                    tuple(false, true,"subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 777, "none", "none"),
+                    tuple(false, true, "permission", "", "/", "/permission", 0L, 777, "none", "none"),
+                    tuple(false, true, "subdir_with_space ", "", "/", "/subdir_with_space ", 0L, 777, "none", "none"),
                     tuple(true, false, "testfile.txt", "txt", "/", "/testfile.txt", 15L, 777, "none", "none"));
-            testFilesInDir(ftpPlugin, "/nested",
-                    tuple(false, true,"buzz", "", "/nested", "/nested/buzz", 0L, 777, "none", "none"),
+            testFilesInDir(
+                    ftpPlugin,
+                    "/nested",
+                    tuple(false, true, "buzz", "", "/nested", "/nested/buzz", 0L, 777, "none", "none"),
                     tuple(true, false, "foo.txt", "txt", "/nested", "/nested/foo.txt", 24L, 777, "none", "none"),
                     tuple(true, false, "bar.txt", "txt", "/nested", "/nested/bar.txt", 8L, 777, "none", "none"));
-            testFilesInDir(ftpPlugin, "/permission",
+            testFilesInDir(
+                    ftpPlugin,
+                    "/permission",
                     tuple(true, false, "all.txt", "txt", "/permission", "/permission/all.txt", 3L, 777, "none", "none"),
-                    tuple(true, false, "none.txt", "txt", "/permission", "/permission/none.txt", 3L, 0, "none", "none"));
-            testFilesInDir(ftpPlugin, "/subdir_with_space ",
-                    tuple(true, false, "hello.txt", "txt", "/subdir_with_space ", "/subdir_with_space /hello.txt", 33L, 777, "none", "none"),
-                    tuple(true, false, "world.txt", "txt", "/subdir_with_space ", "/subdir_with_space /world.txt", 33L, 777, "none", "none"));
+                    tuple(
+                            true,
+                            false,
+                            "none.txt",
+                            "txt",
+                            "/permission",
+                            "/permission/none.txt",
+                            3L,
+                            0,
+                            "none",
+                            "none"));
+            testFilesInDir(
+                    ftpPlugin,
+                    "/subdir_with_space ",
+                    tuple(
+                            true,
+                            false,
+                            "hello.txt",
+                            "txt",
+                            "/subdir_with_space ",
+                            "/subdir_with_space /hello.txt",
+                            33L,
+                            777,
+                            "none",
+                            "none"),
+                    tuple(
+                            true,
+                            false,
+                            "world.txt",
+                            "txt",
+                            "/subdir_with_space ",
+                            "/subdir_with_space /world.txt",
+                            33L,
+                            777,
+                            "none",
+                            "none"));
         } finally {
             ftpPlugin.closeConnection();
         }
@@ -150,7 +187,8 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
         assertThat(plugin.exists(path)).isEqualTo(values.length > 0);
         Collection<FileAbstractModel> files = plugin.getFiles(path);
         assertThat(files).hasSize(values.length);
-        assertThat(files).extracting(
+        assertThat(files)
+                .extracting(
                         FileAbstractModel::isFile,
                         FileAbstractModel::isDirectory,
                         FileAbstractModel::getName,

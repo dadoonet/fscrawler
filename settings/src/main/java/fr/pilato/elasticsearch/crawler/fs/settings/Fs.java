@@ -23,76 +23,102 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
-import org.apache.logging.log4j.LogManager;
-import org.github.gestalt.config.annotations.Config;
-
 import java.util.List;
 import java.util.Objects;
+import org.apache.logging.log4j.LogManager;
+import org.github.gestalt.config.annotations.Config;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
     @Config(defaultVal = Defaults.DEFAULT_DIR)
     private String url;
+
     @Config(defaultVal = "15m")
     private TimeValue updateRate;
+
     @Config
-    @Nullable private List<String> includes;
+    @Nullable
+    private List<String> includes;
+
     @Config(defaultVal = "*/~*")
     private List<String> excludes;
+
     @Config
-    @Nullable private List<String> filters;
+    @Nullable
+    private List<String> filters;
 
     @Config(defaultVal = "false")
     private boolean jsonSupport;
+
     @Config(defaultVal = "false")
     private boolean addAsInnerObject;
+
     @Config(defaultVal = "false")
     private boolean xmlSupport;
 
     @Config(defaultVal = "false")
     private boolean followSymlinks;
+
     @Config(defaultVal = "true")
     private boolean removeDeleted;
+
     @Config(defaultVal = "false")
     private boolean continueOnError;
+
     @Config
-    @Nullable private ByteSizeValue ignoreAbove;
+    @Nullable
+    private ByteSizeValue ignoreAbove;
 
     @Config(defaultVal = "false")
     private boolean filenameAsId;
+
     @Config(defaultVal = "true")
     private boolean addFilesize;
+
     @Config(defaultVal = "false")
     private boolean attributesSupport;
+
     @Config(defaultVal = "false")
     private boolean aclSupport;
+
     @Config(defaultVal = "false")
     private boolean storeSource;
+
     @Config(defaultVal = "true")
     private boolean indexContent;
+
     @Config
-    @Nullable private Percentage indexedChars;
+    @Nullable
+    private Percentage indexedChars;
+
     @Config(defaultVal = "false")
     private boolean rawMetadata;
+
     @Config
-    @Nullable private String checksum;
+    @Nullable
+    private String checksum;
 
     @Config(defaultVal = "true")
     private boolean indexFolders;
+
     @Config(defaultVal = "false")
     private boolean langDetect;
 
     @Config
-    @Nullable private String tikaConfigPath;
+    @Nullable
+    private String tikaConfigPath;
 
     @Config
-    @Nullable private String tempDir;
+    @Nullable
+    private String tempDir;
 
     @Config
-    @Nullable private Ocr ocr;
+    @Nullable
+    private Ocr ocr;
 
     @Config
-    @Nullable private String provider;
+    @Nullable
+    private String provider;
 
     public String getUrl() {
         return url;
@@ -270,7 +296,8 @@ public class Fs {
         } else {
             strategy = "no_ocr";
         }
-        LogManager.getLogger().warn("pdf_ocr setting has been deprecated and is replaced by ocr.pdf_strategy: {}.", strategy);
+        LogManager.getLogger()
+                .warn("pdf_ocr setting has been deprecated and is replaced by ocr.pdf_strategy: {}.", strategy);
         if (this.ocr == null) {
             this.ocr = new Ocr();
         }
@@ -303,11 +330,11 @@ public class Fs {
     }
 
     public String getTikaConfigPath() {
-      return tikaConfigPath;
+        return tikaConfigPath;
     }
 
     public void setTikaConfigPath(String tikaConfigPath) {
-      this.tikaConfigPath = tikaConfigPath;
+        this.tikaConfigPath = tikaConfigPath;
     }
 
     public String getTempDir() {
@@ -331,71 +358,95 @@ public class Fs {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Fs fs = (Fs) o;
-        return jsonSupport == fs.jsonSupport &&
-                filenameAsId == fs.filenameAsId &&
-                addFilesize == fs.addFilesize &&
-                removeDeleted == fs.removeDeleted &&
-                addAsInnerObject == fs.addAsInnerObject &&
-                storeSource == fs.storeSource &&
-                indexContent == fs.indexContent &&
-                attributesSupport == fs.attributesSupport &&
-                aclSupport == fs.aclSupport &&
-                rawMetadata == fs.rawMetadata &&
-                xmlSupport == fs.xmlSupport &&
-                indexFolders == fs.indexFolders &&
-                langDetect == fs.langDetect &&
-                continueOnError == fs.continueOnError &&
-                followSymlinks == fs.followSymlinks &&
-                Objects.equals(url, fs.url) &&
-                Objects.equals(updateRate, fs.updateRate) &&
-                Objects.equals(includes, fs.includes) &&
-                Objects.equals(excludes, fs.excludes) &&
-                Objects.equals(filters, fs.filters) &&
-                Objects.equals(indexedChars, fs.indexedChars) &&
-                Objects.equals(checksum, fs.checksum) &&
-                Objects.equals(ocr, fs.ocr) &&
-                Objects.equals(ignoreAbove, fs.ignoreAbove) &&
-                Objects.equals(tikaConfigPath, fs.tikaConfigPath) &&
-                Objects.equals(tempDir, fs.tempDir) &&
-                Objects.equals(provider, fs.provider);
+        return jsonSupport == fs.jsonSupport
+                && filenameAsId == fs.filenameAsId
+                && addFilesize == fs.addFilesize
+                && removeDeleted == fs.removeDeleted
+                && addAsInnerObject == fs.addAsInnerObject
+                && storeSource == fs.storeSource
+                && indexContent == fs.indexContent
+                && attributesSupport == fs.attributesSupport
+                && aclSupport == fs.aclSupport
+                && rawMetadata == fs.rawMetadata
+                && xmlSupport == fs.xmlSupport
+                && indexFolders == fs.indexFolders
+                && langDetect == fs.langDetect
+                && continueOnError == fs.continueOnError
+                && followSymlinks == fs.followSymlinks
+                && Objects.equals(url, fs.url)
+                && Objects.equals(updateRate, fs.updateRate)
+                && Objects.equals(includes, fs.includes)
+                && Objects.equals(excludes, fs.excludes)
+                && Objects.equals(filters, fs.filters)
+                && Objects.equals(indexedChars, fs.indexedChars)
+                && Objects.equals(checksum, fs.checksum)
+                && Objects.equals(ocr, fs.ocr)
+                && Objects.equals(ignoreAbove, fs.ignoreAbove)
+                && Objects.equals(tikaConfigPath, fs.tikaConfigPath)
+                && Objects.equals(tempDir, fs.tempDir)
+                && Objects.equals(provider, fs.provider);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
-                removeDeleted, addAsInnerObject, storeSource, indexContent, indexedChars, attributesSupport, aclSupport, rawMetadata, xmlSupport,
-                checksum, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks, tikaConfigPath, tempDir, provider);
+        return Objects.hash(
+                url,
+                updateRate,
+                includes,
+                excludes,
+                filters,
+                jsonSupport,
+                filenameAsId,
+                addFilesize,
+                removeDeleted,
+                addAsInnerObject,
+                storeSource,
+                indexContent,
+                indexedChars,
+                attributesSupport,
+                aclSupport,
+                rawMetadata,
+                xmlSupport,
+                checksum,
+                indexFolders,
+                langDetect,
+                continueOnError,
+                ocr,
+                ignoreAbove,
+                followSymlinks,
+                tikaConfigPath,
+                tempDir,
+                provider);
     }
 
     @Override
     public String toString() {
-        return "Fs{" + "url='" + url + '\'' +
-                ", updateRate=" + updateRate +
-                ", includes=" + includes +
-                ", excludes=" + excludes +
-                ", filters=" + filters +
-                ", jsonSupport=" + jsonSupport +
-                ", filenameAsId=" + filenameAsId +
-                ", addFilesize=" + addFilesize +
-                ", removeDeleted=" + removeDeleted +
-                ", addAsInnerObject=" + addAsInnerObject +
-                ", storeSource=" + storeSource +
-                ", indexContent=" + indexContent +
-                ", indexedChars=" + indexedChars +
-                ", attributesSupport=" + attributesSupport +
-                ", aclSupport=" + aclSupport +
-                ", rawMetadata=" + rawMetadata +
-                ", xmlSupport=" + xmlSupport +
-                ", checksum='" + checksum + '\'' +
-                ", indexFolders=" + indexFolders +
-                ", langDetect=" + langDetect +
-                ", continueOnError=" + continueOnError +
-                ", ocr=" + ocr +
-                ", ignoreAbove=" + ignoreAbove +
-                ", followSymlinks=" + followSymlinks +
-                ", tikaConfigPath='" + tikaConfigPath + '\'' +
-                ", tempDir='" + tempDir + '\'' +
-                ", provider='" + provider + '\'' +
-                '}';
+        return "Fs{" + "url='" + url + '\'' + ", updateRate="
+                + updateRate + ", includes="
+                + includes + ", excludes="
+                + excludes + ", filters="
+                + filters + ", jsonSupport="
+                + jsonSupport + ", filenameAsId="
+                + filenameAsId + ", addFilesize="
+                + addFilesize + ", removeDeleted="
+                + removeDeleted + ", addAsInnerObject="
+                + addAsInnerObject + ", storeSource="
+                + storeSource + ", indexContent="
+                + indexContent + ", indexedChars="
+                + indexedChars + ", attributesSupport="
+                + attributesSupport + ", aclSupport="
+                + aclSupport + ", rawMetadata="
+                + rawMetadata + ", xmlSupport="
+                + xmlSupport + ", checksum='"
+                + checksum + '\'' + ", indexFolders="
+                + indexFolders + ", langDetect="
+                + langDetect + ", continueOnError="
+                + continueOnError + ", ocr="
+                + ocr + ", ignoreAbove="
+                + ignoreAbove + ", followSymlinks="
+                + followSymlinks + ", tikaConfigPath='"
+                + tikaConfigPath + '\'' + ", tempDir='"
+                + tempDir + '\'' + ", provider='"
+                + provider + '\'' + '}';
     }
 }

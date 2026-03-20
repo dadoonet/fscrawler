@@ -19,10 +19,10 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.serialize;
 
 public class ESSearchRequest {
 

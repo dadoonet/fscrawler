@@ -20,11 +20,9 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 /**
- * A {@code SizeUnit} represents size at a given unit of
- * granularity and provides utility methods to convert across units.
- * A {@code SizeUnit} does not maintain size information, but only
- * helps organize and use size representations that may be maintained
- * separately across various contexts.
+ * A {@code SizeUnit} represents size at a given unit of granularity and provides utility methods to convert across
+ * units. A {@code SizeUnit} does not maintain size information, but only helps organize and use size representations
+ * that may be maintained separately across various contexts.
  */
 public enum ByteSizeUnit {
     BYTES {
@@ -253,10 +251,7 @@ public enum ByteSizeUnit {
 
     static final long MAX = Long.MAX_VALUE;
 
-    /**
-     * Scale d by m, checking for overflow.
-     * This has a short name to make above code more readable.
-     */
+    /** Scale d by m, checking for overflow. This has a short name to make above code more readable. */
     static long x(long d, long m, long over) {
         if (d > over) return Long.MAX_VALUE;
         if (d < -over) return Long.MIN_VALUE;

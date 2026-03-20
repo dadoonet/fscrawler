@@ -22,10 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * This class represents a ServerUrl which is basically just a String.
- * This is used in the Elasticsearch.Node class.
- */
+/** This class represents a ServerUrl which is basically just a String. This is used in the Elasticsearch.Node class. */
 @Deprecated
 public class ServerUrl {
     private final Logger logger = LogManager.getLogger();
@@ -33,7 +30,8 @@ public class ServerUrl {
     private String url;
 
     public void setUrl(String url) {
-        logger.fatal("Setting elasticsearch.nodes.url has been removed in favor of elasticsearch.urls. " +
-                "Please update your configuration. See https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#node-settings.");
+        logger.fatal(
+                "Setting elasticsearch.nodes.url has been removed in favor of elasticsearch.urls. "
+                        + "Please update your configuration. See https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#node-settings.");
     }
 }

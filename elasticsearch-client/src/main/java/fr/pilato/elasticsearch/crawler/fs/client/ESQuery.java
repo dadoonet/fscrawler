@@ -19,7 +19,8 @@
 
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-public abstract sealed class ESQuery permits ESTermQuery, ESMatchQuery, ESSemanticQuery, ESPrefixQuery, ESRangeQuery, ESBoolQuery {
+public abstract sealed class ESQuery
+        permits ESTermQuery, ESMatchQuery, ESSemanticQuery, ESPrefixQuery, ESRangeQuery, ESBoolQuery {
     private final String field;
 
     ESQuery(String field) {

@@ -19,5 +19,4 @@
 
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-class RestApi {
-}
+class RestApi {}

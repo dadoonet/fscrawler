@@ -19,21 +19,18 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
+import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil.mapper;
-
-/**
- * Parse a XML document and generate a FSCrawler Doc
- */
+/** Parse a XML document and generate a FSCrawler Doc */
 @SuppressWarnings("unchecked")
 public class XmlDocParser {
 
@@ -58,7 +55,9 @@ public class XmlDocParser {
     }
 
     /**
-     * Extracting XML content. See #185: <a href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a>
+     * Extracting XML content. See #185: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/185">https://github.com/dadoonet/fscrawler/issues/185</a>
+     *
      * @param inputStream The XML Stream
      * @return The XML Content as a map
      */

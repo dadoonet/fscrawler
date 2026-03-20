@@ -19,14 +19,23 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
+import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
+import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.assertj.core.api.Assumptions.assumeThatCode;
+
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
-
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import java.security.MessageDigest;
+import java.time.LocalDateTime;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
@@ -34,18 +43,6 @@ import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.time.LocalDateTime;
-import java.util.Map;
-
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomBoolean;
-import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.localDateTimeToDate;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.assertj.core.api.Assumptions.assumeThatCode;
 
 public class TikaDocParserTest extends DocParserTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -62,10 +59,11 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/782">https://github.com/dadoonet/fscrawler/issues/782</a>.
-     * Apple Keynote (.key) files should have their text content extracted by Tika (IWorkPackageParser).
-     * With OCR enabled, the test.key file yields "FSCrawler" and "You know, for files!" from the slide content.
-     * Skipped when Tesseract is not installed.
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/782">https://github.com/dadoonet/fscrawler/issues/782</a>.
+     * Apple Keynote (.key) files should have their text content extracted by Tika (IWorkPackageParser). With OCR
+     * enabled, the test.key file yields "FSCrawler" and "You know, for files!" from the slide content. Skipped when
+     * Tesseract is not installed.
      */
     @Test
     public void keynoteIssue782() throws IOException {
@@ -74,14 +72,12 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .isTrue();
 
         Doc doc = extractFromFile("test.key");
-        assertThat(doc.getContent())
-                .contains("FSCrawler")
-                .contains("You know, for files!");
+        assertThat(doc.getContent()).contains("FSCrawler").contains("You know, for files!");
     }
 
     /**
-     * Keynote (.key) without OCR: Tika extracts the package structure (file paths) but not the slide text.
-     * Verifies that we get at least the image path pattern and not the slide text "FSCrawler".
+     * Keynote (.key) without OCR: Tika extracts the package structure (file paths) but not the slide text. Verifies
+     * that we get at least the image path pattern and not the slide text "FSCrawler".
      */
     @Test
     public void keynoteIssue782WithoutOcr() throws IOException {
@@ -95,10 +91,11 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/494">https://github.com/dadoonet/fscrawler/issues/494</a>.
-     * Email files (multipart/alternative) can contain both text/plain and text/html with the same content.
-     * Since Tika 1.17, extraction of all alternatives is no longer done by default, so the body text
-     * should appear only once in the extracted content.
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/494">https://github.com/dadoonet/fscrawler/issues/494</a>.
+     * Email files (multipart/alternative) can contain both text/plain and text/html with the same content. Since Tika
+     * 1.17, extraction of all alternatives is no longer done by default, so the body text should appear only once in
+     * the extracted content.
      */
     @Test
     public void emailIssue494NoDuplicateContent() throws IOException {
@@ -107,7 +104,8 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/162">https://github.com/dadoonet/fscrawler/issues/162</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/162">https://github.com/dadoonet/fscrawler/issues/162</a>
      */
     @Test
     public void langDetect162() throws IOException {
@@ -124,7 +122,8 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
     public void pdfIssue221() throws IOException {
@@ -160,7 +159,8 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
     public void xmlIssue163() throws IOException {
@@ -243,7 +243,8 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent()).contains("This is a sample text available in page");
 
         // Content Type
-        assertThat(doc.getFile().getContentType()).isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        assertThat(doc.getFile().getContentType())
+                .isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 
         // Meta data
         assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
@@ -272,7 +273,8 @@ public class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("extended-properties:TotalTime", "6")
                 .containsEntry("extended-properties:Manager", "My Mother")
                 .containsEntry("custom:N° du document", "1234")
-                .containsEntry("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                .containsEntry(
+                        "Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .containsEntry("dc:subject", "Test Tika Object")
                 .containsEntry("extended-properties:Application", "Microsoft Macintosh Word")
                 .containsEntry("meta:last-author", "David Pilato")
@@ -305,26 +307,27 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(15)
-            .containsEntry("Titre", "Test Tika title")
-            .containsEntry("Content-Location", "Web%20page")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("resourceName", "test.html")
-            .containsEntry("Mots clés", "keyword1, keyword2")
-            .containsEntry("ProgId", "Word.Document")
-            .containsEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector")
-            .containsEntry("Originator", "Microsoft Word 15")
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("dc:title", "Test Tika title")
-            .containsEntry("Content-Encoding", "UTF-8")
-            .containsEntry("Content-Type-Hint", "text/html; charset=macintosh")
-            .containsEntry("X-TIKA:detectedEncoding", "UTF-8")
-            .containsEntry("Content-Type", "text/html; charset=UTF-8")
-            .containsEntry("Generator", "Microsoft Word 15");
+                .hasSize(15)
+                .containsEntry("Titre", "Test Tika title")
+                .containsEntry("Content-Location", "Web%20page")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("resourceName", "test.html")
+                .containsEntry("Mots clés", "keyword1, keyword2")
+                .containsEntry("ProgId", "Word.Document")
+                .containsEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector")
+                .containsEntry("Originator", "Microsoft Word 15")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:title", "Test Tika title")
+                .containsEntry("Content-Encoding", "UTF-8")
+                .containsEntry("Content-Type-Hint", "text/html; charset=macintosh")
+                .containsEntry("X-TIKA:detectedEncoding", "UTF-8")
+                .containsEntry("Content-Type", "text/html; charset=UTF-8")
+                .containsEntry("Generator", "Microsoft Word 15");
     }
 
     /**
-     * Test for #87: <a href="https://github.com/dadoonet/fscrawler/issues/87">https://github.com/dadoonet/fscrawler/issues/87</a>
+     * Test for #87: <a
+     * href="https://github.com/dadoonet/fscrawler/issues/87">https://github.com/dadoonet/fscrawler/issues/87</a>
      */
     @Test
     public void extractFromMp3() throws IOException {
@@ -344,25 +347,25 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(19)
-            .containsEntry("xmpDM:genre", "Vocal")
-            .containsEntry("xmpDM:album", "FS Crawler")
-            .containsEntry("xmpDM:trackNumber", "1")
-            .containsEntry("xmpDM:releaseDate", "2016")
-            .containsEntry("xmpDM:artist", "David Pilato")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("dc:creator", "David Pilato")
-            .containsEntry("xmpDM:audioCompressor", "MP3")
-            .containsEntry("resourceName", "test.mp3")
-            .containsEntry("xmpDM:audioChannelType", "Stereo")
-            .containsEntry("version", "MPEG 3 Layer III Version 1")
-            .containsEntry("xmpDM:audioSampleRate", "44100")
-            .containsEntry("channels", "2")
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("dc:title", "Test Tika")
-            .containsEntry("xmpDM:duration", "1.0187751054763794")
-            .containsEntry("Content-Type", "audio/mpeg")
-            .containsEntry("samplerate", "44100");
+                .hasSize(19)
+                .containsEntry("xmpDM:genre", "Vocal")
+                .containsEntry("xmpDM:album", "FS Crawler")
+                .containsEntry("xmpDM:trackNumber", "1")
+                .containsEntry("xmpDM:releaseDate", "2016")
+                .containsEntry("xmpDM:artist", "David Pilato")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:creator", "David Pilato")
+                .containsEntry("xmpDM:audioCompressor", "MP3")
+                .containsEntry("resourceName", "test.mp3")
+                .containsEntry("xmpDM:audioChannelType", "Stereo")
+                .containsEntry("version", "MPEG 3 Layer III Version 1")
+                .containsEntry("xmpDM:audioSampleRate", "44100")
+                .containsEntry("channels", "2")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:title", "Test Tika")
+                .containsEntry("xmpDM:duration", "1.0187751054763794")
+                .containsEntry("Content-Type", "audio/mpeg")
+                .containsEntry("samplerate", "44100");
         assertThat(raw)
                 .extractingByKey("xmpDM:logComment")
                 .satisfies(rawField -> assertThat(rawField).containsAnyOf("Hello but reverted"));
@@ -386,29 +389,29 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(22)
-            .containsEntry("dc:description", "Comments")
-            .containsEntry("meta:paragraph-count", "1")
-            .containsEntry("meta:word-count", "12")
-            .containsEntry("dc:subject", "keyword1,  keyword2")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("dc:creator", "David Pilato")
-            .containsEntry("generator", "MicrosoftOffice/15.0 MicrosoftWord")
-            .containsEntry("xmpTPg:NPages", "1")
-            .containsEntry("resourceName", "test.odt")
-            .containsEntry("dcterms:created", "2016-07-07T08:37:00Z")
-            .containsEntry("dcterms:modified", "2016-07-07T08:37:00Z")
-            .containsEntry("editing-cycles", "2")
-            .containsEntry("meta:character-count", "86")
-            .containsEntry("custom:Terminé le", "2016-07-06T22:00:00Z")
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("dc:title", "Test Tika title")
-            .containsEntry("odf:version", "1.2")
-            .containsEntry("meta:keyword", "keyword1,  keyword2")
-            .containsEntry("extended-properties:TotalTime", "PT0S")
-            .containsEntry("cp:subject", "Test Tika Object")
-            .containsEntry("meta:page-count", "1")
-            .containsEntry("Content-Type", "application/vnd.oasis.opendocument.text");
+                .hasSize(22)
+                .containsEntry("dc:description", "Comments")
+                .containsEntry("meta:paragraph-count", "1")
+                .containsEntry("meta:word-count", "12")
+                .containsEntry("dc:subject", "keyword1,  keyword2")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:creator", "David Pilato")
+                .containsEntry("generator", "MicrosoftOffice/15.0 MicrosoftWord")
+                .containsEntry("xmpTPg:NPages", "1")
+                .containsEntry("resourceName", "test.odt")
+                .containsEntry("dcterms:created", "2016-07-07T08:37:00Z")
+                .containsEntry("dcterms:modified", "2016-07-07T08:37:00Z")
+                .containsEntry("editing-cycles", "2")
+                .containsEntry("meta:character-count", "86")
+                .containsEntry("custom:Terminé le", "2016-07-06T22:00:00Z")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:title", "Test Tika title")
+                .containsEntry("odf:version", "1.2")
+                .containsEntry("meta:keyword", "keyword1,  keyword2")
+                .containsEntry("extended-properties:TotalTime", "PT0S")
+                .containsEntry("cp:subject", "Test Tika Object")
+                .containsEntry("meta:page-count", "1")
+                .containsEntry("Content-Type", "application/vnd.oasis.opendocument.text");
     }
 
     @Test
@@ -429,49 +432,50 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(42)
-            .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
-            .containsEntry("pdf:PDFVersion", "1.5")
-            .containsEntry("pdf:docinfo:title", "Test Tika title")
-            .containsEntry("xmp:CreatorTool", "Microsoft Word")
-            .containsEntry("pdf:hasXFA", "false")
-            .containsEntry("access_permission:modify_annotations", "true")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser")
-            .containsEntry("dc:creator", "David Pilato")
-            .containsEntry("pdf:num3DAnnotations", "0")
-            .containsEntry("dcterms:created", "2016-07-07T08:37:42Z")
-            .containsEntry("dcterms:modified", "2016-07-07T08:37:42Z")
-            .containsEntry("dc:format", "application/pdf; version=1.5")
-            .containsEntry("pdf:docinfo:creator_tool", "Microsoft Word")
-            .containsEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0")
-            .containsEntry("access_permission:fill_in_form", "true")
-            .containsEntry("pdf:docinfo:keywords", "keyword1, keyword2")
-            .containsEntry("pdf:docinfo:modified", "2016-07-07T08:37:42Z")
-            .containsEntry("pdf:hasCollection", "false")
-            .containsEntry("pdf:encrypted", "false")
-            .containsEntry("dc:title", "Test Tika title")
-            .containsEntry("pdf:containsNonEmbeddedFont", "false")
-            .containsEntry("pdf:docinfo:subject", "Test Tika Object")
-            .containsEntry("pdf:hasMarkedContent", "true")
-            .containsEntry("Content-Type", "application/pdf")
-            .containsEntry("access_permission:can_print_faithful", "true")
-            .containsEntry("pdf:docinfo:creator", "David Pilato")
-            .containsEntry("dc:language", "en-US")
-            .containsEntry("dc:subject", "keyword1, keyword2")
-            .containsEntry("pdf:totalUnmappedUnicodeChars", "0")
-            .containsEntry("access_permission:extract_for_accessibility", "true")
-            .containsEntry("access_permission:assemble_document", "true")
-            .containsEntry("xmpTPg:NPages", "2")
-            .containsEntry("resourceName", "test.pdf")
-            .containsEntry("pdf:hasXMP", "false")
-            .containsEntry("pdf:charsPerPage", "42")
-            .containsEntry("access_permission:extract_content", "true")
-            .containsEntry("access_permission:can_print", "true")
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser")
-            .containsEntry("access_permission:can_modify", "true")
-            .containsEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z")
-            .containsEntry("pdf:containsDamagedFont", "false");
-        assertThat(raw).containsKey("pdf:ocrPageCount")
+                .hasSize(42)
+                .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
+                .containsEntry("pdf:PDFVersion", "1.5")
+                .containsEntry("pdf:docinfo:title", "Test Tika title")
+                .containsEntry("xmp:CreatorTool", "Microsoft Word")
+                .containsEntry("pdf:hasXFA", "false")
+                .containsEntry("access_permission:modify_annotations", "true")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser")
+                .containsEntry("dc:creator", "David Pilato")
+                .containsEntry("pdf:num3DAnnotations", "0")
+                .containsEntry("dcterms:created", "2016-07-07T08:37:42Z")
+                .containsEntry("dcterms:modified", "2016-07-07T08:37:42Z")
+                .containsEntry("dc:format", "application/pdf; version=1.5")
+                .containsEntry("pdf:docinfo:creator_tool", "Microsoft Word")
+                .containsEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0")
+                .containsEntry("access_permission:fill_in_form", "true")
+                .containsEntry("pdf:docinfo:keywords", "keyword1, keyword2")
+                .containsEntry("pdf:docinfo:modified", "2016-07-07T08:37:42Z")
+                .containsEntry("pdf:hasCollection", "false")
+                .containsEntry("pdf:encrypted", "false")
+                .containsEntry("dc:title", "Test Tika title")
+                .containsEntry("pdf:containsNonEmbeddedFont", "false")
+                .containsEntry("pdf:docinfo:subject", "Test Tika Object")
+                .containsEntry("pdf:hasMarkedContent", "true")
+                .containsEntry("Content-Type", "application/pdf")
+                .containsEntry("access_permission:can_print_faithful", "true")
+                .containsEntry("pdf:docinfo:creator", "David Pilato")
+                .containsEntry("dc:language", "en-US")
+                .containsEntry("dc:subject", "keyword1, keyword2")
+                .containsEntry("pdf:totalUnmappedUnicodeChars", "0")
+                .containsEntry("access_permission:extract_for_accessibility", "true")
+                .containsEntry("access_permission:assemble_document", "true")
+                .containsEntry("xmpTPg:NPages", "2")
+                .containsEntry("resourceName", "test.pdf")
+                .containsEntry("pdf:hasXMP", "false")
+                .containsEntry("pdf:charsPerPage", "42")
+                .containsEntry("access_permission:extract_content", "true")
+                .containsEntry("access_permission:can_print", "true")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser")
+                .containsEntry("access_permission:can_modify", "true")
+                .containsEntry("pdf:docinfo:created", "2016-07-07T08:37:42Z")
+                .containsEntry("pdf:containsDamagedFont", "false");
+        assertThat(raw)
+                .containsKey("pdf:ocrPageCount")
                 .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
                 .isNotEmpty();
     }
@@ -585,22 +589,23 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(15)
-            .containsEntry("meta:word-count", "19")
-            .containsEntry("dc:subject", "Test Tika Object")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("dc:creator", "David Pilato")
-            .containsEntry("extended-properties:Company", "elastic")
-            .containsEntry("resourceName", "test.rtf")
-            .containsEntry("meta:character-count", "68")
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("dc:title", "Test Tika title")
-            .containsEntry("meta:keyword", "keyword1, keyword2")
-            .containsEntry("extended-properties:Manager", "My Mother")
-            .containsEntry("meta:page-count", "2")
-            .containsEntry("cp:category", "test")
-            .containsEntry("Content-Type", "application/rtf");
-        assertThat(raw).containsKey("dcterms:created")
+                .hasSize(15)
+                .containsEntry("meta:word-count", "19")
+                .containsEntry("dc:subject", "Test Tika Object")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:creator", "David Pilato")
+                .containsEntry("extended-properties:Company", "elastic")
+                .containsEntry("resourceName", "test.rtf")
+                .containsEntry("meta:character-count", "68")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("dc:title", "Test Tika title")
+                .containsEntry("meta:keyword", "keyword1, keyword2")
+                .containsEntry("extended-properties:Manager", "My Mother")
+                .containsEntry("meta:page-count", "2")
+                .containsEntry("cp:category", "test")
+                .containsEntry("Content-Type", "application/rtf");
+        assertThat(raw)
+                .containsKey("dcterms:created")
                 .extractingByKey("dcterms:created", InstanceOfAssertFactories.STRING)
                 .startsWith("2016-07-0");
     }
@@ -623,14 +628,14 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(7)
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("Content-Encoding", "ISO-8859-1")
-            .containsEntry("resourceName", "test.txt")
-            .containsEntry("X-TIKA:detectedEncoding", "ISO-8859-1")
-            .containsEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector")
-            .containsEntry("Content-Type", "text/plain; charset=ISO-8859-1");
+                .hasSize(7)
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("Content-Encoding", "ISO-8859-1")
+                .containsEntry("resourceName", "test.txt")
+                .containsEntry("X-TIKA:detectedEncoding", "ISO-8859-1")
+                .containsEntry("X-TIKA:encodingDetector", "UniversalEncodingDetector")
+                .containsEntry("Content-Type", "text/plain; charset=ISO-8859-1");
 
         assertThat(doc.getAttachment()).isNull();
         assertThat(doc.getFile().getChecksum()).isNull();
@@ -654,17 +659,17 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(10)
-            .containsEntry("xmpDM:audioSampleRate", "44100")
-            .containsEntry("channels", "2")
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
-            .containsEntry("bits", "16")
-            .containsEntry("resourceName", "test.wav")
-            .containsEntry("encoding", "PCM_SIGNED")
-            .containsEntry("xmpDM:audioSampleType", "16Int")
-            .containsEntry("Content-Type", "audio/vnd.wave")
-            .containsEntry("samplerate", "44100.0");
+                .hasSize(10)
+                .containsEntry("xmpDM:audioSampleRate", "44100")
+                .containsEntry("channels", "2")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("bits", "16")
+                .containsEntry("resourceName", "test.wav")
+                .containsEntry("encoding", "PCM_SIGNED")
+                .containsEntry("xmpDM:audioSampleType", "16Int")
+                .containsEntry("Content-Type", "audio/vnd.wave")
+                .containsEntry("samplerate", "44100.0");
     }
 
     @Test
@@ -724,8 +729,9 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for checksum calculation on small files (below 64KB threshold).
-     * Small files are processed in-memory for better performance.
+     * Test case for checksum calculation on small files (below 64KB threshold). Small files are processed in-memory for
+     * better performance.
+     *
      * @throws Exception In case something goes wrong
      */
     @Test
@@ -755,9 +761,9 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for checksum calculation when filesize is unknown (0 or -1).
-     * This can happen with REST API uploads when the client doesn't provide file size.
-     * The code should use the temp file approach to be safe and avoid OOM.
+     * Test case for checksum calculation when filesize is unknown (0 or -1). This can happen with REST API uploads when
+     * the client doesn't provide file size. The code should use the temp file approach to be safe and avoid OOM.
+     *
      * @throws Exception In case something goes wrong
      */
     @Test
@@ -794,10 +800,10 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for checksum calculation on large binary files.
-     * This verifies that the MD5 checksum is computed over the entire file content,
-     * not just the first 64KB that Tika reads for content type detection.
-     * Large files are processed using a temporary file to avoid OOM.
+     * Test case for checksum calculation on large binary files. This verifies that the MD5 checksum is computed over
+     * the entire file content, not just the first 64KB that Tika reads for content type detection. Large files are
+     * processed using a temporary file to avoid OOM.
+     *
      * @throws Exception In case something goes wrong
      */
     @Test
@@ -893,14 +899,14 @@ public class TikaDocParserTest extends DocParserTestCase {
         assertThat(doc.getContent()).contains("This file also contains text.");
     }
 
-
     @Test
     public void ocrWithPdfStrategyAuto() throws IOException {
         assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
-        // Test with OCR On and PDF Strategy set to auto (meaning that PDF will be only OCRed if less than 10 characters are found)
+        // Test with OCR On and PDF Strategy set to auto (meaning that PDF will be only OCRed if less than 10 characters
+        // are found)
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("auto");
         Doc doc = extractFromFile("test-ocr.pdf", fsSettings);
@@ -909,7 +915,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr-notext.pdf", fsSettings);
         assertThat(doc.getContent()).contains("This file contains some words.");
     }
-
 
     @Test
     public void ocrOff() throws IOException {
@@ -927,7 +932,6 @@ public class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.docx", fsSettings);
         assertThat(doc.getContent()).doesNotContain("This file contains some words.");
     }
-
 
     @Test
     public void ocrWrongPaths() throws IOException {
@@ -974,7 +978,8 @@ public class TikaDocParserTest extends DocParserTestCase {
             // This test requires to have the hebrew language pack, so we don't fail the test but just log
             assertThat(doc.getContent()).contains("המבודדים מתקבלים");
         } catch (AssertionError e) {
-            logger.info("We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
+            logger.info(
+                    "We were not able to get the Hebrew content with OCR. May be the language pack was not installed?");
         }
     }
 
@@ -988,7 +993,9 @@ public class TikaDocParserTest extends DocParserTestCase {
         Files.copy(tikaConfigIS, testTikaConfig.resolve("tikaConfig.xml"));
 
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getFs().setTikaConfigPath(testTikaConfig.resolve("tikaConfig.xml").toString());
+        fsSettings
+                .getFs()
+                .setTikaConfigPath(testTikaConfig.resolve("tikaConfig.xml").toString());
 
         // Test that default parser for HTML is HTML parser
         Doc doc = extractFromFile("test.html");
@@ -1017,8 +1024,11 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/1097">https://github.com/dadoonet/fscrawler/issues/1097</a>.
-     * Related to <a href="https://issues.apache.org/jira/browse/TIKA-3364">https://issues.apache.org/jira/browse/TIKA-3364</a>.
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/1097">https://github.com/dadoonet/fscrawler/issues/1097</a>.
+     * Related to <a
+     * href="https://issues.apache.org/jira/browse/TIKA-3364">https://issues.apache.org/jira/browse/TIKA-3364</a>.
+     *
      * @throws IOException In case something goes wrong
      */
     @Test
@@ -1031,9 +1041,8 @@ public class TikaDocParserTest extends DocParserTestCase {
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
         // TODO This test is now passing but should be failing with ocr when
         // https://issues.apache.org/jira/browse/TIKA-3364 is solved
-        assertThat(doc.getContent()).isEqualTo(withOcr ?
-                "\nDummy PDF file\n\nDummy PDF file\n\n\n\n" :
-                "\nDummy PDF file\n\n\n");
+        assertThat(doc.getContent())
+                .isEqualTo(withOcr ? "\nDummy PDF file\n\nDummy PDF file\n\n\n\n" : "\nDummy PDF file\n\n\n");
 
         // Meta data
         assertThat(doc.getMeta().getAuthor()).isNotNull();
@@ -1043,49 +1052,52 @@ public class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(36)
-            .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
-            .containsEntry("pdf:PDFVersion", "1.4")
-            .containsEntry("xmp:CreatorTool", "Writer")
-            .containsEntry("pdf:hasXFA", "false")
-            .containsEntry("access_permission:modify_annotations", "true")
-            .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser")
-            .containsEntry("dc:creator", "Evangelos Vlachogiannis")
-            .containsEntry("pdf:num3DAnnotations", "0")
-            .containsEntry("dcterms:created", "2007-02-23T15:56:37Z")
-            .containsEntry("dc:format", "application/pdf; version=1.4")
-            .containsEntry("pdf:docinfo:creator_tool", "Writer")
-            .containsEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0")
-            .containsEntry("access_permission:fill_in_form", "true")
-            .containsEntry("pdf:hasCollection", "false")
-            .containsEntry("pdf:encrypted", "false")
-            .containsEntry("pdf:containsNonEmbeddedFont", "false")
-            .containsEntry("pdf:hasMarkedContent", "false")
-            .containsEntry("Content-Type", "application/pdf")
-            .containsEntry("access_permission:can_print_faithful", "true")
-            .containsEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis")
-            .containsEntry("pdf:producer", "OpenOffice.org 2.1")
-            .containsEntry("pdf:totalUnmappedUnicodeChars", "0")
-            .containsEntry("access_permission:extract_for_accessibility", "true")
-            .containsEntry("access_permission:assemble_document", "true")
-            .containsEntry("xmpTPg:NPages", "1")
-            .containsEntry("resourceName", "issue-1097.pdf")
-            .containsEntry("pdf:hasXMP", "false")
-            .containsEntry("pdf:charsPerPage", "14")
-            .containsEntry("access_permission:extract_content", "true")
-            .containsEntry("access_permission:can_print", "true")
-            .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser")
-            .containsEntry("access_permission:can_modify", "true")
-            .containsEntry("pdf:docinfo:producer", "OpenOffice.org 2.1")
-            .containsEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z")
-            .containsEntry("pdf:containsDamagedFont", "false");
-        assertThat(raw).containsKey("pdf:ocrPageCount")
+                .hasSize(36)
+                .containsEntry("pdf:unmappedUnicodeCharsPerPage", "0")
+                .containsEntry("pdf:PDFVersion", "1.4")
+                .containsEntry("xmp:CreatorTool", "Writer")
+                .containsEntry("pdf:hasXFA", "false")
+                .containsEntry("access_permission:modify_annotations", "true")
+                .containsEntry("X-TIKA:Parsed-By-Full-Set", "org.apache.tika.parser.pdf.PDFParser")
+                .containsEntry("dc:creator", "Evangelos Vlachogiannis")
+                .containsEntry("pdf:num3DAnnotations", "0")
+                .containsEntry("dcterms:created", "2007-02-23T15:56:37Z")
+                .containsEntry("dc:format", "application/pdf; version=1.4")
+                .containsEntry("pdf:docinfo:creator_tool", "Writer")
+                .containsEntry("pdf:overallPercentageUnmappedUnicodeChars", "0.0")
+                .containsEntry("access_permission:fill_in_form", "true")
+                .containsEntry("pdf:hasCollection", "false")
+                .containsEntry("pdf:encrypted", "false")
+                .containsEntry("pdf:containsNonEmbeddedFont", "false")
+                .containsEntry("pdf:hasMarkedContent", "false")
+                .containsEntry("Content-Type", "application/pdf")
+                .containsEntry("access_permission:can_print_faithful", "true")
+                .containsEntry("pdf:docinfo:creator", "Evangelos Vlachogiannis")
+                .containsEntry("pdf:producer", "OpenOffice.org 2.1")
+                .containsEntry("pdf:totalUnmappedUnicodeChars", "0")
+                .containsEntry("access_permission:extract_for_accessibility", "true")
+                .containsEntry("access_permission:assemble_document", "true")
+                .containsEntry("xmpTPg:NPages", "1")
+                .containsEntry("resourceName", "issue-1097.pdf")
+                .containsEntry("pdf:hasXMP", "false")
+                .containsEntry("pdf:charsPerPage", "14")
+                .containsEntry("access_permission:extract_content", "true")
+                .containsEntry("access_permission:can_print", "true")
+                .containsEntry("X-TIKA:Parsed-By", "org.apache.tika.parser.pdf.PDFParser")
+                .containsEntry("access_permission:can_modify", "true")
+                .containsEntry("pdf:docinfo:producer", "OpenOffice.org 2.1")
+                .containsEntry("pdf:docinfo:created", "2007-02-23T15:56:37Z")
+                .containsEntry("pdf:containsDamagedFont", "false");
+        assertThat(raw)
+                .containsKey("pdf:ocrPageCount")
                 .extractingByKey("pdf:ocrPageCount", InstanceOfAssertFactories.STRING)
                 .isNotEmpty();
     }
 
     /**
-     * Test case for <a href="https://github.com/dadoonet/fscrawler/issues/834">https://github.com/dadoonet/fscrawler/issues/834</a>.
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/834">https://github.com/dadoonet/fscrawler/issues/834</a>.
+     *
      * @throws IOException In case something goes wrong
      */
     @Test
@@ -1098,14 +1110,12 @@ public class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         Map<String, String> raw = doc.getMeta().getRaw();
         assertThat(raw)
-            .hasSize(2)
-        .containsEntry("Content-Type", "text/plain")
-        .containsEntry("resourceName", "issue-834.txt");
+                .hasSize(2)
+                .containsEntry("Content-Type", "text/plain")
+                .containsEntry("resourceName", "issue-834.txt");
     }
 
-    /**
-     * Test protected document
-     */
+    /** Test protected document */
     @Test
     public void protectedDocument() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -1120,13 +1130,13 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test that FSCrawler handles RuntimeException/IOException/SAXException from parser gracefully.
-     * The document should be created but with empty/null content.
-     * <p>
-     * The MockParser throws an exception during parsing, but FSCrawler should
-     * not crash and should create a document object (even if content is empty).
-     * <p>
-     * See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
+     * Test that FSCrawler handles RuntimeException/IOException/SAXException from parser gracefully. The document should
+     * be created but with empty/null content.
+     *
+     * <p>The MockParser throws an exception during parsing, but FSCrawler should not crash and should create a document
+     * object (even if content is empty).
+     *
+     * <p>See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
      */
     @Test
     public void mockParserRuntimeException() throws IOException {
@@ -1139,12 +1149,11 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     /**
-     * Test that FSCrawler handles parser writing to stdout without issues.
-     * Note: The MockParser behavior varies - it may or may not extract content
-     * depending on the Tika version and configuration. This test verifies
-     * that the document is created without crashing.
-     * <p>
-     * See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
+     * Test that FSCrawler handles parser writing to stdout without issues. Note: The MockParser behavior varies - it
+     * may or may not extract content depending on the Tika version and configuration. This test verifies that the
+     * document is created without crashing.
+     *
+     * <p>See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
      */
     @Test
     public void mockParserStdoutAndStderr() throws IOException {
@@ -1157,6 +1166,7 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     /**
      * Helper method to test MockParser behavior with different mock files.
+     *
      * @param mockFilename The name of the mock file to test (e.g., "mock-runtime-exception.xml")
      * @return The generated Doc object, which should be created even if the parser throws an exception
      * @throws IOException In case something goes wrong

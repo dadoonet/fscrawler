@@ -19,9 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import java.util.Locale;
-
 import static fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil.format1Decimals;
+
+import java.util.Locale;
 
 public class ByteSizeValue implements Comparable<ByteSizeValue> {
     private final long size;
@@ -39,7 +39,8 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
 
     public ByteSizeValue(long size, ByteSizeUnit unit) {
         if (size < -1 || (size == -1 && unit != ByteSizeUnit.BYTES)) {
-            throw new IllegalArgumentException("Values less than -1 bytes are not supported: " + size + unit.getSuffix());
+            throw new IllegalArgumentException(
+                    "Values less than -1 bytes are not supported: " + size + unit.getSuffix());
         }
         if (size > Long.MAX_VALUE / unit.toBytes(1)) {
             throw new IllegalArgumentException(
@@ -94,12 +95,9 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
     }
 
     /**
-     * @return a string representation of this value which is guaranteed to be
-     *         able to be parsed using
-     *         {@link #parseBytesSizeValue(String, ByteSizeValue)}.
-     *         Unlike {@link #toString()} this method will not output fractional
-     *         or rounded values so this method should be preferred when
-     *         serialising the value to JSON.
+     * @return a string representation of this value which is guaranteed to be able to be parsed using
+     *     {@link #parseBytesSizeValue(String, ByteSizeValue)}. Unlike {@link #toString()} this method will not output
+     *     fractional or rounded values so this method should be preferred when serialising the value to JSON.
      */
     public String getStringRep() {
         if (size <= 0) {
@@ -162,7 +160,10 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
         } else if (lowerSValue.endsWith("pb")) {
             return parse(lowerSValue, "pb", ByteSizeUnit.PB);
         } else if (lowerSValue.endsWith("b")) {
-            return new ByteSizeValue(Long.parseLong(lowerSValue.substring(0, lowerSValue.length() - 1).trim()), ByteSizeUnit.BYTES);
+            return new ByteSizeValue(
+                    Long.parseLong(
+                            lowerSValue.substring(0, lowerSValue.length() - 1).trim()),
+                    ByteSizeUnit.BYTES);
         } else if (lowerSValue.equals("-1")) {
             // Allow this special value to be unit-less:
             return new ByteSizeValue(-1, ByteSizeUnit.BYTES);
@@ -171,14 +172,14 @@ public class ByteSizeValue implements Comparable<ByteSizeValue> {
             return new ByteSizeValue(0, ByteSizeUnit.BYTES);
         } else {
             // Missing units:
-            throw new NumberFormatException(
-                    String.format("failed to parse value [%s] as a size in bytes: unit is missing or unrecognized",
-                    sValue));
+            throw new NumberFormatException(String.format(
+                    "failed to parse value [%s] as a size in bytes: unit is missing or unrecognized", sValue));
         }
     }
 
     private static ByteSizeValue parse(final String normalized, final String suffix, ByteSizeUnit unit) {
-        final String s = normalized.substring(0, normalized.length() - suffix.length()).trim();
+        final String s =
+                normalized.substring(0, normalized.length() - suffix.length()).trim();
         try {
             return new ByteSizeValue(Long.parseLong(s), unit);
         } catch (final NumberFormatException e) {
