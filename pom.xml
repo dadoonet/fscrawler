@@ -893,12 +893,35 @@
                                 <version>2.89.0</version>
                                 <formatJavadoc>true</formatJavadoc>
                             </palantirJavaFormat>
+                            <forbidWildcardImports/>
+                            <licenseHeader>
+                                <file>/Users/david/IdeaProjects/fscrawler/src/main/spotless/JavaLicenseHeader.java</file>
+                            </licenseHeader>
                         </java>
                         <pom>
                             <sortPom>
                                 <nrOfIndentSpace>4</nrOfIndentSpace>
                             </sortPom>
                         </pom>
+                        <json>
+                            <includes>
+                                <include>src/**/*.json</include>
+                            </includes>
+                            <jackson>
+                                <version>${jackson.version}</version>
+                            </jackson>
+                        </json>
+                        <yaml>
+                            <includes>
+                                <include>src/**/*.yaml</include>
+                            </includes>
+                            <jackson>
+                                <version>${jackson.version}</version>
+                            </jackson>
+                        </yaml>
+                        <shell>
+                            <shfmt/>
+                        </shell>
                     </configuration>
                     <executions>
                         <execution>
