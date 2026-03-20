@@ -15,15 +15,15 @@ a global tag file which you can set by using the ``tags.staticMetaFilename`` set
 
     Only json and yaml files are supported.
 
-Here is a list of Tags settings (under ``tags.`` prefix)`:
+Here is a list of Tags settings (under ``tags.`` prefix):
 
-+----------------------------+-----------------------+---------------------------------+
-| Name                       | Default value         | Documentation                   |
-+============================+=======================+=================================+
-| ``tags.metaFilename``      | ``".meta.yml"``       | `Meta Filename`_                |
-+----------------------------+-----------------------+---------------------------------+
-| ``tags.staticMetaFilename``| ``null``              | `Static Metadata`_              |
-+----------------------------+-----------------------+---------------------------------+
++-----------------------------+---------------------------------------+-----------------+--------------------+
+| Name                        | Environment Variable                  | Default value   | Documentation      |
++=============================+=======================================+=================+====================+
+| ``tags.metaFilename``       | ``FSCRAWLER_TAGS_METAFILENAME``       | ``".meta.yml"`` | `Meta Filename`_   |
++-----------------------------+---------------------------------------+-----------------+--------------------+
+| ``tags.staticMetaFilename`` | ``FSCRAWLER_TAGS_STATICMETAFILENAME`` | ``null``        | `Static Metadata`_ |
++-----------------------------+---------------------------------------+-----------------+--------------------+
 
 .. tip::
 
