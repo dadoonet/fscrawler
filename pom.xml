@@ -76,7 +76,7 @@
         <jersey.version>4.0.2</jersey.version>
 
         <!-- For FSCrawler S3 plugin -->
-        <minio.version>8.6.0</minio.version>
+        <minio.version>9.0.0</minio.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
