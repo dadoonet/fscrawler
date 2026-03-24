@@ -97,7 +97,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
             }
             minioClient.putObject(
                     PutObjectArgs.builder().contentType("text/plain").bucket("foo").object(objectName).stream(
-                                    IOUtils.toInputStream(object, StandardCharsets.UTF_8), object.length(), -1)
+                                    IOUtils.toInputStream(object, StandardCharsets.UTF_8), (long) object.length(), -1L)
                             .build());
         } catch (Exception e) {
             logger.warn("Could not create bucket [{}]; [{}]: {}", objectName, object, e.getMessage());

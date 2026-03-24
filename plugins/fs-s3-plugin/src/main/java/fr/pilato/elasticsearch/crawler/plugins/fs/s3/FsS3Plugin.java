@@ -34,8 +34,6 @@ import io.minio.MinioClient;
 import io.minio.errors.MinioException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.Extension;
@@ -116,7 +114,7 @@ public class FsS3Plugin extends FsCrawlerPlugin {
                     GetObjectArgs.builder().bucket(bucket).object(object).build();
             try {
                 return minioClient.getObject(getObjectArgs);
-            } catch (MinioException | IOException | InvalidKeyException | NoSuchAlgorithmException e) {
+            } catch (MinioException e) {
                 logger.debug("Failed to read file", e);
                 throw new FsCrawlerPluginException(
                         "IOException caught while getting object " + object + " from bucket " + bucket + ":"
@@ -132,9 +130,6 @@ public class FsS3Plugin extends FsCrawlerPlugin {
             try (GetObjectResponse response = minioClient.getObject(getObjectArgs)) {
                 logger.trace("S3 response headers [{}]", response.headers());
                 return Long.parseLong(response.headers().get("Content-Length"));
-            } catch (InvalidKeyException | NoSuchAlgorithmException e) {
-                logger.debug("Failed to read file", e);
-                throw new FsCrawlerIllegalConfigurationException(e.getMessage());
             } catch (MinioException | IOException e) {
                 throw new FsCrawlerPluginException(
                         "Can not get file size for object " + object + " of bucket " + bucket, e);
