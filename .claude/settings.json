@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)",
+      "Bash(git mv:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh issue:*)",
+      "Bash(gh api:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(find *)",
+      "WebFetch(domain:www.elastic.co)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s http://localhost:9200*)",
+      "Bash(curl -sv http://localhost:*)",
+      "Bash(curl -s -XPUT \"http://localhost:9200*)"
+    ]
+  }
+}

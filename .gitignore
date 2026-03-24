@@ -18,3 +18,5 @@ target
 /contrib/docker-compose-example-workplace/config/_default/
 /contrib/docker-compose-example-workplace/logs/
 /.run/IT (serverless).run.xml
+CLAUDE.local.md
+.claude/settings.local.json
