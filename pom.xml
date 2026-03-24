@@ -69,7 +69,7 @@
         <gestalt.version>0.37.1</gestalt.version>
         <snakeyaml.version>2.6</snakeyaml.version>
 
-        <tika.version>3.2.3</tika.version>
+        <tika.version>3.3.0</tika.version>
         <jackson.version>2.21.2</jackson.version>
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.25.3</log4j.version>
