@@ -50,8 +50,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -634,9 +632,9 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
                                 .stream(
                                         Files.newInputStream(file),
                                         file.toFile().length(),
-                                        -1)
+                                        -1L)
                                 .build());
-            } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
+            } catch (MinioException e) {
                 throw new IOException(e);
             }
             return FileVisitResult.CONTINUE;
