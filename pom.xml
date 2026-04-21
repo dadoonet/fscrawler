@@ -96,7 +96,7 @@
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
         <tests.index.prefix/>
         <tests.rest.port>0</tests.rest.port>
-        <testcontainers.version>2.0.4</testcontainers.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
 
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
