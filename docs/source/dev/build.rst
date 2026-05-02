@@ -48,7 +48,6 @@ To run integration tests from your IDE, you need to start tests in ``fscrawler-i
 But you can specify the Maven profile to use and rebuild the project.
 
 * ``es-8x`` for Elasticsearch 8.x
-* ``es-7x`` for Elasticsearch 7.x
 
 Faster integration tests
 """"""""""""""""""""""""
