@@ -72,7 +72,7 @@
         <tika.version>3.3.0</tika.version>
         <jackson.version>2.21.3</jackson.version>
         <jsonpath.version>3.0.0</jsonpath.version>
-        <log4j.version>2.25.4</log4j.version>
+        <log4j.version>2.26.0</log4j.version>
         <jersey.version>4.0.2</jersey.version>
 
         <!-- For FSCrawler S3 plugin -->
