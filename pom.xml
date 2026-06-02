@@ -78,6 +78,10 @@
         <!-- For FSCrawler S3 plugin -->
         <minio.version>9.0.0</minio.version>
 
+        <!-- Tests -->
+        <junit.version>6.0.3</junit.version>
+        <randomizedtesting.version>0.2.0</randomizedtesting.version>
+
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
         <jpeg.version>1.4.0</jpeg.version>
@@ -101,10 +105,11 @@
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
         <tests.timezone>random</tests.timezone>
-        <tests.output>onError</tests.output>
+        <tests.output>true</tests.output>
         <tests.verbose>false</tests.verbose>
         <tests.leaveTemporary>false</tests.leaveTemporary>
-        <tests.parallelism>auto</tests.parallelism>
+        <!-- JUnit Platform parallel execution: true=enabled, false=disabled -->
+        <tests.parallelism>true</tests.parallelism>
         <tests.heartbeat>10</tests.heartbeat>
         <tests.seed/>
         <!-- Running the tests with Tesseract OCR might take time -->
@@ -499,6 +504,13 @@
                 <version>${jersey.version}</version>
             </dependency>
 
+            <!-- For the HTTP Client used by ElasticsearchClient -->
+            <dependency>
+                <groupId>org.glassfish.jersey.connectors</groupId>
+                <artifactId>jersey-apache5-connector</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
             <!-- Logging dependencies -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -601,14 +613,41 @@
                 <version>3.27.7</version>
             </dependency>
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.2</version>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-commons</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-launcher</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
-                <artifactId>randomizedtesting-runner</artifactId>
-                <version>2.8.4</version>
+                <artifactId>randomizedtesting-jupiter</artifactId>
+                <version>${randomizedtesting.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
@@ -693,21 +732,33 @@
                     <version>3.10.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>com.carrotsearch.randomizedtesting</groupId>
-                    <artifactId>junit4-maven-plugin</artifactId>
-                    <version>2.8.4</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.5</version>
                     <configuration>
+                        <!-- TODO REPLACE ?
                         <heartbeat>${tests.heartbeat}</heartbeat>
                         <jvmOutputAction>pipe,ignore</jvmOutputAction>
                         <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
-                        <ifNoTests>warn</ifNoTests>
-                        <parallelism>${tests.parallelism}</parallelism>
+                        -->
+                        <failIfNoTests>false</failIfNoTests>
+                        <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
+                        <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
+                        <!-- TODO REPLACE ? // showOutput="${tests.output}" ?
                         <listeners>
                             <report-text showOutput="${tests.output}" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="${tests.verbose}" showSuiteSummary="${tests.verbose}" showThrowable="true"/>
                         </listeners>
                         <seed>${tests.seed}</seed>
-                        <systemProperties combine.children="append">
+                        -->
+                        <systemPropertyVariables combine.children="append">
+                            <!-- JUnit Platform parallel execution (replaces junit4-maven-plugin parallelism=auto) -->
+                            <!-- classes run concurrently, methods within a class run sequentially -->
+                            <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
+                            <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
+                            <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                            <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
                             <arg.common>arg.common</arg.common>
+                            <tests.seed>${tests.seed}</tests.seed>
                             <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
                             <tests.timeout>${tests.timeout}</tests.timeout>
                             <tests.locale>${tests.locale}</tests.locale>
@@ -722,14 +773,13 @@
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                             <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
                             <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
-                        </systemProperties>
+                        </systemPropertyVariables>
                     </configuration>
-
                     <executions>
                         <execution>
-                            <id>unit-tests</id>
+                            <id>default-test</id>
                             <goals>
-                                <goal>junit4</goal>
+                                <goal>test</goal>
                             </goals>
                             <phase>test</phase>
                             <inherited>true</inherited>
@@ -744,9 +794,9 @@
                             </configuration>
                         </execution>
                         <execution>
-                            <id>integration-tests</id>
+                            <id>integration-test</id>
                             <goals>
-                                <goal>junit4</goal>
+                                <goal>test</goal>
                             </goals>
                             <phase>integration-test</phase>
                             <inherited>true</inherited>
@@ -759,18 +809,6 @@
                                     <exclude>**/*$*</exclude>
                                 </excludes>
                             </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <!-- Disable surefire so we can use randomize testing framework -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.5</version>
-                    <executions>
-                        <execution>
-                            <id>default-test</id>
-                            <phase>none</phase>
                         </execution>
                     </executions>
                 </plugin>
@@ -976,6 +1014,39 @@
     </build>
 
     <profiles>
+        <!-- Default daily tests: we exclude Tests tagged with Nightly (@Nightly) -->
+        <profile>
+            <id>daily</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludedGroups>Nightly</excludedGroups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Nightly tests: we include Tests tagged with Nightly (@Nightly) -->
+        <profile>
+            <id>nightly</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>Nightly</groups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- Profile for ES8 -->
         <profile>
             <id>es-8x</id>

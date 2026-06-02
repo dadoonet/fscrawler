@@ -28,14 +28,14 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** Test with multiple crawlers */
 public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
-    @Before
+    @BeforeEach
     @Override
     public void cleanExistingIndex() throws ElasticsearchClientException {
         // Also clean the specific indices for this test suite
@@ -46,7 +46,7 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
         super.cleanExistingIndex();
     }
 
-    @After
+    @AfterEach
     @Override
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
@@ -60,7 +60,7 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void multiple_crawlers() throws Exception {
+    void multiple_crawlers() throws Exception {
         FsSettings fsSettings1 = createTestSettings(getCrawlerName() + "_1");
         fsSettings1.getFs().setUrl(currentTestResourceDir.resolve("crawler1").toString());
         FsSettings fsSettings2 = createTestSettings(getCrawlerName() + "_2");

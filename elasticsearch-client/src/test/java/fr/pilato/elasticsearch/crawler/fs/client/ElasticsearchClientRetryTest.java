@@ -20,7 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import com.carrotsearch.randomizedtesting.jupiter.DetectThreadLeaks;
+import com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -28,6 +29,12 @@ import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.IntelliJThreadsFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.JUnitThreadsFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
 import jakarta.ws.rs.ServiceUnavailableException;
 import java.io.IOException;
@@ -36,22 +43,30 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Integration tests for the retry mechanism on GET/HEAD requests. Uses WireMock to simulate server errors (503) and
  * verify retry behavior.
  */
-@ThreadLeakFilters(filters = {WireMockThreadFilter.class})
-public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
+@DetectThreadLeaks.ExcludeThreads({
+    WireMockThreadFilter.class,
+    SystemThreadFilter.class,
+    WindowsSpecificThreadFilter.class,
+    TestContainerThreadFilter.class,
+    JNACleanerThreadFilter.class,
+    IntelliJThreadsFilter.class,
+    JUnitThreadsFilter.class
+})
+class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static WireMockServer wireMockServer;
     private static String elasticsearchVersion;
 
-    @BeforeClass
-    public static void startWireMock() throws IOException {
+    @BeforeAll
+    static void startWireMock() throws IOException {
         // Load the Elasticsearch version from properties
         Properties props = new Properties();
         props.load(ElasticsearchClientRetryTest.class.getResourceAsStream("/elasticsearch.version.properties"));
@@ -65,8 +80,8 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("WireMock server started on port {}", wireMockServer.port());
     }
 
-    @AfterClass
-    public static void stopWireMock() {
+    @AfterAll
+    static void stopWireMock() {
         if (wireMockServer != null) {
             wireMockServer.stop();
             logger.info("WireMock server stopped");
@@ -89,7 +104,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
      * initialization.
      */
     @Test
-    public void testRetryOnServerError() throws IOException, ElasticsearchClientException {
+    void testRetryOnServerError() throws IOException, ElasticsearchClientException {
         // Setup: First 2 calls return 503, third call succeeds
         wireMockServer.resetAll();
 
@@ -127,7 +142,8 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
     /** Test that the client throws an exception after all retries are exhausted. */
     @Test
-    public void testRetryExhausted() throws IOException {
+    @Slow
+    void testRetryExhausted() throws IOException {
         // Setup: All calls return 503
         wireMockServer.resetAll();
 
@@ -146,7 +162,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
     /** Test that 4xx errors are not retried (only 5xx server errors should be retried). */
     @Test
-    public void testNoRetryOn4xxErrors() throws IOException, ElasticsearchClientException {
+    void testNoRetryOn4xxErrors() throws IOException, ElasticsearchClientException {
         // Setup: Root endpoint works, but specific endpoint returns 404
         wireMockServer.resetAll();
 
@@ -186,7 +202,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
      * limiting. See: https://github.com/dadoonet/fscrawler/issues/2119
      */
     @Test
-    public void testRetryOn429TooManyRequests() throws IOException, ElasticsearchClientException {
+    void testRetryOn429TooManyRequests() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
         // Use WireMock Scenarios to simulate: 429 -> 429 -> Success
@@ -228,7 +244,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
     /** Test that successful requests don't trigger any retry. */
     @Test
-    public void testImmediateSuccessNoRetry() throws IOException, ElasticsearchClientException {
+    void testImmediateSuccessNoRetry() throws IOException, ElasticsearchClientException {
         // Setup: First call succeeds immediately
         wireMockServer.resetAll();
 
@@ -253,7 +269,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
      * method which uses httpHead().
      */
     @Test
-    public void testHeadRequestSuccess() throws IOException, ElasticsearchClientException {
+    void testHeadRequestSuccess() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
         // Stub for client initialization
@@ -283,7 +299,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
     /** Test that HEAD requests with 503 errors are retried correctly. */
     @Test
-    public void testHeadRequestRetryOnServerError() throws IOException, ElasticsearchClientException {
+    void testHeadRequestRetryOnServerError() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
         // Stub for client initialization
@@ -323,7 +339,7 @@ public class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
      * message is preserved.
      */
     @Test
-    public void testConnectionErrorNotSilentlyRetried() throws IOException {
+    void testConnectionErrorNotSilentlyRetried() throws IOException {
         // Use a port where nothing is listening to simulate connection error
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName("test-connection-error");

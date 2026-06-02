@@ -20,18 +20,18 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
+class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void byteSizeConversion() {
+    void byteSizeConversion() {
         testConversionBothWays("100mb", 104857600L);
         testConversionBothWays("1mb", 1048576L);
         testConversionBothWays("10kb", 10240L);
@@ -39,7 +39,7 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
 
         // Test 500 random values
         for (int i = 0; i < 500; i++) {
-            int unitNumber = RandomizedTest.randomIntBetween(0, 5);
+            int unitNumber = RandomizedTest.randomIntInRange(TEST_RANDOM, 0, 5);
             ByteSizeUnit unit =
                     switch (unitNumber) {
                         case 1 -> ByteSizeUnit.KB;
@@ -50,7 +50,7 @@ public class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
                         default -> ByteSizeUnit.BYTES;
                     };
 
-            long value = RandomizedTest.randomLongBetween(1, 999);
+            long value = RandomizedTest.randomLongInRange(TEST_RANDOM, 1, 999);
             String randomByteSize = value + unit.getSuffix();
             testConversionBothWays(randomByteSize, value, unit);
         }

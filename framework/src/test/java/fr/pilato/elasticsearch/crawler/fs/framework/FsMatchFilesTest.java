@@ -25,12 +25,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void exclude_only() {
+    void exclude_only() {
         Assertions.assertThat(FsCrawlerUtil.isIndexable(
                         false, "/test.doc", new ArrayList<>(), Collections.singletonList("*/*.doc")))
                 .isFalse();
@@ -61,7 +61,7 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void include_only() {
+    void include_only() {
         Assertions.assertThat(FsCrawlerUtil.isIndexable(
                         false, "/test.doc", Collections.singletonList("*/*.doc"), new ArrayList<>()))
                 .isTrue();
@@ -86,7 +86,7 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void include_exclude() {
+    void include_exclude() {
         Assertions.assertThat(FsCrawlerUtil.isIndexable(
                         false, "/test.doc", Collections.singletonList("*/*.xls"), Collections.singletonList("*/*.doc")))
                 .isFalse();
@@ -114,7 +114,7 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void case_sensitive() {
+    void case_sensitive() {
         // Excludes
         Assertions.assertThat(FsCrawlerUtil.isIndexable(
                         false, "/test.doc", new ArrayList<>(), Collections.singletonList("*/*.DOC")))
@@ -157,7 +157,7 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void directories() {
+    void directories() {
         Assertions.assertThat(FsCrawlerUtil.isIndexable(
                         true, "/folderA", new ArrayList<>(), Collections.singletonList("/folderB/subfolder*")))
                 .isTrue();
@@ -309,7 +309,7 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
      * href="https://github.com/dadoonet/fscrawler/issues/1794>#1794</a>
      */
     @Test
-    public void specialCharacters1794() {
+    void specialCharacters1794() {
         Assertions.assertThat(FsCrawlerUtil.isIndexable(
                         false,
                         "/filter test/should-exclude.docx",
@@ -329,7 +329,7 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
      * href="https://github.com/dadoonet/fscrawler/issues/1794>#1794</a>
      */
     @Test
-    public void isMatching() {
+    void isMatching() {
         Assertions.assertThat(FsCrawlerUtil.isMatching(
                         "/filter test/~should-exclude.docx", Collections.singletonList("*~*"), "exclusion"))
                 .isTrue();
@@ -348,7 +348,7 @@ public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
 
     /** Testing with windows separator See <a href="https://github.com/dadoonet/fscrawler/issues/1974>#1974</a> */
     @Test
-    public void windowsSeparator() {
+    void windowsSeparator() {
         // We test with the Linux separator
         Assertions.assertThat(FsCrawlerUtil.isIndexable(
                         true, "/arbets", new ArrayList<>(), Collections.singletonList("*/arbets/*")))

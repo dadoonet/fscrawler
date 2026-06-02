@@ -23,7 +23,6 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
@@ -44,10 +43,11 @@ import org.apache.sshd.sftp.server.SftpFileSystemAccessor;
 import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 import org.apache.sshd.sftp.server.SftpSubsystemProxy;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 /** Test crawler with SSH */
 public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
@@ -57,8 +57,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
 
     private SshServer sshd = null;
 
-    @Before
-    public void setup() throws IOException, NoSuchAlgorithmException {
+    @BeforeEach
+    void setup() throws IOException, NoSuchAlgorithmException {
         SftpSubsystemFactory factory = new SftpSubsystemFactory.Builder()
                 .withFileSystemAccessor(new SftpFileSystemAccessor() {
                     @Override
@@ -89,8 +89,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         logger.info(" -> Started fake SSHD service on {}:{}", sshd.getHost(), sshd.getPort());
     }
 
-    @After
-    public void shutDown() throws IOException {
+    @AfterEach
+    void shutDown() throws IOException {
         if (sshd != null) {
             sshd.stop(true);
             sshd.close();
@@ -99,7 +99,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void ssh() throws Exception {
+    void ssh() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
@@ -116,7 +116,7 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void ssh_with_key() throws Exception {
+    void ssh_with_key() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
@@ -141,13 +141,8 @@ public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
      * When a directory has a space at the end, files inside are not indexed
      */
     @Test
-    public void dir_with_space_at_the_end() throws Exception {
-        // Skip early on Windows to avoid race condition with SSHD async threads during shutdown
-        // Windows does not support trailing spaces in path names
-        Assume.assumeFalse(
-                "This test cannot run on Windows (trailing spaces not supported in paths)", OsValidator.WINDOWS);
-
-        // We need to do a small hack here and rename the test directory as this could not work on Windows
+    @DisabledOnOs(OS.WINDOWS) // Windows does not allow to have a space at the end of a directory name
+    void dir_with_space_at_the_end() throws Exception {
         Path dirWithSpace = currentTestResourceDir.resolve("with_space ");
         Files.move(currentTestResourceDir.resolve("with_space"), dirWithSpace);
 

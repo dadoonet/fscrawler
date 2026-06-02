@@ -20,7 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.carrotsearch.randomizedtesting.annotations.Timeout;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -34,6 +33,8 @@ import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import fr.pilato.elasticsearch.crawler.plugins.fs.ssh.SshTestHelper;
 import io.minio.MakeBucketArgs;
@@ -70,16 +71,14 @@ import org.apache.sshd.sftp.server.SftpSubsystemProxy;
 import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -93,7 +92,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         return createTestSettings();
     }
 
-    @Before
+    @BeforeEach
     @Override
     public void cleanExistingIndex() throws ElasticsearchClientException {
         // Also clean the specific indices for this test suite
@@ -102,7 +101,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         super.cleanExistingIndex();
     }
 
-    @After
+    @AfterEach
     @Override
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
@@ -114,15 +113,15 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void callRoot() {
+    void callRoot() {
         ServerStatusResponse status = get("/", ServerStatusResponse.class);
         Assertions.assertThat(status.getVersion()).isEqualTo(Version.getVersion());
         Assertions.assertThat(status.getElasticsearch()).isNotNull();
     }
 
     @Test
-    @Timeout(millis = 10 * TIMEOUT_MINUTE_AS_MS)
-    public void uploadAllDocuments() throws Exception {
+    @VerySlow
+    void uploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
@@ -147,7 +146,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithId() throws Exception {
+    void uploadDocumentWithId() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
@@ -165,7 +164,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithIdUsingPut() throws Exception {
+    void uploadDocumentWithIdUsingPut() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
@@ -183,7 +182,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void deleteDocumentApi() throws Exception {
+    void deleteDocumentApi() throws Exception {
         // We need to create first the index
         DeleteResponse deleteResponse = deleteDocument(target, null, "foo", null, "/_document");
         Assertions.assertThat(deleteResponse.isOk()).isFalse();
@@ -239,7 +238,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void allDocumentsWithRestExternalIndex() throws Exception {
+    @VerySlow
+    void allDocumentsWithRestExternalIndex() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
@@ -273,7 +273,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void documentWithExternalTags() throws Exception {
+    void documentWithExternalTags() throws Exception {
         // We iterate over all sample files, and we try to locate any existing tag file
         // which can overwrite the data we extracted
         AtomicInteger numFiles = new AtomicInteger();
@@ -379,7 +379,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadUsingWrongFieldName() {
+    void uploadUsingWrongFieldName() {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
@@ -403,7 +403,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithFsPlugin() throws Exception {
+    void uploadDocumentWithFsPlugin() throws Exception {
         Path fileDoesNotExist = rootTmpDir
                 .resolve("resources")
                 .resolve("documents")
@@ -490,12 +490,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithS3Plugin() throws Exception {
-        // We can only run this test if Docker is available on this machine
-        Assume.assumeTrue(
-                "We can only run this test if Docker is available on this machine",
-                DockerClientFactory.instance().isDockerAvailable());
-
+    @DisabledIfNoDocker
+    void uploadDocumentWithS3Plugin() throws Exception {
         logger.info("Starting Minio");
 
         try (MinIOContainer container = new MinIOContainer("minio/minio")) {
@@ -581,7 +577,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithUnknownPlugin() {
+    void uploadDocumentWithUnknownPlugin() {
         Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(fromExists)) {
             logger.error("file [{}] should exist before we start tests", fromExists);
@@ -648,12 +644,8 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithHttpPlugin() throws Exception {
-        // We can only run this test if Docker is available on this machine
-        Assume.assumeTrue(
-                "We can only run this test if Docker is available on this machine",
-                DockerClientFactory.instance().isDockerAvailable());
-
+    @DisabledIfNoDocker
+    void uploadDocumentWithHttpPlugin() throws Exception {
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
@@ -740,7 +732,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithSshPlugin() throws Exception {
+    void uploadDocumentWithSshPlugin() throws Exception {
         logger.info("Starting SSH server for test");
 
         // Create test directory for SSH
@@ -841,7 +833,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadDocumentWithFtpPlugin() throws Exception {
+    void uploadDocumentWithFtpPlugin() throws Exception {
         logger.info("Starting FTP server for test");
 
         String ftpUser = "testuser";

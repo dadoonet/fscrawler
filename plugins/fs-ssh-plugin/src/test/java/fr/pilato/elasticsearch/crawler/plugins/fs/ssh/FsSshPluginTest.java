@@ -24,7 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-// SshTestHelper is in the same package
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,9 +42,9 @@ import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 import org.apache.sshd.sftp.server.SftpSubsystemProxy;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -54,8 +53,8 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     private SshServer sshd = null;
     Path testDir = rootTmpDir.resolve("test-ssh");
 
-    @Before
-    public void setup() throws IOException, NoSuchAlgorithmException {
+    @BeforeEach
+    void setup() throws IOException, NoSuchAlgorithmException {
         if (Files.notExists(testDir)) {
             Files.createDirectory(testDir);
         }
@@ -135,8 +134,8 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         logger.info(" -> Started fake SSHD service on {}:{}", sshd.getHost(), sshd.getPort());
     }
 
-    @After
-    public void shutDown() throws IOException {
+    @AfterEach
+    void shutDown() throws IOException {
         if (sshd != null) {
             sshd.stop(true);
             sshd.close();
@@ -145,7 +144,7 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void sshPlugin() throws Exception {
+    void sshPlugin() throws Exception {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getServer().setHostname(sshd.getHost());
         fsSettings.getServer().setPort(sshd.getPort());
@@ -222,7 +221,7 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getType() {
+    void getType() {
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
         Assertions.assertThat(sshPlugin.getType()).isEqualTo("ssh");
     }

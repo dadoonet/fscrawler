@@ -35,18 +35,18 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** We want to test FSCrawler main app */
-public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
 
-    @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException {
+    @BeforeAll
+    static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
             Files.createDirectory(metadataDir);
@@ -54,8 +54,8 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
-    @AfterClass
-    public static void printMetadataDirContent() throws IOException {
+    @AfterAll
+    static void printMetadataDirContent() throws IOException {
         printLs(metadataDir);
     }
 
@@ -77,13 +77,13 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
      * We want to make sure that we can run several times the same test without having any error due to the fact that
      * the logger context has already been initialized.
      */
-    @Before
-    public void resetLogger() {
+    @BeforeEach
+    void resetLogger() {
         FsCrawlerCli.reinitLoggerContext();
     }
 
     @Test
-    public void changeLoggerContextForDebug() {
+    void changeLoggerContextForDebug() {
         String[] args = {"--debug", "jobName"};
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         Assertions.assertThat(command).isNotNull();
@@ -104,7 +104,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void changeLoggerContextForTrace() {
+    void changeLoggerContextForTrace() {
         String[] args = {"--trace", "jobName"};
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         Assertions.assertThat(command).isNotNull();
@@ -125,7 +125,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void changeLoggerContextForSilent() {
+    void changeLoggerContextForSilent() {
         String[] args = {"--silent", "jobName"};
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         Assertions.assertThat(command).isNotNull();
@@ -145,7 +145,7 @@ public class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void changeLoggerContextByDefault() {
+    void changeLoggerContextByDefault() {
         String[] args = {"jobName"};
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         Assertions.assertThat(command).isNotNull();

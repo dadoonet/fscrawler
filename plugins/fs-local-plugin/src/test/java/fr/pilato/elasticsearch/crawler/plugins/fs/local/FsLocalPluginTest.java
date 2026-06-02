@@ -31,15 +31,15 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FsLocalPluginTest {
 
     private FsCrawlerExtensionFsProvider localPlugin;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         FsSettings fsSettings = FsSettingsLoader.load();
         FsLocalPlugin.FsCrawlerExtensionFsProviderLocal plugin = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal();
         plugin.start(fsSettings, "{}");
@@ -47,7 +47,7 @@ public class FsLocalPluginTest {
     }
 
     @Test
-    public void getFiles() throws Exception {
+    void getFiles() throws Exception {
         Path tempDir = Files.createTempDirectory("testGetFiles");
         // File1 is created first
         Path tempFile1 = Files.createFile(tempDir.resolve("file1.txt"));
@@ -75,7 +75,7 @@ public class FsLocalPluginTest {
     }
 
     @Test
-    public void exists() throws Exception {
+    void exists() throws Exception {
         Path tempDir = Files.createTempDirectory("testExists");
         Assertions.assertThat(localPlugin.exists(tempDir.toString())).isTrue();
         Assertions.assertThat(localPlugin.exists(tempDir.resolve("nonexistent").toString()))
@@ -86,7 +86,7 @@ public class FsLocalPluginTest {
     }
 
     @Test
-    public void getType() {
+    void getType() {
         Assertions.assertThat(localPlugin.getType()).isEqualTo("local");
     }
 }

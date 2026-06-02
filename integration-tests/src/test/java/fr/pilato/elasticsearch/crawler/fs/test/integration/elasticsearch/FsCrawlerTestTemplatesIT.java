@@ -28,7 +28,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test template management settings See <a
@@ -41,7 +41,7 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
      * force_push_templates = false)
      */
     @Test
-    public void existing_component_template_is_preserved() throws Exception {
+    void existing_component_template_is_preserved() throws Exception {
         // Create settings first to get the correct index name
         FsSettings fsSettings = createTestSettings();
         String indexName = fsSettings.getElasticsearch().getIndex();
@@ -88,7 +88,7 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
 
     /** Test that force_push_templates = true overrides existing component templates */
     @Test
-    public void force_push_templates_overrides_existing() throws Exception {
+    void force_push_templates_overrides_existing() throws Exception {
         // Create settings first to get the correct index name
         FsSettings fsSettings = createTestSettings();
         String indexName = fsSettings.getElasticsearch().getIndex();
@@ -134,7 +134,7 @@ public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
 
     /** Test that templates are skipped when the index template already exists */
     @Test
-    public void templates_skipped_when_index_template_exists() throws Exception {
+    void templates_skipped_when_index_template_exists() throws Exception {
         // Create settings first to get the correct index name
         FsSettings fsSettings = createTestSettings();
         String indexName = fsSettings.getElasticsearch().getIndex();

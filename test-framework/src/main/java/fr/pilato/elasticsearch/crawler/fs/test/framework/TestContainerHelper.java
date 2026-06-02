@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
@@ -54,6 +55,19 @@ public class TestContainerHelper {
     private byte[] certAsBytes;
     private final AtomicBoolean starting = new AtomicBoolean(false);
     private boolean started = false;
+
+    /**
+     * Util method to check if Docker is running.
+     *
+     * @return true if Docker is not available, false otherwise
+     */
+    public static boolean isDockerMissing() {
+        try {
+            return !DockerClientFactory.instance().isDockerAvailable();
+        } catch (Exception e) {
+            return true;
+        }
+    }
 
     public TestContainerHelper() {
         try {

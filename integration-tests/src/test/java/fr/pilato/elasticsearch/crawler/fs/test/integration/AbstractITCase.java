@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.NotFoundException;
@@ -56,6 +57,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -70,10 +72,11 @@ import org.assertj.core.api.Assumptions;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on <a
@@ -87,6 +90,11 @@ import org.junit.BeforeClass;
  *
  * <pre><code>mvn verify -DskipIntegTests</code></pre>
  */
+@DisabledIfSystemProperty(
+        named = "skipIntegTests",
+        matches = "true",
+        disabledReason = "skipIntegTests is true. So we are skipping the integration tests.")
+@Slow
 public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     protected static final Path DEFAULT_RESOURCES = Paths.get(getUrl("samples", "_common"));
@@ -114,18 +122,17 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * readable. The temp folder which is used as a root is automatically cleaned after the test, so we don't have to
      * worry about it.
      */
-    @Before
+    @BeforeEach
     public void copyTestResources() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
         }
 
-        String currentTestName = getCurrentTestName();
         // We copy files from the src dir to the temp dir
-        logger.info("🎬 Launching test [{}]", currentTestName);
-        currentTestResourceDir = testResourceTarget.resolve(currentTestName);
-        String url = getUrl("samples", currentTestName);
+        logger.info("🎬 Launching test [{}]", jobName);
+        currentTestResourceDir = testResourceTarget.resolve(jobName);
+        String url = getUrl("samples", jobName);
         Path from = Paths.get(url);
 
         if (Files.exists(from)) {
@@ -140,19 +147,18 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         logger.debug("✅ Test resources ready in [{}]", currentTestResourceDir);
     }
 
-    @Before
+    @BeforeEach
     public void copyTags() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
         }
 
-        String currentTestName = getCurrentTestName();
         // We copy files from the src dir to the temp dir
-        String url = getUrl("tags", currentTestName);
+        String url = getUrl("tags", jobName);
         Path from = Paths.get(url);
 
-        currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
+        currentTestTagDir = testResourceTarget.resolve(jobName + ".tags");
         if (Files.exists(from)) {
             logger.trace("📂 Copying test resources from [{}]", from);
             FsCrawlerUtilForTests.copyDirs(from, currentTestTagDir);
@@ -160,13 +166,13 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    @After
+    @AfterEach
     public void cleanTestResources() {
-        logger.info("🏁 Test [{}] is now stopped", getCurrentTestName());
+        logger.info("🏁 Test [{}] is now stopped", jobName);
     }
 
-    @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException {
+    @BeforeAll
+    static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
         if (Files.notExists(metadataDir)) {
             Files.createDirectory(metadataDir);
@@ -174,8 +180,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         logger.debug("🚦 Test metadata dir ready in [{}]", metadataDir);
     }
 
-    @AfterClass
-    public static void printMetadataDirContent() throws IOException {
+    @AfterAll
+    static void printMetadataDirContent() throws IOException {
         // If something goes wrong while initializing, we might have no metadataDir at all.
         if (metadataDir != null) {
             logger.debug("ls -l {}", metadataDir);
@@ -183,8 +189,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    @BeforeClass
-    public static void copyResourcesToTestDir() throws IOException, URISyntaxException {
+    @BeforeAll
+    protected static void copyResourcesToTestDir() throws IOException, URISyntaxException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             logger.debug("⛏️ Creating test resources dir in [{}]", testResourceTarget);
@@ -273,8 +279,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    @BeforeClass
-    public static void startServices() throws IOException, ElasticsearchClientException {
+    @BeforeAll
+    static void startServices(Random rnd) throws IOException, ElasticsearchClientException {
         logger.debug("⛏️ Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
 
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -365,7 +371,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // If the Api Key is not provided, we want to generate it and use in all the tests
         if (testApiKey == null) {
             // Generate the Api-Key
-            testApiKey = client.generateApiKey("fscrawler-" + RandomizedTest.randomAsciiAlphanumOfLength(10));
+            testApiKey = client.generateApiKey("fscrawler-" + RandomizedTest.randomAsciiAlphanumOfLength(rnd, 10));
 
             fsSettings.getElasticsearch().setApiKey(testApiKey);
             fsSettings.getElasticsearch().setUsername(null);
@@ -398,8 +404,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return client;
     }
 
-    @AfterClass
-    public static void stopServices() throws IOException {
+    @AfterAll
+    static void stopServices() throws IOException {
         logger.debug("🏁 Stopping integration tests against an external cluster");
         if (client != null) {
             client.close();
@@ -410,15 +416,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             pluginsManager.close();
             pluginsManager = null;
         }
-    }
-
-    @Before
-    public void checkSkipIntegTests() {
-        // In case we are running tests from the IDE with the skipIntegTests option, let make sure we are skipping
-        // those tests
-        RandomizedTest.assumeFalse(
-                "skipIntegTests is true. So we are skipping the integration tests.",
-                getSystemProperty("skipIntegTests", false));
     }
 
     protected static void refresh(String indexName) throws ElasticsearchClientException {

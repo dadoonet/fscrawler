@@ -31,7 +31,7 @@ import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test filename_as_id crawler setting */
 public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
@@ -43,7 +43,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
      * filename as ID
      */
     @Test
-    public void filename_as_id() throws Exception {
+    void filename_as_id() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilenameAsId(true);
         crawler = startCrawler(fsSettings);
@@ -66,7 +66,7 @@ public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
      * href="https://github.com/dadoonet/fscrawler/issues/336">https://github.com/dadoonet/fscrawler/issues/336</a>
      */
     @Test
-    public void remove_deleted_with_filename_as_id() throws Exception {
+    void remove_deleted_with_filename_as_id() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(true);
         fsSettings.getFs().setFilenameAsId(true);

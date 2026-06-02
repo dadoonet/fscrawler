@@ -50,13 +50,33 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
 
 /** Test attributes crawler settings */
 public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
+
+    /**
+     * check if the filesystem used for tests supports ACLs. If it doesn't, we should not have ACL metadata in the
+     * documents, and ACL change tests should be disabled to avoid false negatives.
+     *
+     * @return true if not supported
+     */
+    static boolean isAclFilesystemNotSupported() {
+        try {
+            Path tmp = Files.createTempFile("acl-check", ".tmp");
+            try {
+                return Files.getFileAttributeView(tmp, AclFileAttributeView.class) == null;
+            } finally {
+                Files.deleteIfExists(tmp);
+            }
+        } catch (IOException e) {
+            return true;
+        }
+    }
+
     @Test
-    public void attributes() throws Exception {
+    void attributes() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAttributesSupport(true);
         crawler = startCrawler(fsSettings);
@@ -82,7 +102,7 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void aclAttributes() throws Exception {
+    void aclAttributes() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAttributesSupport(true);
         fsSettings.getFs().setAclSupport(true);
@@ -117,10 +137,11 @@ public class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void aclChangeTriggersReindex() throws Exception {
+    @DisabledIf(
+            value = "isAclFilesystemNotSupported",
+            disabledReason = "ACL change tests require an ACL-capable filesystem")
+    void aclChangeTriggersReindex() throws Exception {
         Path file = currentTestResourceDir.resolve("roottxtfile.txt");
-        AclFileAttributeView aclView = Files.getFileAttributeView(file, AclFileAttributeView.class);
-        Assume.assumeTrue("ACL change tests require an ACL-capable filesystem", aclView != null);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAttributesSupport(true);

@@ -33,7 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FsSettingsLoaderTest {
 
@@ -47,7 +47,7 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
-    public void loadWrongSettings() {
+    void loadWrongSettings() {
         AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-wrong"))
                 .withMessageContaining("Syntax error in configuration file [_settings.yaml]")
@@ -56,7 +56,7 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
-    public void loadStructuralWrongSettings() {
+    void loadStructuralWrongSettings() {
         AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-structural-wrong"))
                 .withMessageContaining("Can not load settings")
@@ -64,54 +64,54 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
-    public void loadDeprecatedElasticsearchNodesSettings() throws IOException {
+    void loadDeprecatedElasticsearchNodesSettings() throws IOException {
         FsSettings fsSettings = new FsSettingsLoader(configPath).read("yaml-deprecated");
         Assertions.assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
     }
 
     @Test
-    public void loadNonExistingSettings() throws IOException {
+    void loadNonExistingSettings() throws IOException {
         FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, doesnotexist);
     }
 
     @Test
-    public void loadNoFile() {
+    void loadNoFile() {
         checkSettings(generateExpectedDefaultFsSettings(), FsSettingsLoader.load());
     }
 
     @Test
-    public void loadJsonSimple() throws IOException {
+    void loadJsonSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("json-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
 
     @Test
-    public void loadJsonFull() throws IOException {
+    void loadJsonFull() throws IOException {
         testLoadFullSettings("json-full");
     }
 
     @Test
-    public void loadYamlFull() throws IOException {
+    void loadYamlFull() throws IOException {
         testLoadFullSettings("yaml-full");
     }
 
     @Test
-    public void loadYamlSplit() throws IOException {
+    void loadYamlSplit() throws IOException {
         testLoadFullSettings("yaml-split");
     }
 
     @Test
-    public void loadYamlSimple() throws IOException {
+    void loadYamlSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
 
     @Test
-    public void withDefaultNamesForEnvVariables() throws Exception {
+    void withDefaultNamesForEnvVariables() throws Exception {
         // Create environment variables
         System.setProperty("name", "foo");
         System.setProperty("fs.url", "/tmp/test");

@@ -56,8 +56,8 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>com.carrotsearch.randomizedtesting</groupId>
-                <artifactId>junit4-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
                 <executions>
                     <execution>
                         <!-- There is no unit test, so we can skip that execution -->

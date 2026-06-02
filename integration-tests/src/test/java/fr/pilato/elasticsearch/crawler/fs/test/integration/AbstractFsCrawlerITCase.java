@@ -31,13 +31,13 @@ import java.io.IOException;
 import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
 
-    @Before
+    @BeforeEach
     public void cleanExistingIndex() throws ElasticsearchClientException {
         logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
         client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
@@ -49,10 +49,10 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         removeIndexTemplates(templateName);
         removeComponentTemplates(templateName);
 
-        logger.info("🎬 Starting test [{}] with [{}] as the crawler name", getCurrentTestName(), getCrawlerName());
+        logger.info("🎬 Starting test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
 
-    @After
+    @AfterEach
     public void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             logger.debug("🧹 Removing index [{}*]", getCrawlerName());
@@ -65,7 +65,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
             removeComponentTemplates(templateName);
         }
 
-        logger.info("✅ End of test [{}] with [{}] as the crawler name", getCurrentTestName(), getCrawlerName());
+        logger.info("✅ End of test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
 
     protected static void removeComponentTemplates(String componentTemplateName) {
@@ -98,8 +98,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         }
     }
 
-    @After
-    public void shutdownCrawler() throws InterruptedException, IOException {
+    @AfterEach
+    void shutdownCrawler() throws InterruptedException, IOException {
         if (crawler != null) {
             logger.info("🏁 Stopping crawler");
             crawler.close();

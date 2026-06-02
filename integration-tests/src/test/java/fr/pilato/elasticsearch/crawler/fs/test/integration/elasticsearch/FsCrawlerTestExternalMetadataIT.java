@@ -34,14 +34,14 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test crawler with external metadata files */
 public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void metadata_external_default() throws Exception {
+    void metadata_external_default() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 3 files
@@ -70,7 +70,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void metadata_external_yaml() throws Exception {
+    void metadata_external_yaml() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setMetaFilename("meta-as-yaml.yaml");
         crawler = startCrawler(fsSettings);
@@ -101,7 +101,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void metadata_external_json() throws Exception {
+    void metadata_external_json() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setMetaFilename("meta-as-json.json");
         crawler = startCrawler(fsSettings);
@@ -132,7 +132,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void metadata_external_overwrite() throws Exception {
+    void metadata_external_overwrite() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 3 files
@@ -161,17 +161,17 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void metadata_static_basic_json() throws Exception {
+    void metadata_static_basic_json() throws Exception {
         testStaticMetadataFilename("static-meta.json", true);
     }
 
     @Test
-    public void metadata_static_basic_yaml() throws Exception {
+    void metadata_static_basic_yaml() throws Exception {
         testStaticMetadataFilename("static-meta.yaml", true);
     }
 
     @Test
-    public void metadata_static_empty() throws Exception {
+    void metadata_static_empty() throws Exception {
         testStaticMetadataFilename("static-meta.yaml", false);
     }
 
@@ -194,7 +194,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void metadata_static_no_file() {
+    void metadata_static_no_file() {
         Path staticMetadataFile = currentTestTagDir.resolve("static-meta.yaml");
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());
@@ -205,7 +205,7 @@ public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void metadata_static_and_external() throws Exception {
+    void metadata_static_and_external() throws Exception {
         Path staticMetadataFile = currentTestTagDir.resolve("static-meta.yaml");
         FsSettings fsSettings = createTestSettings();
         fsSettings.getTags().setStaticMetaFilename(staticMetadataFile.toString());

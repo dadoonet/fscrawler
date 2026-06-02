@@ -1,0 +1,271 @@
+# Migration JUnit 4 → JUnit Jupiter 6
+
+This document describes the manual migration of FSCrawler's test infrastructure from JUnit 4 +
+`randomizedtesting-runner` 2.8.4 to JUnit Jupiter 6.0.3 + `randomizedtesting-jupiter` 0.2.0, done on
+branch `519-junit5`.
+
+---
+
+## Summary of changes
+
+### Dependencies (`pom.xml` root)
+
+| Before | After |
+|--------|-------|
+| `junit:junit:4.13.2` | `org.junit.jupiter:junit-jupiter-api:6.0.3` + engine + platform modules |
+| `com.carrotsearch.randomizedtesting:randomizedtesting-runner:2.8.4` | `com.carrotsearch.randomizedtesting:randomizedtesting-jupiter:0.2.0` |
+| `com.carrotsearch.randomizedtesting:junit4-maven-plugin:2.8.4` | `org.apache.maven.plugins:maven-surefire-plugin:3.5.5` |
+
+The JUnit BOM (`org.junit:junit-bom:6.0.3`) was also added to `dependencyManagement` to align all
+`junit-platform-*` artifact versions.
+
+The `maven-surefire-plugin` was previously disabled (so that `junit4-maven-plugin` could own test
+execution). It is now re-enabled as the sole test runner.
+
+### Class-level annotations (test classes)
+
+| Before (JUnit 4) | After (JUnit 5/6) |
+|------------------|-------------------|
+| `public class Foo extends …` | `class Foo extends …` (no need for `public`) |
+| `@Before` | `@BeforeEach` |
+| `@After` | `@AfterEach` |
+| `@BeforeClass public static void m()` | `@BeforeAll static void m()` |
+| `@AfterClass public static void m()` | `@AfterAll static void m()` |
+| `public void testMethod()` | `void testMethod()` (no need for `public`) |
+| `@Test public void m()` | `@Test void m()` |
+
+### Imports
+
+| Before | After |
+|--------|-------|
+| `org.junit.Before` / `After` / `BeforeClass` / `AfterClass` / `Test` | `org.junit.jupiter.api.*` equivalents |
+| `com.carrotsearch.randomizedtesting.RandomizedTest` | `com.carrotsearch.randomizedtesting.jupiter.RandomizedTest` |
+| `com.carrotsearch.randomizedtesting.annotations.Nightly` | `fr.pilato.elasticsearch.crawler.fs.test.framework.Nightly` (custom) |
+| `org.junit.Assume.assumeTrue(...)` | `org.assertj.core.api.Assumptions.assumeThat(...)` |
+| `org.testcontainers.DockerClientFactory` guard in `@Before` | `@DisabledIfNoDocker` annotation (custom) |
+| Inline script in `@DisabledIf(value = "expr...")` | Static method reference: `@DisabledIf(value = "methodName")` — see below |
+
+### `@DisabledIf` — always use static method references
+
+`@DisabledIf` conditions must be **static methods** returning `boolean`, never inline script expressions.
+Inline expressions are fragile and may reference instance fields (e.g., `currentTestResourceDir`) that
+are not yet initialized when the condition is evaluated — `@DisabledIf` runs before any `@BeforeEach`.
+
+```java
+// Wrong — inline expression, currentTestResourceDir is null at evaluation time
+@DisabledIf(
+    value = "Files.getFileAttributeView(currentTestResourceDir.resolve(\"file.txt\"), AclFileAttributeView.class) == null",
+    disabledReason = "...")
+
+// Correct — static method, no dependency on instance state
+@DisabledIf(value = "isAclFilesystemNotSupported", disabledReason = "...")
+
+static boolean isAclFilesystemNotSupported() {
+    try {
+        Path tmp = Files.createTempFile("acl-check", ".tmp");
+        try {
+            return Files.getFileAttributeView(tmp, AclFileAttributeView.class) == null;
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
+    } catch (IOException e) {
+        return true;
+    }
+}
+```
+
+See also `TestContainerHelperIT.isExternalClusterSet()` for the reference pattern.
+
+### Class-level activation (`AbstractFSCrawlerTestCase`)
+
+The base test class is now annotated with:
+
+```java
+@Randomized
+@ExtendWith(FsCrawlerReproduceInfoExtension.class)
+@DetectThreadLeaks(scope = DetectThreadLeaks.Scope.SUITE)
+@DetectThreadLeaks.LingerTime(millis = 5000)
+@DetectThreadLeaks.ExcludeThreads({ … })
+@Fast   // ← default timeout: 10 seconds
+public abstract class AbstractFSCrawlerTestCase { … }
+```
+
+`@Randomized` replaces the old `@RunWith(RandomizedRunner.class)`.
+
+### RandomizedTest API changes
+
+The `randomizedtesting-jupiter` artifact exposes a different API — random-producing methods now
+require an explicit `Random` parameter instead of relying on a thread-local context:
+
+| Before | After |
+|--------|-------|
+| `RandomizedTest.randomLongBetween(5, 20)` | `RandomizedTest.randomLongInRange(rnd, 5, 20)` |
+| `RandomizedTest.randomIntBetween(1, 100)` | `RandomizedTest.randomIntInRange(rnd, 1, 100)` |
+| `RandomizedTest.randomAsciiAlphanumOfLength(10)` | `RandomizedTest.randomAsciiAlphanumOfLength(rnd, 10)` |
+
+The `Random` instance is either injected directly into `@BeforeAll`/`@BeforeEach`/`@Test` method
+parameters (supported by `@Randomized`), or stored as `TEST_RANDOM` in the base class via:
+
+```java
+@BeforeEach
+void storeRandom(Random rnd) {
+    TEST_RANDOM = rnd;
+}
+```
+
+`getCurrentTestName()` (old randomizedtesting helper) was replaced by `jobName`, a field computed
+in `@BeforeEach` from `TestInfo.getTestMethod().getName()`.
+
+### New infrastructure classes in `test-framework`
+
+| Class | Purpose |
+|-------|---------|
+| `Fast` | Composed annotation: `@Timeout(10, SECONDS)`. Applied at class level on `AbstractFSCrawlerTestCase`. |
+| `Slow` | Composed annotation: `@Timeout(1, MINUTES)`. Can be applied at class or method level. |
+| `VerySlow` | Composed annotation: `@Timeout(10, MINUTES)`. Can be applied at class or method level. |
+| `Nightly` | Simple tag annotation: `@Tag("nightly")`. Marks tests only run in nightly CI. **No implicit timeout** — combine with `@Slow`, `@VerySlow`, or `@Timeout` explicitly to set the duration. |
+| `DisabledIfNoDocker` | JUnit 5 `ExecutionCondition` extension: disables test if Docker is not available. Replaces `Assume.assumeTrue(DockerClientFactory…)`. |
+| `FsCrawlerReproduceInfoExtension` | `AfterTestExecutionCallback`: prints reproduction command line on failure. Replaces `FSCrawlerReproduceInfoPrinter`. |
+| `IntelliJThreadsFilter` | `Predicate<Thread>`: ignores JMX/RMI threads created by IntelliJ when running under `@DetectThreadLeaks`. |
+| `JUnitThreadsFilter` | `Predicate<Thread>`: ignores the `junit-jupiter-timeout-watcher` thread created by `@Timeout`. **Required** — without it, `@Timeout` triggers a thread-leak false positive. |
+| `KeepAliveTimerThreadFilter` | `Predicate<Thread>`: ignores `Keep-Alive-Timer` threads from `sun.net.www.http.KeepAliveCache` (JDK HTTP keep-alive pool, created by Jersey's default `HttpURLConnection` connector or Testcontainers health checks). Always `TERMINATED` when detected — pure false positive. |
+| `Java2DThreadFilter` | `Predicate<Thread>`: ignores `Java2D Disposer`, `AppKit Thread` (macOS only), and `AWT-*` threads. Created by the JDK's AWT/Java2D subsystem when PDFBox (via Apache Tika) initialises graphics resources to parse PDFs. JVM-lifetime system threads — false positives. |
+
+### Deleted class
+
+`FSCrawlerReproduceInfoPrinter` was removed. Its functionality is now in `FsCrawlerReproduceInfoExtension`.
+
+### Maven profiles
+
+Two new Maven profiles were added for test filtering via Surefire tags:
+
+| Profile | Active by default | Effect |
+|---------|------------------|--------|
+| `daily` | ✅ yes | Excludes tests tagged `Nightly` |
+| `nightly` | ❌ no | Includes only tests tagged `Nightly` |
+
+Usage:
+```bash
+mvn verify -P nightly   # run nightly tests
+mvn verify              # run daily tests (default, no @Nightly)
+```
+
+### Pending/commented-out Surefire config
+
+Several `junit4-maven-plugin` features do not have a direct Surefire equivalent and were left as
+`<!-- TODO REPLACE ? … -->` comments in the root `pom.xml`:
+
+- `heartbeat` — no equivalent in Surefire (used to log progress of long-running tests)
+- `jvmOutputAction` — no equivalent
+- `leaveTemporary` / `listeners` — partially replaced by `systemPropertyVariables`
+- `seed` — passed as system property `tests.seed` but the randomized runner must pick it up
+- `showOutput="onError"` — Surefire has no direct `onError` mode. Use
+  `<redirectTestOutputToFile>true</redirectTestOutputToFile>` instead: stdout/stderr (including
+  Log4j2 console output) goes to `target/surefire-reports/TEST-*.txt` for passing tests, and is
+  automatically included in the console failure report for failing tests. Remove `<detail>` which
+  only controls the Surefire progress summary, not test log output.
+
+---
+
+## Known issues and open questions
+
+### 1. `@Fast` timeout inheritance in integration tests
+
+`AbstractFSCrawlerTestCase` is annotated with `@Fast` (10-second `@Timeout`). The intent is for
+all tests to declare their speed tier explicitly. However, tests in `ElasticsearchClientIT` wait the
+full 10 minutes (Awaitility's `maxWaitForSearch`) before failing, which means `@Fast` is not being
+applied.
+
+**JUnit 6 source analysis (`AnnotationUtils.java`):**
+
+```java
+boolean inherited = annotationType.isAnnotationPresent(Inherited.class);
+return findAnnotation(element, annotationType, inherited, new HashSet<>());
+// ...class hierarchy is only traversed when inherited == true
+```
+
+`@Timeout` carries `@Inherited` in JUnit 6.0.3, so the traversal *should* happen and
+`@Fast` → `@Timeout(10s)` on `AbstractFSCrawlerTestCase` should be found when processing
+`ElasticsearchClientIT`. The mechanism is correct by design.
+
+**Probable root cause:** `TimeoutExtension.beforeAll(context)` reads the timeout from
+`context.getElement()` (the test class) and stores it in the extension store. If `@Randomized`
+(from `randomizedtesting-jupiter`) wraps or replaces the execution context before
+`TimeoutExtension.beforeAll` fires, `context.getElement()` might not return the expected class,
+causing `readTimeoutFromAnnotation` to return `empty()` and nothing to be stored → no timeout.
+
+**Diagnostic:**
+Add `@Timeout(5, SECONDS)` directly on one test method (not via a composed annotation). If the
+test is killed in 5 s, the mechanism works at method level but not at class level. If it still runs
+for 10 minutes, `TimeoutExtension` is completely inactive (possibly overridden by `@Randomized`).
+
+**Safe workaround:** annotate IT base classes explicitly so the override is unambiguous:
+
+```java
+@VerySlow
+public abstract class AbstractITCase extends AbstractFSCrawlerTestCase { … }
+
+@VerySlow
+class ElasticsearchClientIT extends AbstractFSCrawlerTestCase { … }
+```
+
+`FsCrawlerImplAllDocumentsIT` and `FsCrawlerTestSubDirsIT` already have `@VerySlow` applied
+directly — that pattern should be extended to all IT base classes.
+
+### 2. `@Nightly` tag case mismatch — tests not excluded from daily builds ✅ fixed
+
+**Was the root cause of the 10-minute blocking.** The `@Nightly` annotation was using a lowercase
+tag (`"nightly"`) while the Maven Surefire profiles used `"Nightly"` (capital N). JUnit Platform
+tag names are case-sensitive, so the daily-build filter never matched and `@Nightly` tests always
+ran — including `indexFsCrawlerDocuments()` in `ElasticsearchClientIT`, which blocked for up to
+10 minutes waiting on Awaitility.
+
+**Fixed:** `@Tag("Nightly")` now matches `<excludedGroups>Nightly</excludedGroups>` in `pom.xml`.
+
+### 3. Tests blocked at `ElasticsearchClientIT.java:1104`
+
+Now that the root cause (§2) is identified: `indexFsCrawlerDocuments()` was running in every daily
+build due to the tag mismatch, and its `countTestHelper` call waited up to `maxWaitForSearch` for
+documents that required semantic search templates to fully initialize. Once the tag casing is fixed
+(or `@Disabled` removed and a proper `@Nightly` filter applied), this blocking disappears.
+
+### 4. TestContainers container lifecycle with `TEST_KEEP_DATA=true`
+
+`ElasticsearchClientIT` passes `TEST_KEEP_DATA` (default: `true`) to
+`TestContainerHelper.startElasticsearch(keepData)`, which calls `.withReuse(true)` on the container.
+
+For `withReuse(true)` to keep the container alive across runs, the developer must have:
+
+```properties
+# ~/.testcontainers.properties
+testcontainers.reuse.enable=true
+```
+
+When this is set, `mvn` test runs correctly reuse the running container. The container may still be
+stopped when tests are run from an IDE depending on how the IDE manages the JVM lifecycle — this is
+a known Testcontainers behaviour when Ryuk is active in the IDE's JVM process.
+
+### 5. Commented-out Surefire configuration
+
+The `<!-- TODO REPLACE ? -->` blocks in the root `pom.xml` contain old `junit4-maven-plugin`
+settings that were not migrated. Check whether `tests.seed`, `heartbeat`, and `leaveTemporary`
+need to be wired differently with Surefire + `randomizedtesting-jupiter`.
+
+### 6. `integration-tests/pom.xml` — disabled executions
+
+The `integration-tests` module disables BOTH the `unit-tests` and `integration-tests` Surefire
+executions. There are no unit tests in that module (intentional), and the integration tests are run
+by the parent `integration-test` execution. Confirm this is still correct after the migration.
+
+---
+
+## Reproduction commands
+
+After a test failure, `FsCrawlerReproduceInfoExtension` prints a command like:
+
+```
+REPRODUCE WITH:
+mvn integration-test -Dtests.class=…ClassName -Dtests.method=methodName -Dtests.locale=… -Dtests.timezone=…
+```
+
+This replaces the old `FSCrawlerReproduceInfoPrinter` that was a JUnit 4 `RunListener`.

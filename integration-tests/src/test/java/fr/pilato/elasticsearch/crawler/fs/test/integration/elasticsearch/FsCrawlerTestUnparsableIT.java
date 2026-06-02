@@ -32,7 +32,7 @@ import java.util.EnumSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assumptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test crawler with unparsable files */
 public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
@@ -43,7 +43,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
      * href="https://github.com/dadoonet/fscrawler/issues/105">https://github.com/dadoonet/fscrawler/issues/105</a>
      */
     @Test
-    public void unparsable() throws Exception {
+    void unparsable() throws Exception {
         crawler = startCrawler();
 
         // We expect to have two files
@@ -57,7 +57,7 @@ public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
      * @throws Exception In case something is wrong
      */
     @Test
-    public void non_readable_file() throws Exception {
+    void non_readable_file() throws Exception {
         // We change the attributes of the file
         logger.info(" ---> Changing attributes for file roottxtfile.txt");
 

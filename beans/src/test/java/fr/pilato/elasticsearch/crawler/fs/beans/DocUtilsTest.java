@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DocUtilsTest {
     private static final Logger logger = LogManager.getLogger(DocUtilsTest.class);
@@ -40,7 +40,7 @@ public class DocUtilsTest {
     }
 
     @Test
-    public void mergeDocsWithNoJsonFile() {
+    void mergeDocsWithNoJsonFile() {
         Doc mergedDoc = DocUtils.getMergedDoc(getDocSample(), "empty.json", null);
         logger.trace("Merged doc: {}", DocUtils.prettyPrint(mergedDoc));
 
@@ -54,7 +54,7 @@ public class DocUtilsTest {
     }
 
     @Test
-    public void mergeDocsWithEmptyJsonFile() {
+    void mergeDocsWithEmptyJsonFile() {
         Doc mergedDoc = DocUtils.getMergedDoc(
                 getDocSample(), "empty.json", new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)));
         logger.trace("Merged doc: {}", DocUtils.prettyPrint(mergedDoc));
@@ -69,7 +69,7 @@ public class DocUtilsTest {
     }
 
     @Test
-    public void mergeDocsWithNoYamlFile() {
+    void mergeDocsWithNoYamlFile() {
         Doc mergedDoc = DocUtils.getMergedDoc(getDocSample(), "empty.yaml", null);
         logger.trace("Merged doc: {}", DocUtils.prettyPrint(mergedDoc));
 
@@ -83,12 +83,12 @@ public class DocUtilsTest {
     }
 
     @Test
-    public void mergeDocsWithAJsonFile() {
+    void mergeDocsWithAJsonFile() {
         testMergeDocsWithAFile(path.resolve("meta-as-json.json"));
     }
 
     @Test
-    public void mergeDocsWithAYamlFile() {
+    void mergeDocsWithAYamlFile() {
         testMergeDocsWithAFile(path.resolve(".meta.yml"));
     }
 

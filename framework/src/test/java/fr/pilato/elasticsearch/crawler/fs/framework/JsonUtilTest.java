@@ -28,14 +28,14 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void jsonPath() {
+    void jsonPath() {
         String json = """
                 {
                    "content":"Some Text",
@@ -101,7 +101,7 @@ public class JsonUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void mappersWithStringsArray() throws IOException {
+    void mappersWithStringsArray() throws IOException {
         // We try with multiple elements in the cities field as an array
         mapperTester(
                 JsonUtil.mapper,

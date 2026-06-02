@@ -20,8 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import com.carrotsearch.randomizedtesting.jupiter.DetectThreadLeaks;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -60,19 +60,18 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 @SuppressWarnings("ALL")
-@ThreadLeakFilters(
-        filters = {
-            WindowsSpecificThreadFilter.class,
-            TestContainerThreadFilter.class,
-            JNACleanerThreadFilter.class,
-            MinioThreadFilter.class
-        })
+@DetectThreadLeaks.ExcludeThreads({
+    WindowsSpecificThreadFilter.class,
+    TestContainerThreadFilter.class,
+    JNACleanerThreadFilter.class,
+    MinioThreadFilter.class
+})
 public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final int DEFAULT_TEST_REST_PORT = 0;
@@ -105,8 +104,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
     public abstract FsSettings getFsSettings();
 
-    @Before
-    public void startRestServer() throws Exception {
+    @BeforeEach
+    void startRestServer() throws Exception {
         FsSettings fsSettings = getFsSettings();
 
         // Add the rest interface
@@ -130,8 +129,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         logger.info(" -> Creating index [{}]", fsSettings.getElasticsearch().getIndex());
     }
 
-    @After
-    public void stopRestServer() throws IOException, InterruptedException {
+    @AfterEach
+    void stopRestServer() throws IOException, InterruptedException {
         if (restServer != null) {
             restServer.close();
         }
@@ -201,8 +200,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         return builder.delete(clazz);
     }
 
-    @BeforeClass
-    public static void startRestClient() throws IOException {
+    @BeforeAll
+    static void startRestClient() throws IOException {
         // create the client
         httpClient = ClientBuilder.newBuilder()
                 .register(MultiPartFeature.class)
@@ -213,8 +212,8 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         target = httpClient.target("http://127.0.0.1:" + getRestPort() + "/fscrawler");
     }
 
-    @AfterClass
-    public static void stopRestClient() {
+    @AfterAll
+    static void stopRestClient() {
         if (httpClient != null) {
             httpClient.close();
             httpClient = null;
@@ -317,7 +316,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         return post(target, api, mp, UploadResponse.class, params);
     }
 
-    public static UploadResponse putDocument(WebTarget target, Path file, Path tagsFile, String index, String id) {
+    protected UploadResponse putDocument(WebTarget target, Path file, Path tagsFile, String index, String id) {
         Assertions.assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
@@ -329,7 +328,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         mp.bodyPart(filePart);
 
         if (index != null) {
-            if (RandomizedTest.rarely()) {
+            if (RandomizedTest.rarely(TEST_RANDOM)) {
                 logger.info("Force index name to {} using a form field", index);
                 mp.field("index", index);
             } else {

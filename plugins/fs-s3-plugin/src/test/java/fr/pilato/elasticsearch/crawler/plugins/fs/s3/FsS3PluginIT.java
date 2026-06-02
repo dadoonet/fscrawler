@@ -20,10 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import com.carrotsearch.randomizedtesting.jupiter.DetectThreadLeaks;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.MinioThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
@@ -39,34 +40,27 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
-import org.testcontainers.DockerClientFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.MinIOContainer;
 
-@ThreadLeakFilters(
-        filters = {
-            WindowsSpecificThreadFilter.class,
-            TestContainerThreadFilter.class,
-            JNACleanerThreadFilter.class,
-            MinioThreadFilter.class
-        })
-public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
+@DetectThreadLeaks.ExcludeThreads({
+    WindowsSpecificThreadFilter.class,
+    TestContainerThreadFilter.class,
+    JNACleanerThreadFilter.class,
+    MinioThreadFilter.class
+})
+@DisabledIfNoDocker
+class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static MinIOContainer container;
     private static String s3Url = "http://localhost:9000";
     private static String s3Username = "minioadmin";
     private static String s3Password = "minioadmin";
 
-    @Before
-    public void startMinioContainer() {
-        // We can only run this test if Docker is available on this machine
-        Assume.assumeTrue(
-                "We can only run this test if Docker is available on this machine",
-                DockerClientFactory.instance().isDockerAvailable());
-
+    @BeforeEach
+    void startMinioContainer() {
         logger.info("Starting Minio");
         container = new MinIOContainer("minio/minio");
         container.start();
@@ -76,8 +70,8 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
         logger.info("Minio started on {} with username {} and password {}.", s3Url, s3Username, s3Password);
     }
 
-    @After
-    public void stopMinioContainer() {
+    @AfterEach
+    void stopMinioContainer() {
         if (container != null) {
             container.close();
             container = null;
@@ -105,7 +99,7 @@ public class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void minio() throws Exception {
+    void minio() throws Exception {
         String text = "Hello Foo world!";
         createBucket("foo.txt", text);
         createBucket("bar.txt", "This one should be ignored.");

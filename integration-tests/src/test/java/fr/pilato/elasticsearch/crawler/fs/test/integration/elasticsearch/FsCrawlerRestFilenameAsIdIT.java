@@ -33,7 +33,7 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("ALL")
 public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
@@ -46,7 +46,7 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadOneDocument() throws Exception {
+    void uploadOneDocument() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
@@ -64,7 +64,7 @@ public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     }
 
     @Test
-    public void uploadAllDocuments() throws Exception {
+    void uploadAllDocuments() throws Exception {
         Path from = rootTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);

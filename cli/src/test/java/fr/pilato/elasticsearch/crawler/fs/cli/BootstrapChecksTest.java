@@ -22,13 +22,13 @@ package fr.pilato.elasticsearch.crawler.fs.cli;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** We want to test the bootstrap checks */
 public class BootstrapChecksTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void bootstrapChecks() {
+    void bootstrapChecks() {
         // Test all checks (this test depends on the platform we are running)
         BootstrapChecks.check();
 

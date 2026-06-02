@@ -36,7 +36,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -53,7 +53,7 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readFileWithFullPath() throws Exception {
+    void readFileWithFullPath() throws Exception {
         String text = "Hello Foo world!";
         Path fileName = createFile("foo.txt", text);
         createFile("bar.txt", "This one should be ignored.");
@@ -86,7 +86,7 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readFileWithRelativePath() throws Exception {
+    void readFileWithRelativePath() throws Exception {
         String text = "Hello Foo world!";
         Path fileName = createFile("foo.txt", text);
 
@@ -118,7 +118,7 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readFileWithFullPathOutsideRootDir() throws Exception {
+    void readFileWithFullPathOutsideRootDir() throws Exception {
         Path rootDir = rootTmpDir.resolve("root-dir");
         Files.createDirectory(rootDir);
         Path outsideRootDir = rootTmpDir.resolve("outside-root-dir");

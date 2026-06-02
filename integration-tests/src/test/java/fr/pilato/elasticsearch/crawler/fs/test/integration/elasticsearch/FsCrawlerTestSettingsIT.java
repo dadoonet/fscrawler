@@ -26,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test various crawler settings */
 public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
@@ -36,7 +36,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
      * href="https://github.com/dadoonet/fscrawler/issues/83">https://github.com/dadoonet/fscrawler/issues/83</a>
      */
     @Test
-    public void time_value() throws Exception {
+    void time_value() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueHours(1));
         crawler = startCrawler(fsSettings);
@@ -46,7 +46,7 @@ public class FsCrawlerTestSettingsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void bulk_flush() throws Exception {
+    void bulk_flush() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setBulkSize(100);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(2));

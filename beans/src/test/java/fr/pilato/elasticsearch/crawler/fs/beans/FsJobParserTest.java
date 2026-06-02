@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -41,13 +41,13 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void parseEmptyJob() throws IOException {
+    void parseEmptyJob() throws IOException {
         jobTester(new FsJob());
     }
 
     @Test
-    public void parseJob() throws IOException {
-        jobTester(new FsJob(getCurrentTestName(), LocalDateTime.now(), LocalDateTime.now(), 1000, 5));
+    void parseJob() throws IOException {
+        jobTester(new FsJob(jobName, LocalDateTime.now(), LocalDateTime.now(), 1000, 5));
     }
 
     /**
@@ -56,9 +56,9 @@ public class FsJobParserTest extends AbstractFSCrawlerTestCase {
      * @throws IOException In case of serialization problem
      */
     @Test
-    public void dateTimeSerialization() throws IOException {
+    void dateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
-        FsJob job = new FsJob(getCurrentTestName(), now, now, 1000, 5);
+        FsJob job = new FsJob(jobName, now, now, 1000, 5);
         String json = JsonUtil.prettyMapper.writeValueAsString(job);
         FsJob generated = JsonUtil.prettyMapper.readValue(json, FsJob.class);
         Assertions.assertThat(generated.getLastrun()).isEqualTo(now);

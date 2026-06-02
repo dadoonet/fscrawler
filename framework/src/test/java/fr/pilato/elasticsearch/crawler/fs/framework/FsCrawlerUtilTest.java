@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.File;
 import java.io.IOException;
@@ -38,16 +38,17 @@ import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
-public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static File file;
 
-    @BeforeClass
-    public static void createTmpFile() throws IOException {
+    @BeforeAll
+    static void createTmpFile() throws IOException {
         Path path = rootTmpDir.resolve("test-group.txt");
         if (!OsValidator.WINDOWS) {
             Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");
@@ -60,27 +61,27 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void ownerName() {
+    void ownerName() {
         String ownerName = FsCrawlerUtil.getOwnerName(file);
         Assertions.assertThat(ownerName).isNotEmpty();
     }
 
     @Test
-    public void groups() {
-        Assume.assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
+    @DisabledOnOs(OS.WINDOWS)
+    void groups() {
         String groupName = FsCrawlerUtil.getGroupName(file);
         Assertions.assertThat(groupName).isNotEmpty();
     }
 
     @Test
-    public void permissions() {
-        Assume.assumeFalse("This test can not run on Windows.", OsValidator.WINDOWS);
+    @DisabledOnOs(OS.WINDOWS)
+    void permissions() {
         int permissions = FsCrawlerUtil.getFilePermissions(file);
         Assertions.assertThat(permissions).isEqualTo(700);
     }
 
     @Test
-    public void aclEntries() {
+    void aclEntries() {
         List<FileAcl> aclEntries = FsCrawlerUtil.getFileAcls(file.toPath());
         if (OsValidator.WINDOWS) {
             Assertions.assertThat(aclEntries)
@@ -94,7 +95,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void aclHashConsistency() {
+    void aclHashConsistency() {
         FileAcl aclOne = new FileAcl();
         aclOne.setPrincipal("user");
         aclOne.setType("ALLOW");
@@ -117,33 +118,34 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void isFileSizeUnderLimit() {
+    void isFileSizeUnderLimit() {
         Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1))
                 .isTrue();
         Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(ByteSizeValue.parseBytesSizeValue("1mb"), 1048576))
                 .isTrue();
         Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(
                         ByteSizeValue.parseBytesSizeValue("1mb"),
-                        new ByteSizeValue(RandomizedTest.randomIntBetween(2, 100), ByteSizeUnit.MB).getBytes()))
+                        new ByteSizeValue(RandomizedTest.randomIntInRange(TEST_RANDOM, 2, 100), ByteSizeUnit.MB)
+                                .getBytes()))
                 .isFalse();
     }
 
     @Test
-    public void extractMajorVersion() {
+    void extractMajorVersion() {
         Assertions.assertThat(FsCrawlerUtil.extractMajorVersion("7.2.0")).isEqualTo(7);
         Assertions.assertThat(FsCrawlerUtil.extractMajorVersion("8.17.1")).isEqualTo(8);
         Assertions.assertThat(FsCrawlerUtil.extractMajorVersion("10.1.0")).isEqualTo(10);
     }
 
     @Test
-    public void extractMinorVersion() {
+    void extractMinorVersion() {
         Assertions.assertThat(FsCrawlerUtil.extractMinorVersion("7.2.0")).isEqualTo(2);
         Assertions.assertThat(FsCrawlerUtil.extractMinorVersion("8.17.1")).isEqualTo(17);
         Assertions.assertThat(FsCrawlerUtil.extractMinorVersion("10.1.0")).isEqualTo(1);
     }
 
     @Test
-    public void getRealPathNameWindows() {
+    void getRealPathNameWindows() {
         testRealPath("/C:", "test-windows.txt", "/C:/test-windows.txt");
         testRealPath("/C:/", "test-windows.txt", "/C:/test-windows.txt");
         testRealPath("/C:/dir", "test-windows.txt", "/C:/dir/test-windows.txt");
@@ -155,7 +157,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getRealPathNameWindowsBackslash() {
+    void getRealPathNameWindowsBackslash() {
         testRealPath("C:", "test-windows.txt", "C:\\test-windows.txt");
         testRealPath("C:\\", "test-windows.txt", "C:\\test-windows.txt");
         testRealPath("C:\\dir", "test-windows.txt", "C:\\dir\\test-windows.txt");
@@ -163,7 +165,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getRealPathNameWindowsNetworkPath() {
+    void getRealPathNameWindowsNetworkPath() {
         testRealPath("\\\\SOMEONE", "test-smb.txt", "\\\\SOMEONE\\test-smb.txt");
         testRealPath("\\\\SOMEONE\\", "test-smb.txt", "\\\\SOMEONE\\test-smb.txt");
         testRealPath("\\\\SOMEONE\\share", "test-smb.txt", "\\\\SOMEONE\\share\\test-smb.txt");
@@ -171,7 +173,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getRealPathNameLinuxForLocalOrFtp() {
+    void getRealPathNameLinuxForLocalOrFtp() {
         // Local Linux / FTP
         testRealPath("/", "test-linux.txt", "/test-linux.txt");
         testRealPath("/dir", "test-linux.txt", "/dir/test-linux.txt");
@@ -179,7 +181,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getRealPathNameLinuxForSmb() {
+    void getRealPathNameLinuxForSmb() {
         // SMB
         testRealPath("//SOMEONE", "test-smb.txt", "//SOMEONE/test-smb.txt");
         testRealPath("//SOMEONE/", "test-smb.txt", "//SOMEONE/test-smb.txt");
@@ -193,7 +195,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathLinuxFromRoot() {
+    void computePathLinuxFromRoot() {
         // Local Linux / FTP
         testVirtualPath("/", "/", "/");
         testVirtualPath("/", "/dir", "/dir");
@@ -204,7 +206,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathLinuxFromDir() {
+    void computePathLinuxFromDir() {
         testVirtualPath("/tmp", "/tmp", "/");
         testVirtualPath("/tmp", "/tmp/dir", "/dir");
         testVirtualPath("/tmp", "/tmp/dir/subdir", "/dir/subdir");
@@ -214,7 +216,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathLinuxSmb() {
+    void computePathLinuxSmb() {
         // SMB
         testVirtualPath("//SOMEONE/share", "//SOMEONE/share", "/");
         testVirtualPath("//SOMEONE/share", "//SOMEONE/share/dir", "/dir");
@@ -225,7 +227,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathWindowsFromRoot() {
+    void computePathWindowsFromRoot() {
         testVirtualPath("C:", "C:", "\\");
         testVirtualPath("C:", "C:\\dir", "\\dir");
         testVirtualPath("C:", "C:\\dir\\subdir", "\\dir\\subdir");
@@ -235,7 +237,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathWindowsFromDirBackslash() {
+    void computePathWindowsFromDirBackslash() {
         testVirtualPath("C:\\tmp", "C:\\tmp", "\\");
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir", "\\dir");
         testVirtualPath("C:\\tmp", "C:\\tmp\\dir\\subdir", "\\dir\\subdir");
@@ -245,7 +247,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathWindowsFromDirSlash() {
+    void computePathWindowsFromDirSlash() {
         testVirtualPath("C:/tmp", "C:/tmp", "/");
         testVirtualPath("C:/tmp", "C:/tmp/dir", "/dir");
         testVirtualPath("C:/tmp", "C:/tmp/dir/subdir", "/dir/subdir");
@@ -255,7 +257,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathWindowsNetworkDrive() {
+    void computePathWindowsNetworkDrive() {
         testVirtualPath("/C:/tmp", "/C:/tmp", "/");
         testVirtualPath("/C:/tmp", "/C:/tmp/dir", "/dir");
         testVirtualPath("/C:/tmp", "/C:/tmp/dir/subdir", "/dir/subdir");
@@ -265,7 +267,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void computePathWindowsRemoteServer() {
+    void computePathWindowsRemoteServer() {
         testVirtualPath("\\\\SOMEONE\\share", "\\\\SOMEONE\\share", "\\");
         testVirtualPath("\\\\SOMEONE\\share", "\\\\SOMEONE\\share\\dir", "\\dir");
         testVirtualPath("\\\\SOMEONE\\share", "\\\\SOMEONE\\share\\dir\\subdir", "\\dir\\subdir");
@@ -280,7 +282,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getFileExtension() {
+    void getFileExtension() {
         Assertions.assertThat(FsCrawlerUtil.getFileExtension(new File("foo.bar")))
                 .isEqualTo("bar");
         Assertions.assertThat(FsCrawlerUtil.getFileExtension(new File("foo"))).isEmpty();
@@ -289,7 +291,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void localDateToDate() {
+    void localDateToDate() {
         LocalDateTime now = LocalDateTime.now();
         Date date = FsCrawlerUtil.localDateTimeToDate(now);
         logger.info(
@@ -305,7 +307,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
      * href="https://github.com/dadoonet/fscrawler/issues/2134">#2134</a>
      */
     @Test
-    public void getPathSeparator() {
+    void getPathSeparator() {
         // Linux-style paths
         Assertions.assertThat(FsCrawlerUtil.getPathSeparator("/tmp/dir")).isEqualTo("/");
         Assertions.assertThat(FsCrawlerUtil.getPathSeparator("/")).isEqualTo("/");
@@ -328,7 +330,7 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void humanReadableDuration() {
+    void humanReadableDuration() {
         Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ZERO)).isEqualTo("0s");
         Assertions.assertThat(FsCrawlerUtil.durationToString(null)).isNull();
         Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofSeconds(59)))
@@ -344,13 +346,13 @@ public class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(61)))
                 .isEqualTo("1h1m");
         Assertions.assertThat(FsCrawlerUtil.durationToString(
-                        Duration.ofMillis(RandomizedTest.randomLongBetween(0, 999999999L))))
+                        Duration.ofMillis(RandomizedTest.randomLongInRange(TEST_RANDOM, 0, 999999999L))))
                 .isNotEmpty();
     }
 
     @Test
-    public void wait_for() {
-        int duration = RandomizedTest.randomIntBetween(50, 100);
+    void wait_for() {
+        int duration = RandomizedTest.randomIntInRange(TEST_RANDOM, 50, 100);
         LocalDateTime now = LocalDateTime.now();
         FsCrawlerUtil.waitFor(Duration.ofMillis(duration));
         LocalDateTime afterWait1 = LocalDateTime.now();

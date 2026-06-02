@@ -23,38 +23,28 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 /** Test weird filenames */
 public class FsCrawlerTestWeirdFilenamesIT extends AbstractFsCrawlerITCase {
-    private static final Logger logger = LogManager.getLogger();
-
     /**
      * Test for #1952: <a
      * href="https://github.com/dadoonet/fscrawler/issues/1952">https://github.com/dadoonet/fscrawler/issues/1952</a>:
      * When a directory has a space at the end, files inside are not indexed
      */
     @Test
-    public void dir_with_space_at_the_end() throws Exception {
-        try {
-            // We need to do a small hack here and rename the test directory as this could not work on Windows
-            Path dirWithSpace = currentTestResourceDir.resolve("with_space ");
-            Files.move(currentTestResourceDir.resolve("with_space"), dirWithSpace);
-        } catch (InvalidPathException e) {
-            logger.warn("Cannot rename directory to have a space at the end on Windows. Ignoring the test.", e);
-            Assume.assumeFalse("We can not run this test on Windows", OsValidator.WINDOWS);
-        }
-
+    @DisabledOnOs(OS.WINDOWS) // Windows does not allow to have a space at the end of a directory name
+    void dir_with_space_at_the_end() throws Exception {
+        // We need to do a small hack here and rename the test directory as this could not work on Windows
+        Path dirWithSpace = currentTestResourceDir.resolve("with_space ");
+        Files.move(currentTestResourceDir.resolve("with_space"), dirWithSpace);
         FsSettings fsSettings = createTestSettings();
         crawler = startCrawler(fsSettings);
         ESSearchResponse response = countTestHelper(

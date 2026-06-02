@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -40,15 +40,15 @@ import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Assumptions;
 import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-public class TikaDocParserTest extends DocParserTestCase {
+class TikaDocParserTest extends DocParserTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static boolean isOcrAvailable;
 
-    @BeforeClass
-    public static void setOcrAvailable() {
+    @BeforeAll
+    static void setOcrAvailable() {
         try {
             isOcrAvailable = new TesseractOCRParser().hasTesseract();
         } catch (TikaConfigException e) {
@@ -65,7 +65,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * Tesseract is not installed.
      */
     @Test
-    public void keynoteIssue782() throws IOException {
+    void keynoteIssue782() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -79,7 +79,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * that we get at least the image path pattern and not the slide text "FSCrawler".
      */
     @Test
-    public void keynoteIssue782WithoutOcr() throws IOException {
+    void keynoteIssue782WithoutOcr() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setEnabled(false);
         Doc doc = extractFromFile("test.key", fsSettings);
@@ -97,7 +97,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * the extracted content.
      */
     @Test
-    public void emailIssue494NoDuplicateContent() throws IOException {
+    void emailIssue494NoDuplicateContent() throws IOException {
         Doc doc = extractFromFile("issue-494-email-with-plain-and-html.eml");
         Assertions.assertThat(doc.getContent()).containsOnlyOnce("Unique plain text body for issue 494");
     }
@@ -107,7 +107,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * href="https://github.com/dadoonet/fscrawler/issues/162">https://github.com/dadoonet/fscrawler/issues/162</a>
      */
     @Test
-    public void langDetect162() throws IOException {
+    void langDetect162() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setLangDetect(true);
         Doc doc = extractFromFile("test.txt", fsSettings);
@@ -125,7 +125,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * href="https://github.com/dadoonet/fscrawler/issues/221">https://github.com/dadoonet/fscrawler/issues/221</a>
      */
     @Test
-    public void pdfIssue221() throws IOException {
+    void pdfIssue221() throws IOException {
         // We test document 1
         Doc doc = extractFromFile("issue-221-doc1.pdf");
 
@@ -164,7 +164,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * href="https://github.com/dadoonet/fscrawler/issues/163">https://github.com/dadoonet/fscrawler/issues/163</a>
      */
     @Test
-    public void xmlIssue163() throws IOException {
+    void xmlIssue163() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         Doc doc = extractFromFile("issue-163.xml", fsSettings);
@@ -191,7 +191,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromDoc() throws IOException {
+    void extractFromDoc() throws IOException {
         Doc doc = extractFromFileExtension("doc");
 
         // Extracted content
@@ -238,7 +238,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromDocx() throws IOException {
+    void extractFromDocx() throws IOException {
         Doc doc = extractFromFileExtension("docx");
 
         // Extracted content
@@ -293,7 +293,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromHtml() throws IOException {
+    void extractFromHtml() throws IOException {
         Doc doc = extractFromFileExtension("html");
 
         // Extracted content
@@ -333,7 +333,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * href="https://github.com/dadoonet/fscrawler/issues/87">https://github.com/dadoonet/fscrawler/issues/87</a>
      */
     @Test
-    public void extractFromMp3() throws IOException {
+    void extractFromMp3() throws IOException {
         Doc doc = extractFromFileExtension("mp3");
 
         // Extracted content
@@ -375,7 +375,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromOdt() throws IOException {
+    void extractFromOdt() throws IOException {
         Doc doc = extractFromFileExtension("odt");
 
         // Extracted content
@@ -419,7 +419,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromPdf() throws IOException {
+    void extractFromPdf() throws IOException {
         Doc doc = extractFromFileExtension("pdf");
 
         // Extracted content
@@ -486,7 +486,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromJpg() throws IOException {
+    void extractFromJpg() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
 
@@ -578,7 +578,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromRtf() throws IOException {
+    void extractFromRtf() throws IOException {
         Doc doc = extractFromFileExtension("rtf");
 
         // Extracted content
@@ -617,7 +617,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromTxt() throws IOException {
+    void extractFromTxt() throws IOException {
         Doc doc = extractFromFileExtension("txt");
 
         // Extracted content
@@ -648,7 +648,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromWav() throws IOException {
+    void extractFromWav() throws IOException {
         Doc doc = extractFromFileExtension("wav");
 
         // Extracted content
@@ -679,7 +679,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromTxtAndStoreSource() throws IOException {
+    void extractFromTxtAndStoreSource() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setTempDir(rootTmpDir.toString());
@@ -691,7 +691,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromTxtStoreSourceAndNoIndexContent() throws IOException {
+    void extractFromTxtStoreSourceAndNoIndexContent() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setIndexContent(false);
@@ -704,7 +704,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromTxtAndStoreSourceWithDigest() throws IOException {
+    void extractFromTxtAndStoreSourceWithDigest() throws IOException {
         Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -720,7 +720,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void extractFromTxtWithDigest() throws IOException {
+    void extractFromTxtWithDigest() throws IOException {
         Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -741,7 +741,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * @throws Exception In case something goes wrong
      */
     @Test
-    public void checksumForSmallFile() throws Exception {
+    void checksumForSmallFile() throws Exception {
         Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -773,7 +773,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * @throws Exception In case something goes wrong
      */
     @Test
-    public void checksumWithUnknownFilesize() throws Exception {
+    void checksumWithUnknownFilesize() throws Exception {
         Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         // Use test.txt content but pass filesize as 0 (unknown)
@@ -813,7 +813,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * @throws Exception In case something goes wrong
      */
     @Test
-    public void checksumForLargeBinaryFile() throws Exception {
+    void checksumForLargeBinaryFile() throws Exception {
         Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         // Create a binary file larger than 64KB (100KB)
@@ -850,7 +850,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocr() throws IOException {
+    void ocr() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -867,7 +867,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocrWithPdfStrategyNoOcr() throws IOException {
+    void ocrWithPdfStrategyNoOcr() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -886,7 +886,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocrWithPdfStrategyOcrOnly() throws IOException {
+    void ocrWithPdfStrategyOcrOnly() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -906,7 +906,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocrWithPdfStrategyAuto() throws IOException {
+    void ocrWithPdfStrategyAuto() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -923,7 +923,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocrOff() throws IOException {
+    void ocrOff() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -940,7 +940,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocrWrongPaths() throws IOException {
+    void ocrWrongPaths() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -956,7 +956,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocrOutputTypeHocr() throws IOException {
+    void ocrOutputTypeHocr() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -971,7 +971,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void ocrLanguageHeb() throws IOException {
+    void ocrLanguageHeb() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
@@ -990,7 +990,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void customTikaConfig() throws IOException {
+    void customTikaConfig() throws IOException {
         InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
         Path testTikaConfig = rootTmpDir.resolve("tika-config");
         if (Files.notExists(testTikaConfig)) {
@@ -1024,7 +1024,7 @@ public class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    public void shiftJisEncoding() throws IOException {
+    void shiftJisEncoding() throws IOException {
         Doc doc = extractFromFile("issue-400-shiftjis.txt");
         Assertions.assertThat(doc.getContent()).isNotEmpty();
     }
@@ -1038,9 +1038,9 @@ public class TikaDocParserTest extends DocParserTestCase {
      * @throws IOException In case something goes wrong
      */
     @Test
-    public void pdfIssue1097() throws IOException {
+    void pdfIssue1097() throws IOException {
         // Run the test with or without OCR as the behavior changes
-        boolean withOcr = isOcrAvailable && RandomizedTest.randomBoolean();
+        boolean withOcr = isOcrAvailable && RandomizedTest.randomBoolean(TEST_RANDOM);
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         fsSettings.getFs().getOcr().setEnabled(withOcr);
@@ -1107,7 +1107,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * @throws IOException In case something goes wrong
      */
     @Test
-    public void emptyFileIssue834() throws IOException {
+    void emptyFileIssue834() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         Doc doc = extractFromFile("issue-834.txt", fsSettings);
@@ -1123,14 +1123,14 @@ public class TikaDocParserTest extends DocParserTestCase {
 
     /** Test protected document */
     @Test
-    public void protectedDocument() throws IOException {
+    void protectedDocument() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         Doc doc = extractFromFile("test-protected.docx", fsSettings);
         Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/x-tika-ooxml-protected");
     }
 
     @Test
-    public void docxWithEmbeddedBadPDF() throws IOException {
+    void docxWithEmbeddedBadPDF() throws IOException {
         Doc doc = extractFromFile("issue-stackoverflow.docx");
         Assertions.assertThat(doc.getContent()).isNotEmpty();
     }
@@ -1145,7 +1145,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * <p>See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
      */
     @Test
-    public void mockParserRuntimeException() throws IOException {
+    void mockParserRuntimeException() throws IOException {
         Doc doc = testWithMock("mock-runtime-exception.xml");
         Assertions.assertThat(doc.getContent()).isNull();
         doc = testWithMock("mock-io-exception.xml");
@@ -1162,7 +1162,7 @@ public class TikaDocParserTest extends DocParserTestCase {
      * <p>See <<a href="https://cwiki.apache.org/confluence/display/tika/MockParser">MockParser</a>>
      */
     @Test
-    public void mockParserStdoutAndStderr() throws IOException {
+    void mockParserStdoutAndStderr() throws IOException {
         Doc doc = testWithMock("mock-stdout.xml");
         // Content should be extracted
         Assertions.assertThat(doc.getContent()).contains("I'm a fake file");

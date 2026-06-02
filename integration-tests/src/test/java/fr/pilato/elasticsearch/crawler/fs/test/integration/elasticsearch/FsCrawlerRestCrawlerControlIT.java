@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
@@ -51,9 +51,9 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.glassfish.jersey.jackson.JacksonFeature;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Integration tests for the REST API crawler control endpoints (pause, resume, checkpoint). These tests use a real
@@ -67,8 +67,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     private WebTarget target;
     private int restPort;
 
-    @Before
-    public void startRestServer() throws Exception {
+    @BeforeEach
+    void startRestServer() throws Exception {
         // Find an available port
         try (ServerSocket serverSocket = new ServerSocket(0)) {
             restPort = serverSocket.getLocalPort();
@@ -83,8 +83,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
         target = httpClient.target("http://127.0.0.1:" + restPort + "/fscrawler");
     }
 
-    @After
-    public void stopRestServer() {
+    @AfterEach
+    void stopRestServer() {
         if (restServer != null) {
             restServer.close();
             restServer = null;
@@ -104,10 +104,10 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
      * effect).
      */
     @Test
-    public void test_pause_resume_indexing() throws Exception {
+    void test_pause_resume_indexing() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
-        long nbFolders = RandomizedTest.randomLongBetween(5, 20);
-        long nbFiles = RandomizedTest.randomLongBetween(100, 1000);
+        long nbFolders = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
+        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 100, 1000);
 
         Path testDir = currentTestResourceDir;
         for (long i = 0; i < nbFolders; i++) {
@@ -190,9 +190,9 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
     /** Test scenario 2: Delete checkpoint and verify documents are re-indexed. */
     @Test
-    public void test_delete_checkpoint_reindex() throws Exception {
+    void test_delete_checkpoint_reindex() throws Exception {
         // Create a small set of test files
-        long nbFiles = RandomizedTest.randomLongBetween(5, 10);
+        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(currentTestResourceDir.resolve("doc_" + i + ".txt"), "Document content " + i);
         }
@@ -267,9 +267,9 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
      * after a completed scan.
      */
     @Test
-    public void test_status_after_completed_scan() throws Exception {
+    void test_status_after_completed_scan() throws Exception {
         // Create test files
-        long nbFiles = RandomizedTest.randomLongBetween(3, 10);
+        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(currentTestResourceDir.resolve("status_test_" + i + ".txt"), "Status test " + i);
         }
@@ -311,8 +311,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_pause_already_paused() throws Exception {
-        long nbFiles = RandomizedTest.randomLongBetween(3, 10);
+    void test_pause_already_paused() throws Exception {
+        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(
                     currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
@@ -355,8 +355,8 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void test_delete_checkpoint_while_running() throws Exception {
-        long nbFiles = RandomizedTest.randomLongBetween(3, 10);
+    void test_delete_checkpoint_while_running() throws Exception {
+        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(
                     currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
@@ -388,10 +388,10 @@ public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void status_during_scan() throws Exception {
+    void status_during_scan() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
-        long nbFolders = RandomizedTest.randomLongBetween(5, 20);
-        long nbFiles = RandomizedTest.randomLongBetween(100, 1000);
+        long nbFolders = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
+        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 100, 1000);
 
         Path testDir = currentTestResourceDir;
         for (long i = 0; i < nbFolders; i++) {

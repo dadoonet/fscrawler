@@ -31,7 +31,7 @@ import org.assertj.core.api.Assertions;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for REST server behaviour, including issue #474: hostname with underscore in the Host header causes
@@ -54,7 +54,7 @@ public class RestServerTest {
      * request with a custom Host header to trigger the same code path.
      */
     @Test
-    public void requestWithHostHeaderContainingUnderscoreReturnsServerError() throws Exception {
+    void requestWithHostHeaderContainingUnderscoreReturnsServerError() throws Exception {
         // Bind to localhost with random port (0 = assign any free port)
         URI baseUri = URI.create("http://127.0.0.1:0");
         ResourceConfig rc = new ResourceConfig().register(new RootResource());

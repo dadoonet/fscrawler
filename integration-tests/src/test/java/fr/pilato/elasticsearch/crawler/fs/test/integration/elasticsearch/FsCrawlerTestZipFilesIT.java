@@ -25,7 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test crawler with zip files */
 public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
@@ -36,7 +36,7 @@ public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
      * Add support for compressed files It's a long job, so we let it run up to 2 minutes
      */
     @Test
-    public void zip() throws Exception {
+    void zip() throws Exception {
         crawler = startCrawler(createTestSettings());
 
         // We expect to have one file

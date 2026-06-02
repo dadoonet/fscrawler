@@ -28,9 +28,9 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import java.util.Collection;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -39,13 +39,13 @@ import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.Permissions;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
-public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
+class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
     private FakeFtpServer fakeFtpServer;
     private final String user = "user";
     private final String pass = "pass";
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         fakeFtpServer = new FakeFtpServer();
         fakeFtpServer.setServerControlPort(0);
         fakeFtpServer.addUserAccount(new UserAccount(user, pass, "/"));
@@ -98,13 +98,13 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
         fakeFtpServer.start();
     }
 
-    @After
-    public void shutDown() {
+    @AfterEach
+    void shutDown() {
         fakeFtpServer.stop();
     }
 
     @Test
-    public void ftpPlugin() throws Exception {
+    void ftpPlugin() throws Exception {
         int port = fakeFtpServer.getServerControlPort();
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getServer().setHostname("localhost");
@@ -192,7 +192,7 @@ public class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getType() {
+    void getType() {
         FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
         Assertions.assertThat(ftpPlugin.getType()).isEqualTo("ftp");
     }

@@ -25,12 +25,12 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test filters crawler settings */
 public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
-    public void filter_one_term() throws Exception {
+    void filter_one_term() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of(".*foo.*"));
         crawler = startCrawler(fsSettings);
@@ -38,7 +38,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void filter_visa_pattern() throws Exception {
+    void filter_visa_pattern() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}"));
         crawler = startCrawler(fsSettings);
@@ -46,7 +46,7 @@ public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void filter_visa_pattern_plus_foo() throws Exception {
+    void filter_visa_pattern_plus_foo() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setFilters(List.of("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}", ".*foo.*"));
         crawler = startCrawler(fsSettings);

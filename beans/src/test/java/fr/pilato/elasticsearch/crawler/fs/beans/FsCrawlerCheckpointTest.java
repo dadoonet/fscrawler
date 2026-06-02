@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -42,18 +42,18 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void parseEmptyCheckpoint() throws IOException {
+    void parseEmptyCheckpoint() throws IOException {
         checkpointTester(new FsCrawlerCheckpoint());
     }
 
     @Test
-    public void parseNewCheckpoint() throws IOException {
+    void parseNewCheckpoint() throws IOException {
         FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint("/test/path");
         checkpointTester(checkpoint);
     }
 
     @Test
-    public void parseCheckpointWithData() throws IOException {
+    void parseCheckpointWithData() throws IOException {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId("test-scan-123");
         checkpoint.setScanStartTime(LocalDateTime.now());
@@ -74,7 +74,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testNewCheckpoint() {
+    void testNewCheckpoint() {
         FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint("/root/path");
 
         Assertions.assertThat(checkpoint.getScanId()).isNotNull();
@@ -85,7 +85,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testPendingPathsOperations() {
+    void testPendingPathsOperations() {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
 
         Assertions.assertThat(checkpoint.hasPendingWork()).isFalse();
@@ -105,7 +105,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testIsPendingAndClearPendingPaths() {
+    void testIsPendingAndClearPendingPaths() {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         Assertions.assertThat(checkpoint.isPending("/path1")).isFalse();
 
@@ -125,7 +125,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testIsPendingRebuildsLookupSetWhenNull() throws Exception {
+    void testIsPendingRebuildsLookupSetWhenNull() throws Exception {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.addPath("/path1");
 
@@ -137,7 +137,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testCompletedPaths() {
+    void testCompletedPaths() {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
 
         Assertions.assertThat(checkpoint.isCompleted("/path1")).isFalse();
@@ -150,7 +150,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testCounters() {
+    void testCounters() {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
 
         Assertions.assertThat(checkpoint.getFilesProcessed()).isZero();
@@ -173,7 +173,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testCrawlerStates() {
+    void testCrawlerStates() {
         for (CrawlerState state : CrawlerState.values()) {
             FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
             checkpoint.setState(state);
@@ -183,7 +183,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
 
     /** Test that date serialization is stable */
     @Test
-    public void dateTimeSerialization() throws IOException {
+    void dateTimeSerialization() throws IOException {
         LocalDateTime now = LocalDateTime.now();
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanStartTime(now);
@@ -202,7 +202,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
 
     /** Test completed checkpoint scenario (replaces FsJob) */
     @Test
-    public void testCompletedCheckpoint() throws IOException {
+    void testCompletedCheckpoint() throws IOException {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId("completed-scan-123");
         checkpoint.setState(CrawlerState.COMPLETED);
@@ -224,7 +224,7 @@ public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
      * corruption), deserialization must not leave nulls, and toString() must not throw NPE (e.g. when used in logging).
      */
     @Test
-    public void parseCheckpointWithNullCollectionsDoesNotThrow() throws IOException {
+    void parseCheckpointWithNullCollectionsDoesNotThrow() throws IOException {
         String json = "{\"scan_id\":\"x\",\"state\":\"PAUSED\",\"pending_paths\":null,\"completed_paths\":null}";
         FsCrawlerCheckpoint checkpoint = JsonUtil.prettyMapper.readValue(json, FsCrawlerCheckpoint.class);
 

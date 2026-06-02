@@ -39,14 +39,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Assumptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests with OCR configuration See <a href="https://github.com/dadoonet/fscrawler/issues/1988">#1988</a> */
 public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void ocr() throws Exception {
+    void ocr() throws Exception {
         String exec = "tesseract";
         Optional<Path> tessPath = Stream.of(System.getenv("PATH").split(Pattern.quote(File.pathSeparator)))
                 .map(Paths::get)
@@ -126,7 +126,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void ocr_disabled() throws Exception {
+    void ocr_disabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRawMetadata(true);
         fsSettings.getFs().getOcr().setEnabled(false);

@@ -25,9 +25,9 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockftpserver.fake.FakeFtpServer;
 import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.DirectoryEntry;
@@ -43,8 +43,8 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     private final String user = "user";
     private final String pass = "pass";
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         fakeFtpServer = new FakeFtpServer();
         fakeFtpServer.setServerControlPort(port);
         UserAccount anonymous = new UserAccount("anonymous", "", "/");
@@ -60,15 +60,15 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
         fakeFtpServer.start();
     }
 
-    @After
-    public void shutDown() {
+    @AfterEach
+    void shutDown() {
         if (fakeFtpServer != null) {
             fakeFtpServer.stop();
         }
     }
 
     @Test
-    public void ftp() throws Exception {
+    void ftp() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getServer().setHostname(hostname);
@@ -81,7 +81,7 @@ public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void ftp_with_user() throws Exception {
+    void ftp_with_user() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setUrl("/");
         fsSettings.getServer().setHostname(hostname);

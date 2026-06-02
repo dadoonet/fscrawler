@@ -79,6 +79,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+import org.glassfish.jersey.apache5.connector.Apache5ConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
@@ -146,6 +147,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         // Create the client
         ClientConfig config = new ClientConfig();
+
+        // Use JDK Native HttpClient instead of the default HttpURLConnection
+        config.connectorProvider(new Apache5ConnectorProvider());
+
         // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
 

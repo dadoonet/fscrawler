@@ -1,13 +1,21 @@
 # Testing
 
+## Framework
+
+**JUnit Jupiter 6** (`org.junit.jupiter:junit-jupiter-api:6.0.3`) + **randomizedtesting-jupiter 0.2.0**.
+Tests are run by `maven-surefire-plugin 3.5.5` (the old `junit4-maven-plugin` has been removed).
+See `docs/MIGRATE_JUNIT6.md` for the full migration reference.
+
 ## Test Types
 
 - **Unit tests**: `*Test.java` — run during `test` phase
 - **Integration tests**: `*IT.java` — run during `integration-test` phase
 
 Base classes:
-- `AbstractFSCrawlerTestCase` — unit test base
-- `AbstractFSCrawlerMetadataTestCase` — integration test base
+- `AbstractFSCrawlerTestCase` — base for all tests (unit and IT); carries `@Fast` (10 s default timeout), `@Randomized`, `@DetectThreadLeaks`
+- `AbstractFSCrawlerMetadataTestCase` — adds a `.fscrawler` temp directory
+- `AbstractITCase` — IT base; connects to ES via TestContainers or a local cluster
+- `AbstractFsCrawlerITCase` — IT base with full crawler lifecycle helpers
 
 ## Running Tests
 
@@ -31,9 +39,29 @@ mvn verify -pl integration-tests -am \
 
 - `-Dtests.parallelism=1` — avoid resource conflicts
 - `-Dtests.leaveTemporary=false` — clean up temp files/containers
-- `-Dtests.seed=<SEED>` — reproduce a specific failure
-- `-Dtests.output=always` — always show test output
+- `-Dtests.seed=<SEED>` — reproduce a specific failure (passed as system property)
+- `-Dtests.output=false|true` — show test output (default: false)
 - `-Dtests.cluster.url=http://localhost:9200` — use local ES instead of TestContainers
+
+## Speed tier annotations
+
+Every test class **must** declare its tier (used by `@Timeout` and for CI filtering):
+
+| Annotation | Timeout | Notes |
+|-----------|---------|-------|
+| `@Fast` (default) | 10 s | Already on `AbstractFSCrawlerTestCase` — all subclasses inherit it |
+| `@Slow` | 1 min | Apply at class **or** method level to override `@Fast` |
+| `@VerySlow` | 10 min | Apply at class **or** method level |
+| `@Nightly` | tag `nightly` only — **no implicit timeout** | Excluded from default daily CI; run with `-P nightly`; combine with `@Slow`/`@VerySlow` explicitly |
+
+**Important:** IT classes that use Awaitility waits > 10 s **must** override the timeout with
+`@Slow` or `@VerySlow` at the class level, otherwise they may be silently limited to 10 s.
+See `docs/MIGRATE_JUNIT6.md` §1 for the open question on timeout inheritance.
+
+## Maven profiles
+
+- `daily` (active by default) — excludes `@Nightly` tests
+- `nightly` — includes only `@Nightly` tests (`mvn verify -P nightly`)
 
 ## Local Elasticsearch for Integration Tests
 

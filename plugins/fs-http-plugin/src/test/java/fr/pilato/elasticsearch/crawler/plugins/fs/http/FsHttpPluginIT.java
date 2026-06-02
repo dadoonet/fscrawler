@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,16 +35,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Assume;
-import org.junit.Test;
-import org.testcontainers.DockerClientFactory;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
-public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
+class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private static final String text = "Hello Foo world!";
+    private static final String TEXT = "Hello Foo world!";
 
     private void createFile(Path root, String objectName, String object) throws IOException {
         logger.info("Create fake content [{}]; [{}]", objectName, object);
@@ -52,17 +51,13 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readFileFromNginx() throws Exception {
-        // We can only run this test if Docker is available on this machine
-        Assume.assumeTrue(
-                "We can only run this test if Docker is available on this machine",
-                DockerClientFactory.instance().isDockerAvailable());
-
+    @DisabledIfNoDocker
+    void readFileFromNginx() throws Exception {
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
         Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
-        createFile(nginxRoot, "foo.txt", text);
+        createFile(nginxRoot, "foo.txt", TEXT);
         createFile(nginxRoot, "bar.txt", "This one should be ignored.");
 
         try (NginxContainer<?> container = new NginxContainer<>("nginx")) {
@@ -83,7 +78,7 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
                                 + "}");
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                Assertions.assertThat(object).isEqualTo(text);
+                Assertions.assertThat(object).isEqualTo(TEXT);
                 Doc doc = provider.createDocument();
                 Assertions.assertThat(doc.getFile().getFilename()).isEqualTo("foo.txt");
                 Assertions.assertThat(doc.getFile().getFilesize()).isEqualTo(16L);
@@ -92,7 +87,7 @@ public class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readTxtFileFromWebsite() throws Exception {
+    void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
             provider.start(

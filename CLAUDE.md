@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Document parsing**: Apache Tika
 - **REST framework**: Jersey (JAX-RS)
 - **Plugin system**: PF4J
-- **Testing**: JUnit 4 + Randomized Testing Framework + TestContainers
+- **Testing**: JUnit Jupiter 6 + randomizedtesting-jupiter 0.2.0 + TestContainers
 
 ## Detailed Instructions
 

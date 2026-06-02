@@ -25,12 +25,12 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test includes crawler settings */
 public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     @Test
-    public void includes() throws Exception {
+    void includes() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIncludes(List.of("*/*_include\\.txt"));
         crawler = startCrawler(fsSettings);
@@ -38,7 +38,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void subdirs_with_patterns() throws Exception {
+    void subdirs_with_patterns() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIncludes(List.of("*/*\\.txt"));
         crawler = startCrawler(fsSettings);
@@ -48,7 +48,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void ignore_dir() throws Exception {
+    void ignore_dir() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setExcludes(List.of("*/\\.ignore/", "/subdir/sub*"));
         crawler = startCrawler(fsSettings);
@@ -58,7 +58,7 @@ public class FsCrawlerTestIncludesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void fscrawlerignore() throws Exception {
+    void fscrawlerignore() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 4 files as subdir1 should be ignored
