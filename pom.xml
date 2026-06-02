@@ -109,7 +109,7 @@
         <tests.verbose>false</tests.verbose>
         <tests.leaveTemporary>false</tests.leaveTemporary>
         <!-- JUnit Platform parallel execution: true=enabled, false=disabled -->
-        <tests.parallelism>true</tests.parallelism>
+        <tests.parallelism>false</tests.parallelism>
         <tests.heartbeat>10</tests.heartbeat>
         <tests.seed/>
         <!-- Running the tests with Tesseract OCR might take time -->

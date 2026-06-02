@@ -150,6 +150,29 @@ mvn verify -P nightly   # run nightly tests
 mvn verify              # run daily tests (default, no @Nightly)
 ```
 
+### Parallel execution disabled (static `@TempDir` aliasing)
+
+Parallel class execution (`tests.parallelism`) is set to `false` because `rootTmpDir` is declared
+as a **static** `@TempDir` field on `AbstractFSCrawlerTestCase` and inherited by all ~70 test
+classes. When two classes run concurrently, JUnit's `@TempDir` injection overwrites this single
+shared field, causing one class to use (and later lose) the temp directory of another — resulting
+in flaky failures (e.g. `FsCrawlerUtilTest`).
+
+The Surefire parallel configuration in the root `pom.xml` (lines ~756-759) is kept in place but
+is inert while `tests.parallelism=false`:
+
+```xml
+<junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
+<junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
+<junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+<junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
+```
+
+**Deferred fix:** To re-enable parallelism cleanly, replace the static field with a JUnit extension
+that stores each class's temp directory in `ExtensionContext.Store` (keyed by class) and exposes it
+via a static `rootTmpDir()` accessor (safe because `mode.default=same_thread` guarantees the full
+class lifecycle runs on one thread). This requires renaming ~65 field accesses to `rootTmpDir()`.
+
 ### Pending/commented-out Surefire config
 
 Several `junit4-maven-plugin` features do not have a direct Surefire equivalent and were left as
