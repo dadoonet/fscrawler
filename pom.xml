@@ -106,17 +106,13 @@
         <tests.locale>random</tests.locale>
         <tests.timezone>random</tests.timezone>
         <tests.output>false</tests.output>
-        <tests.verbose>false</tests.verbose>
         <tests.leaveTemporary>false</tests.leaveTemporary>
         <!-- JUnit Platform parallel execution: true=enabled, false=disabled -->
         <tests.parallelism>false</tests.parallelism>
-        <tests.heartbeat>10</tests.heartbeat>
         <tests.seed/>
         <!-- Running the tests with Tesseract OCR might take time -->
-        <tests.timeoutSuite>180000</tests.timeoutSuite>
-        <tests.timeout>120000</tests.timeout>
-        <!-- When we want to run tests which could take a lot of time - ie semantic search -->
-        <tests.nightly/>
+        <tests.timeoutSuite>120</tests.timeoutSuite>
+        <tests.timeout>60</tests.timeout>
 
         <!-- For CVE Audit with Sonatype -->
         <env.SONATYPE_USER/>
@@ -736,23 +732,11 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.5</version>
                     <configuration>
-                        <!-- TODO REPLACE ?
-                        <heartbeat>${tests.heartbeat}</heartbeat>
-                        <jvmOutputAction>pipe,ignore</jvmOutputAction>
-                        <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
-                        -->
                         <failIfNoTests>false</failIfNoTests>
                         <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                         <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
                         <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
-                        <!-- TODO REPLACE ? // showOutput="${tests.output}" ?
-                        <listeners>
-                            <report-text showOutput="${tests.output}" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="${tests.verbose}" showSuiteSummary="${tests.verbose}" showThrowable="true"/>
-                        </listeners>
-                        <seed>${tests.seed}</seed>
-                        -->
                         <systemPropertyVariables combine.children="append">
-                            <!-- JUnit Platform parallel execution (replaces junit4-maven-plugin parallelism=auto) -->
                             <!-- classes run concurrently, methods within a class run sequentially -->
                             <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
                             <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
@@ -812,7 +796,6 @@
                             <tests.timeout>${tests.timeout}</tests.timeout>
                             <tests.locale>${tests.locale}</tests.locale>
                             <tests.timezone>${tests.timezone}</tests.timezone>
-                            <tests.nightly>${tests.nightly}</tests.nightly>
                             <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                             <java.awt.headless>true</java.awt.headless>
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
@@ -1076,6 +1059,7 @@
             </build>
         </profile>
         <!-- Nightly tests: we include Tests tagged with Nightly (@Nightly) -->
+        <!-- When we want to run tests which could take a lot of time - ie semantic search -->
         <profile>
             <id>nightly</id>
             <build>

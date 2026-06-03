@@ -154,19 +154,14 @@ Tests options
 Some options are available from the command line when running the tests:
 
 * ``tests.leaveTemporary`` leaves temporary files after tests (and also the TestContainers instance). ``false`` by default.
-* ``tests.parallelism`` how many JVM to launch in parallel for tests. ``auto`` by default which means that it depends on
-  the number of processors you have. It can be set to ``max`` if you want to use all the available processors, or a
-  given value like ``1`` to use that exact number of JVMs.
-* ``tests.output`` what should be displayed to the console while running tests. By default it is set to ``onError`` but
-  can be set to ``always``.
-* ``tests.verbose`` ``false`` by default.
+* ``tests.parallelism`` set to ``true`` if you want to allow multiple suites to be ran in parallel. Default to ``false``.
+* ``tests.output`` set to ``true`` if you want to redirect the tests output redirected to a file.
+Defaults to ``false``.
 * ``tests.seed`` if you need to reproduce a specific failure using the exact same random seed.
-* ``tests.timeoutSuite`` how long a full suite of tests can run. It's set by default to ``60000`` which means 1 minute.
-* ``tests.timeout`` how long a single test can run. It's set by default to ``120000`` which means 2 minutes.
+* ``tests.timeoutSuite`` how long a full suite of tests can run. It's set by default to ``120`` which means 2 minutes.
+* ``tests.timeout`` how long a single test can run. It's set by default to ``60`` which means 1 minute.
 * ``tests.locale`` by default it's set to ``random`` but you can force the locale to use.
 * ``tests.timezone`` by default it's set to ``random`` but you can force the timezone to use, like ``CEST`` or ``-0200``.
-* ``tests.nightly`` if you want to run the tests which are taking a significant time to run, set it to ``true``.
-  ``false`` by default.
 
 For example::
 
@@ -177,6 +172,13 @@ For example::
     -Dtests.verbose \
     -Dtests.leaveTemporary \
     -Dtests.seed=E776CE45185A6E7A
+
+Nightly tests
+"""""""""""""
+
+To run the tests in a more exhaustive way, you can use the ``nightly`` profile which will run only the longest tests::
+
+    mvn verify -P nightly
 
 Code formatting (Spotless)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
