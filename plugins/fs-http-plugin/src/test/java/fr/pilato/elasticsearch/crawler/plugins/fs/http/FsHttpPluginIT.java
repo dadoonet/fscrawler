@@ -36,8 +36,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.nginx.NginxContainer;
 import org.testcontainers.utility.MountableFile;
 
 class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
@@ -60,7 +60,7 @@ class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
         createFile(nginxRoot, "foo.txt", TEXT);
         createFile(nginxRoot, "bar.txt", "This one should be ignored.");
 
-        try (NginxContainer<?> container = new NginxContainer<>("nginx")) {
+        try (NginxContainer container = new NginxContainer("nginx")) {
             container.waitingFor(new HttpWaitStrategy());
             container.start();
             container.copyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html");

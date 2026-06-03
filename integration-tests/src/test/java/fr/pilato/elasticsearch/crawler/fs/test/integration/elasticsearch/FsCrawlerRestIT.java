@@ -80,11 +80,11 @@ import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 import org.testcontainers.containers.MinIOContainer;
-import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.nginx.NginxContainer;
 import org.testcontainers.utility.MountableFile;
 
-public class FsCrawlerRestIT extends AbstractRestITCase {
+class FsCrawlerRestIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String CUSTOM_INDEX_NAME = getCrawlerName(FsCrawlerRestIT.class, "custom");
 
@@ -654,7 +654,7 @@ public class FsCrawlerRestIT extends AbstractRestITCase {
         createFile(nginxRoot, "foo.txt", text);
         createFile(nginxRoot, "bar.txt", "This one should be ignored.");
 
-        try (NginxContainer<?> container = new NginxContainer<>("nginx")) {
+        try (NginxContainer container = new NginxContainer("nginx")) {
             container.waitingFor(new HttpWaitStrategy());
             container.start();
             container.copyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html");

@@ -67,8 +67,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.nginx.NginxContainer;
 import org.testcontainers.utility.MountableFile;
 
 @Slow
@@ -909,7 +909,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         Files.createDirectory(nginxRoot);
         Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
 
-        try (NginxContainer<?> container = new NginxContainer<>("nginx")) {
+        try (NginxContainer container = new NginxContainer("nginx")) {
             container.waitingFor(new HttpWaitStrategy());
             container.start();
             container.copyFileToContainer(MountableFile.forHostPath(nginxRoot), "/usr/share/nginx/html");
