@@ -20,20 +20,22 @@ Base classes:
 ## Running Tests
 
 ```bash
-# Single unit test
-mvn test -pl <module> -Dtest=ClassName#methodName
+# Single unit test (Surefire)
+mvn test -pl <module> -am -DskipIntegTests -Dtest=ClassName#methodName
 
-# Single integration test — uses TestContainers (auto-starts ES)
-mvn verify -pl integration-tests -am \
-  -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch.FsCrawlerTestAddNewFilesIT \
-  -Dtests.method="add_new_files_and_force_rescan"
+# Single integration test (Failsafe) — uses TestContainers (auto-starts ES)
+mvn verify -pl integration-tests -am -DskipUnitTests \
+  -Dit.test=FsCrawlerTestAddNewFilesIT#add_new_files_and_force_rescan
 
-# Single integration test — against a local Elasticsearch cluster
-mvn verify -pl integration-tests -am \
+# Single integration test (Failsafe) — against a local Elasticsearch cluster
+mvn verify -pl integration-tests -am -DskipUnitTests \
   -Dtests.cluster.url=http://localhost:9200 \
-  -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch.FsCrawlerTestAddNewFilesIT \
-  -Dtests.method="add_new_files_and_force_rescan"
+  -Dit.test=FsCrawlerTestAddNewFilesIT#add_new_files_and_force_rescan
 ```
+
+> **Note**: les tests d'intégration (`*IT.java`) sont gérés par `maven-failsafe-plugin` et utilisent
+> `-Dit.test=` ; les tests unitaires (`*Test.java`) sont gérés par `maven-surefire-plugin` et
+> utilisent `-Dtest=`. Les deux propriétés sont indépendantes — pas de double exécution possible.
 
 ## Useful Test Flags
 

@@ -742,6 +742,7 @@
                         <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
                         -->
                         <failIfNoTests>false</failIfNoTests>
+                        <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                         <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
                         <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
                         <!-- TODO REPLACE ? // showOutput="${tests.output}" ?
@@ -753,6 +754,54 @@
                         <systemPropertyVariables combine.children="append">
                             <!-- JUnit Platform parallel execution (replaces junit4-maven-plugin parallelism=auto) -->
                             <!-- classes run concurrently, methods within a class run sequentially -->
+                            <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
+                            <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
+                            <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                            <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
+                            <arg.common>arg.common</arg.common>
+                            <tests.seed>${tests.seed}</tests.seed>
+                            <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
+                            <tests.timeout>${tests.timeout}</tests.timeout>
+                            <tests.locale>${tests.locale}</tests.locale>
+                            <tests.timezone>${tests.timezone}</tests.timezone>
+                            <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                            <java.awt.headless>true</java.awt.headless>
+                            <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
+                            <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
+                        </systemPropertyVariables>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-test</id>
+                            <goals>
+                                <goal>test</goal>
+                            </goals>
+                            <phase>test</phase>
+                            <inherited>true</inherited>
+                            <configuration>
+                                <skipTests>${skipUnitTests}</skipTests>
+                                <includes>
+                                    <include>**/*Test.class</include>
+                                </includes>
+                                <excludes>
+                                    <exclude>**/*$*</exclude>
+                                </excludes>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- Integration tests: separate plugin so -Dit.test= never interferes with -Dtest= -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.5.5</version>
+                    <configuration>
+                        <failIfNoTests>false</failIfNoTests>
+                        <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                        <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
+                        <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
+                        <systemPropertyVariables combine.children="append">
                             <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
                             <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
                             <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
@@ -777,31 +826,13 @@
                     </configuration>
                     <executions>
                         <execution>
-                            <id>default-test</id>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <phase>test</phase>
-                            <inherited>true</inherited>
-                            <configuration>
-                                <skipTests>${skipUnitTests}</skipTests>
-                                <includes>
-                                    <include>**/*Test.class</include>
-                                </includes>
-                                <excludes>
-                                    <exclude>**/*$*</exclude>
-                                </excludes>
-                            </configuration>
-                        </execution>
-                        <execution>
                             <id>integration-test</id>
                             <goals>
-                                <goal>test</goal>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
                             </goals>
-                            <phase>integration-test</phase>
-                            <inherited>true</inherited>
                             <configuration>
-                                <skipTests>${skipIntegTests}</skipTests>
+                                <skipITs>${skipIntegTests}</skipITs>
                                 <includes>
                                     <include>**/*IT.class</include>
                                 </includes>
@@ -1010,6 +1041,11 @@
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
             </plugin>
+            <!-- Activate Failsafe for integration tests (*IT.java) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
@@ -1029,6 +1065,13 @@
                             <excludedGroups>Nightly</excludedGroups>
                         </configuration>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <excludedGroups>Nightly</excludedGroups>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -1040,6 +1083,13 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>Nightly</groups>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <groups>Nightly</groups>
                         </configuration>

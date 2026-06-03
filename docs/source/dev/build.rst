@@ -67,9 +67,19 @@ to set ``tests.leaveTemporary`` to ``true``::
 Run a specific test from your Terminal
 """"""""""""""""""""""""""""""""""""""
 
+To run a specific unit test, just run::
+
+    mvn verify -DskipIntegTests -Dtest=CLASS_NAME#METHOD_NAME
+
 To run a specific integration test, just run::
 
-    mvn verify -am -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.integration.CLASS_NAME -Dtests.method="METHOD_NAME"
+    mvn verify -DskipUnitTests -Dit.test=CLASS_NAME#METHOD_NAME
+
+.. note::
+
+    Integration tests (``*IT.java``) are run by ``maven-failsafe-plugin`` and use ``-Dit.test=``.
+    Unit tests (``*Test.java``) are run by ``maven-surefire-plugin`` and use ``-Dtest=``.
+
 
 Run tests with an external cluster
 """"""""""""""""""""""""""""""""""
@@ -123,11 +133,18 @@ When set to ``0`` (default value), the port is assigned randomly.
 Randomized testing
 """"""""""""""""""
 
-FS Crawler uses the `randomized testing framework <https://github.com/randomizedtesting/randomizedtesting>`_.
+FS Crawler uses the `randomized testing framework <https://github.com/randomizedtesting/randomizedtesting-jupiter>`_.
 In case of failure, it will print a line like::
 
+For a unit test::
+
     REPRODUCE WITH:
-    mvn test -Dtests.seed=AC6992149EB4B547 -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.unit.tika.TikaDocParserTest -Dtests.method="testExtractFromRtf" -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
+    mvn test -pl tika -Dtest=TikaDocParserTest#testExtractFromRtf -Dtests.seed=AC6992149EB4B547 -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
+
+For an integration test::
+
+    REPRODUCE WITH:
+    mvn verify -pl integration-tests -am -Dit.test=FsCrawlerTestOcrIT#ocr_disabled -Dtests.seed=AC6992149EB4B547 -Dtests.locale=tr-TR
 
 You can just run the test again using the same seed to make sure you always run the test in the same context as before.
 

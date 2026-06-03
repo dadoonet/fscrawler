@@ -125,23 +125,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <!-- There is no unit test, so we can skip that execution -->
-                        <id>unit-tests</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <!-- There is no integration test, so we can skip that execution -->
-                        <id>integration-tests</id>
-                        <phase>none</phase>
-                    </execution>
-                </executions>
-                <!--
                 <configuration>
-                    <argLine>-verbose:class</argLine>
+                    <!-- No unit tests (*Test.java) in this module — only ITs run via Failsafe -->
+                    <skipTests>true</skipTests>
                 </configuration>
-                -->
             </plugin>
         </plugins>
     </build>
