@@ -26,7 +26,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 /** Response object for the crawler status endpoint */
-public class CrawlerStatusResponse extends RestResponse {
+public final class CrawlerStatusResponse extends RestResponse {
 
     private CrawlerState state;
     private String currentPath;
