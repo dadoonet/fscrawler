@@ -30,6 +30,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Nightly;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Assumptions;
@@ -39,7 +40,8 @@ import org.junit.jupiter.api.Test;
  * Test if semantic search is working as we could expect, ie: not activated when it can't or activated when it should.
  */
 @Nightly
-public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
+@VerySlow
+class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test for #1996: <a
