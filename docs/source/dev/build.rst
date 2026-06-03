@@ -213,16 +213,20 @@ vulnerabilities. This is ran during the ``verify`` phase.
 Sonatype provides this service but with a anonymous account, you might be limited
 by the number of tests you can run during a given period.
 
-If you have an existing account, you can use it to bypass this limit for anonymous users by
-setting ``sonatype.username`` and ``sonatype.password``::
+You can bypass this limit by creating a `Personal Access Token (PAT) <https://guide.sonatype.com/settings/tokens>`_
+and then set the ``sonatype.username`` and ``sonatype.password`` properties::
 
         mvn verify -DskipTests \
             -Dsonatype.username=youremail@domain.com \
-            -Dsonatype.password=yourverysecuredpassword
+            -Dsonatype.password=YOUR_PAT
 
-If you want to skip the check, you can run with ``-Dossindex.fail=false``::
+If you want to just warn but not fail, you can run with ``-Dossindex.fail=false``::
 
-        mvn clean install -Dossindex.fail=false
+        mvn verify -Dossindex.fail=false
+
+If you want to skip the check, you can run with ``-Dossindex.skip``::
+
+        mvn verify -Dossindex.skip
 
 If a CVE needs a temporary exclusion, you can add it to the ``excludeVulnerabilityIds`` list
 of the ``ossindex`` maven plugin in the ``pom.xml`` file::
