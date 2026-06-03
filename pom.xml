@@ -953,7 +953,7 @@
                         </pom>
                         <json>
                             <includes>
-                                <include>src/**/*.json</include>
+                                <include>src/main/*.json</include>
                             </includes>
                             <jackson>
                                 <version>${jackson.version}</version>
@@ -961,14 +961,19 @@
                         </json>
                         <yaml>
                             <includes>
-                                <include>src/**/*.yaml</include>
+                                <include>src/main/*.yaml</include>
                             </includes>
                             <jackson>
                                 <version>${jackson.version}</version>
                             </jackson>
                         </yaml>
                         <shell>
-                            <shfmt/>
+                            <includes>
+                                <include>src/main/*.sh</include>
+                            </includes>
+                            <shfmt>
+                                <version>3.13.1</version>
+                            </shfmt>
                         </shell>
                     </configuration>
                     <executions>
