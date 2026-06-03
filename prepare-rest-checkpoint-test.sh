@@ -31,33 +31,33 @@ echo ""
 echo "--- 0. Check Elasticsearch ---"
 ES_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$ES_URL" 2>/dev/null || echo "000")
 if [ "$ES_STATUS" != "200" ] && [ "$ES_STATUS" != "401" ]; then
-  echo "Elasticsearch does not appear to be running at $ES_URL (got HTTP $ES_STATUS)."
-  echo ""
-  echo "Start a local Elasticsearch with:"
-  echo "  curl -fsSL https://elastic.co/start-local | ES_LOCAL_PASSWORD=\"changeme\" sh"
-  echo ""
-  echo "Then re-run this script. Set ES_LOCAL_PASSWORD if you used another password."
-  exit 1
+	echo "Elasticsearch does not appear to be running at $ES_URL (got HTTP $ES_STATUS)."
+	echo ""
+	echo "Start a local Elasticsearch with:"
+	echo "  curl -fsSL https://elastic.co/start-local | ES_LOCAL_PASSWORD=\"changeme\" sh"
+	echo ""
+	echo "Then re-run this script. Set ES_LOCAL_PASSWORD if you used another password."
+	exit 1
 fi
 echo "Elasticsearch is running at $ES_URL"
 
 # 1. Maven build (distribution + test-documents for classes/documents)
 echo "--- 1. Maven build ---"
 if ! [ -d "$DOCS_SOURCE" ]; then
-  echo "Building test-documents and distribution..."
-  mvn clean compile -pl test-documents -q
-  mvn package -DskipTests -pl distribution -am -q
+	echo "Building test-documents and distribution..."
+	mvn clean compile -pl test-documents -q
+	mvn package -DskipTests -pl distribution -am -q
 else
-  echo "Building distribution (test-documents already present)..."
-  mvn package -DskipTests -pl distribution -am -q
+	echo "Building distribution (test-documents already present)..."
+	mvn package -DskipTests -pl distribution -am -q
 fi
 
 # 2. Unzip distribution
 echo "--- 2. Unzip distribution ---"
 ZIP=$(ls "$DIST_TARGET"/fscrawler*.zip 2>/dev/null | head -1)
 if [ -z "$ZIP" ]; then
-  echo "No zip found in $DIST_TARGET. Run: mvn package -DskipTests -pl distribution -am"
-  exit 1
+	echo "No zip found in $DIST_TARGET. Run: mvn package -DskipTests -pl distribution -am"
+	exit 1
 fi
 echo "Using: $ZIP"
 cd "$DIST_TARGET"
@@ -65,7 +65,7 @@ unzip -o -q "$(basename "$ZIP")"
 # Top-level dir created by unzip (e.g. fscrawler-distribution-2.10-SNAPSHOT)
 EXTRACTED=$(find . -maxdepth 1 -type d -name 'fscrawler*' ! -name '.' | head -1)
 if [ -z "$EXTRACTED" ]; then
-  EXTRACTED="."
+	EXTRACTED="."
 fi
 FSCRAWLER_HOME="$DIST_TARGET/${EXTRACTED#./}"
 cd "$PROJECT_ROOT"
@@ -74,9 +74,9 @@ echo "FSCrawler home: $FSCRAWLER_HOME"
 # 3. Create job config
 echo "--- 3. Create job: $JOB_NAME ---"
 if ! [ -d "$DOCS_SOURCE" ]; then
-  echo "ERROR: Documents dir not found: $DOCS_SOURCE"
-  echo "Run: mvn compile -pl test-documents"
-  exit 1
+	echo "ERROR: Documents dir not found: $DOCS_SOURCE"
+	echo "Run: mvn compile -pl test-documents"
+	exit 1
 fi
 DOCS_ABS=$(cd "$DOCS_SOURCE" && pwd)
 CONFIG_DIR="$FSCRAWLER_HOME/config"
@@ -86,22 +86,22 @@ mkdir -p "$JOB_DIR"
 # Create Elasticsearch API key for FSCrawler (authenticate as elastic user)
 ELASTIC_API_KEY=""
 API_KEY_RESPONSE=$(curl -s -u "elastic:$ES_PASSWORD" -X POST -H "Content-Type: application/json" \
-  -d "{\"name\":\"fscrawler-$JOB_NAME\",\"expiration\":\"7d\"}" \
-  "$ES_URL/_security/api_key" 2>/dev/null || true)
+	-d "{\"name\":\"fscrawler-$JOB_NAME\",\"expiration\":\"7d\"}" \
+	"$ES_URL/_security/api_key" 2>/dev/null || true)
 if command -v jq >/dev/null 2>&1; then
-  ELASTIC_API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.encoded // empty')
+	ELASTIC_API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.encoded // empty')
 elif python3 -c 'import json' 2>/dev/null; then
-  ELASTIC_API_KEY=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('encoded',''))" <<< "$API_KEY_RESPONSE" 2>/dev/null)
+	ELASTIC_API_KEY=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('encoded',''))" <<<"$API_KEY_RESPONSE" 2>/dev/null)
 fi
 if [ -z "$ELASTIC_API_KEY" ]; then
-  echo "WARNING: Could not create Elasticsearch API key (check ES_LOCAL_PASSWORD?). Using no auth in job config."
-  ELASTIC_AUTH=""
+	echo "WARNING: Could not create Elasticsearch API key (check ES_LOCAL_PASSWORD?). Using no auth in job config."
+	ELASTIC_AUTH=""
 else
-  echo "Elasticsearch API key created for FSCrawler."
-  ELASTIC_AUTH="  api_key: \"$ELASTIC_API_KEY\""
+	echo "Elasticsearch API key created for FSCrawler."
+	ELASTIC_AUTH="  api_key: \"$ELASTIC_API_KEY\""
 fi
 
-cat > "$JOB_DIR/_settings.yaml" << EOF
+cat >"$JOB_DIR/_settings.yaml" <<EOF
 name: "$JOB_NAME"
 
 fs:
@@ -128,9 +128,9 @@ echo "To start FSCrawler run:"
 echo "  $FSCRAWLER_HOME/bin/fscrawler $JOB_NAME --rest --loop 0 --config_dir $CONFIG_DIR"
 echo ""
 if [ "${RUN_FSCRAWLER:-0}" = "1" ]; then
-  echo "Starting FSCrawler (RUN_FSCRAWLER=1)..."
-  exec "$FSCRAWLER_HOME/bin/fscrawler" "$JOB_NAME" --rest --loop 0 --config_dir "$CONFIG_DIR"
+	echo "Starting FSCrawler (RUN_FSCRAWLER=1)..."
+	exec "$FSCRAWLER_HOME/bin/fscrawler" "$JOB_NAME" --rest --loop 0 --config_dir "$CONFIG_DIR"
 else
-  echo "Setup done. Set RUN_FSCRAWLER=1 to start automatically, or run the command above."
-  echo "Test steps: IGNORE_ME/manual-test-rest-checkpoint.md"
+	echo "Setup done. Set RUN_FSCRAWLER=1 to start automatically, or run the command above."
+	echo "Test steps: IGNORE_ME/manual-test-rest-checkpoint.md"
 fi
