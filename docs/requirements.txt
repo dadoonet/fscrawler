@@ -17,7 +17,7 @@ docutils==0.21.2
     #   sphinx
     #   sphinx-rtd-theme
     #   sphinx-substitution-extensions
-idna==3.10
+idna==3.15
     # via requests
 imagesize==1.4.1
     # via sphinx
@@ -27,7 +27,7 @@ markupsafe==3.0.2
     # via jinja2
 packaging==24.2
     # via sphinx
-pygments==2.18.0
+pygments==2.20.0
     # via sphinx
 requests==2.33.0
     # via sphinx
@@ -57,5 +57,5 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
