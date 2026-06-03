@@ -29,7 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.junit.jupiter.api.Test;
 
 /** Test all crawler settings */
-public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test for #103: <a

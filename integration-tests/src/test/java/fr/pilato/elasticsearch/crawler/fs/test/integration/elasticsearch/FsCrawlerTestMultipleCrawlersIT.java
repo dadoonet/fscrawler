@@ -33,11 +33,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** Test with multiple crawlers */
-public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
     @BeforeEach
     @Override
-    public void cleanExistingIndex() throws ElasticsearchClientException {
+    protected void cleanExistingIndex() throws ElasticsearchClientException {
         // Also clean the specific indices for this test suite
         client.deleteIndex(getCrawlerName() + "_1" + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + "_1" + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
@@ -48,7 +48,7 @@ public class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
 
     @AfterEach
     @Override
-    public void cleanUp() throws ElasticsearchClientException {
+    protected void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             // Also clean the specific indices for this test suite
             client.deleteIndex(getCrawlerName() + "_1" + FsCrawlerUtil.INDEX_SUFFIX_DOCS);

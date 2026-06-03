@@ -23,7 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TimeValueTest {
+class TimeValueTest {
 
     @Test
     void timeValueFromString() {

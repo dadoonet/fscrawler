@@ -39,7 +39,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test different dates of files */
-public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /** We want to make sure dates are correctly generated */

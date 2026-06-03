@@ -32,7 +32,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test crawler with ingest pipelines */
-public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for #234: <a

@@ -36,7 +36,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("ALL")
-public class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
+class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
 
     public FsSettings getFsSettings() {

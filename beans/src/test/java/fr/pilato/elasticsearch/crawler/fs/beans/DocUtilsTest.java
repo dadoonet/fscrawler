@@ -29,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class DocUtilsTest {
+class DocUtilsTest {
     private static final Logger logger = LogManager.getLogger(DocUtilsTest.class);
 
     // Get the tags path from resources

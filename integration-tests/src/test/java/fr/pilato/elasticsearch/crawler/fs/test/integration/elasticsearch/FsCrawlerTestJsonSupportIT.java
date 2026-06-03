@@ -35,7 +35,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /** Test json support crawler setting */
-public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**

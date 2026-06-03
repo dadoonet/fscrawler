@@ -38,7 +38,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @BeforeEach
-    public void cleanExistingIndex() throws ElasticsearchClientException {
+    protected void cleanExistingIndex() throws ElasticsearchClientException {
         logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
         client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
@@ -53,7 +53,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     @AfterEach
-    public void cleanUp() throws ElasticsearchClientException {
+    protected void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
             logger.debug("🧹 Removing index [{}*]", getCrawlerName());
             client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);

@@ -37,7 +37,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test crawler with external metadata files */
-public class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestExternalMetadataIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test

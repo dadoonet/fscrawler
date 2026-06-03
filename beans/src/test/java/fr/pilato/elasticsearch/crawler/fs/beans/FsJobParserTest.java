@@ -29,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class FsJobParserTest extends AbstractFSCrawlerTestCase {
+class FsJobParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     private void jobTester(FsJob source) throws IOException {

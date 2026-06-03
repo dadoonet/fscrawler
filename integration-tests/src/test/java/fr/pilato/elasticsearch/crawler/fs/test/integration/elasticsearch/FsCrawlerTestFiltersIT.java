@@ -28,7 +28,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /** Test filters crawler settings */
-public class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestFiltersIT extends AbstractFsCrawlerITCase {
     @Test
     void filter_one_term() throws Exception {
         FsSettings fsSettings = createTestSettings();

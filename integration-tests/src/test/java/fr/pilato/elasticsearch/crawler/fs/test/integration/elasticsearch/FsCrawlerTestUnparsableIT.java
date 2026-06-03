@@ -35,7 +35,7 @@ import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 /** Test crawler with unparsable files */
-public class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestUnparsableIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**

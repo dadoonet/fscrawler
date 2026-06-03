@@ -32,7 +32,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /** Test loop crawler settings */
-public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for #227: <a

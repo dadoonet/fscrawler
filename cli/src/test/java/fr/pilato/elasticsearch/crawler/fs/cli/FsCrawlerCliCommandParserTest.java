@@ -29,7 +29,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /** We want to test FSCrawler main app */
-public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
 
     private static Path metadataDir;
 

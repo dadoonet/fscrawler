@@ -32,7 +32,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test store_source crawler setting */
-public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
     @Test
     void store_source() throws Exception {

@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
  *   <li>Does not crash when encountering problematic files
  * </ul>
  */
-public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test that the crawler continues processing files even when one file causes a parser exception via MockParser.

@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /** We want to test FSCrawler main app */
-public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
 

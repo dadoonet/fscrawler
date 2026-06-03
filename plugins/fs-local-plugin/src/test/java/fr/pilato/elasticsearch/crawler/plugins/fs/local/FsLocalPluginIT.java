@@ -38,7 +38,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
+class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     private static Path createFile(String objectName, String object) throws IOException {

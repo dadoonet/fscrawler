@@ -31,7 +31,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 /** Test with symlinks */
-public class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestFollowSymlinksIT extends AbstractFsCrawlerITCase {
 
     @Test
     @DisabledOnOs(value = OS.WINDOWS, disabledReason = "We cannot create symlink on Windows OS")

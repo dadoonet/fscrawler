@@ -31,7 +31,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test crawler with empty files. Issue <a href="https://github.com/dadoonet/fscrawler/issues/1798">#1798</a> */
-public class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
 
     @Test
     void empty_files() throws Exception {

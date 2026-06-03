@@ -50,7 +50,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 /** Test crawler with SSH */
-public class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String SSH_USERNAME = "USERNAME";
     private static final String SSH_PASSWORD = "PASSWORD";

@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
+class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     @Test
     void default_ignored_file() {
         Assertions.assertThat(FsCrawlerUtil.isIndexable(false, "/~mydoc", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))

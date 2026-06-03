@@ -34,7 +34,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test Xml support crawler setting */
-public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**

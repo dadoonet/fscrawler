@@ -34,7 +34,7 @@ import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 /** Test checksum crawler settings */
-public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
 
     @Test
     void checksum_md5() throws Exception {

@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test

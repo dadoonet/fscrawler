@@ -25,7 +25,7 @@ import java.io.InputStream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class XmlDocParserTest extends DocParserTestCase {
+class XmlDocParserTest extends DocParserTestCase {
 
     @Test
     void xml() throws JsonProcessingException {

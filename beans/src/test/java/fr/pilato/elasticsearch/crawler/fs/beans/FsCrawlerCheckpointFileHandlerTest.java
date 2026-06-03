@@ -29,13 +29,13 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
 
     private Path rootDir;
     private FsCrawlerCheckpointFileHandler handler;
 
     @BeforeEach
-    public void setUp() throws IOException {
+    void setUp() throws IOException {
         rootDir = rootTmpDir.resolve("checkpoint-test");
         Files.createDirectories(rootDir);
         handler = new FsCrawlerCheckpointFileHandler(rootDir);

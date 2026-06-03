@@ -35,7 +35,7 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 
-public class FsSettingsLoaderTest {
+class FsSettingsLoaderTest {
 
     private static final Logger logger = LogManager.getLogger();
 

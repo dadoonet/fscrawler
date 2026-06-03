@@ -34,7 +34,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /** Test filename_as_id crawler setting */
-public class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestFilenameAsIdIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**

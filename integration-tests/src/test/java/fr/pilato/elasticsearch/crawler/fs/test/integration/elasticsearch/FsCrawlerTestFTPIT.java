@@ -36,7 +36,7 @@ import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 /** Test crawler with FTP */
-public class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     private FakeFtpServer fakeFtpServer;
     private final int port = 5968;
     private final String hostname = "localhost";

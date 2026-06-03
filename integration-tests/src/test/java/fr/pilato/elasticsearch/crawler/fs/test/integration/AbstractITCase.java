@@ -97,7 +97,7 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
         matches = "true",
         disabledReason = "skipIntegTests is true. So we are skipping the integration tests.")
 @Slow
-public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
+abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     protected static final Path DEFAULT_RESOURCES = Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
@@ -125,7 +125,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * worry about it.
      */
     @BeforeEach
-    public void copyTestResources() throws IOException {
+    void copyTestResources() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
@@ -150,7 +150,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @BeforeEach
-    public void copyTags() throws IOException {
+    void copyTags() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
         if (Files.notExists(testResourceTarget)) {
             Files.createDirectory(testResourceTarget);
@@ -169,7 +169,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterEach
-    public void cleanTestResources() {
+    void cleanTestResources() {
         logger.info("🏁 Test [{}] is now stopped", jobName);
     }
 

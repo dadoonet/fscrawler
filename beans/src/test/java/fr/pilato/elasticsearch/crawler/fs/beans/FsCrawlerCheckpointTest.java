@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     private void checkpointTester(FsCrawlerCheckpoint source) throws IOException {

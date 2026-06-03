@@ -36,7 +36,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
 /** Test crawler default settings */
-public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
     void defaults() throws Exception {

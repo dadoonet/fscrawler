@@ -40,7 +40,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test filesize crawler setting */
-public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test

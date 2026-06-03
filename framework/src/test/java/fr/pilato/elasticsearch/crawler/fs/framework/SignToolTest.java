@@ -25,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class SignToolTest extends AbstractFSCrawlerTestCase {
+class SignToolTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void sign() throws NoSuchAlgorithmException {

@@ -28,7 +28,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test crawler with zip files */
-public class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestZipFilesIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for #230: <a

@@ -42,7 +42,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /** Test moving/removing/adding files */
-public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test

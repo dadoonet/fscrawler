@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final TestBean PAYLOAD = new TestBean("bar");
     private static final int PAYLOAD_SIZE =

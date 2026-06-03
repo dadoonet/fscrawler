@@ -29,7 +29,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Test index_folders crawler setting */
-public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for #155: <a

@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
  * Test template management settings See <a
  * href="https://github.com/dadoonet/fscrawler/issues/1797">https://github.com/dadoonet/fscrawler/issues/1797</a>
  */
-public class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test that an existing component template is preserved when FSCrawler starts (default behavior with

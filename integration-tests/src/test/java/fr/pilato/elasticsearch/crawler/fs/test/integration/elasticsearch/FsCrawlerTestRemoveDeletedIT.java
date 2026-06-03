@@ -37,7 +37,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 /** Test moving/removing/adding files */
-public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test

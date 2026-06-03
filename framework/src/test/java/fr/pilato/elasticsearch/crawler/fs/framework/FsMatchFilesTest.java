@@ -27,7 +27,7 @@ import java.util.Collections;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
+class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void exclude_only() {

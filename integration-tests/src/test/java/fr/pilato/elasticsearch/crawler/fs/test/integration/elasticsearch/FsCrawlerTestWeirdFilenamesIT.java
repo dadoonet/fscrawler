@@ -33,7 +33,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 /** Test weird filenames */
-public class FsCrawlerTestWeirdFilenamesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestWeirdFilenamesIT extends AbstractFsCrawlerITCase {
     /**
      * Test for #1952: <a
      * href="https://github.com/dadoonet/fscrawler/issues/1952">https://github.com/dadoonet/fscrawler/issues/1952</a>:

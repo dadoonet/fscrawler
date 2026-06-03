@@ -25,7 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.junit.jupiter.api.Test;
 
 /** We want to test the bootstrap checks */
-public class BootstrapChecksTest extends AbstractFSCrawlerTestCase {
+class BootstrapChecksTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void bootstrapChecks() {

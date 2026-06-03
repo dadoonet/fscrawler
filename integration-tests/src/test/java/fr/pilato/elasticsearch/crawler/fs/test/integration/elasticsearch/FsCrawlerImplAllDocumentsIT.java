@@ -139,12 +139,12 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     @Override
-    public void cleanExistingIndex() {
+    protected void cleanExistingIndex() {
         // We need to override this method to avoid removing the index
     }
 
     @Override
-    public void cleanUp() {
+    protected void cleanUp() {
         // We need to override this method to avoid removing the index
     }
 

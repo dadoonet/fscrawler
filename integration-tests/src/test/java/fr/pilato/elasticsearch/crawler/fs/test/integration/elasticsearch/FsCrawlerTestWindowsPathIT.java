@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
  * href="https://github.com/dadoonet/fscrawler/issues/2134">#2134</a> where using Linux-style paths (forward slashes) on
  * Windows caused a StringIndexOutOfBoundsException.
  */
-public class FsCrawlerTestWindowsPathIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestWindowsPathIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test that using forward slashes in fs.url on Windows works correctly. This test converts the path from Windows

@@ -59,7 +59,7 @@ import org.junit.jupiter.api.Test;
  * Integration tests for the REST API crawler control endpoints (pause, resume, checkpoint). These tests use a real
  * crawler alongside the REST server to test the control functionality.
  */
-public class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
+class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     private RestServer restServer;

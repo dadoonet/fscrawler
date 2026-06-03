@@ -25,7 +25,7 @@ import org.assertj.core.api.Assertions;
 import org.awaitility.pollinterval.PollInterval;
 import org.junit.jupiter.api.Test;
 
-public class ExponentialBackoffPollIntervalTest {
+class ExponentialBackoffPollIntervalTest {
 
     @Test
     void testExponentialBackoffPollInterval() {

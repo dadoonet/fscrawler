@@ -26,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 
-public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     @SuppressWarnings("resource")
     @Test
     void checksum_non_existing_algorithm() {
