@@ -20,6 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.opentest4j.TestAbortedException;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -29,16 +35,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.opentest4j.TestAbortedException;
 
 /**
  * JUnit 6 extension that prints an exact reproduction command line when a test fails, adapted to the original build
  * tool (Maven or Gradle).
  */
 public class FsCrawlerReproduceInfoExtension implements AfterTestExecutionCallback {
+
+    private static final Logger logger = LogManager.getLogger();
 
     /** Annotation to put on test classes to inject additional system properties into the reproduction command. */
     @Retention(RetentionPolicy.RUNTIME)
@@ -57,29 +61,31 @@ public class FsCrawlerReproduceInfoExtension implements AfterTestExecutionCallba
             }
 
             StringBuilder commandBuilder = new StringBuilder();
-            commandBuilder.append("REPRODUCE WITH:\n");
+            commandBuilder.append("\n🐛 REPRODUCE WITH:\n");
 
-            // 2. Dynamic detection of the test launcher (command line tool)
-            String buildTool = detectBuildTool();
-            commandBuilder.append(buildTool);
-
-            // 3. Retrieve class and method names from the JUnit 6 context
+            // 2. Retrieve class and method names from the JUnit 6 context
             Class<?> testClass = context.getRequiredTestClass();
             String className = testClass.getName();
             String methodName = context.getRequiredTestMethod().getName();
+            String simpleName = testClass.getSimpleName();
 
-            // 4. Build standardized arguments
-            appendOpt(commandBuilder, "tests.class", className);
-            appendOpt(commandBuilder, "tests.method", methodName);
+            // 3. Detect test type and build Maven command
+            boolean isIntegrationTest = simpleName.endsWith("IT");
+            commandBuilder.append("mvn verify");
 
-            // If timeout is used, we can print which version it was
-            Timeout timeoutAnnotation = context.getRequiredTestClass().getAnnotation(Timeout.class);
-            if (timeoutAnnotation != null) {
-                long seconds = timeoutAnnotation.unit().toSeconds(timeoutAnnotation.value());
-                appendOpt(commandBuilder, "tests.timeout", String.valueOf(seconds * 1000)); // En ms
+            if (isIntegrationTest) {
+                commandBuilder.append(" -DskipUnitTests");
+                commandBuilder
+                        .append(" -Dit.test=")
+                        .append(className)
+                        .append("#")
+                        .append(methodName);
+            } else {
+                commandBuilder.append(" -DskipIntegTests");
+                commandBuilder.append(" -Dtest=").append(className).append("#").append(methodName);
             }
 
-            // Default Java/ES environment options
+            // 4. Default Java/ES environment options
             appendOpt(commandBuilder, "tests.locale", Locale.getDefault().toLanguageTag());
             appendOpt(commandBuilder, "tests.timezone", TimeZone.getDefault().getID());
 
@@ -93,26 +99,9 @@ public class FsCrawlerReproduceInfoExtension implements AfterTestExecutionCallba
                 }
             }
 
-            // 6. Print to standard error output
-            System.err.println(commandBuilder);
+            // 6. Log the reproduction command
+            logger.fatal(commandBuilder);
         }
-    }
-
-    /**
-     * Inspect the global Java command to infer whether the test was launched by Maven or Gradle. If it cannot be
-     * detected (for example from an IDE), fall back to a default Maven syntax.
-     */
-    private String detectBuildTool() {
-        String javaCommand = System.getProperty("sun.java.command", "").toLowerCase();
-
-        if (javaCommand.contains("surefire") || javaCommand.contains("failsafe") || javaCommand.contains("maven")) {
-            return "mvn integration-test";
-        } else if (javaCommand.contains("gradle")) {
-            return "./gradlew test --tests";
-        }
-
-        // Generic fallback if launched from an IDE or an unknown runner
-        return "mvn test";
     }
 
     /** Safely append a -D option to the StringBuilder, with space handling. */

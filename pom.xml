@@ -105,7 +105,7 @@
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
         <tests.timezone>random</tests.timezone>
-        <tests.output>true</tests.output>
+        <tests.output>false</tests.output>
         <tests.verbose>false</tests.verbose>
         <tests.leaveTemporary>false</tests.leaveTemporary>
         <!-- JUnit Platform parallel execution: true=enabled, false=disabled -->
