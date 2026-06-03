@@ -32,6 +32,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
 /** Test crawler default settings */
@@ -113,12 +114,11 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
                 .withESQuery(new ESMatchQuery("content", "exemplo"))
                 .addHighlighter("content"));
         Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
-        Assertions.assertThat(response.getHits())
+        Assertions.assertThat(findHitByFilename(response, "roottxtfile.txt").getHighlightFields())
+                .containsKey("content")
+                .extractingByKey("content", InstanceOfAssertFactories.list(String.class))
                 .singleElement()
-                .satisfies(hit -> Assertions.assertThat(hit.getHighlightFields())
-                        .extractingByKey("content")
-                        .satisfies(h -> Assertions.assertThat(h)
-                                .singleElement()
-                                .satisfies(t -> Assertions.assertThat(t).contains("<em>exemplo</em>"))));
+                .asString()
+                .contains("<em>exemplo</em>");
     }
 }

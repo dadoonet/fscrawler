@@ -59,6 +59,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Assumptions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterAll;
@@ -447,12 +448,10 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             Assertions.assertThat(hit.getSource()).isNotEmpty();
             Assertions.assertThat(hit.getHighlightFields())
                     .hasSize(1)
-                    .satisfies(highlight -> Assertions.assertThat(highlight)
-                            .containsKey("foo.bar")
-                            .extractingByKey("foo.bar")
-                            .satisfies(highlightField -> Assertions.assertThat(highlightField)
-                                    .singleElement()
-                                    .isEqualTo("<em>bar</em>")));
+                    .containsKey("foo.bar")
+                    .extractingByKey("foo.bar", InstanceOfAssertFactories.list(String.class))
+                    .singleElement()
+                    .isEqualTo("<em>bar</em>");
             Assertions.assertThat(hit.getStoredFields()).isNull();
         });
     }
