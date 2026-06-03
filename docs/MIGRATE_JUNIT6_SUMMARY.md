@@ -1,7 +1,7 @@
 # JUnit 4 → JUnit Jupiter 6 — Migration Summary
 
 Quick-reference of every change made on branch `519-junit5`, grouped by theme.
-Full narrative: `docs/MIGRATE_JUNIT6.md`. Blog post: `docs/MIGRATE_JUNIT6_BLOG.md`.
+Full narrative: `docs/MIGRATE_JUNIT6.md`.
 
 ---
 
