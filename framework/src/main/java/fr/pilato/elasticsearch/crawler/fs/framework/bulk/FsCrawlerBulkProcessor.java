@@ -55,27 +55,20 @@ public class FsCrawlerBulkProcessor<
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
 
-    public FsCrawlerBulkProcessor(
+    private FsCrawlerBulkProcessor(
             Engine<O, Req, Res> engine,
             Listener<O, Req, Res> listener,
             int bulkActions,
-            TimeValue flushInterval,
             ByteSizeValue byteSize,
-            Supplier<Req> requestSupplier) {
+            Supplier<Req> requestSupplier,
+            ScheduledExecutorService executor) {
         this.engine = engine;
         this.listener = listener;
         this.bulkActions = bulkActions;
         this.byteSize = byteSize;
         this.requestSupplier = requestSupplier;
         this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
-        this.listener.setBulkProcessor(this);
-
-        if (flushInterval != null) {
-            executor = Executors.newScheduledThreadPool(1);
-            executor.scheduleWithFixedDelay(this::executeWhenNeeded, 0, flushInterval.millis(), TimeUnit.MILLISECONDS);
-        } else {
-            executor = null;
-        }
+        this.executor = executor;
     }
 
     @Override
@@ -219,8 +212,15 @@ public class FsCrawlerBulkProcessor<
         }
 
         public FsCrawlerBulkProcessor<O, Req, Res> build() {
-            return new FsCrawlerBulkProcessor<>(
-                    engine, listener, bulkActions, flushInterval, byteSize, requestSupplier);
+            ScheduledExecutorService exec = flushInterval != null ? Executors.newScheduledThreadPool(1) : null;
+            var processor =
+                    new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, byteSize, requestSupplier, exec);
+            processor.listener.setBulkProcessor(processor);
+            if (exec != null) {
+                exec.scheduleWithFixedDelay(
+                        processor::executeWhenNeeded, 0, flushInterval.millis(), TimeUnit.MILLISECONDS);
+            }
+            return processor;
         }
     }
 

@@ -46,13 +46,10 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         int maxActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(
-                        new TestEngine(),
-                        listener,
-                        maxActions,
-                        null,
-                        new ByteSizeValue(1, ByteSizeUnit.MB),
-                        TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(maxActions)
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -68,7 +65,9 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         int maxActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(new TestEngine(), listener, maxActions, null, null, TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(maxActions)
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -84,13 +83,10 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         int maxActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(
-                        new TestEngine(),
-                        listener,
-                        maxActions,
-                        null,
-                        new ByteSizeValue(0, ByteSizeUnit.MB),
-                        TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(maxActions)
+                        .setByteSize(new ByteSizeValue(0, ByteSizeUnit.MB))
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -106,13 +102,9 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         int maxActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(
-                        new TestEngine(),
-                        listener,
-                        0,
-                        null,
-                        new ByteSizeValue((long) maxActions * PAYLOAD_SIZE, ByteSizeUnit.BYTES),
-                        TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setByteSize(new ByteSizeValue((long) maxActions * PAYLOAD_SIZE, ByteSizeUnit.BYTES))
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -133,7 +125,9 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         TimeValue flushInterval = TimeValue.timeValueMillis(RandomizedTest.randomIntInRange(TEST_RANDOM, 500, 2000));
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(new TestEngine(), listener, 0, flushInterval, null, TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setFlushInterval(flushInterval)
+                        .build();
 
         // We don't load immediately the bulk processor
         FsCrawlerUtil.waitFor(Duration.ofMillis(100));
