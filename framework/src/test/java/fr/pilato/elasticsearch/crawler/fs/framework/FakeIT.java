@@ -20,11 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled("This is only to manually test the FsCrawlerReproduceInfoExtension behavior")
 class FakeIT extends AbstractFSCrawlerTestCase {
