@@ -757,11 +757,6 @@
                     <executions>
                         <execution>
                             <id>default-test</id>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <phase>test</phase>
-                            <inherited>true</inherited>
                             <configuration>
                                 <skipTests>${skipUnitTests}</skipTests>
                                 <includes>
