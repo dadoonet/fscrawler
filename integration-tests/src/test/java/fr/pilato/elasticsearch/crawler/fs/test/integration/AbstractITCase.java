@@ -176,9 +176,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     @BeforeAll
     static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
-        }
+        Files.createDirectories(metadataDir);
         logger.debug("🚦 Test metadata dir ready in [{}]", metadataDir);
     }
 
@@ -194,10 +192,8 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     @BeforeAll
     protected static void copyResourcesToTestDir() throws IOException, URISyntaxException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            logger.debug("⛏️ Creating test resources dir in [{}]", testResourceTarget);
-            Files.createDirectory(testResourceTarget);
-        }
+        logger.debug("⛏️ Creating test resources dir in [{}]", testResourceTarget);
+        Files.createDirectories(testResourceTarget);
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
