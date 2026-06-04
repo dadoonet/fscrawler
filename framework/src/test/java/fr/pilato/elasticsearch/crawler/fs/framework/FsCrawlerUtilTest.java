@@ -30,6 +30,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -355,15 +356,15 @@ class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     void wait_for() {
         int duration = RandomizedTest.randomIntInRange(randomizedRandomForTests, 50, 100);
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         FsCrawlerUtil.waitFor(Duration.ofMillis(duration));
-        LocalDateTime afterWait1 = LocalDateTime.now();
+        Instant afterWait1 = Instant.now();
         Assertions.assertThat(Duration.between(now, afterWait1).toMillis()).isGreaterThanOrEqualTo(duration);
         FsCrawlerUtil.waitFor(Duration.ofMillis(100));
-        LocalDateTime afterWait2 = LocalDateTime.now();
+        Instant afterWait2 = Instant.now();
         Assertions.assertThat(Duration.between(now, afterWait2).toMillis()).isGreaterThanOrEqualTo(100);
         FsCrawlerUtil.waitFor(Duration.ofSeconds(1));
-        LocalDateTime afterWait3 = LocalDateTime.now();
+        Instant afterWait3 = Instant.now();
         Assertions.assertThat(Duration.between(now, afterWait3).toSeconds()).isGreaterThanOrEqualTo(1);
     }
 }
