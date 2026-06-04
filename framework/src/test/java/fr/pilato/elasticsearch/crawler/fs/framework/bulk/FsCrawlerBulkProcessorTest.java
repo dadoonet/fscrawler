@@ -122,7 +122,8 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     @Test
     void bulkProcessorFlushInterval() throws IOException {
         int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
-        TimeValue flushInterval = TimeValue.timeValueMillis(RandomizedTest.randomIntInRange(randomizedRandomForTests, 500, 2000));
+        TimeValue flushInterval =
+                TimeValue.timeValueMillis(RandomizedTest.randomIntInRange(randomizedRandomForTests, 500, 2000));
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
                 new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)

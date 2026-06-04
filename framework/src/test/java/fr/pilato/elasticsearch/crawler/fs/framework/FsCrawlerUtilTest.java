@@ -125,7 +125,9 @@ class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
                 .isTrue();
         Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(
                         ByteSizeValue.parseBytesSizeValue("1mb"),
-                        new ByteSizeValue(RandomizedTest.randomIntInRange(randomizedRandomForTests, 2, 100), ByteSizeUnit.MB)
+                        new ByteSizeValue(
+                                        RandomizedTest.randomIntInRange(randomizedRandomForTests, 2, 100),
+                                        ByteSizeUnit.MB)
                                 .getBytes()))
                 .isFalse();
     }
