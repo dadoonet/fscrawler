@@ -1218,5 +1218,20 @@
                 </repository>
             </repositories>
         </profile>
+        <!-- Profile to enable parallel test execution when running against a live Elasticsearch cluster -->
+        <!-- Activation: when -Dtests.cluster.url is provided -->
+        <!-- This profile configures JUnit 6 to parallelize test methods, not just test classes -->
+        <profile>
+            <id>cluster-parallel</id>
+            <activation>
+                <property>
+                    <name>tests.cluster.url</name>
+                </property>
+            </activation>
+            <properties>
+                <!-- Enable parallel execution of test methods when running against a live Elasticsearch cluster -->
+                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+            </properties>
+        </profile>
     </profiles>
 </project>
