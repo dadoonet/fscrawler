@@ -72,7 +72,8 @@ public final class CrawlerStatusResponse extends RestResponse {
         this.lastError = checkpoint.getLastError();
 
         if (checkpoint.getScanStartTime() != null) {
-            Instant start = checkpoint.getScanStartTime().atZone(ZoneId.systemDefault()).toInstant();
+            Instant start =
+                    checkpoint.getScanStartTime().atZone(ZoneId.systemDefault()).toInstant();
             Instant end;
             if (checkpoint.getState() == CrawlerState.COMPLETED && checkpoint.getScanEndTime() != null) {
                 end = checkpoint.getScanEndTime().atZone(ZoneId.systemDefault()).toInstant();
