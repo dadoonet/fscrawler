@@ -50,7 +50,6 @@ class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
     @Test
     void semantic() throws Exception {
         // We will execute this test from version 8.17 with a trial or enterprise license
-        // TODO Move it to the annotation
         Assumptions.assumeThat(client.isSemanticSupported())
                 .as("We don't run this test when semantic search is not available")
                 .isTrue();
