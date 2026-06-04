@@ -9,8 +9,8 @@ on:
       - 'docs/**'
 
 env:
-  ELASTIC_APIKEY: ${{ secrets.ELASTIC_APIKEY }}
-  ELASTIC_URL: ${{ secrets.ELASTIC_URL }}
+  ELASTIC_SERVERLESS_APIKEY: ${{ secrets.ELASTIC_SERVERLESS_APIKEY }}
+  ELASTIC_SERVERLESS_URL: ${{ secrets.ELASTIC_SERVERLESS_URL }}
   ELASTIC_CLOUD_APIKEY: ${{ secrets.ELASTIC_CLOUD_APIKEY }}
   ELASTIC_CLOUD_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
 
@@ -134,28 +134,28 @@ jobs:
       - get-pr-number
     steps:
       - uses: actions/checkout@v6
-        if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
       - name: Fetch base branch for Spotless ratchet
-        if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
         run: git fetch origin master --depth=1
       - name: Set up JDK 21
         uses: actions/setup-java@v5
-        if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
         uses: AndreKurait/docker-cache@0.6.0
-        if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
         run: |
           echo "Running integration tests with Elastic Cloud Elasticsearch Serverless service with prefix ${{ needs.get-pr-number.outputs.pr_number }}"
-          mvn --batch-mode verify -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
+          mvn --batch-mode verify -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_SERVERLESS_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_SERVERLESS_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run integration tests from a Windows machine to Elastic Cloud
   it-windows:
