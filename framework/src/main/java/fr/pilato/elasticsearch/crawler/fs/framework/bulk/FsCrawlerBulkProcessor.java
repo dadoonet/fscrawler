@@ -145,7 +145,7 @@ public class FsCrawlerBulkProcessor<
 
         // execute in a blocking fashion...
         boolean afterCalled = false;
-        try (Scope bulkScope = bulkSpan.makeCurrent()) {
+        try (Scope $ignored = bulkSpan.makeCurrent()) {
             listener.beforeBulk(executionId, bulkRequest);
             Res bulkItemResponses = engine.bulk(bulkRequest);
             afterCalled = true;

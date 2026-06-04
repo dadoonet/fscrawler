@@ -82,7 +82,7 @@ public class TikaDocParser {
             throws IOException {
         Span tikaSpan = FsCrawlerTracing.startSpan("fscrawler.tika.extract");
         tikaSpan.setAttribute("file.size", filesize);
-        try (Scope tikaScope = tikaSpan.makeCurrent()) {
+        try (Scope $ignored = tikaSpan.makeCurrent()) {
             logger.trace("Generating document [{}]", doc.getPath().getReal());
             // Extracting content with Tika
             // See #38: https://github.com/dadoonet/fscrawler/issues/38
