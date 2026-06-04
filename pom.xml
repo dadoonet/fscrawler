@@ -1244,7 +1244,7 @@
                             <systemPropertyVariables combine.children="override">
                                 <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
                                 <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-                                <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                                <junit.jupiter.execution.parallel.mode.classes.default>sequential</junit.jupiter.execution.parallel.mode.classes.default>
                                 <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
                             </systemPropertyVariables>
                         </configuration>
