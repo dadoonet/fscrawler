@@ -224,6 +224,35 @@ comment blocks have been removed from the root `pom.xml`; here is how each item 
 
 ---
 
+## Reproduction commands
+
+After a test failure, `FsCrawlerReproduceInfoExtension` prints a command like:
+
+For a **unit test** (`*Test`):
+```
+🐛 REPRODUCE WITH:
+mvn verify -DskipIntegTests -Dtest=…ClassName#methodName -Dtests.locale=… -Dtests.timezone=…
+```
+
+For an **integration test** (`*IT`):
+```
+🐛 REPRODUCE WITH:
+mvn verify -DskipUnitTests -Dit.test=…ClassName#methodName -Dtests.locale=… -Dtests.timezone=…
+```
+
+The extension detects the test type automatically from the class name suffix. To inject additional
+system properties (e.g. `tests.cluster.url`) into the reproduction command, annotate the test class
+with the inner `@Properties` annotation:
+
+```java
+@FsCrawlerReproduceInfoExtension.Properties({"tests.cluster.url"})
+class MyIT extends AbstractITCase { … }
+```
+
+This replaces the old `FSCrawlerReproduceInfoPrinter` that was a JUnit 4 `RunListener`.
+
+---
+
 ## Known issues and open questions
 
 ### 1. `@Fast` timeout inheritance in integration tests
@@ -268,77 +297,3 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase { … }
 
 `FsCrawlerImplAllDocumentsIT` and `FsCrawlerTestSubDirsIT` already have `@VerySlow` applied
 directly — that pattern should be extended to all IT base classes.
-
-### 2. `@Nightly` tag case mismatch — tests not excluded from daily builds ✅ fixed
-
-**Was the root cause of the 10-minute blocking.** The `@Nightly` annotation was using a lowercase
-tag (`"nightly"`) while the Maven Surefire profiles used `"Nightly"` (capital N). JUnit Platform
-tag names are case-sensitive, so the daily-build filter never matched and `@Nightly` tests always
-ran — including `indexFsCrawlerDocuments()` in `ElasticsearchClientIT`, which blocked for up to
-10 minutes waiting on Awaitility.
-
-**Fixed:** `@Tag("Nightly")` now matches `<excludedGroups>Nightly</excludedGroups>` in `pom.xml`.
-
-### 3. Tests blocked at `ElasticsearchClientIT.java:1104` ✅ fixed
-
-Root cause was the `@Nightly` tag case mismatch (§2): `indexFsCrawlerDocuments()` was running in
-every daily build, and its `countTestHelper` call waited up to `maxWaitForSearch` for documents
-that required semantic search templates to fully initialize. Fixed by correcting the tag casing and
-adding `@VerySlow` to all `@Nightly` tests.
-
-### 4. TestContainers container lifecycle with `TEST_KEEP_DATA=true`
-
-`ElasticsearchClientIT` passes `TEST_KEEP_DATA` (default: `true`) to
-`TestContainerHelper.startElasticsearch(keepData)`, which calls `.withReuse(true)` on the container.
-
-For `withReuse(true)` to keep the container alive across runs, the developer must have:
-
-```properties
-# ~/.testcontainers.properties
-testcontainers.reuse.enable=true
-```
-
-When this is set, `mvn` test runs correctly reuse the running container. The container may still be
-stopped when tests are run from an IDE depending on how the IDE manages the JVM lifecycle — this is
-a known Testcontainers behaviour when Ryuk is active in the IDE's JVM process.
-
-### 5. Commented-out Surefire configuration ✅ resolved
-
-The `<!-- TODO REPLACE ? -->` blocks have been removed from the root `pom.xml`.
-See §"Resolved: old `junit4-maven-plugin` config items" above for how each item was handled.
-
-### 6. `integration-tests/pom.xml` — disabled executions ✅ resolved
-
-After the surefire/failsafe split (see §Maven surefire / failsafe split above), the
-`integration-tests` module correctly disables the `unit-tests` Surefire execution (there are no
-unit tests in that module) and delegates integration test execution to the Failsafe plugin bound to
-the `integration-test` phase. This is the intended configuration.
-
----
-
-## Reproduction commands
-
-After a test failure, `FsCrawlerReproduceInfoExtension` prints a command like:
-
-For a **unit test** (`*Test`):
-```
-🐛 REPRODUCE WITH:
-mvn verify -DskipIntegTests -Dtest=…ClassName#methodName -Dtests.locale=… -Dtests.timezone=…
-```
-
-For an **integration test** (`*IT`):
-```
-🐛 REPRODUCE WITH:
-mvn verify -DskipUnitTests -Dit.test=…ClassName#methodName -Dtests.locale=… -Dtests.timezone=…
-```
-
-The extension detects the test type automatically from the class name suffix. To inject additional
-system properties (e.g. `tests.cluster.url`) into the reproduction command, annotate the test class
-with the inner `@Properties` annotation:
-
-```java
-@FsCrawlerReproduceInfoExtension.Properties({"tests.cluster.url"})
-class MyIT extends AbstractITCase { … }
-```
-
-This replaces the old `FSCrawlerReproduceInfoPrinter` that was a JUnit 4 `RunListener`.
