@@ -76,9 +76,6 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
     private static final String DEFAULT_USERNAME = "elastic";
-    private static final String JOB_NAME = "fscrawler_elasticsearch_client_i_t";
-    private static final String DOC_INDEX_NAME = JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
-    private static final String FOLDER_INDEX_NAME = JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER;
     private static final TestContainerHelper TEST_CONTAINER_HELPER = new TestContainerHelper();
 
     private static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
@@ -95,9 +92,6 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.debug("Generate settings against [{}] with ssl check [{}]", testClusterUrl, TEST_CHECK_CERTIFICATE);
 
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.setName(JOB_NAME);
-        fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
-        fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
         fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
         fsSettings.getElasticsearch().setSslVerification(TEST_CHECK_CERTIFICATE);
         fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
@@ -215,37 +209,34 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @BeforeEach
     void cleanExistingIndex() throws ElasticsearchClientException {
-        logger.debug(" -> Removing existing index [{}*]", getCrawlerName());
+        logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-        // Remove existing templates if any
-        logger.debug(" -> Removing existing templates");
-        removeTemplatesForIndex(getCrawlerName());
-        removeTemplatesForIndex(DOC_INDEX_NAME);
 
-        logger.info("🎬 Starting test [{}]", jobName);
+        // Remove existing templates if any
+        String templateName = "fscrawler_" + getCrawlerName() + "_*";
+        logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
+        removeIndexTemplates(templateName);
+        removeComponentTemplates(templateName);
+
+        logger.info("🎬 Starting test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
 
     @AfterEach
     void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
-            logger.debug(" -> Removing index [{}*]", getCrawlerName());
+            logger.debug("🧹 Removing index [{}*]", getCrawlerName());
             esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
             esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+
             // Remove existing templates if any
-            logger.debug(" -> Removing existing templates");
-            removeTemplatesForIndex(getCrawlerName());
-            removeTemplatesForIndex(DOC_INDEX_NAME);
+            String templateName = "fscrawler_" + getCrawlerName() + "_*";
+            logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
+            removeIndexTemplates(templateName);
+            removeComponentTemplates(templateName);
         }
 
-        logger.info("✅ End of test [{}]", jobName);
-    }
-
-    private static void removeTemplatesForIndex(String indexName) {
-        String templateName = "fscrawler_" + indexName + "_*";
-        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-        removeIndexTemplates(templateName);
-        removeComponentTemplates(templateName);
+        logger.info("✅ End of test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
 
     @Test
@@ -792,8 +783,6 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 .setUrls(List.of(testClusterUrl, testClusterUrl, "http://127.0.0.1:9206", testClusterUrl));
         fsSettings.getElasticsearch().setApiKey(testApiKey);
         fsSettings.getElasticsearch().setSslVerification(false);
-        fsSettings.getElasticsearch().setIndex(DOC_INDEX_NAME);
-        fsSettings.getElasticsearch().setIndexFolder(FOLDER_INDEX_NAME);
         try (IElasticsearchClient localClient = new ElasticsearchClient(fsSettings)) {
             localClient.start();
 
@@ -963,22 +952,31 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @VerySlow
     @Test
     void indexFsCrawlerDocuments() throws Exception {
-        // We push the templates to the cluster
-        esClient.createIndexAndComponentTemplates();
+        String docIndex = getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
 
-        // We remove the exising indices
-        esClient.deleteIndex(DOC_INDEX_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-        esClient.deleteIndex(FOLDER_INDEX_NAME);
+        // Create a temporary client with the correct index name to push templates
+        // (createIndexAndComponentTemplates() needs the index configured to generate the right template names)
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(getCrawlerName());
+        fsSettings.getElasticsearch().setIndex(docIndex);
+        fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
+        fsSettings.getElasticsearch().setSslVerification(TEST_CHECK_CERTIFICATE);
+        fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
+        fsSettings.getElasticsearch().setApiKey(testApiKey);
+        try (ElasticsearchClient tempClient = new ElasticsearchClient(fsSettings)) {
+            tempClient.start();
+            tempClient.createIndexAndComponentTemplates();
+        }
 
         // We create a document
-        esClient.index(DOC_INDEX_NAME, "BackToTheFuture", new Doc("Marty! Let's go back to the future!"), null);
+        esClient.index(docIndex, "BackToTheFuture", new Doc("Marty! Let's go back to the future!"), null);
         esClient.index(
-                DOC_INDEX_NAME,
+                docIndex,
                 "StarWars",
                 new Doc("Luke. Obiwan never told you what happened to your father. I'm your father!"),
                 null);
         esClient.index(
-                DOC_INDEX_NAME,
+                docIndex,
                 "TheLordOfTheRings",
                 new Doc(
                         "You cannot pass! I am a servant of the Secret Fire, wielder of the Flame of Anor. The dark fire will not avail you, Flame of Udun! Go back to the shadow. You shall not pass!"),
@@ -988,25 +986,25 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         esClient.flush();
 
         // Wait until we have the expected number of documents indexed
-        countTestHelper(new ESSearchRequest().withIndex(DOC_INDEX_NAME), 3L);
+        countTestHelper(new ESSearchRequest().withIndex(docIndex), 3L);
 
         // We can run some queries to check that semantic search actually works as expected
         Assertions.assertThat(esClient.search(new ESSearchRequest()
-                                .withIndex(DOC_INDEX_NAME)
+                                .withIndex(docIndex)
                                 .withESQuery(new ESMatchQuery("content", "father")))
                         .getHits()
                         .get(0)
                         .getId())
                 .isEqualTo("StarWars");
         Assertions.assertThat(esClient.search(new ESSearchRequest()
-                                .withIndex(DOC_INDEX_NAME)
+                                .withIndex(docIndex)
                                 .withESQuery(new ESMatchQuery("content", "future")))
                         .getHits()
                         .get(0)
                         .getId())
                 .isEqualTo("BackToTheFuture");
         Assertions.assertThat(esClient.search(new ESSearchRequest()
-                                .withIndex(DOC_INDEX_NAME)
+                                .withIndex(docIndex)
                                 .withESQuery(new ESMatchQuery("content", "Flame")))
                         .getHits()
                         .get(0)
@@ -1017,14 +1015,14 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         if (esClient.isSemanticSupported()) {
             // We can run some queries to check that semantic search actually works as expected
             Assertions.assertThat(esClient.search(new ESSearchRequest()
-                                    .withIndex(DOC_INDEX_NAME)
+                                    .withIndex(docIndex)
                                     .withESQuery(new ESSemanticQuery("content_semantic", "a movie from Georges Lucas")))
                             .getHits()
                             .get(0)
                             .getId())
                     .isEqualTo("StarWars");
             Assertions.assertThat(esClient.search(new ESSearchRequest()
-                                    .withIndex(DOC_INDEX_NAME)
+                                    .withIndex(docIndex)
                                     .withESQuery(
                                             new ESSemanticQuery("content_semantic", "a movie with a delorean car")))
                             .getHits()
@@ -1032,7 +1030,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                             .getId())
                     .isEqualTo("BackToTheFuture");
             Assertions.assertThat(esClient.search(new ESSearchRequest()
-                                    .withIndex(DOC_INDEX_NAME)
+                                    .withIndex(docIndex)
                                     .withESQuery(new ESSemanticQuery("content_semantic", "Frodo and Gollum")))
                             .getHits()
                             .get(0)
