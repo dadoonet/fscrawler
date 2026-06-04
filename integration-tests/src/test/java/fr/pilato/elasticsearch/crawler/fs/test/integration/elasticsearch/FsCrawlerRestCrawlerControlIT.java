@@ -33,6 +33,8 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.SimpleResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -104,6 +106,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
      * effect).
      */
     @Test
+    @VerySlow
     void test_pause_resume_indexing() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
         long nbFolders = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
