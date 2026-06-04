@@ -328,7 +328,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         mp.bodyPart(filePart);
 
         if (index != null) {
-            if (RandomizedTest.rarely(TEST_RANDOM)) {
+            if (RandomizedTest.rarely(randomizedRandomForTests)) {
                 logger.info("Force index name to {} using a form field", index);
                 mp.field("index", index);
             } else {

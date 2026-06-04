@@ -571,7 +571,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
     @Test
     void bulk_index_only() throws Exception {
-        long nbItems = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
+        long nbItems = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 20);
 
         ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
@@ -596,8 +596,8 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     void bulk_index_and_delete() throws Exception {
         esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-        long nbItems = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
-        long nbItemsToDelete = RandomizedTest.randomLongInRange(TEST_RANDOM, 1, nbItems);
+        long nbItems = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 20);
+        long nbItemsToDelete = RandomizedTest.randomLongInRange(randomizedRandomForTests, 1, nbItems);
 
         ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
@@ -629,7 +629,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     @Test
     void bulk_index_with_multiline_json() throws Exception {
         esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-        long nbItems = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
+        long nbItems = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 20);
 
         ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 
@@ -673,7 +673,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         createIndex(indexSettings);
 
-        long nbItems = RandomizedTest.randomLongInRange(TEST_RANDOM, 6, 20);
+        long nbItems = RandomizedTest.randomLongInRange(randomizedRandomForTests, 6, 20);
 
         ElasticsearchBulkRequest bulkRequest = new ElasticsearchBulkRequest();
 

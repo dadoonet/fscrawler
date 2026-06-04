@@ -37,7 +37,7 @@ class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
     @Test
     void listExistingJobs() throws IOException {
         String jobNamePrefix = "fscrawler_list_existing_jobs";
-        int numJobs = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 30);
+        int numJobs = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 30);
 
         // We generate so fake jobs first in metadata dir
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
@@ -46,7 +46,7 @@ class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
             String jobName = jobNamePrefix + "-" + i;
             Path jobDir = metadataDir.resolve(jobName);
             Files.createDirectories(jobDir);
-            if (RandomizedTest.randomBoolean(TEST_RANDOM)) {
+            if (RandomizedTest.randomBoolean(randomizedRandomForTests)) {
                 // Yaml settings file
                 fsSettingsLoader.write(jobName, new FsSettings());
             } else {

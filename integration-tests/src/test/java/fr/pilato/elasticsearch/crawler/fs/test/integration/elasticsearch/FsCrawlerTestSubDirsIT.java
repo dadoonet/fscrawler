@@ -218,7 +218,7 @@ class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     @VerySlow
     void subdirs_very_deep_tree() throws Exception {
 
-        long subdirs = RandomizedTest.randomLongInRange(TEST_RANDOM, 30, 100);
+        long subdirs = RandomizedTest.randomLongInRange(randomizedRandomForTests, 30, 100);
 
         logger.debug("  --> Generating [{}] dirs [{}]", subdirs, currentTestResourceDir);
 
@@ -228,7 +228,7 @@ class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
         Path newDir = mainDir;
 
         for (int i = 0; i < subdirs; i++) {
-            newDir = newDir.resolve(i + "_" + RandomizedTest.randomAsciiLettersOfLengthBetween(TEST_RANDOM, 2, 5));
+            newDir = newDir.resolve(i + "_" + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 2, 5));
             Files.createDirectory(newDir);
             // Copy the original test file in the new dir
             Files.copy(sourceFile, newDir.resolve("sample.txt"));

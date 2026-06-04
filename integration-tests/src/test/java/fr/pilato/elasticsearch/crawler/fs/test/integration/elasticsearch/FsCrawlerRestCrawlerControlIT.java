@@ -108,8 +108,8 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @VerySlow
     void test_pause_resume_indexing() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
-        long nbFolders = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
-        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 100, 1000);
+        long nbFolders = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 20);
+        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 100, 1000);
 
         Path testDir = currentTestResourceDir;
         for (long i = 0; i < nbFolders; i++) {
@@ -194,7 +194,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @Test
     void test_delete_checkpoint_reindex() throws Exception {
         // Create a small set of test files
-        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 10);
+        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(currentTestResourceDir.resolve("doc_" + i + ".txt"), "Document content " + i);
         }
@@ -271,7 +271,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @Test
     void test_status_after_completed_scan() throws Exception {
         // Create test files
-        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 3, 10);
+        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(currentTestResourceDir.resolve("status_test_" + i + ".txt"), "Status test " + i);
         }
@@ -314,7 +314,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
     @Test
     void test_pause_already_paused() throws Exception {
-        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 3, 10);
+        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(
                     currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
@@ -358,7 +358,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
     @Test
     void test_delete_checkpoint_while_running() throws Exception {
-        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 3, 10);
+        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 3, 10);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(
                     currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
@@ -392,8 +392,8 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     @Test
     void status_during_scan() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
-        long nbFolders = RandomizedTest.randomLongInRange(TEST_RANDOM, 5, 20);
-        long nbFiles = RandomizedTest.randomLongInRange(TEST_RANDOM, 100, 1000);
+        long nbFolders = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 20);
+        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 100, 1000);
 
         Path testDir = currentTestResourceDir;
         for (long i = 0; i < nbFolders; i++) {

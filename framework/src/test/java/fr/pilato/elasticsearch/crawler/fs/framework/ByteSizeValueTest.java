@@ -39,7 +39,7 @@ class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
 
         // Test 500 random values
         for (int i = 0; i < 500; i++) {
-            int unitNumber = RandomizedTest.randomIntInRange(TEST_RANDOM, 0, 5);
+            int unitNumber = RandomizedTest.randomIntInRange(randomizedRandomForTests, 0, 5);
             ByteSizeUnit unit =
                     switch (unitNumber) {
                         case 1 -> ByteSizeUnit.KB;
@@ -50,7 +50,7 @@ class ByteSizeValueTest extends AbstractFSCrawlerTestCase {
                         default -> ByteSizeUnit.BYTES;
                     };
 
-            long value = RandomizedTest.randomLongInRange(TEST_RANDOM, 1, 999);
+            long value = RandomizedTest.randomLongInRange(randomizedRandomForTests, 1, 999);
             String randomByteSize = value + unit.getSuffix();
             testConversionBothWays(randomByteSize, value, unit);
         }

@@ -1040,7 +1040,7 @@ class TikaDocParserTest extends DocParserTestCase {
     @Test
     void pdfIssue1097() throws IOException {
         // Run the test with or without OCR as the behavior changes
-        boolean withOcr = isOcrAvailable && RandomizedTest.randomBoolean(TEST_RANDOM);
+        boolean withOcr = isOcrAvailable && RandomizedTest.randomBoolean(randomizedRandomForTests);
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         fsSettings.getFs().getOcr().setEnabled(withOcr);

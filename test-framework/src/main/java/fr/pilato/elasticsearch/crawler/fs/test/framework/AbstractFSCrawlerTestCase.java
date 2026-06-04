@@ -76,7 +76,7 @@ public abstract class AbstractFSCrawlerTestCase {
     protected static Path rootTmpDir;
 
     protected String jobName;
-    protected Random TEST_RANDOM;
+    protected Random randomizedRandomForTests;
 
     @BeforeAll
     static void setLocale(Random rnd) {
@@ -124,7 +124,7 @@ public abstract class AbstractFSCrawlerTestCase {
      */
     @BeforeEach
     void storeRandom(Random rnd) {
-        TEST_RANDOM = rnd;
+        randomizedRandomForTests = rnd;
     }
 
     /**

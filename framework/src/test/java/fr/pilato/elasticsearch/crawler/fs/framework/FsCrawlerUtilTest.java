@@ -125,7 +125,7 @@ class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
                 .isTrue();
         Assertions.assertThat(FsCrawlerUtil.isFileSizeUnderLimit(
                         ByteSizeValue.parseBytesSizeValue("1mb"),
-                        new ByteSizeValue(RandomizedTest.randomIntInRange(TEST_RANDOM, 2, 100), ByteSizeUnit.MB)
+                        new ByteSizeValue(RandomizedTest.randomIntInRange(randomizedRandomForTests, 2, 100), ByteSizeUnit.MB)
                                 .getBytes()))
                 .isFalse();
     }
@@ -346,13 +346,13 @@ class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(FsCrawlerUtil.durationToString(Duration.ofMinutes(61)))
                 .isEqualTo("1h1m");
         Assertions.assertThat(FsCrawlerUtil.durationToString(
-                        Duration.ofMillis(RandomizedTest.randomLongInRange(TEST_RANDOM, 0, 999999999L))))
+                        Duration.ofMillis(RandomizedTest.randomLongInRange(randomizedRandomForTests, 0, 999999999L))))
                 .isNotEmpty();
     }
 
     @Test
     void wait_for() {
-        int duration = RandomizedTest.randomIntInRange(TEST_RANDOM, 50, 100);
+        int duration = RandomizedTest.randomIntInRange(randomizedRandomForTests, 50, 100);
         LocalDateTime now = LocalDateTime.now();
         FsCrawlerUtil.waitFor(Duration.ofMillis(duration));
         LocalDateTime afterWait1 = LocalDateTime.now();

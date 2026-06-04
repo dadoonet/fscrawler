@@ -81,7 +81,7 @@ class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
     @Test
     void disable_raw() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        if (RandomizedTest.rarely(TEST_RANDOM)) {
+        if (RandomizedTest.rarely(randomizedRandomForTests)) {
             // Sometimes we explicitly disable it but this is also the default value
             fsSettings.getFs().setRawMetadata(false);
         }

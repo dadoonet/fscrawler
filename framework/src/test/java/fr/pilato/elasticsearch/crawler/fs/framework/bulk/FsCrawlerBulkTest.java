@@ -38,7 +38,7 @@ class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void bulkRequestLimitsMaxActions() {
-        int maxActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(maxActions, new ByteSizeValue(1, ByteSizeUnit.MB));
         generateAndTest(bulk, 1, maxActions - 1, false);
         generateAndTest(bulk, maxActions, 1, true);
@@ -46,7 +46,7 @@ class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void bulkRequestLimitsMaxSize() {
-        int firstSize = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
+        int firstSize = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         int secondSize = 1;
         FsCrawlerBulkRequest<TestOperation> bulk =
                 generateBulk(0, new ByteSizeValue((long) firstSize * PAYLOAD_SIZE, ByteSizeUnit.BYTES));
@@ -56,7 +56,7 @@ class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void bulkRequestLimitsNullSize() {
-        int maxActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(maxActions, null);
         generateAndTest(bulk, 1, maxActions - 1, false);
         generateAndTest(bulk, maxActions, 1, true);
@@ -64,7 +64,7 @@ class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void bulkRequestLimitsZeroSize() {
-        int maxActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(maxActions, new ByteSizeValue(0, ByteSizeUnit.KB));
         generateAndTest(bulk, 1, maxActions - 1, false);
         generateAndTest(bulk, maxActions, 1, true);
@@ -72,7 +72,7 @@ class FsCrawlerBulkTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void bulkRequestNoLimits() {
-        int nbActions = RandomizedTest.randomIntInRange(TEST_RANDOM, 1, 1000);
+        int nbActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         FsCrawlerBulkRequest<TestOperation> bulk = generateBulk(0, null);
         generateAndTest(bulk, 1, nbActions, false);
     }
