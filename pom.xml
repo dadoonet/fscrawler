@@ -1229,9 +1229,28 @@
                 </property>
             </activation>
             <properties>
+                <!-- Enable parallel execution -->
+                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
                 <!-- Enable parallel execution of test methods when running against a live Elasticsearch cluster -->
                 <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
             </properties>
+            <build>
+                <plugins>
+                    <!-- Override Failsafe plugin configuration to enable parallel test method execution -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables combine.children="override">
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                                <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                                <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
