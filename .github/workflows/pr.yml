@@ -61,7 +61,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.6.0
+        uses: AndreKurait/docker-cache@0.7.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
@@ -81,7 +81,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.6.0
+        uses: AndreKurait/docker-cache@0.7.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
@@ -105,7 +105,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.6.0
+        uses: AndreKurait/docker-cache@0.7.0
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
@@ -133,7 +133,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.6.0
+        uses: AndreKurait/docker-cache@0.7.0
         if: ${{ env.ELASTIC_APIKEY && env.ELASTIC_URL }}
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
@@ -180,7 +180,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.6.0
+        uses: AndreKurait/docker-cache@0.7.0
         with:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
