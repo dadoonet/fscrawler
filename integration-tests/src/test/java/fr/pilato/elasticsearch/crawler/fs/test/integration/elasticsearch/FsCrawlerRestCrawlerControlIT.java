@@ -33,7 +33,6 @@ import fr.pilato.elasticsearch.crawler.fs.rest.RestJsonProvider;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.rest.SimpleResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import jakarta.ws.rs.client.Client;
