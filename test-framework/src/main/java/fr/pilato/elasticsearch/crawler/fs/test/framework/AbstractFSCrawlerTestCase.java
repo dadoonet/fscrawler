@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 import com.carrotsearch.randomizedtesting.jupiter.DetectThreadLeaks;
 import com.carrotsearch.randomizedtesting.jupiter.Randomized;
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -46,6 +47,8 @@ import org.junit.jupiter.api.io.TempDir;
 @DetectThreadLeaks(scope = DetectThreadLeaks.Scope.SUITE)
 @DetectThreadLeaks.LingerTime(millis = 5000) // 5 sec lingering
 @DetectThreadLeaks.ExcludeThreads({
+    SystemThreadFilter.class,
+    ForkJoinPoolThreadFilter.class,
     WindowsSpecificThreadFilter.class,
     TestContainerThreadFilter.class,
     JNACleanerThreadFilter.class,

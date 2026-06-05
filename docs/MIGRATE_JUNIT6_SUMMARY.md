@@ -42,10 +42,12 @@ Full narrative: `docs/MIGRATE_JUNIT6.md`.
 
 ## 5. Thread Leak Detection
 
-Seven thread filters registered on `AbstractFSCrawlerTestCase` via `@DetectThreadLeaks.ExcludeThreads`:
+Nine thread filters registered on `AbstractFSCrawlerTestCase` via `@DetectThreadLeaks.ExcludeThreads`:
 
 | Filter                        | Source                                                                 |
 |-------------------------------|------------------------------------------------------------------------|
+| `SystemThreadFilter`          | From randomizedtesting-jupiter: system group, ForkJoinPool.commonPool, JFR, AWT, process reaper, etc. |
+| `ForkJoinPoolThreadFilter`    | Custom: `ForkJoinPool-*` worker threads (e.g., ForkJoinPool-1-worker-*) |
 | `JUnitThreadsFilter`          | `junit-jupiter-timeout-watcher` — created by `@Timeout`                |
 | `IntelliJThreadsFilter`       | JMX/RMI threads created by IntelliJ                                    |
 | `KeepAliveTimerThreadFilter`  | `Keep-Alive-Timer` from JDK HTTP keep-alive pool                       |
