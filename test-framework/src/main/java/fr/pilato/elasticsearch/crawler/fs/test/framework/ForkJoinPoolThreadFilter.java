@@ -23,10 +23,10 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 import java.util.function.Predicate;
 
 /**
- * Filters the JVM ForkJoinPool worker threads (e.g., ForkJoinPool-1-worker-*).
- * These are system-level threads used for parallel operations and remain in a WAITING state indefinitely.
- * Note: com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter only catches ForkJoinPool.commonPool-*,
- * so we need this to catch numbered pools like ForkJoinPool-1-*.
+ * Filters the JVM ForkJoinPool worker threads (e.g., ForkJoinPool-1-worker-*). These are system-level threads used for
+ * parallel operations and remain in a WAITING state indefinitely. Note:
+ * com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter only catches ForkJoinPool.commonPool-*, so we need this
+ * to catch numbered pools like ForkJoinPool-1-*.
  */
 public class ForkJoinPoolThreadFilter implements Predicate<Thread> {
     public boolean test(Thread t) {
