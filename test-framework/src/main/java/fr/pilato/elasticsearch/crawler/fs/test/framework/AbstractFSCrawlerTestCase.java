@@ -31,7 +31,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
@@ -83,6 +85,7 @@ public abstract class AbstractFSCrawlerTestCase {
     protected String jobName;
     protected Path testTmpDir;
     protected Random randomizedRandomForTests;
+    private Map<String, String> savedSystemProperties;
 
     @BeforeAll
     static void setLocale(Random rnd) {
@@ -255,6 +258,26 @@ public abstract class AbstractFSCrawlerTestCase {
             return defaultValue;
         } else {
             return Boolean.parseBoolean(property);
+        }
+    }
+
+    protected void saveSystemProperties(String... propertyNames) {
+        savedSystemProperties = new HashMap<>();
+        for (String propertyName : propertyNames) {
+            savedSystemProperties.put(propertyName, System.getProperty(propertyName));
+        }
+    }
+
+    protected void restoreSystemProperties() {
+        if (savedSystemProperties != null) {
+            for (Map.Entry<String, String> entry : savedSystemProperties.entrySet()) {
+                if (entry.getValue() == null) {
+                    System.clearProperty(entry.getKey());
+                } else {
+                    System.setProperty(entry.getKey(), entry.getValue());
+                }
+            }
+            savedSystemProperties.clear();
         }
     }
 }

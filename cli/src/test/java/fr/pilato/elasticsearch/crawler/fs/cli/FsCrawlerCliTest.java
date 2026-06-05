@@ -39,26 +39,46 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /** We want to test FSCrawler main app */
+@Execution(ExecutionMode.SAME_THREAD)
 class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private static Path metadataDir;
+    private static Path staticMetadataDir;
+    private Path metadataDir;
 
     @BeforeAll
     static void createFsCrawlerJobDir() throws IOException {
-        metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
+        staticMetadataDir = rootTmpDir.resolve(".fscrawler");
+        if (Files.notExists(staticMetadataDir)) {
+            Files.createDirectory(staticMetadataDir);
         }
-        logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+        logger.debug("  --> Test metadata dir ready in [{}]", staticMetadataDir);
     }
 
     @AfterAll
     static void printMetadataDirContent() throws IOException {
-        printLs(metadataDir);
+        printLs(staticMetadataDir);
+    }
+
+    @BeforeEach
+    void initMetadataDirAndSystemProperties() throws IOException {
+        metadataDir = testTmpDir.resolve(".fscrawler");
+        if (Files.notExists(metadataDir)) {
+            Files.createDirectory(metadataDir);
+        }
+        saveSystemProperties("MY_JOB_NAME", "FSCRAWLER_NAME", "FSCRAWLER_FS_URL");
+    }
+
+    @AfterEach
+    void cleanupSystemProperties() {
+        super.restoreSystemProperties();
     }
 
     private static void printLs(Path dir) throws IOException {
@@ -140,15 +160,9 @@ class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
                 """);
 
         String[] args = {"--config_dir", metadataDir.toString(), jobName};
-        // Create an environment variable
         System.setProperty("MY_JOB_NAME", "fscrawler_env_variables");
 
-        try {
-            Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
-        } finally {
-            // Remove the environment variable
-            System.clearProperty("MY_JOB_NAME");
-        }
+        Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
 
     @Test
@@ -159,17 +173,10 @@ class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Files.createDirectories(jobDir);
 
         String[] args = {"--config_dir", metadataDir.toString(), jobName};
-        // Create an environment variable
         System.setProperty("FSCRAWLER_NAME", "fscrawler_env_variables_default");
         System.setProperty("FSCRAWLER_FS_URL", "/foo/bar");
 
-        try {
-            Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
-        } finally {
-            // Remove the environment variable
-            System.clearProperty("FSCRAWLER_NAME");
-            System.clearProperty("FSCRAWLER_FS_URL");
-        }
+        Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
 
     @Test

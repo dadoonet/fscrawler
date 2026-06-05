@@ -39,8 +39,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /** We want to test FSCrawler main app */
+@Execution(ExecutionMode.SAME_THREAD)
 class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
