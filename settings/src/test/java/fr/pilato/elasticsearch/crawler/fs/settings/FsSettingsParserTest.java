@@ -34,13 +34,10 @@ import org.junit.jupiter.api.io.TempDir;
 class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
-    @TempDir
-    protected static Path rootTmpDir;
-
-    private void settingsTester(FsSettings source) throws IOException {
+    private void settingsTester(FsSettings source, Path tempDir) throws IOException {
         String yaml = FsSettingsParser.toYaml(source);
         logger.debug("generated yaml:\n{}", yaml);
-        Path settingsFile = rootTmpDir.resolve("settings.yaml");
+        Path settingsFile = tempDir.resolve("settings.yaml");
         Files.writeString(settingsFile, yaml);
         FsSettings generated = FsSettingsLoader.load(settingsFile);
         checkSettings(source, generated);
@@ -66,36 +63,36 @@ class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void parseEmptySettings() throws IOException {
-        settingsTester(FsSettingsLoader.load());
+    void parseEmptySettings(@TempDir Path tempDir) throws IOException {
+        settingsTester(FsSettingsLoader.load(), tempDir);
     }
 
     @Test
-    void parseSettingsElasticsearchTwoNodes() throws IOException {
+    void parseSettingsElasticsearchTwoNodes(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setUrls(List.of("https://127.0.0.1:9200", "https://127.0.0.1:9201"));
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 
     @Test
-    void parseSettingsElasticsearchWithPathPrefix() throws IOException {
+    void parseSettingsElasticsearchWithPathPrefix(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setPathPrefix("/path/to/elasticsearch");
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 
     @Test
-    void parseSettingsWithStaticMetadata() throws IOException {
+    void parseSettingsWithStaticMetadata(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getTags().setStaticMetaFilename("/path/to/metadatafile.yml");
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 
     @Test
-    void parseSettingsWithAclSupport() throws IOException {
+    void parseSettingsWithAclSupport(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setAttributesSupport(true);
         fsSettings.getFs().setAclSupport(true);
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 }
