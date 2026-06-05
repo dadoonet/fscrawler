@@ -28,20 +28,20 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
-import java.util.HashMap;
-import java.util.Map;
 
 class FsSettingsLoaderTest {
 
@@ -135,7 +135,6 @@ class FsSettingsLoaderTest {
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
-
 
     private void testLoadFullSettings(String jobName) throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read(jobName);

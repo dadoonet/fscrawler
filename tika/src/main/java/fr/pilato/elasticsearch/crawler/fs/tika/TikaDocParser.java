@@ -57,6 +57,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 
 /** Parse a binary document and generate a FSCrawler Doc */
 public class TikaDocParser {
+    // TODO Make TikaInstance and TikaDocParser not static
 
     private static final Logger logger = LogManager.getLogger();
 
