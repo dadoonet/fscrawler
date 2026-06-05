@@ -25,8 +25,10 @@ import com.carrotsearch.randomizedtesting.jupiter.Randomized;
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Locale;
@@ -79,6 +81,7 @@ public abstract class AbstractFSCrawlerTestCase {
     protected static Path rootTmpDir;
 
     protected String jobName;
+    protected Path testTmpDir;
     protected Random randomizedRandomForTests;
 
     @BeforeAll
@@ -116,8 +119,9 @@ public abstract class AbstractFSCrawlerTestCase {
      * @param testInfo The current test
      */
     @BeforeEach
-    void setJobName(TestInfo testInfo) {
+    void setJobName(TestInfo testInfo) throws IOException {
         jobName = toUnderscoreCase(testInfo.getTestMethod().orElseThrow().getName());
+        testTmpDir = Files.createDirectories(rootTmpDir.resolve(jobName));
     }
 
     /**
