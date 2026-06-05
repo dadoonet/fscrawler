@@ -31,14 +31,11 @@ import org.junit.jupiter.api.Test;
 
 class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
 
-    private Path rootDir;
     private FsCrawlerCheckpointFileHandler handler;
 
     @BeforeEach
-    void setUp() throws IOException {
-        rootDir = rootTmpDir.resolve("checkpoint-test");
-        Files.createDirectories(rootDir);
-        handler = new FsCrawlerCheckpointFileHandler(rootDir);
+    void setUp() {
+        handler = new FsCrawlerCheckpointFileHandler(testTmpDir);
     }
 
     @Test
@@ -137,7 +134,7 @@ class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
     @Test
     void migrate_from_legacy_status() throws IOException {
         // Create a legacy _status.json file
-        FsJobFileHandler legacyHandler = new FsJobFileHandler(rootDir);
+        FsJobFileHandler legacyHandler = new FsJobFileHandler(testTmpDir);
         FsJob legacyJob = new FsJob();
         legacyJob.setLastrun(LocalDateTime.now().minusHours(1));
         legacyJob.setNextCheck(LocalDateTime.now().plusHours(1));

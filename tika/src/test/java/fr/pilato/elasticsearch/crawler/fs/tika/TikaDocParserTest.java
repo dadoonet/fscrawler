@@ -685,7 +685,7 @@ class TikaDocParserTest extends DocParserTestCase {
     void extractFromTxtAndStoreSource() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
-        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        fsSettings.getFs().setTempDir(testTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
@@ -698,7 +698,7 @@ class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setIndexContent(false);
-        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        fsSettings.getFs().setTempDir(testTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
@@ -713,7 +713,7 @@ class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setChecksum("MD5");
-        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        fsSettings.getFs().setTempDir(testTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
@@ -728,7 +728,7 @@ class TikaDocParserTest extends DocParserTestCase {
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
-        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        fsSettings.getFs().setTempDir(testTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Extracted content
@@ -749,7 +749,7 @@ class TikaDocParserTest extends DocParserTestCase {
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
-        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        fsSettings.getFs().setTempDir(testTmpDir.toString());
         Doc doc = extractFromFile("test.txt", fsSettings);
 
         // Verify the checksum is computed
@@ -792,7 +792,7 @@ class TikaDocParserTest extends DocParserTestCase {
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
-        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        fsSettings.getFs().setTempDir(testTmpDir.toString());
 
         Doc doc = new Doc();
         doc.getPath().setReal("test.txt");
@@ -837,7 +837,7 @@ class TikaDocParserTest extends DocParserTestCase {
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("MD5");
-        fsSettings.getFs().setTempDir(rootTmpDir.toString());
+        fsSettings.getFs().setTempDir(testTmpDir.toString());
 
         Doc doc = new Doc();
         doc.getPath().setReal("large-binary-file.bin");
@@ -995,7 +995,7 @@ class TikaDocParserTest extends DocParserTestCase {
     @Test
     void customTikaConfig() throws IOException {
         InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
-        Path testTikaConfig = rootTmpDir.resolve("tika-config");
+        Path testTikaConfig = testTmpDir.resolve("tika-config");
         if (Files.notExists(testTikaConfig)) {
             Files.createDirectory(testTikaConfig);
         }
