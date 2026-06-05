@@ -36,9 +36,7 @@ public abstract class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawle
     @BeforeAll
     static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (!metadataDir.toFile().exists()) {
-            Files.createDirectory(metadataDir);
-        }
+        Files.createDirectories(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 

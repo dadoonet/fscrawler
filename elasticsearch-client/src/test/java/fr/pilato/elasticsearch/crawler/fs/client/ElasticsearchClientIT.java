@@ -895,7 +895,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(esClient.getVersion()).isNotEmpty();
 
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
-        Files.createDirectory(nginxRoot);
+        Files.createDirectories(nginxRoot);
         Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
 
         try (NginxContainer container = new NginxContainer("nginx")) {

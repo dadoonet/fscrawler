@@ -256,9 +256,7 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
 
     private Path addFakeDir(Path dir, String subDirname) throws IOException {
         Path subDir = dir.resolve(subDirname);
-        if (Files.notExists(subDir)) {
-            Files.createDirectory(subDir);
-        }
+        Files.createDirectories(subDir);
         return subDir;
     }
 }

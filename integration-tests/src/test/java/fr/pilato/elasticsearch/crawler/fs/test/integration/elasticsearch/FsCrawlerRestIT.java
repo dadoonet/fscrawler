@@ -648,7 +648,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     void uploadDocumentWithHttpPlugin() throws Exception {
         logger.info("Starting Nginx from {}", testTmpDir);
         Path nginxRoot = testTmpDir.resolve("nginx-root");
-        Files.createDirectory(nginxRoot);
+        Files.createDirectories(nginxRoot);
         Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
         String text = "Hello Foo world!";
         createFile(nginxRoot, "foo.txt", text);
@@ -737,9 +737,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
         // Create test directory for SSH
         Path sshTestDir = testTmpDir.resolve("test-ssh-rest");
-        if (Files.notExists(sshTestDir)) {
-            Files.createDirectory(sshTestDir);
-        }
+        Files.createDirectories(sshTestDir);
 
         // Create test files
         String textContent = "Hello SSH world!";

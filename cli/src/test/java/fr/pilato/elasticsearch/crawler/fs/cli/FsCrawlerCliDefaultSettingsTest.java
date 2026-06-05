@@ -41,9 +41,7 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     @BeforeAll
     static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
-        }
+        Files.createDirectories(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 

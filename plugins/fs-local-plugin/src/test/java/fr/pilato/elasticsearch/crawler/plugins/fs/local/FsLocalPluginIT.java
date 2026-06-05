@@ -120,9 +120,9 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     @Test
     void readFileWithFullPathOutsideRootDir() throws Exception {
         Path rootDir = testTmpDir.resolve("root-dir");
-        Files.createDirectory(rootDir);
+        Files.createDirectories(rootDir);
         Path outsideRootDir = testTmpDir.resolve("outside-root-dir");
-        Files.createDirectory(outsideRootDir);
+        Files.createDirectories(outsideRootDir);
 
         String text = "Hello Foo world!";
         Path fileName = createFile(outsideRootDir, "foo.txt", text);

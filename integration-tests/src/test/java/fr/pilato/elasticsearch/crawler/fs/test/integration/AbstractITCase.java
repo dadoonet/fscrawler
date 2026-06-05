@@ -127,9 +127,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     @BeforeEach
     void copyTestResources() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            Files.createDirectory(testResourceTarget);
-        }
+        Files.createDirectories(testResourceTarget);
 
         // We copy files from the src dir to the temp dir
         logger.info("🎬 Launching test [{}]", jobName);
@@ -152,9 +150,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     @BeforeEach
     void copyTags() throws IOException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            Files.createDirectory(testResourceTarget);
-        }
+        Files.createDirectories(testResourceTarget);
 
         // We copy files from the src dir to the temp dir
         String url = getUrl("tags", jobName);
@@ -219,7 +215,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 Path finalTarget = target.resolve(sourceDirName);
                 if (Files.notExists(finalTarget)) {
                     logger.debug("⛏️ Creating test dir named [{}]", finalTarget);
-                    Files.createDirectory(finalTarget);
+                    Files.createDirectories(finalTarget);
                 }
                 // We are running our tests from the IDE most likely and documents are directly available in the
                 // classpath
@@ -234,10 +230,8 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 break;
             }
             case "jar": {
-                if (Files.notExists(target)) {
-                    logger.debug("⛏️ Creating test dir named [{}]", target);
-                    Files.createDirectory(target);
-                }
+                logger.debug("⛏️ Creating test dir named [{}]", target);
+                Files.createDirectories(target);
                 // We are  running our tests from the CLI most likely and documents are provided within a JAR as a
                 // dependency
                 String fileInJar = resource.getPath();

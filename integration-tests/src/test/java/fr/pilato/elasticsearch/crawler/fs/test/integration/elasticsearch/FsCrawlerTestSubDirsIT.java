@@ -224,13 +224,13 @@ class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
 
         Path sourceFile = currentTestResourceDir.resolve("roottxtfile.txt");
         Path mainDir = currentTestResourceDir.resolve("main_dir");
-        Files.createDirectory(mainDir);
+        Files.createDirectories(mainDir);
         Path newDir = mainDir;
 
         for (int i = 0; i < subdirs; i++) {
             newDir = newDir.resolve(
                     i + "_" + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 2, 5));
-            Files.createDirectory(newDir);
+            Files.createDirectories(newDir);
             // Copy the original test file in the new dir
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
         }

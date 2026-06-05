@@ -996,9 +996,7 @@ class TikaDocParserTest extends DocParserTestCase {
     void customTikaConfig() throws IOException {
         InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.xml");
         Path testTikaConfig = testTmpDir.resolve("tika-config");
-        if (Files.notExists(testTikaConfig)) {
-            Files.createDirectory(testTikaConfig);
-        }
+        Files.createDirectories(testTikaConfig);
         Files.copy(tikaConfigIS, testTikaConfig.resolve("tikaConfig.xml"));
 
         FsSettings fsSettings = FsSettingsLoader.load();

@@ -34,13 +34,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -49,51 +45,18 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 /** We want to test FSCrawler main app */
 @Execution(ExecutionMode.SAME_THREAD)
 class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
-    private static final Logger logger = LogManager.getLogger();
-    private static Path staticMetadataDir;
     private Path metadataDir;
-
-    @BeforeAll
-    static void createFsCrawlerJobDir() throws IOException {
-        staticMetadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(staticMetadataDir)) {
-            Files.createDirectory(staticMetadataDir);
-        }
-        logger.debug("  --> Test metadata dir ready in [{}]", staticMetadataDir);
-    }
-
-    @AfterAll
-    static void printMetadataDirContent() throws IOException {
-        printLs(staticMetadataDir);
-    }
 
     @BeforeEach
     void initMetadataDirAndSystemProperties() throws IOException {
         metadataDir = testTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
-        }
+        Files.createDirectories(metadataDir);
         saveSystemProperties("MY_JOB_NAME", "FSCRAWLER_NAME", "FSCRAWLER_FS_URL");
     }
 
     @AfterEach
     void cleanupSystemProperties() {
         super.restoreSystemProperties();
-    }
-
-    private static void printLs(Path dir) throws IOException {
-        logger.debug("ls -l {}", dir);
-        Files.list(dir).forEach(path -> {
-            if (Files.isDirectory(path)) {
-                try {
-                    printLs(path);
-                } catch (IOException ignored) {
-                    // It's just for debugging, we don't care if it fails
-                }
-            } else {
-                logger.debug("{}", path);
-            }
-        });
     }
 
     @Test

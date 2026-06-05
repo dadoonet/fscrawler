@@ -55,7 +55,7 @@ class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     void readFileFromNginx() throws Exception {
         logger.info("Starting Nginx from {}", rootTmpDir);
         Path nginxRoot = rootTmpDir.resolve("nginx-root");
-        Files.createDirectory(nginxRoot);
+        Files.createDirectories(nginxRoot);
         Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
         createFile(nginxRoot, "foo.txt", TEXT);
         createFile(nginxRoot, "bar.txt", "This one should be ignored.");
