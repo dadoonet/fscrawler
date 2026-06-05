@@ -41,8 +41,8 @@ import org.junit.jupiter.api.Test;
 class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
-    private static Path createFile(String objectName, String object) throws IOException {
-        return createFile(rootTmpDir, objectName, object);
+    private Path createFile(String objectName, String object) throws IOException {
+        return createFile(testTmpDir, objectName, object);
     }
 
     private static Path createFile(Path dir, String objectName, String object) throws IOException {
@@ -61,7 +61,7 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         logger.info("Starting Test with bucket [{}]", fileName);
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
-            fsSettings.getFs().setUrl(rootTmpDir.toString());
+            fsSettings.getFs().setUrl(testTmpDir.toString());
             provider.start(
                     fsSettings,
                     "{\n" + "  \"type\": \"local\",\n"
@@ -93,7 +93,7 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         logger.info("Starting Test with bucket [{}]", fileName);
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
-            fsSettings.getFs().setUrl(rootTmpDir.toString());
+            fsSettings.getFs().setUrl(testTmpDir.toString());
             provider.start(
                     fsSettings,
                     "{\n" + "  \"type\": \"local\",\n"
@@ -119,9 +119,9 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
 
     @Test
     void readFileWithFullPathOutsideRootDir() throws Exception {
-        Path rootDir = rootTmpDir.resolve("root-dir");
+        Path rootDir = testTmpDir.resolve("root-dir");
         Files.createDirectory(rootDir);
-        Path outsideRootDir = rootTmpDir.resolve("outside-root-dir");
+        Path outsideRootDir = testTmpDir.resolve("outside-root-dir");
         Files.createDirectory(outsideRootDir);
 
         String text = "Hello Foo world!";

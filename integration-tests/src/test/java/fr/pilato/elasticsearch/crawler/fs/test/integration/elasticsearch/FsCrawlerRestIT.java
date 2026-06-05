@@ -122,7 +122,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     @Test
     @VerySlow
     void uploadAllDocuments() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        Path from = testTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -147,7 +147,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadDocumentWithId() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path from = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -165,7 +165,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadDocumentWithIdUsingPut() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path from = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -188,7 +188,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         Assertions.assertThat(deleteResponse.isOk()).isFalse();
         Assertions.assertThat(deleteResponse.getMessage()).startsWith("Can not remove document [");
 
-        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        Path from = testTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -240,7 +240,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     @Test
     @VerySlow
     void allDocumentsWithRestExternalIndex() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        Path from = testTmpDir.resolve("resources").resolve("documents");
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -380,7 +380,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadUsingWrongFieldName() {
-        Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path from = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -404,13 +404,13 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadDocumentWithFsPlugin() throws Exception {
-        Path fileDoesNotExist = rootTmpDir
+        Path fileDoesNotExist = testTmpDir
                 .resolve("resources")
                 .resolve("documents")
                 .resolve("foobar")
                 .resolve("foobar.txt");
         Path fileOutsideWatchedDir =
-                rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+                testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         Path correctFile = currentTestResourceDir.resolve("roottxtfile.txt");
         if (Files.notExists(fileOutsideWatchedDir)) {
             logger.error("file [{}] should exist before we start tests", fileOutsideWatchedDir);
@@ -578,7 +578,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadDocumentWithUnknownPlugin() {
-        Path fromExists = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path fromExists = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
         if (Files.notExists(fromExists)) {
             logger.error("file [{}] should exist before we start tests", fromExists);
             throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");
@@ -646,8 +646,8 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     @Test
     @DisabledIfNoDocker
     void uploadDocumentWithHttpPlugin() throws Exception {
-        logger.info("Starting Nginx from {}", rootTmpDir);
-        Path nginxRoot = rootTmpDir.resolve("nginx-root");
+        logger.info("Starting Nginx from {}", testTmpDir);
+        Path nginxRoot = testTmpDir.resolve("nginx-root");
         Files.createDirectory(nginxRoot);
         Files.writeString(nginxRoot.resolve("index.html"), "<html><body>Hello World!</body></html>");
         String text = "Hello Foo world!";
@@ -736,7 +736,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         logger.info("Starting SSH server for test");
 
         // Create test directory for SSH
-        Path sshTestDir = rootTmpDir.resolve("test-ssh-rest");
+        Path sshTestDir = testTmpDir.resolve("test-ssh-rest");
         if (Files.notExists(sshTestDir)) {
             Files.createDirectory(sshTestDir);
         }
@@ -764,15 +764,16 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         String sshUsername = "testuser";
         String sshPassword = "testpass";
 
-        // Generate key files for SSH tests
-        SshTestHelper.generateAndSaveKeyPair(rootTmpDir);
+        // Generate key files for SSH tests in a dedicated directory
+        Path sshKeyDir = Files.createDirectories(testTmpDir.resolve(".ssh-keys"));
+        SshTestHelper.generateAndSaveKeyPair(sshKeyDir);
 
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setHost("localhost");
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(rootTmpDir.resolve("host.ser")));
+        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(sshKeyDir.resolve("host.ser")));
         sshd.setPasswordAuthenticator(
                 (username, password, session) -> sshUsername.equals(username) && sshPassword.equals(password));
-        sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(rootTmpDir.resolve("public.key")));
+        sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(sshKeyDir.resolve("public.key")));
         sshd.setSubsystemFactories(Collections.singletonList(factory));
         sshd.start();
 

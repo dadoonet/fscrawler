@@ -73,15 +73,16 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
                 })
                 .build();
 
-        // Generate the key files for our SSH tests
-        SshTestHelper.generateAndSaveKeyPair(rootTmpDir);
+        // Generate the key files for our SSH tests in a dedicated directory
+        Path sshKeyDir = Files.createDirectories(testTmpDir.resolve(".ssh-keys"));
+        SshTestHelper.generateAndSaveKeyPair(sshKeyDir);
 
         sshd = SshServer.setUpDefaultServer();
         sshd.setHost("localhost");
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(rootTmpDir.resolve("host.ser")));
+        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(sshKeyDir.resolve("host.ser")));
         sshd.setPasswordAuthenticator(
                 (username, password, session) -> SSH_USERNAME.equals(username) && SSH_PASSWORD.equals(password));
-        sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(rootTmpDir.resolve("public.key")));
+        sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(sshKeyDir.resolve("public.key")));
 
         sshd.setSubsystemFactories(Collections.singletonList(factory));
         sshd.start();
@@ -126,7 +127,7 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setPassword(SSH_PASSWORD);
         fsSettings
                 .getServer()
-                .setPemPath(rootTmpDir.resolve("private.key").toFile().getAbsolutePath());
+                .setPemPath(testTmpDir.resolve(".ssh-keys/private.key").toFile().getAbsolutePath());
         fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
         crawler = startCrawler(fsSettings);
 

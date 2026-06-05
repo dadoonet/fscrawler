@@ -174,7 +174,7 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logger.info(" ---> Moving file roottxtfile.txt to a tmp dir");
         Files.move(
                 currentTestResourceDir.resolve("roottxtfile.txt"),
-                rootTmpDir.resolve("roottxtfile.txt"),
+                testTmpDir.resolve("roottxtfile.txt"),
                 StandardCopyOption.ATOMIC_MOVE);
 
         // We expect to have 0 file
@@ -186,7 +186,7 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         // We move the file back
         logger.info(" ---> Moving file roottxtfile.txt from the tmp dir");
         Files.move(
-                rootTmpDir.resolve("roottxtfile.txt"),
+                testTmpDir.resolve("roottxtfile.txt"),
                 currentTestResourceDir.resolve("roottxtfile.txt"),
                 StandardCopyOption.ATOMIC_MOVE);
 
@@ -211,7 +211,7 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         String filename = "oldfile.txt";
         logger.info(" ---> Creating a file [{}]", filename);
 
-        Path tmpDir = rootTmpDir.resolve("resources").resolve(jobName + "-tmp");
+        Path tmpDir = testTmpDir.resolve("resources").resolve(jobName + "-tmp");
         if (Files.notExists(tmpDir)) {
             Files.createDirectory(tmpDir);
         }
