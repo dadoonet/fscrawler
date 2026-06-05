@@ -122,7 +122,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     @Test
     @VerySlow
     void uploadAllDocuments() throws Exception {
-        Path from = testTmpDir.resolve("resources").resolve("documents");
+        Path from = testDocumentsDir;
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -147,7 +147,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadDocumentWithId() throws Exception {
-        Path from = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path from = testDocumentsDir.resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -165,7 +165,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadDocumentWithIdUsingPut() throws Exception {
-        Path from = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path from = testDocumentsDir.resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -188,7 +188,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         Assertions.assertThat(deleteResponse.isOk()).isFalse();
         Assertions.assertThat(deleteResponse.getMessage()).startsWith("Can not remove document [");
 
-        Path from = testTmpDir.resolve("resources").resolve("documents");
+        Path from = testDocumentsDir;
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -240,7 +240,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     @Test
     @VerySlow
     void allDocumentsWithRestExternalIndex() throws Exception {
-        Path from = testTmpDir.resolve("resources").resolve("documents");
+        Path from = testDocumentsDir;
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -279,12 +279,13 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         AtomicInteger numFiles = new AtomicInteger();
         Files.walk(currentTestResourceDir).filter(Files::isRegularFile).forEach(path -> {
             Path tagsFilePath = currentTestTagDir.resolve(path.getFileName().toString() + ".json");
+            Path tagsFilePathToUse = Files.exists(tagsFilePath) ? tagsFilePath : null;
             logger.info(
                     "Upload file #[{}]: [{}] with tags [{}]",
                     numFiles.incrementAndGet(),
                     path.getFileName(),
-                    tagsFilePath.getFileName());
-            UploadResponse response = uploadFileUsingApi(target, path, tagsFilePath, null, "/_document", null);
+                    tagsFilePathToUse != null ? tagsFilePath.getFileName() : "none");
+            UploadResponse response = uploadFileUsingApi(target, path, tagsFilePathToUse, null, "/_document", null);
             Assertions.assertThat(response.getFilename())
                     .isEqualTo(path.getFileName().toString());
         });
@@ -380,7 +381,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadUsingWrongFieldName() {
-        Path from = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path from = testDocumentsDir.resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -409,8 +410,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
                 .resolve("documents")
                 .resolve("foobar")
                 .resolve("foobar.txt");
-        Path fileOutsideWatchedDir =
-                testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path fileOutsideWatchedDir = testDocumentsDir.resolve("test.txt");
         Path correctFile = currentTestResourceDir.resolve("roottxtfile.txt");
         if (Files.notExists(fileOutsideWatchedDir)) {
             logger.error("file [{}] should exist before we start tests", fileOutsideWatchedDir);
@@ -578,7 +578,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
 
     @Test
     void uploadDocumentWithUnknownPlugin() {
-        Path fromExists = testTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path fromExists = testDocumentsDir.resolve("test.txt");
         if (Files.notExists(fromExists)) {
             logger.error("file [{}] should exist before we start tests", fromExists);
             throw new RuntimeException(fromExists + " doesn't seem to exist. Check your JUnit tests.");

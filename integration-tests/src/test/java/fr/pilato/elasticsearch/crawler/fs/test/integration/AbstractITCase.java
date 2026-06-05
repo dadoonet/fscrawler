@@ -109,6 +109,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
     protected static Path metadataDir = null;
+    protected static Path testDocumentsDir;
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
     protected Path currentTestTagDir;
@@ -126,41 +127,40 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      */
     @BeforeEach
     void copyTestResources() throws IOException {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
-        Files.createDirectories(testResourceTarget);
-
         // We copy files from the src dir to the temp dir
-        logger.info("🎬 Launching test [{}]", jobName);
-        currentTestResourceDir = testResourceTarget.resolve(jobName);
+        logger.info("Launching test [{}]", jobName);
+        currentTestResourceDir = testTmpDir;
         String url = getUrl("samples", jobName);
         Path from = Paths.get(url);
 
         if (Files.exists(from)) {
-            logger.trace("📂 Copying test resources from [{}]", from);
+            logger.trace("Copying test resources from [{}]", from);
         } else {
-            logger.trace("📂 Copying test resources from [{}]", DEFAULT_RESOURCES);
+            logger.trace("Copying test resources from [{}]", DEFAULT_RESOURCES);
             from = DEFAULT_RESOURCES;
         }
 
         FsCrawlerUtilForTests.copyDirs(from, currentTestResourceDir);
 
-        logger.debug("✅ Test resources ready in [{}]", currentTestResourceDir);
+        logger.debug("Test resources ready in [{}]", currentTestResourceDir);
     }
 
     @BeforeEach
     void copyTags() throws IOException {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
-        Files.createDirectories(testResourceTarget);
-
         // We copy files from the src dir to the temp dir
         String url = getUrl("tags", jobName);
         Path from = Paths.get(url);
 
-        currentTestTagDir = testResourceTarget.resolve(jobName + ".tags");
+        currentTestTagDir = testTmpDir.resolve(jobName + ".tags");
+        logger.info(
+                "Looking for tags: jobName=[{}], from=[{}], currentTestTagDir=[{}]", jobName, from, currentTestTagDir);
         if (Files.exists(from)) {
-            logger.trace("📂 Copying test resources from [{}]", from);
+            logger.info("Tags source exists at [{}]", from);
+            Files.createDirectories(currentTestTagDir.getParent());
             FsCrawlerUtilForTests.copyDirs(from, currentTestTagDir);
-            logger.debug("✅ Tags ready in [{}]", currentTestTagDir);
+            logger.info("Tags ready in [{}]", currentTestTagDir);
+        } else {
+            logger.info("No tags found at [{}]", from);
         }
     }
 
@@ -193,6 +193,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
+        testDocumentsDir = testResourceTarget.resolve("documents");
 
         logger.debug("🚦 Test resources ready in [{}]:", testResourceTarget);
     }
