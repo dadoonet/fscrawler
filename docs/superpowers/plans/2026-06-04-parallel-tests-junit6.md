@@ -2,9 +2,9 @@
 
 > **Pour exécuter ce plan:** Utilisez superpowers:subagent-driven-development (recommandé) pour dispatcher une sous-tâche par task avec review intermédiaire, ou superpowers:executing-plans pour exécution inline avec checkpoints.
 
-**Objectif:** Activer la parallélisation des tests JUnit 6 à deux niveaux (classes + méthodes) automatiquement quand `-Dtests.cluster.url` est fourni, tout en gardant les tests séquentiels avec TestContainers.
+**Objectif:** Activer la parallélisation optionnelle des tests JUnit 6 à deux niveaux (classes + méthodes) via un profil Maven non-activé par défaut, pour éviter les problèmes de shared state avec TestContainers.
 
-**Architecture:** Un seul profil Maven conditionnel (`cluster-parallel`) qui s'active si `-Dtests.cluster.url` est présent. Le profil override la propriété `junit.jupiter.execution.parallel.mode.default` de `same_thread` à `concurrent`. Aucun autre changement requis.
+**Architecture:** Un profil Maven opt-in (`parallel_tests`) qui s'active uniquement via `-P parallel_tests`. Le profil override la propriété `junit.jupiter.execution.parallel.mode.default` de `same_thread` à `concurrent`, ainsi que `junit.jupiter.execution.parallel.mode.classes.default` à `concurrent`. Aucun autre changement requis.
 
 **Tech Stack:** Maven profiles, JUnit 6 parallel execution configuration
 
@@ -13,11 +13,11 @@
 ## File Structure
 
 **Modification:**
-- `pom.xml` — Ajouter le profil `cluster-parallel` dans la section `<profiles>`
+- `pom.xml` — Ajouter le profil `parallel_tests` dans la section `<profiles>`
 
 ---
 
-## Task 1: Add `cluster-parallel` Profile to pom.xml
+## Task 1: Add `parallel_tests` Profile to pom.xml
 
 **Files:**
 - Modify: `pom.xml` (section `<profiles>`)
@@ -40,22 +40,33 @@ sed -n '1234,1300p' pom.xml
 
 Expected: Output showing existing profiles like `daily`, `nightly`, etc.
 
-- [ ] **Step 3: Add the new `cluster-parallel` profile before the closing `</profiles>` tag**
+- [ ] **Step 3: Add the new `parallel_tests` profile before the closing `</profiles>` tag**
 
 Insert this profile (adjust indentation to match existing profiles):
 
 ```xml
+        <!-- This profile configures JUnit 6 to parallelize test methods, not just test classes -->
         <profile>
-            <id>cluster-parallel</id>
-            <activation>
-                <property>
-                    <name>tests.cluster.url</name>
-                </property>
-            </activation>
-            <properties>
-                <!-- Enable parallel execution of test methods when running against a live Elasticsearch cluster -->
-                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-            </properties>
+            <id>parallel_tests</id>
+            <build>
+                <plugins>
+                    <!-- Override Failsafe plugin configuration to enable parallel test method execution -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables combine.children="override">
+                                <!-- Enable parallel execution -->
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <!-- Enable parallel execution of classes -->
+                                <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                                <!-- Enable parallel execution of test methods -->
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 ```
 
@@ -73,20 +84,20 @@ Expected: No errors. Output: `BUILD SUCCESS`
 
 ```bash
 git add pom.xml
-git commit -m "feat(test): add cluster-parallel profile for conditional parallel test execution
+git commit -m "feat(test): add parallel_tests profile for opt-in parallel test execution
 
-- Automatically enable two-level parallelization (test classes and methods)
-- Activation: when -Dtests.cluster.url is provided
-- Falls back to sequential execution for TestContainers scenarios
-- No CI workflow changes required"
+- Enable two-level parallelization (test classes and methods)
+- Activation: only via -P parallel_tests (not automatic)
+- Default: sequential execution to avoid TestContainers shared state issues
+- CI workflows can opt-in with -P parallel_tests when using external clusters"
 ```
 
 ---
 
-## Task 2: Verify Profile Activation with Live Elasticsearch
+## Task 2: Verify Profile Activation with Opt-In Flag
 
 **Files:**
-- Test: Run integration tests with `-Dtests.cluster.url`
+- Test: Run integration tests with `-P parallel_tests`
 
 - [ ] **Step 1: Start a local Elasticsearch instance (if needed)**
 
@@ -99,12 +110,13 @@ Or manually start ES on `http://localhost:9200` with user `elastic` and password
 
 Wait for ES to be ready.
 
-- [ ] **Step 2: Run a single integration test with `-Dtests.cluster.url` to verify parallelization activates**
+- [ ] **Step 2: Run a single integration test with `-P parallel_tests` to verify parallelization activates**
 
 ```bash
 mvn verify -pl integration-tests -am -DskipUnitTests \
   -Dtests.cluster.url=http://localhost:9200 \
   -Dit.test=FsCrawlerTestAddNewFilesIT#add_new_files_and_force_rescan \
+  -P parallel_tests \
   -Dtests.output=true
 ```
 
@@ -115,10 +127,10 @@ Expected: Test passes. Check the console output for parallel execution indicator
 Look for a line like:
 ```
 [INFO] --- maven-help-plugin:3.x.x:active-profiles (default-cli) @ <module> ---
-[INFO] Active profiles: es-8x, cluster-parallel
+[INFO] Active profiles: es-8x, parallel_tests
 ```
 
-If you see `cluster-parallel` in the active profiles list, the activation condition worked.
+If you see `parallel_tests` in the active profiles list, the activation worked.
 
 - [ ] **Step 4: Run a broader set of integration tests**
 
@@ -133,20 +145,20 @@ Expected: All tests pass with parallel execution enabled.
 
 ---
 
-## Task 3: Verify Sequential Execution Without `-Dtests.cluster.url`
+## Task 3: Verify Sequential Execution (Default Behavior)
 
 **Files:**
-- Test: Run unit tests without the cluster URL (TestContainers scenario)
+- Test: Run tests without `-P parallel_tests` (default sequential execution)
 
-- [ ] **Step 1: Run unit tests (no integration tests, no `-Dtests.cluster.url`)**
+- [ ] **Step 1: Run unit tests (no integration tests, without `-P parallel_tests`)**
 
 ```bash
 mvn clean test -DskipIntegTests
 ```
 
-Expected: All unit tests pass. The `cluster-parallel` profile should NOT be active (no `-Dtests.cluster.url`).
+Expected: All unit tests pass. The `parallel_tests` profile should NOT be active.
 
-Check output: Should NOT show `cluster-parallel` in active profiles.
+Check output: Should NOT show `parallel_tests` in active profiles.
 
 - [ ] **Step 2: Verify tests remain sequential**
 
@@ -166,28 +178,33 @@ Expected: All tests pass sequentially (TestContainers scenario). May take severa
 
 ---
 
-## Task 4: Verify CI Workflows Are Unaffected
+## Task 4: Optional — Enable Parallelization in CI Workflows
 
 **Files:**
-- Review (no changes): `.github/workflows/pr.yml`
+- Optional modify: `.github/workflows/pr.yml`
 
-- [ ] **Step 1: Review the PR workflow to confirm it already uses `-Dtests.cluster.url`**
+- [ ] **Step 1: Review the PR workflow to identify jobs that could benefit from parallelization**
 
 ```bash
-grep -n "Dtests.cluster.url" .github/workflows/pr.yml
+grep -n "mvn verify" .github/workflows/pr.yml
 ```
 
-Expected: Multiple matches showing existing `-Dtests.cluster.url` usage in CI jobs.
+Expected: Multiple matches showing existing `mvn verify` jobs in CI.
 
-- [ ] **Step 2: Confirm no workflow changes are needed**
+- [ ] **Step 2: Decision: Keep default sequential or opt-in to parallelization**
 
-Existing CI commands like:
+Option A (Recommended — sequential by default):
+- No workflow changes needed. CI runs with default sequential execution to be conservative.
+- Performance: slower but safest.
+
+Option B (Advanced — opt-in parallelization):
+- Add `-P parallel_tests` to jobs that run against external Elasticsearch clusters.
+- Example:
 ```
-mvn verify -Dtests.cluster.url=${{ secrets.ELASTIC_SERVERLESS_URL }} ...
+mvn verify -P parallel_tests -Dtests.cluster.url=${{ secrets.ELASTIC_SERVERLESS_URL }} ...
 ```
+- Performance: faster for external cluster jobs, but adds profile dependency.
 
-will automatically activate the `cluster-parallel` profile now, resulting in faster test execution with zero workflow changes.
+- [ ] **Step 3: Decision made — no further changes needed**
 
-- [ ] **Step 3: Note: No commit needed**
-
-CI workflows run unchanged and benefit from parallelization automatically.
+CI workflows work correctly with the new `parallel_tests` profile either way.

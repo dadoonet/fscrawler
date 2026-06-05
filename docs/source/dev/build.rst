@@ -64,6 +64,17 @@ to set ``tests.leaveTemporary`` to ``true``::
 
     mvn verify -Dtests.leaveTemporary=true
 
+Parallel test execution
+"""""""""""""""""""""""
+
+By default, parallel test execution is disabled to avoid static field issues (shared ElasticsearchClient for example).
+To enable parallel execution of test classes and methods, use the ``parallel_tests`` Maven profile::
+
+    mvn verify -P parallel_tests
+
+This profile enables JUnit 6's parallel execution engine, running both test classes concurrently
+and test methods within each class in parallel.
+
 Run a specific test from your Terminal
 """"""""""""""""""""""""""""""""""""""
 

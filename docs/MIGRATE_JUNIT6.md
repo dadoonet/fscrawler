@@ -182,9 +182,9 @@ mvn verify -P nightly   # run nightly tests
 mvn verify              # run daily tests (default, no @Nightly)
 ```
 
-### Parallel execution disabled (static `@TempDir` aliasing)
+### Parallel execution disabled by default (static `@TempDir` aliasing)
 
-Parallel class execution (`tests.parallelism`) is set to `false` because `rootTmpDir` is declared
+Parallel class execution (`tests.parallelism`) is set to `false` by default because `rootTmpDir` is declared
 as a **static** `@TempDir` field on `AbstractFSCrawlerTestCase` and inherited by all ~70 test
 classes. When two classes run concurrently, JUnit's `@TempDir` injection overwrites this single
 shared field, causing one class to use (and later lose) the temp directory of another — resulting
@@ -199,6 +199,15 @@ is inert while `tests.parallelism=false`:
 <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
 <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
 ```
+
+To **opt-in** to parallel execution, use the `parallel_tests` Maven profile:
+
+```bash
+mvn verify -P parallel_tests   # Enable parallel class and method execution
+```
+
+This profile overrides the system properties to enable JUnit 5's parallel engine without modifying
+the default sequential behavior. The profile is **not** active by default.
 
 **Deferred fix:** To re-enable parallelism cleanly, replace the static field with a JUnit extension
 that stores each class's temp directory in `ExtensionContext.Store` (keyed by class) and exposes it

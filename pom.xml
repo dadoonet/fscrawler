@@ -107,8 +107,6 @@
         <tests.timezone>random</tests.timezone>
         <tests.output>false</tests.output>
         <tests.leaveTemporary>false</tests.leaveTemporary>
-        <!-- JUnit Platform parallel execution: true=enabled, false=disabled -->
-        <tests.parallelism>false</tests.parallelism>
         <tests.seed/>
         <!-- Running the tests with Tesseract OCR might take time -->
         <tests.timeoutSuite>120</tests.timeoutSuite>
@@ -737,11 +735,10 @@
                         <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
                         <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
                         <systemPropertyVariables combine.children="append">
-                            <!-- classes run concurrently, methods within a class run sequentially -->
-                            <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
-                            <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
-                            <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
-                            <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
+                            <!-- classes run sequentially, methods within a class run concurrently -->
+                            <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                            <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                            <junit.jupiter.execution.parallel.mode.classes.default>same_thread</junit.jupiter.execution.parallel.mode.classes.default>
                             <arg.common>arg.common</arg.common>
                             <tests.seed>${tests.seed}</tests.seed>
                             <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
@@ -782,9 +779,6 @@
                         <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
                         <systemPropertyVariables combine.children="append">
                             <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
-                            <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
-                            <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
-                            <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
                             <arg.common>arg.common</arg.common>
                             <tests.seed>${tests.seed}</tests.seed>
                             <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
@@ -1033,6 +1027,12 @@
     </build>
 
     <profiles>
+        <!-- Tests related profiles:
+            -Pdaily: run the default tests (exclude tests tagged with @Nightly)
+            -Pnightly: run the nightly tests (include tests tagged with @Nightly)
+            -Pparallel_tests: run tests in parallel (classes and methods) use it with -Dtests.cluster.url
+         -->
+
         <!-- Default daily tests: we exclude Tests tagged with Nightly (@Nightly) -->
         <profile>
             <id>daily</id>
@@ -1081,6 +1081,36 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Profile to enable parallel test execution -->
+        <!-- It's recommended to run it with -Dtests.cluster.url pointing to a live ES cluster. -->
+        <!-- This profile configures JUnit 6 to parallelize test methods, not just test classes -->
+        <profile>
+            <id>parallel_tests</id>
+            <build>
+                <plugins>
+                    <!-- Override Failsafe plugin configuration to enable parallel test method execution -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables combine.children="override">
+                                <!-- Enable parallel execution -->
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <!-- Enable parallel execution of classes -->
+                                <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                                <!-- Enable parallel execution of test methods -->
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                                <!-- Define the strategy for the number of threads: we use default: dynamic -->
+                                <!-- junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy-->
+                                <!-- Define the factor to use x * num of cores: we use default: 1 -->
+                                <!-- junit.jupiter.execution.parallel.config.dynamic.factor>1</junit.jupiter.execution.parallel.config.dynamic.factor-->
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!-- Profile for ES8 -->
         <profile>
             <id>es-8x</id>
@@ -1217,40 +1247,6 @@
                     <url>https://repository.apache.org/content/repositories/orgapachetika-1061/</url>
                 </repository>
             </repositories>
-        </profile>
-        <!-- Profile to enable parallel test execution when running against a live Elasticsearch cluster -->
-        <!-- Activation: when -Dtests.cluster.url is provided -->
-        <!-- This profile configures JUnit 6 to parallelize test methods, not just test classes -->
-        <profile>
-            <id>cluster-parallel</id>
-            <activation>
-                <property>
-                    <name>tests.cluster.url</name>
-                </property>
-            </activation>
-            <properties>
-                <!-- Enable parallel execution -->
-                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                <!-- Enable parallel execution of test methods when running against a live Elasticsearch cluster -->
-                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-            </properties>
-            <build>
-                <plugins>
-                    <!-- Override Failsafe plugin configuration to enable parallel test method execution -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <configuration>
-                            <systemPropertyVariables combine.children="override">
-                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-                                <junit.jupiter.execution.parallel.mode.classes.default>sequential</junit.jupiter.execution.parallel.mode.classes.default>
-                                <junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 </project>

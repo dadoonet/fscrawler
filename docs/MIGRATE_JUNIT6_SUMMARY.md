@@ -17,8 +17,8 @@ Full narrative: `docs/MIGRATE_JUNIT6.md`.
 - `maven-failsafe-plugin` handles `*IT.java` integration tests; `maven-surefire-plugin` handles `*Test.java` unit tests
 - `-DskipUnitTests` / `-DskipIntegTests` properties added for selective execution
 - Always use `mvn verify` (not `mvn integration-test`) to run IT tests: `failsafe:verify` (bound to the `verify` phase) is what actually fails the build on test failures
-- Two Maven profiles: `daily` (default, excludes `@Nightly`) and `nightly` (includes only `@Nightly`)
-- Parallel execution disabled (`tests.parallelism=false`) to avoid static `@TempDir` aliasing
+- Three Maven profiles: `daily` (default, excludes `@Nightly`), `nightly` (includes only `@Nightly`), and `parallel_tests` (opt-in for parallel class/method execution)
+- Parallel execution disabled by default (`tests.parallelism=false`) to avoid static `@TempDir` aliasing; use `-P parallel_tests` to enable
 - `tests.timeoutSuite` and `tests.timeout` are in **seconds** (mapped to `parallelTestsTimeoutInSeconds` in Failsafe)
 
 ## 3. JUnit API Changes (annotations & imports)

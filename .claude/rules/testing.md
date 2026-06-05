@@ -64,6 +64,7 @@ See `docs/MIGRATE_JUNIT6.md` §1 for the open question on timeout inheritance.
 
 - `daily` (active by default) — excludes `@Nightly` tests
 - `nightly` — includes only `@Nightly` tests (`mvn verify -P nightly`)
+- `parallel_tests` (opt-in) — enables parallel class and method execution (`mvn verify -P parallel_tests`); use with live ES clusters, avoid with TestContainers
 
 ## Local Elasticsearch for Integration Tests
 
