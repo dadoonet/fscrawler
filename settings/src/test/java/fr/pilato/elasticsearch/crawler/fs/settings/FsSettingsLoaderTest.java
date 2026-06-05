@@ -34,6 +34,13 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
+import java.util.HashMap;
+import java.util.Map;
 
 class FsSettingsLoaderTest {
 
@@ -110,37 +117,6 @@ class FsSettingsLoaderTest {
         checkSettings(expected, settings);
     }
 
-    @Test
-    void withDefaultNamesForEnvVariables() throws Exception {
-        // Create environment variables
-        System.setProperty("name", "foo");
-        System.setProperty("fs.url", "/tmp/test");
-        System.setProperty("fs.xml_support", "true");
-
-        try {
-            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
-            FsSettings expected = generateExpectedDefaultFsSettings();
-            // Although a value is set by a env variable, the yaml file takes precedence
-            // So we have myname instead of foo
-            expected.setName("myname");
-
-            // Elasticsearch index name depends on the crawler name value ${name}
-            expected.getElasticsearch().setIndex("myname_docs");
-            expected.getElasticsearch().setIndexFolder("myname_folder");
-
-            // This is set by the env variable
-            expected.getFs().setUrl("/tmp/test");
-
-            // This is set by the env variable
-            expected.getFs().setXmlSupport(true);
-            checkSettings(expected, settings);
-        } finally {
-            // Remove the environment variable
-            System.clearProperty("name");
-            System.clearProperty("fs.url");
-            System.clearProperty("fs.xml_support");
-        }
-    }
 
     private void testLoadFullSettings(String jobName) throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read(jobName);
@@ -278,5 +254,49 @@ class FsSettingsLoaderTest {
         expected.setRest(rest);
 
         return expected;
+    }
+
+    @Nested
+    class WithEnvironmentVariablesTests {
+
+        private final Map<String, String> savedProperties = new HashMap<>();
+        private final String[] propertiesToManage = {"name", "fs.url", "fs.xml_support"};
+
+        @BeforeEach
+        void saveSystemProperties() {
+            for (String prop : propertiesToManage) {
+                savedProperties.put(prop, System.getProperty(prop));
+            }
+        }
+
+        @AfterEach
+        void restoreSystemProperties() {
+            for (String prop : propertiesToManage) {
+                String originalValue = savedProperties.get(prop);
+                if (originalValue == null) {
+                    System.clearProperty(prop);
+                } else {
+                    System.setProperty(prop, originalValue);
+                }
+            }
+            savedProperties.clear();
+        }
+
+        @Test
+        @ResourceLock(Resources.SYSTEM_PROPERTIES)
+        void withDefaultNamesForEnvVariables() throws Exception {
+            System.setProperty("name", "foo");
+            System.setProperty("fs.url", "/tmp/test");
+            System.setProperty("fs.xml_support", "true");
+
+            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
+            FsSettings expected = generateExpectedDefaultFsSettings();
+            expected.setName("myname");
+            expected.getElasticsearch().setIndex("myname_docs");
+            expected.getElasticsearch().setIndexFolder("myname_folder");
+            expected.getFs().setUrl("/tmp/test");
+            expected.getFs().setXmlSupport(true);
+            checkSettings(expected, settings);
+        }
     }
 }
