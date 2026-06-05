@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.api.parallel.Resources;
 import java.util.HashMap;
@@ -48,6 +49,20 @@ class FsSettingsLoaderTest {
 
     // Get the config path from resources
     Path configPath;
+
+    @BeforeEach
+    void cleanupSystemProperties() {
+        System.clearProperty("name");
+        System.clearProperty("fs.url");
+        System.clearProperty("fs.xml_support");
+    }
+
+    @AfterAll
+    static void cleanupAfterAll() {
+        System.clearProperty("name");
+        System.clearProperty("fs.url");
+        System.clearProperty("fs.xml_support");
+    }
 
     public FsSettingsLoaderTest() throws URISyntaxException {
         configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").toURI());
@@ -77,6 +92,7 @@ class FsSettingsLoaderTest {
     }
 
     @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadNonExistingSettings() throws IOException {
         FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
         FsSettings expected = generateExpectedDefaultFsSettings();
@@ -84,11 +100,13 @@ class FsSettingsLoaderTest {
     }
 
     @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadNoFile() {
         checkSettings(generateExpectedDefaultFsSettings(), FsSettingsLoader.load());
     }
 
     @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadJsonSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("json-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
@@ -111,6 +129,7 @@ class FsSettingsLoaderTest {
     }
 
     @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadYamlSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
