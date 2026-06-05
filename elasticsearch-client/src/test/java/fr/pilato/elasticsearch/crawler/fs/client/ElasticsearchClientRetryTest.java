@@ -46,6 +46,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /**
  * Integration tests for the retry mechanism on GET/HEAD requests. Uses WireMock to simulate server errors (503) and
@@ -60,6 +62,7 @@ import org.junit.jupiter.api.Test;
     IntelliJThreadsFilter.class,
     JUnitThreadsFilter.class
 })
+@Execution(ExecutionMode.SAME_THREAD)
 class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static WireMockServer wireMockServer;
