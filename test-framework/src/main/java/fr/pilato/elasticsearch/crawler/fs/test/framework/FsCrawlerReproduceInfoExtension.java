@@ -99,7 +99,7 @@ public class FsCrawlerReproduceInfoExtension implements AfterTestExecutionCallba
             }
 
             // 6. Log the reproduction command
-            logger.fatal(commandBuilder);
+            logger.fatal(commandBuilder.toString());
         }
     }
 
