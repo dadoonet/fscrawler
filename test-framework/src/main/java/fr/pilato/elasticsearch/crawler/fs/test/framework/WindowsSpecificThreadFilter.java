@@ -25,8 +25,17 @@ import java.util.function.Predicate;
 public class WindowsSpecificThreadFilter implements Predicate<Thread> {
     @Override
     public boolean test(Thread t) {
-        return System.getProperty("os.name").toLowerCase().contains("win")
+        if (!System.getProperty("os.name").toLowerCase().contains("win")) {
+            return false;
+        }
+        // Exclude TGRP- threads
+        if (t.getThreadGroup() != null && t.getThreadGroup().getName().startsWith("TGRP-")) {
+            return true;
+        }
+        // Exclude Apache HttpClient5 connector threads (Thread-N) that may leak on Windows
+        // These are Iocp threads that can take several seconds to shut down
+        return t.getName().matches("Thread-\\d+")
                 && t.getThreadGroup() != null
-                && t.getThreadGroup().getName().startsWith("TGRP-");
+                && "main".equals(t.getThreadGroup().getName());
     }
 }
