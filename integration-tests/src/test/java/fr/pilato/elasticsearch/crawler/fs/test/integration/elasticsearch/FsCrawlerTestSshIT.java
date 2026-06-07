@@ -73,8 +73,8 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
                 })
                 .build();
 
-        // Generate the key files for our SSH tests in a dedicated directory
-        Path sshKeyDir = Files.createDirectories(testTmpDir.resolve(".ssh-keys"));
+        // Generate the key files for our SSH tests in a dedicated directory outside the crawled path
+        Path sshKeyDir = Files.createDirectories(rootTmpDir.resolve(jobName + "-ssh-keys"));
         SshTestHelper.generateAndSaveKeyPair(sshKeyDir);
 
         sshd = SshServer.setUpDefaultServer();
