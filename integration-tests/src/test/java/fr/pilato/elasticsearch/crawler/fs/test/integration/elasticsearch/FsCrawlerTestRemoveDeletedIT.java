@@ -214,7 +214,7 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         String filename = "oldfile.txt";
         logger.info(" ---> Creating a file [{}]", filename);
 
-        Path tmpDir = testTmpDir.resolve("resources").resolve(jobName + "-tmp");
+        Path tmpDir = Files.createDirectories(rootTmpDir.resolve(jobName + "-temp"));
         Files.createDirectories(tmpDir);
 
         Path file = Files.createFile(tmpDir.resolve(filename));
