@@ -164,6 +164,9 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     void move_file() throws Exception {
         crawler = startCrawler();
 
+        // Create a directory outside of the crawled path to temporarily move files
+        Path movedFilesDir = Files.createDirectories(rootTmpDir.resolve(jobName + "-moved"));
+
         // We should have one doc first
         countTestHelper(
                 new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
@@ -174,7 +177,7 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logger.info(" ---> Moving file roottxtfile.txt to a tmp dir");
         Files.move(
                 currentTestResourceDir.resolve("roottxtfile.txt"),
-                testTmpDir.resolve("roottxtfile.txt"),
+                movedFilesDir.resolve("roottxtfile.txt"),
                 StandardCopyOption.ATOMIC_MOVE);
 
         // We expect to have 0 file
@@ -186,7 +189,7 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         // We move the file back
         logger.info(" ---> Moving file roottxtfile.txt from the tmp dir");
         Files.move(
-                testTmpDir.resolve("roottxtfile.txt"),
+                movedFilesDir.resolve("roottxtfile.txt"),
                 currentTestResourceDir.resolve("roottxtfile.txt"),
                 StandardCopyOption.ATOMIC_MOVE);
 
