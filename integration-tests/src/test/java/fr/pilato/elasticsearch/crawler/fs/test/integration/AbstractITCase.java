@@ -151,7 +151,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         String url = getUrl("tags", jobName);
         Path from = Paths.get(url);
 
-        currentTestTagDir = testTmpDir.resolve(jobName + ".tags");
+        currentTestTagDir = rootTmpDir.resolve(jobName + ".tags");
         logger.info(
                 "Looking for tags: jobName=[{}], from=[{}], currentTestTagDir=[{}]", jobName, from, currentTestTagDir);
         if (Files.exists(from)) {
