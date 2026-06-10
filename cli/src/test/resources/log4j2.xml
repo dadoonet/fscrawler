@@ -26,6 +26,9 @@
       <Logger name="org.github.gestalt" level="warn" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
+      <Logger name="io.opentelemetry" level="warn" additivity="false">
+         <AppenderRef ref="CONSOLE"/>
+      </Logger>
       <Root level="info">
          <AppenderRef ref="CONSOLE"/>
       </Root>
