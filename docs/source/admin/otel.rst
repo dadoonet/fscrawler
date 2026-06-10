@@ -93,8 +93,6 @@ Common variables:
      - Comma-separated ``key=value`` resource attributes
    * - ``OTEL_EXPORTER_OTLP_HEADERS``
      - Auth headers, e.g. ``Authorization=Bearer <token>``
-   * - ``OTEL_SDK_DISABLED``
-     - Set to ``true`` to disable without removing the agent
    * - ``OTEL_EXPORTER_OTLP_TIMEOUT``
      - Export timeout in ms (e.g. ``1000``); reduce if the collector is unavailable
    * - ``OTEL_METRIC_EXPORT_INTERVAL``
@@ -122,18 +120,18 @@ You can find your OTel endpoint and API key in Kibana under
 Behavior without a collector
 ------------------------------
 
-If the agent is present but no EDOT Collector is reachable, the OTLP exporter
+If OTEL_ENABLED is set and the collector is unreachable, the OTLP exporter
 will log a ``WARN`` message on each failed export attempt and retry with
 exponential back-off.  FSCrawler continues to run normally — tracing failures
 are non-blocking.
 
-To suppress the warnings when no collector is available::
+To suppress the warnings, you can:
 
-    export OTEL_SDK_DISABLED=true
-
-or reduce the export timeout::
+- Reduce the export timeout::
 
     export OTEL_EXPORTER_OTLP_TIMEOUT=1000
+
+- Or disable OTEL tracing entirely by not setting ``OTEL_ENABLED=true``
 
 Using with other OTel backends (Jaeger, Zipkin, …)
 ----------------------------------------------------
