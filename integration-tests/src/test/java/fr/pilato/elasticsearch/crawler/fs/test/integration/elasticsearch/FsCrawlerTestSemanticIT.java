@@ -20,9 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.carrotsearch.randomizedtesting.annotations.Nightly;
-import com.carrotsearch.randomizedtesting.annotations.Timeout;
-import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
@@ -32,26 +29,26 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Nightly;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Assumptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test if semantic search is working as we could expect, ie: not activated when it can't or activated when it should.
  */
-@Nightly("Loading semantic models could take some minutes")
-@TimeoutSuite(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
-@Timeout(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
-public class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
+@Nightly
+@VerySlow
+class FsCrawlerTestSemanticIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test for #1996: <a
      * href="https://github.com/dadoonet/fscrawler/pull/1996">https://github.com/dadoonet/fscrawler/pull/1996</a>
      */
     @Test
-    public void semantic() throws Exception {
+    void semantic() throws Exception {
         // We will execute this test from version 8.17 with a trial or enterprise license
         Assumptions.assumeThat(client.isSemanticSupported())
                 .as("We don't run this test when semantic search is not available")

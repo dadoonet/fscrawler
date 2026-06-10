@@ -31,10 +31,10 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test Xml support crawler setting */
-public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**
@@ -43,7 +43,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      * Add xml_support setting
      */
     @Test
-    public void xmlSupport() throws Exception {
+    void xmlSupport() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
         crawler = startCrawler(fsSettings);
@@ -76,7 +76,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      * Add xml_support setting
      */
     @Test
-    public void xmlSupportAndOtherFiles() throws Exception {
+    void xmlSupportAndOtherFiles() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
         crawler = startCrawler(fsSettings);
@@ -91,7 +91,7 @@ public class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
      * invalid json generated from XML
      */
     @Test
-    public void xmlNotReadable() throws Exception {
+    void xmlNotReadable() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
         crawler = startCrawler(fsSettings);

@@ -31,13 +31,13 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import java.security.MessageDigest;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Assumptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test checksum crawler settings */
-public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void checksum_md5() throws Exception {
+    void checksum_md5() throws Exception {
         Assumptions.assumeThatCode(() -> MessageDigest.getInstance("MD5")).doesNotThrowAnyException();
 
         FsSettings fsSettings = createTestSettings();
@@ -54,7 +54,7 @@ public class FsCrawlerTestChecksumIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void checksum_sha1() throws Exception {
+    void checksum_sha1() throws Exception {
         Assumptions.assumeThatCode(() -> MessageDigest.getInstance("SHA-1")).doesNotThrowAnyException();
 
         FsSettings fsSettings = createTestSettings();

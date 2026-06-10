@@ -29,10 +29,10 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test crawler with ingest pipelines */
-public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for #234: <a
@@ -40,7 +40,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
      * Support ingest pipeline processing
      */
     @Test
-    public void ingest_pipeline() throws Exception {
+    void ingest_pipeline() throws Exception {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
@@ -85,7 +85,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
      * Support ingest pipeline processing
      */
     @Test
-    public void ingest_pipeline_392() throws Exception {
+    void ingest_pipeline_392() throws Exception {
         String crawlerName = getCrawlerName();
 
         // Create an empty ingest pipeline
@@ -133,7 +133,7 @@ public class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
      * Missing ES pipeline
      */
     @Test
-    public void ingest_missing_pipeline_490() throws Exception {
+    void ingest_missing_pipeline_490() throws Exception {
         String crawlerName = getCrawlerName();
 
         FsSettings fsSettings = createTestSettings();

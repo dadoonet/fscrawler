@@ -24,34 +24,20 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
+class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
-    @ClassRule
-    public static final TemporaryFolder folder = new TemporaryFolder();
-
-    protected static Path rootTmpDir;
-
-    @BeforeClass
-    public static void createTmpDir() throws IOException {
-        folder.create();
-        rootTmpDir = Paths.get(folder.getRoot().toURI());
-    }
-
-    private void settingsTester(FsSettings source) throws IOException {
+    private void settingsTester(FsSettings source, Path tempDir) throws IOException {
         String yaml = FsSettingsParser.toYaml(source);
         logger.debug("generated yaml:\n{}", yaml);
-        Path settingsFile = rootTmpDir.resolve("settings.yaml");
+        Path settingsFile = tempDir.resolve("settings.yaml");
         Files.writeString(settingsFile, yaml);
         FsSettings generated = FsSettingsLoader.load(settingsFile);
         checkSettings(source, generated);
@@ -77,36 +63,36 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void parseEmptySettings() throws IOException {
-        settingsTester(FsSettingsLoader.load());
+    void parseEmptySettings(@TempDir Path tempDir) throws IOException {
+        settingsTester(FsSettingsLoader.load(), tempDir);
     }
 
     @Test
-    public void parseSettingsElasticsearchTwoNodes() throws IOException {
+    void parseSettingsElasticsearchTwoNodes(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setUrls(List.of("https://127.0.0.1:9200", "https://127.0.0.1:9201"));
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 
     @Test
-    public void parseSettingsElasticsearchWithPathPrefix() throws IOException {
+    void parseSettingsElasticsearchWithPathPrefix(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getElasticsearch().setPathPrefix("/path/to/elasticsearch");
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 
     @Test
-    public void parseSettingsWithStaticMetadata() throws IOException {
+    void parseSettingsWithStaticMetadata(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getTags().setStaticMetaFilename("/path/to/metadatafile.yml");
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 
     @Test
-    public void parseSettingsWithAclSupport() throws IOException {
+    void parseSettingsWithAclSupport(@TempDir Path tempDir) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setAttributesSupport(true);
         fsSettings.getFs().setAclSupport(true);
-        settingsTester(fsSettings);
+        settingsTester(fsSettings, tempDir);
     }
 }

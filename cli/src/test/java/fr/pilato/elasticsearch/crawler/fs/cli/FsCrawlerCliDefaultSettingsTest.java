@@ -30,25 +30,23 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /** We want to test FSCrawler main app */
-public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static Path metadataDir;
 
-    @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException {
+    @BeforeAll
+    static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
-        }
+        Files.createDirectories(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
     @Test
-    public void settingsModifiedWithFtp() throws IOException {
+    void settingsModifiedWithFtp() throws IOException {
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         Path jobDir = metadataDir.resolve("modify_settings_server_ftp");
         Files.createDirectories(jobDir);
@@ -64,7 +62,7 @@ public class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void settingsModifiedWithSsh() throws IOException {
+    void settingsModifiedWithSsh() throws IOException {
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         Path jobDir = metadataDir.resolve("modify_settings_server_ssh");
         Files.createDirectories(jobDir);

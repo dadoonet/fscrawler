@@ -37,14 +37,14 @@ import java.nio.file.Files;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test filesize crawler setting */
-public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void indexed_chars() throws Exception {
+    void indexed_chars() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexedChars(new Percentage(7));
         crawler = startCrawler(fsSettings);
@@ -62,7 +62,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void indexed_chars_percentage() throws Exception {
+    void indexed_chars_percentage() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexedChars(Percentage.parse("0.1%"));
         crawler = startCrawler(fsSettings);
@@ -80,7 +80,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void indexed_chars_nolimit() throws Exception {
+    void indexed_chars_nolimit() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexedChars(new Percentage(-1));
         crawler = startCrawler(fsSettings);
@@ -98,7 +98,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void filesize() throws Exception {
+    void filesize() throws Exception {
         crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(
@@ -111,7 +111,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void filesize_disabled() throws Exception {
+    void filesize_disabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setAddFilesize(false);
         crawler = startCrawler(fsSettings);
@@ -125,7 +125,7 @@ public class FsCrawlerTestFilesizeIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void filesize_limit() throws Exception {
+    void filesize_limit() throws Exception {
         logger.info(" ---> Creating a smaller file small.txt");
         Files.write(
                 currentTestResourceDir.resolve("small.txt"),

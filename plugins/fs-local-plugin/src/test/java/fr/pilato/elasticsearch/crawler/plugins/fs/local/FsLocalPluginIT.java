@@ -36,13 +36,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
+class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
-    private static Path createFile(String objectName, String object) throws IOException {
-        return createFile(rootTmpDir, objectName, object);
+    private Path createFile(String objectName, String object) throws IOException {
+        return createFile(testTmpDir, objectName, object);
     }
 
     private static Path createFile(Path dir, String objectName, String object) throws IOException {
@@ -53,7 +53,7 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readFileWithFullPath() throws Exception {
+    void readFileWithFullPath() throws Exception {
         String text = "Hello Foo world!";
         Path fileName = createFile("foo.txt", text);
         createFile("bar.txt", "This one should be ignored.");
@@ -61,7 +61,7 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         logger.info("Starting Test with bucket [{}]", fileName);
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
-            fsSettings.getFs().setUrl(rootTmpDir.toString());
+            fsSettings.getFs().setUrl(testTmpDir.toString());
             provider.start(
                     fsSettings,
                     "{\n" + "  \"type\": \"local\",\n"
@@ -86,14 +86,14 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readFileWithRelativePath() throws Exception {
+    void readFileWithRelativePath() throws Exception {
         String text = "Hello Foo world!";
         Path fileName = createFile("foo.txt", text);
 
         logger.info("Starting Test with bucket [{}]", fileName);
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
-            fsSettings.getFs().setUrl(rootTmpDir.toString());
+            fsSettings.getFs().setUrl(testTmpDir.toString());
             provider.start(
                     fsSettings,
                     "{\n" + "  \"type\": \"local\",\n"
@@ -118,11 +118,11 @@ public class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void readFileWithFullPathOutsideRootDir() throws Exception {
-        Path rootDir = rootTmpDir.resolve("root-dir");
-        Files.createDirectory(rootDir);
-        Path outsideRootDir = rootTmpDir.resolve("outside-root-dir");
-        Files.createDirectory(outsideRootDir);
+    void readFileWithFullPathOutsideRootDir() throws Exception {
+        Path rootDir = testTmpDir.resolve("root-dir");
+        Files.createDirectories(rootDir);
+        Path outsideRootDir = testTmpDir.resolve("outside-root-dir");
+        Files.createDirectories(outsideRootDir);
 
         String text = "Hello Foo world!";
         Path fileName = createFile(outsideRootDir, "foo.txt", text);

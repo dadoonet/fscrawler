@@ -49,9 +49,7 @@ public class FsCrawlerUtilForTests {
      * @throws IOException If copying does not work
      */
     public static void copyDirs(Path source, Path target, CopyOption... options) throws IOException {
-        if (Files.notExists(target)) {
-            Files.createDirectory(target);
-        }
+        Files.createDirectories(target);
 
         logger.debug("  --> Copying resources from [{}]", source);
         if (Files.notExists(source)) {
@@ -84,7 +82,7 @@ public class FsCrawlerUtilForTests {
 
             Path targetPath = toPath.resolve(fromPath.relativize(dir));
             if (!Files.exists(targetPath)) {
-                Files.createDirectory(targetPath);
+                Files.createDirectories(targetPath);
             }
             return FileVisitResult.CONTINUE;
         }

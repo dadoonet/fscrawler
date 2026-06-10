@@ -26,18 +26,15 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.util.List;
-import org.assertj.core.api.Assumptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /** Test tika config path crawler setting */
-public class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void tika_config_path() throws Exception {
-        Assumptions.assumeThat(false)
-                .as(
-                        "We are skipping this test. See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549")
-                .isTrue();
+    @Disabled("See discussion at https://github.com/dadoonet/fscrawler/pull/1403#issuecomment-1077912549")
+    void tika_config_path() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings
                 .getFs()

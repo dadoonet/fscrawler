@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerMetadataTestCase;
@@ -29,15 +29,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** We want to test some utilities */
-public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
+class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase {
 
     @Test
-    public void listExistingJobs() throws IOException {
+    void listExistingJobs() throws IOException {
         String jobNamePrefix = "fscrawler_list_existing_jobs";
-        int numJobs = between(1, 30);
+        int numJobs = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 30);
 
         // We generate so fake jobs first in metadata dir
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
@@ -46,7 +46,7 @@ public class FsCrawlerCliJobsUtilTest extends AbstractFSCrawlerMetadataTestCase 
             String jobName = jobNamePrefix + "-" + i;
             Path jobDir = metadataDir.resolve(jobName);
             Files.createDirectories(jobDir);
-            if (RandomizedTest.randomBoolean()) {
+            if (RandomizedTest.randomBoolean(randomizedRandomForTests)) {
                 // Yaml settings file
                 fsSettingsLoader.write(jobName, new FsSettings());
             } else {

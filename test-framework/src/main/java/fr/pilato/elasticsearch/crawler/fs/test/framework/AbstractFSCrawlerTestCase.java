@@ -20,43 +20,49 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import com.carrotsearch.randomizedtesting.RandomizedContext;
-import com.carrotsearch.randomizedtesting.RandomizedRunner;
-import com.carrotsearch.randomizedtesting.RandomizedTest;
-import com.carrotsearch.randomizedtesting.annotations.Listeners;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
-import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
+import com.carrotsearch.randomizedtesting.jupiter.DetectThreadLeaks;
+import com.carrotsearch.randomizedtesting.jupiter.Randomized;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
 import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 
-@RunWith(RandomizedRunner.class)
-@Listeners({FSCrawlerReproduceInfoPrinter.class})
-@ThreadLeakScope(ThreadLeakScope.Scope.SUITE)
-@ThreadLeakLingering(linger = 5000) // 5 sec lingering
-@ThreadLeakFilters(
-        filters = {WindowsSpecificThreadFilter.class, TestContainerThreadFilter.class, JNACleanerThreadFilter.class})
+@Randomized
+@ExtendWith(FsCrawlerReproduceInfoExtension.class)
+@DetectThreadLeaks(scope = DetectThreadLeaks.Scope.SUITE)
+@DetectThreadLeaks.LingerTime(millis = 5000) // 5 sec lingering
+@DetectThreadLeaks.ExcludeThreads({
+    SystemThreadFilter.class,
+    ForkJoinPoolThreadFilter.class,
+    WindowsSpecificThreadFilter.class,
+    TestContainerThreadFilter.class,
+    JNACleanerThreadFilter.class,
+    IntelliJThreadsFilter.class,
+    JUnitThreadsFilter.class,
+    KeepAliveTimerThreadFilter.class,
+    Java2DThreadFilter.class
+})
+@Fast
 public abstract class AbstractFSCrawlerTestCase {
-
-    public static final int TIMEOUT_MINUTE_AS_MS = 60 * 1000;
 
     private static final Logger logger = LogManager.getLogger();
     private static final String RANDOM = "random";
@@ -73,51 +79,62 @@ public abstract class AbstractFSCrawlerTestCase {
      */
     public static final Duration MAX_WAIT_FOR_SEARCH_LONG_TESTS = Duration.ofMinutes(10);
 
-    @Rule
-    public TestName name = new TestName();
-
-    @ClassRule
-    public static final TemporaryFolder folder = new TemporaryFolder();
-
+    @TempDir
     protected static Path rootTmpDir;
 
-    @BeforeClass
-    public static void createTmpDir() throws IOException {
-        folder.create();
-        rootTmpDir = Paths.get(folder.getRoot().toURI());
-    }
+    protected String jobName;
+    protected Path testTmpDir;
+    protected Random randomizedRandomForTests;
+    private Map<String, String> savedSystemProperties;
 
-    @BeforeClass
-    public static void setLocale() {
+    @BeforeAll
+    static void setLocale(Random rnd) {
         String testLocale = getSystemProperty("tests.locale", RANDOM);
         Locale locale = testLocale.equals(RANDOM)
-                ? RandomizedTest.randomLocale()
+                ? RandomizedTest.randomLocale(rnd)
                 : new Locale.Builder().setLanguageTag(testLocale).build();
         logger.debug("Running test suite with Locale [{}]", locale);
         Locale.setDefault(locale);
     }
 
-    @AfterClass
-    public static void resetLocale() {
+    @AfterAll
+    static void resetLocale() {
         Locale.setDefault(savedLocale);
     }
 
-    @BeforeClass
-    public static void setTimeZone() {
+    @BeforeAll
+    static void setTimeZone(Random rnd) {
         String testTimeZone = getSystemProperty("tests.timezone", RANDOM);
         TimeZone timeZone =
-                testTimeZone.equals(RANDOM) ? RandomizedTest.randomTimeZone() : TimeZone.getTimeZone(testTimeZone);
+                testTimeZone.equals(RANDOM) ? RandomizedTest.randomTimeZone(rnd) : TimeZone.getTimeZone(testTimeZone);
         logger.debug("Running test suite with TimeZone [{}]/[{}]", timeZone.getID(), timeZone.getDisplayName());
         TimeZone.setDefault(timeZone);
     }
 
-    @AfterClass
-    public static void resetTimeZone() {
+    @AfterAll
+    static void resetTimeZone() {
         TimeZone.setDefault(savedTimeZone);
     }
 
-    protected String getCurrentTestName() {
-        return toUnderscoreCase(name.getMethodName());
+    /**
+     * We are computing automatically the job name from the current method test name.
+     *
+     * @param testInfo The current test
+     */
+    @BeforeEach
+    void setJobName(TestInfo testInfo) throws IOException {
+        jobName = toUnderscoreCase(testInfo.getTestMethod().orElseThrow().getName());
+        testTmpDir = Files.createDirectories(rootTmpDir.resolve(jobName));
+    }
+
+    /**
+     * We store the test Random so we can reuse it later in tests as TEST_RANDOM
+     *
+     * @param rnd The Random provided by the @Randomized annotation
+     */
+    @BeforeEach
+    void storeRandom(Random rnd) {
+        randomizedRandomForTests = rnd;
     }
 
     /**
@@ -128,7 +145,7 @@ public abstract class AbstractFSCrawlerTestCase {
      * @return the crawler name to use
      */
     protected String getCrawlerName() {
-        return getCrawlerName(this.getClass(), getCurrentTestName());
+        return getCrawlerName(this.getClass(), jobName);
     }
 
     /**
@@ -154,10 +171,6 @@ public abstract class AbstractFSCrawlerTestCase {
                     .concat(methodName);
         }
         return testName.contains(" ") ? StringUtils.split(testName, " ")[0] : testName;
-    }
-
-    public static int between(int min, int max) {
-        return RandomNumbers.randomIntBetween(RandomizedContext.current().getRandom(), min, max);
     }
 
     public static String toUnderscoreCase(String value) {
@@ -245,6 +258,26 @@ public abstract class AbstractFSCrawlerTestCase {
             return defaultValue;
         } else {
             return Boolean.parseBoolean(property);
+        }
+    }
+
+    protected void saveSystemProperties(String... propertyNames) {
+        savedSystemProperties = new HashMap<>();
+        for (String propertyName : propertyNames) {
+            savedSystemProperties.put(propertyName, System.getProperty(propertyName));
+        }
+    }
+
+    protected void restoreSystemProperties() {
+        if (savedSystemProperties != null) {
+            for (Map.Entry<String, String> entry : savedSystemProperties.entrySet()) {
+                if (entry.getValue() == null) {
+                    System.clearProperty(entry.getKey());
+                } else {
+                    System.setProperty(entry.getKey(), entry.getValue());
+                }
+            }
+            savedSystemProperties.clear();
         }
     }
 }

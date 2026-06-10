@@ -64,12 +64,33 @@ to set ``tests.leaveTemporary`` to ``true``::
 
     mvn verify -Dtests.leaveTemporary=true
 
+Parallel test execution
+"""""""""""""""""""""""
+
+By default, parallel test execution is disabled to avoid static field issues (shared ElasticsearchClient for example).
+To enable parallel execution of test classes and methods, use the ``parallel_tests`` Maven profile::
+
+    mvn verify -P parallel_tests
+
+This profile enables JUnit 6's parallel execution engine, running both test classes concurrently
+and test methods within each class in parallel.
+
 Run a specific test from your Terminal
 """"""""""""""""""""""""""""""""""""""
 
+To run a specific unit test, just run::
+
+    mvn verify -DskipIntegTests -Dtest=CLASS_NAME#METHOD_NAME
+
 To run a specific integration test, just run::
 
-    mvn verify -am -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.integration.CLASS_NAME -Dtests.method="METHOD_NAME"
+    mvn verify -DskipUnitTests -Dit.test=CLASS_NAME#METHOD_NAME
+
+.. note::
+
+    Integration tests (``*IT.java``) are run by ``maven-failsafe-plugin`` and use ``-Dit.test=``.
+    Unit tests (``*Test.java``) are run by ``maven-surefire-plugin`` and use ``-Dtest=``.
+
 
 Run tests with an external cluster
 """"""""""""""""""""""""""""""""""
@@ -123,11 +144,18 @@ When set to ``0`` (default value), the port is assigned randomly.
 Randomized testing
 """"""""""""""""""
 
-FS Crawler uses the `randomized testing framework <https://github.com/randomizedtesting/randomizedtesting>`_.
+FS Crawler uses the `randomized testing framework <https://github.com/randomizedtesting/randomizedtesting-jupiter>`_.
 In case of failure, it will print a line like::
 
+For a unit test::
+
     REPRODUCE WITH:
-    mvn test -Dtests.seed=AC6992149EB4B547 -Dtests.class=fr.pilato.elasticsearch.crawler.fs.test.unit.tika.TikaDocParserTest -Dtests.method="testExtractFromRtf" -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
+    mvn test -pl tika -Dtest=TikaDocParserTest#testExtractFromRtf -Dtests.seed=AC6992149EB4B547 -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
+
+For an integration test::
+
+    REPRODUCE WITH:
+    mvn verify -pl integration-tests -am -Dit.test=FsCrawlerTestOcrIT#ocr_disabled -Dtests.seed=AC6992149EB4B547 -Dtests.locale=tr-TR
 
 You can just run the test again using the same seed to make sure you always run the test in the same context as before.
 
@@ -137,19 +165,14 @@ Tests options
 Some options are available from the command line when running the tests:
 
 * ``tests.leaveTemporary`` leaves temporary files after tests (and also the TestContainers instance). ``false`` by default.
-* ``tests.parallelism`` how many JVM to launch in parallel for tests. ``auto`` by default which means that it depends on
-  the number of processors you have. It can be set to ``max`` if you want to use all the available processors, or a
-  given value like ``1`` to use that exact number of JVMs.
-* ``tests.output`` what should be displayed to the console while running tests. By default it is set to ``onError`` but
-  can be set to ``always``.
-* ``tests.verbose`` ``false`` by default.
+* ``tests.parallelism`` set to ``true`` if you want to allow multiple suites to be ran in parallel. Default to ``false``.
+* ``tests.output`` set to ``true`` if you want to redirect the tests output redirected to a file.
+Defaults to ``false``.
 * ``tests.seed`` if you need to reproduce a specific failure using the exact same random seed.
-* ``tests.timeoutSuite`` how long a full suite of tests can run. It's set by default to ``60000`` which means 1 minute.
-* ``tests.timeout`` how long a single test can run. It's set by default to ``120000`` which means 2 minutes.
+* ``tests.timeoutSuite`` how long a full suite of tests can run. It's set by default to ``120`` which means 2 minutes.
+* ``tests.timeout`` how long a single test can run. It's set by default to ``60`` which means 1 minute.
 * ``tests.locale`` by default it's set to ``random`` but you can force the locale to use.
 * ``tests.timezone`` by default it's set to ``random`` but you can force the timezone to use, like ``CEST`` or ``-0200``.
-* ``tests.nightly`` if you want to run the tests which are taking a significant time to run, set it to ``true``.
-  ``false`` by default.
 
 For example::
 
@@ -160,6 +183,13 @@ For example::
     -Dtests.verbose \
     -Dtests.leaveTemporary \
     -Dtests.seed=E776CE45185A6E7A
+
+Nightly tests
+"""""""""""""
+
+To run the tests in a more exhaustive way, you can use the ``nightly`` profile which will run only the longest tests::
+
+    mvn verify -P nightly
 
 Code formatting (Spotless)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -196,16 +226,20 @@ vulnerabilities. This is ran during the ``verify`` phase.
 Sonatype provides this service but with a anonymous account, you might be limited
 by the number of tests you can run during a given period.
 
-If you have an existing account, you can use it to bypass this limit for anonymous users by
-setting ``sonatype.username`` and ``sonatype.password``::
+You can bypass this limit by creating a `Personal Access Token (PAT) <https://guide.sonatype.com/settings/tokens>`_
+and then set the ``sonatype.username`` and ``sonatype.password`` properties::
 
         mvn verify -DskipTests \
             -Dsonatype.username=youremail@domain.com \
-            -Dsonatype.password=yourverysecuredpassword
+            -Dsonatype.password=YOUR_PAT
 
-If you want to skip the check, you can run with ``-Dossindex.fail=false``::
+If you want to just warn but not fail, you can run with ``-Dossindex.fail=false``::
 
-        mvn clean install -Dossindex.fail=false
+        mvn verify -Dossindex.fail=false
+
+If you want to skip the check, you can run with ``-Dossindex.skip``::
+
+        mvn verify -Dossindex.skip
 
 If a CVE needs a temporary exclusion, you can add it to the ``excludeVulnerabilityIds`` list
 of the ``ossindex`` maven plugin in the ``pom.xml`` file::

@@ -39,14 +39,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test moving/removing/adding files */
-public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void add_new_files_and_force_rescan() throws Exception {
+    void add_new_files_and_force_rescan() throws Exception {
         FsSettings fsSettings = createTestSettings();
         // We want to wait the default wait time which is 15 minutes.
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(15));
@@ -76,7 +76,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void add_new_files_and_force_rescan_with_null() throws Exception {
+    void add_new_files_and_force_rescan_with_null() throws Exception {
         FsSettings fsSettings = createTestSettings();
         // We want to wait the default wait time which is 15 minutes.
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(15));
@@ -111,7 +111,7 @@ public class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
      * files are not added
      */
     @Test
-    public void add_new_file() throws Exception {
+    void add_new_file() throws Exception {
         // We need to wait for 2 seconds before starting the test as the file might have just been created
         // It's due to https://github.com/dadoonet/fscrawler/issues/82 which removes 2 seconds from the last scan date
         FsCrawlerUtil.waitFor(Duration.ofSeconds(2));

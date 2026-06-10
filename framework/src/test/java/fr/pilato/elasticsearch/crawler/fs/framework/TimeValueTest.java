@@ -21,12 +21,12 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class TimeValueTest {
+class TimeValueTest {
 
     @Test
-    public void timeValueFromString() {
+    void timeValueFromString() {
         Assertions.assertThat(TimeValue.parseTimeValue("1s").millis()).isEqualTo(1000L);
         Assertions.assertThat(TimeValue.parseTimeValue("1s").seconds()).isEqualTo(1L);
         Assertions.assertThat(TimeValue.parseTimeValue("10s").seconds()).isEqualTo(10L);
@@ -41,7 +41,7 @@ public class TimeValueTest {
     }
 
     @Test
-    public void timeValueToString() {
+    void timeValueToString() {
         Assertions.assertThat(TimeValue.parseTimeValue("1s")).hasToString("1s");
         Assertions.assertThat(TimeValue.parseTimeValue("10s")).hasToString("10s");
         Assertions.assertThat(TimeValue.parseTimeValue("1m")).hasToString("1m");

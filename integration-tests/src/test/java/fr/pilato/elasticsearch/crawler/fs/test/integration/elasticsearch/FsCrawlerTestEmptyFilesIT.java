@@ -28,13 +28,13 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test crawler with empty files. Issue <a href="https://github.com/dadoonet/fscrawler/issues/1798">#1798</a> */
-public class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestEmptyFilesIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void empty_files() throws Exception {
+    void empty_files() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 2 files

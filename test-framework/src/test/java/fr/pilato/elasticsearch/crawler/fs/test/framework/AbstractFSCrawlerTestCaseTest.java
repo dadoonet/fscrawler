@@ -21,12 +21,12 @@
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
+class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void toUnderscoreCase() {
+    void toUnderscoreCase() {
         Assertions.assertThat(toUnderscoreCase("")).isEmpty();
         Assertions.assertThat(toUnderscoreCase("AbstractFSCrawlerTestCaseTest"))
                 .isEqualTo("abstract_f_s_crawler_test_case_test");
@@ -35,7 +35,7 @@ public class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testCrawlerName() {
+    void testCrawlerName() {
         String crawlerName = getCrawlerName();
 
         // The test depends on the env variable "test.index.prefix" being set to something"

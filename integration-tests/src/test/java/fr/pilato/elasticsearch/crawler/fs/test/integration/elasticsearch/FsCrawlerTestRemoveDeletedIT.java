@@ -34,14 +34,14 @@ import java.time.Instant;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test moving/removing/adding files */
-public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void remove_deleted_enabled() throws Exception {
+    void remove_deleted_enabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(true);
         crawler = startCrawler(fsSettings);
@@ -64,7 +64,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void remove_deleted_disabled() throws Exception {
+    void remove_deleted_disabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(false);
         crawler = startCrawler(fsSettings);
@@ -92,7 +92,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * Folder index is not getting delete on delete of folder
      */
     @Test
-    public void remove_folder_deleted_enabled() throws Exception {
+    void remove_folder_deleted_enabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRemoveDeleted(true);
         crawler = startCrawler(fsSettings);
@@ -124,7 +124,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * @throws Exception In case something is wrong
      */
     @Test
-    public void rename_file() throws Exception {
+    void rename_file() throws Exception {
         crawler = startCrawler();
 
         // We should have one doc first
@@ -161,8 +161,11 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * @throws Exception In case something is wrong
      */
     @Test
-    public void move_file() throws Exception {
+    void move_file() throws Exception {
         crawler = startCrawler();
+
+        // Create a directory outside of the crawled path to temporarily move files
+        Path movedFilesDir = Files.createDirectories(rootTmpDir.resolve(jobName + "-moved"));
 
         // We should have one doc first
         countTestHelper(
@@ -174,7 +177,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         logger.info(" ---> Moving file roottxtfile.txt to a tmp dir");
         Files.move(
                 currentTestResourceDir.resolve("roottxtfile.txt"),
-                rootTmpDir.resolve("roottxtfile.txt"),
+                movedFilesDir.resolve("roottxtfile.txt"),
                 StandardCopyOption.ATOMIC_MOVE);
 
         // We expect to have 0 file
@@ -186,7 +189,7 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         // We move the file back
         logger.info(" ---> Moving file roottxtfile.txt from the tmp dir");
         Files.move(
-                rootTmpDir.resolve("roottxtfile.txt"),
+                movedFilesDir.resolve("roottxtfile.txt"),
                 currentTestResourceDir.resolve("roottxtfile.txt"),
                 StandardCopyOption.ATOMIC_MOVE);
 
@@ -206,15 +209,13 @@ public class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * Moving existing files does not index new files
      */
     @Test
-    public void moving_files() throws Exception {
+    void moving_files() throws Exception {
         // Let's first create one old file: old = created before the crawler started
         String filename = "oldfile.txt";
         logger.info(" ---> Creating a file [{}]", filename);
 
-        Path tmpDir = rootTmpDir.resolve("resources").resolve(getCurrentTestName() + "-tmp");
-        if (Files.notExists(tmpDir)) {
-            Files.createDirectory(tmpDir);
-        }
+        Path tmpDir = Files.createDirectories(rootTmpDir.resolve(jobName + "-temp"));
+        Files.createDirectories(tmpDir);
 
         Path file = Files.createFile(tmpDir.resolve(filename));
         Files.writeString(file, "Hello world", StandardCharsets.UTF_8);

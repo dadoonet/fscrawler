@@ -32,13 +32,14 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.Test;
 
 /** Test crawler default settings */
-public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void defaults() throws Exception {
+    void defaults() throws Exception {
         crawler = startCrawler();
 
         // We expect to have one file
@@ -53,7 +54,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void default_metadata() throws Exception {
+    void default_metadata() throws Exception {
         crawler = startCrawler();
 
         ESSearchResponse searchResponse = countTestHelper(
@@ -81,7 +82,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void filename_analyzer() throws Exception {
+    void filename_analyzer() throws Exception {
         crawler = startCrawler();
 
         // We should have one doc
@@ -101,7 +102,7 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
      * fields
      */
     @Test
-    public void highlight_documents() throws Exception {
+    void highlight_documents() throws Exception {
         crawler = startCrawler();
 
         // We expect to have one file
@@ -113,12 +114,11 @@ public class FsCrawlerTestDefaultsIT extends AbstractFsCrawlerITCase {
                 .withESQuery(new ESMatchQuery("content", "exemplo"))
                 .addHighlighter("content"));
         Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
-        Assertions.assertThat(response.getHits())
+        Assertions.assertThat(findHitByFilename(response, "roottxtfile.txt").getHighlightFields())
+                .containsKey("content")
+                .extractingByKey("content", InstanceOfAssertFactories.list(String.class))
                 .singleElement()
-                .satisfies(hit -> Assertions.assertThat(hit.getHighlightFields())
-                        .extractingByKey("content")
-                        .satisfies(h -> Assertions.assertThat(h)
-                                .singleElement()
-                                .satisfies(t -> Assertions.assertThat(t).contains("<em>exemplo</em>"))));
+                .asString()
+                .contains("<em>exemplo</em>");
     }
 }

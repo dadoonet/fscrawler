@@ -26,24 +26,22 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 public abstract class AbstractFSCrawlerMetadataTestCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     protected static Path metadataDir;
 
-    @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException {
+    @BeforeAll
+    static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (!metadataDir.toFile().exists()) {
-            Files.createDirectory(metadataDir);
-        }
+        Files.createDirectories(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
-    @AfterClass
-    public static void printMetadataDirContent() throws IOException {
+    @AfterAll
+    static void printMetadataDirContent() throws IOException {
         logger.debug("ls -l {}", metadataDir);
         try (Stream<Path> files = Files.list(metadataDir)) {
             files.forEach(path -> logger.debug("{}", path));

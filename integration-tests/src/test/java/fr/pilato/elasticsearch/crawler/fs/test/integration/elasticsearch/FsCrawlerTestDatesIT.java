@@ -36,15 +36,15 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test different dates of files */
-public class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /** We want to make sure dates are correctly generated */
     @Test
-    public void check_dates() throws Exception {
+    void check_dates() throws Exception {
         crawler = startCrawler();
 
         logger.info(" ---> Creating a new file second.txt");

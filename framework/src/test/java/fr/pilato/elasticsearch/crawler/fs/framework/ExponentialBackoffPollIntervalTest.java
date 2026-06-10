@@ -23,12 +23,12 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 import java.time.Duration;
 import org.assertj.core.api.Assertions;
 import org.awaitility.pollinterval.PollInterval;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class ExponentialBackoffPollIntervalTest {
+class ExponentialBackoffPollIntervalTest {
 
     @Test
-    public void testExponentialBackoffPollInterval() {
+    void testExponentialBackoffPollInterval() {
         PollInterval pollInterval = new ExponentialBackoffPollInterval(Duration.ofMillis(500), Duration.ofSeconds(5));
         Duration duration = null;
         int pollCount = 0;

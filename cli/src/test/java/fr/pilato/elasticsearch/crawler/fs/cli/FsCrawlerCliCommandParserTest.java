@@ -25,21 +25,21 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import java.nio.file.Path;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /** We want to test FSCrawler main app */
-public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
 
     private static Path metadataDir;
 
-    @BeforeClass
-    public static void createFsCrawlerJobDir() {
+    @BeforeAll
+    static void createFsCrawlerJobDir() {
         metadataDir = rootTmpDir.resolve(".fscrawler");
     }
 
     @Test
-    public void commandParserWithFullOptions() {
+    void commandParserWithFullOptions() {
         String[] args = {
             "--config_dir", metadataDir.toString(), "--loop", "0", "--rest", "--upgrade", "--restart", "jobName"
         };
@@ -55,21 +55,21 @@ public class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void commandParserForHelp() {
+    void commandParserForHelp() {
         String[] args = {"--help"};
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         Assertions.assertThat(command).isNull();
     }
 
     @Test
-    public void commandParserSilentModeNoJob() {
+    void commandParserSilentModeNoJob() {
         String[] args = {"--silent"};
         AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> FsCrawlerCli.commandParser(args));
     }
 
     @Test
-    public void commandParserSilentModeWithJob() {
+    void commandParserSilentModeWithJob() {
         String[] args = {"--silent", "jobName"};
         FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
         Assertions.assertThat(command).isNotNull();

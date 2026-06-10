@@ -25,25 +25,25 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void settingsValidation() {
+    void settingsValidation() {
         // Checking default values
         FsSettings settings = FsSettingsLoader.load();
-        settings.setName(getCurrentTestName());
-        settings.getElasticsearch().setIndex(getCurrentTestName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-        settings.getElasticsearch().setIndexFolder(getCurrentTestName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+        settings.setName(jobName);
+        settings.getElasticsearch().setIndex(jobName + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        settings.getElasticsearch().setIndexFolder(jobName + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
 
         Assertions.assertThat(settings.getFs().getUrl()).isEqualTo(Defaults.DEFAULT_DIR);
         Assertions.assertThat(settings.getElasticsearch().getUrls()).contains(Defaults.ELASTICSEARCH_URL_DEFAULT);
         Assertions.assertThat(settings.getElasticsearch().getIndex())
-                .isEqualTo(getCurrentTestName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+                .isEqualTo(jobName + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         Assertions.assertThat(settings.getElasticsearch().getIndexFolder())
-                .isEqualTo(getCurrentTestName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+                .isEqualTo(jobName + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
         Assertions.assertThat(settings.getServer().getProtocol()).isEqualTo("local");
         Assertions.assertThat(settings.getRest().getUrl()).isEqualTo("http://127.0.0.1:8080");
 

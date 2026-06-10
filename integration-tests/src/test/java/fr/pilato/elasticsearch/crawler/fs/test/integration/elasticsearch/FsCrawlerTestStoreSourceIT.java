@@ -29,13 +29,13 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test store_source crawler setting */
-public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
 
     @Test
-    public void store_source() throws Exception {
+    void store_source() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setStoreSource(true);
         crawler = startCrawler(fsSettings);
@@ -50,7 +50,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void do_not_store_source() throws Exception {
+    void do_not_store_source() throws Exception {
         crawler = startCrawler();
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
@@ -65,7 +65,7 @@ public class FsCrawlerTestStoreSourceIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void store_source_no_index_content() throws Exception {
+    void store_source_no_index_content() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setStoreSource(true);
         fsSettings.getFs().setIndexContent(false);

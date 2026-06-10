@@ -27,12 +27,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
+class FsMatchContentTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    public void emptyOrNullTextPattern() {
+    void emptyOrNullTextPattern() {
         // Test with null or empty text
         regexTester(null, null, true);
         regexTester(null, new ArrayList<>(), true);
@@ -43,7 +43,7 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void regexTextPattern() {
+    void regexTextPattern() {
         // Test with text
         regexTester("foo bar", null, true);
         regexTester("foo bar", new ArrayList<>(), true);
@@ -63,7 +63,7 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void regexMultiLinesTextPattern() {
+    void regexMultiLinesTextPattern() {
         // Test with multi line text
         String text = "This is containing foo as one of the words.\n" + "Another line which contains bar also.\n";
         regexTester(text, Collections.singletonList("^foo$"), false);
@@ -75,7 +75,7 @@ public class FsMatchContentTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void regexCreditCardPattern() {
+    void regexCreditCardPattern() {
         // Test a Visa Credit Card pattern
         regexTester(
                 "4012888888881881", Collections.singletonList("^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"), true);

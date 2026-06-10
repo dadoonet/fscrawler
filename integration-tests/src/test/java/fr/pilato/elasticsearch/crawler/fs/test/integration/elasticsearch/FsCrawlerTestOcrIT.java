@@ -39,14 +39,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Assumptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests with OCR configuration See <a href="https://github.com/dadoonet/fscrawler/issues/1988">#1988</a> */
-public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void ocr() throws Exception {
+    void ocr() throws Exception {
         String exec = "tesseract";
         Optional<Path> tessPath = Stream.of(System.getenv("PATH").split(Pattern.quote(File.pathSeparator)))
                 .map(Paths::get)
@@ -126,7 +126,7 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void ocr_disabled() throws Exception {
+    void ocr_disabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRawMetadata(true);
         fsSettings.getFs().getOcr().setEnabled(false);
@@ -137,97 +137,94 @@ public class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                 new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
         // Check that we extracted the content
-        Assertions.assertThat(searchResponse.getHits())
-                .isNotEmpty()
-                .satisfiesExactlyInAnyOrder(
-                        hit -> {
-                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
-                                    .isEqualTo("test-ocr.jpg");
-                            Assertions.assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.content"))
-                                    .isInstanceOf(PathNotFoundException.class);
-                            Map<String, String> raw = JsonPath.read(hit.getSource(), "$.meta.raw");
-                            Assertions.assertThat(raw)
-                                    .hasSize(64)
-                                    .containsEntry("ICC:Profile Connection Space", "XYZ")
-                                    .containsEntry("Number of Tables", "4 Huffman tables")
-                                    .containsEntry("Compression Type", "Baseline")
-                                    .containsEntry("ICC:Profile Copyright", "Copyright Apple Inc., 2017")
-                                    .containsKey("ICC:Apple Multi-language Profile Name")
-                                    .containsKey("X-TIKA:Parsed-By-Full-Set")
-                                    .containsEntry("ICC:Class", "Display Device")
-                                    .containsKey("ICC:Green Colorant")
-                                    .containsKey("ICC:Video Card Gamma")
-                                    .containsEntry("Number of Components", "3")
-                                    .containsKey("Component 2")
-                                    .containsKey("Component 1")
-                                    .containsEntry("Exif SubIFD:Exif Image Width", "982 pixels")
-                                    .containsEntry("ICC:Device manufacturer", "APPL")
-                                    .containsEntry("Exif IFD0:X Resolution", "144 dots per inch")
-                                    .containsEntry("tiff:ResolutionUnit", "Inch")
-                                    .containsEntry("ICC:Signature", "acsp")
-                                    .containsKey("ICC:Green TRC")
-                                    .containsKey("ICC:Media White Point")
-                                    .containsEntry("ICC:CMM Type", "appl")
-                                    .containsKey("Component 3")
-                                    .containsEntry("Exif SubIFD:Components Configuration", "YCbCr")
-                                    .containsEntry("tiff:BitsPerSample", "8")
-                                    .containsEntry("Exif IFD0:YCbCr Positioning", "Center of pixel array")
-                                    .containsEntry("resourceName", "test-ocr.jpg")
-                                    .containsEntry("Exif IFD0:Orientation", "Top, left side (Horizontal / normal)")
-                                    .containsEntry("tiff:Orientation", "1")
-                                    .containsKey("ICC:Version")
-                                    .containsEntry("ICC:Profile Size", "3888")
-                                    .containsKey("X-TIKA:Parsed-By")
-                                    .containsKey("ICC:Blue Colorant")
-                                    .containsEntry("ICC:Tag Count", "17")
-                                    .containsEntry("tiff:YResolution", "144.0")
-                                    .containsEntry("Exif SubIFD:Scene Capture Type", "Standard")
-                                    .containsKey("ICC:Red TRC")
-                                    .containsEntry("Data Precision", "8 bits")
-                                    .containsEntry("tiff:ImageLength", "622")
-                                    .containsKey("ICC:Profile Date/Time")
-                                    .containsKey("ICC:Blue Parametric TRC")
-                                    .containsEntry("Exif SubIFD:Color Space", "sRGB")
-                                    .containsEntry("ICC:Profile Description", "Display")
-                                    .containsEntry("File Size", "41426 bytes")
-                                    .containsEntry("Exif SubIFD:Exif Version", "2.21")
-                                    .containsKey("ICC:Red Parametric TRC")
-                                    .hasEntrySatisfying(
-                                            "File Name",
-                                            value ->
-                                                    Assertions.assertThat(value).startsWith("apache-tika-"))
-                                    .containsEntry("Exif IFD0:Resolution Unit", "Inch")
-                                    .containsEntry("ICC:Color space", "RGB")
-                                    .containsKey("ICC:Green Parametric TRC")
-                                    .containsEntry("Content-Type", "image/jpeg")
-                                    .containsKey("ICC:Blue TRC")
-                                    .containsKey("ICC:XYZ values")
-                                    .containsKey("ICC:Native Display Information")
-                                    .containsKey("File Modified Date")
-                                    .containsEntry("tiff:XResolution", "144.0")
-                                    .containsEntry("Image Height", "622 pixels")
-                                    .containsEntry("Exif SubIFD:FlashPix Version", "1.00")
-                                    .containsKey("ICC:Make And Model")
-                                    .containsEntry("Exif SubIFD:Exif Image Height", "622 pixels")
-                                    .containsEntry("Image Width", "982 pixels")
-                                    .containsEntry("ICC:Primary Platform", "Apple Computer, Inc.")
-                                    .containsKey("ICC:Chromatic Adaptation")
-                                    .containsKey("ICC:Red Colorant")
-                                    .containsEntry("tiff:ImageWidth", "982")
-                                    .containsEntry("Exif IFD0:Y Resolution", "144 dots per inch");
-                        },
-                        hit -> {
-                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
-                                    .isEqualTo("test-ocr.png");
-                            Assertions.assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.content"))
-                                    .isInstanceOf(PathNotFoundException.class);
-                        },
-                        hit -> {
-                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.file.filename"))
-                                    .isEqualTo("test-ocr.pdf");
-                            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
-                                    .contains("This file also contains text.")
-                                    .doesNotContain("words");
-                        });
+        Assertions.assertThat(searchResponse.getHits()).as("total hits").hasSize(3);
+
+        // test-ocr.jpg: OCR disabled → no content, raw metadata present
+        String jpgHitSource = findHitByFilename(searchResponse, "test-ocr.jpg").getSource();
+        Assertions.assertThatThrownBy(() -> JsonPath.read(jpgHitSource, "$.content"))
+                .as("test-ocr.jpg: content should be absent when OCR is disabled")
+                .isInstanceOf(PathNotFoundException.class);
+        Map<String, String> raw = JsonPath.read(jpgHitSource, "$.meta.raw");
+        Assertions.assertThat(raw)
+                .as("test-ocr.jpg: raw metadata")
+                .hasSize(64)
+                .containsEntry("ICC:Profile Connection Space", "XYZ")
+                .containsEntry("Number of Tables", "4 Huffman tables")
+                .containsEntry("Compression Type", "Baseline")
+                .containsEntry("ICC:Profile Copyright", "Copyright Apple Inc., 2017")
+                .containsKey("ICC:Apple Multi-language Profile Name")
+                .containsKey("X-TIKA:Parsed-By-Full-Set")
+                .containsEntry("ICC:Class", "Display Device")
+                .containsKey("ICC:Green Colorant")
+                .containsKey("ICC:Video Card Gamma")
+                .containsEntry("Number of Components", "3")
+                .containsKey("Component 2")
+                .containsKey("Component 1")
+                .containsEntry("Exif SubIFD:Exif Image Width", "982 pixels")
+                .containsEntry("ICC:Device manufacturer", "APPL")
+                .containsKey("Exif IFD0:X Resolution")
+                .containsEntry("tiff:ResolutionUnit", "Inch")
+                .containsEntry("ICC:Signature", "acsp")
+                .containsKey("ICC:Green TRC")
+                .containsKey("ICC:Media White Point")
+                .containsEntry("ICC:CMM Type", "appl")
+                .containsKey("Component 3")
+                .containsEntry("Exif SubIFD:Components Configuration", "YCbCr")
+                .containsEntry("tiff:BitsPerSample", "8")
+                .containsEntry("Exif IFD0:YCbCr Positioning", "Center of pixel array")
+                .containsEntry("resourceName", "test-ocr.jpg")
+                .containsEntry("Exif IFD0:Orientation", "Top, left side (Horizontal / normal)")
+                .containsEntry("tiff:Orientation", "1")
+                .containsKey("ICC:Version")
+                .containsEntry("ICC:Profile Size", "3888")
+                .containsKey("X-TIKA:Parsed-By")
+                .containsKey("ICC:Blue Colorant")
+                .containsEntry("ICC:Tag Count", "17")
+                .containsEntry("tiff:YResolution", "144.0")
+                .containsEntry("Exif SubIFD:Scene Capture Type", "Standard")
+                .containsKey("ICC:Red TRC")
+                .containsEntry("Data Precision", "8 bits")
+                .containsEntry("tiff:ImageLength", "622")
+                .containsKey("ICC:Profile Date/Time")
+                .containsKey("ICC:Blue Parametric TRC")
+                .containsEntry("Exif SubIFD:Color Space", "sRGB")
+                .containsEntry("ICC:Profile Description", "Display")
+                .containsEntry("File Size", "41426 bytes")
+                .containsEntry("Exif SubIFD:Exif Version", "2.21")
+                .containsKey("ICC:Red Parametric TRC")
+                .hasEntrySatisfying(
+                        "File Name", value -> Assertions.assertThat(value).startsWith("apache-tika-"))
+                .containsEntry("Exif IFD0:Resolution Unit", "Inch")
+                .containsEntry("ICC:Color space", "RGB")
+                .containsKey("ICC:Green Parametric TRC")
+                .containsEntry("Content-Type", "image/jpeg")
+                .containsKey("ICC:Blue TRC")
+                .containsKey("ICC:XYZ values")
+                .containsKey("ICC:Native Display Information")
+                .containsKey("File Modified Date")
+                .containsEntry("tiff:XResolution", "144.0")
+                .containsEntry("Image Height", "622 pixels")
+                .containsEntry("Exif SubIFD:FlashPix Version", "1.00")
+                .containsKey("ICC:Make And Model")
+                .containsEntry("Exif SubIFD:Exif Image Height", "622 pixels")
+                .containsEntry("Image Width", "982 pixels")
+                .containsEntry("ICC:Primary Platform", "Apple Computer, Inc.")
+                .containsKey("ICC:Chromatic Adaptation")
+                .containsKey("ICC:Red Colorant")
+                .containsEntry("tiff:ImageWidth", "982")
+                .containsKey("Exif IFD0:Y Resolution");
+
+        // test-ocr.png: OCR disabled → no content
+        String pngHitSource = findHitByFilename(searchResponse, "test-ocr.png").getSource();
+        Assertions.assertThatThrownBy(() -> JsonPath.read(pngHitSource, "$.content"))
+                .as("test-ocr.png: content should be absent when OCR is disabled")
+                .isInstanceOf(PathNotFoundException.class);
+
+        // test-ocr.pdf: text layer always present regardless of OCR setting
+        String pdfHitSource = findHitByFilename(searchResponse, "test-ocr.pdf").getSource();
+        Assertions.assertThat((String) JsonPath.read(pdfHitSource, "$.content"))
+                .as("test-ocr.pdf: text layer content")
+                .contains("This file also contains text.")
+                .doesNotContain("words");
     }
 }

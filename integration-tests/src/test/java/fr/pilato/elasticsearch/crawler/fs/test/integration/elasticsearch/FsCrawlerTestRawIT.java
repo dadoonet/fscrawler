@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
@@ -31,10 +31,10 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test json support crawler setting */
-public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for issue #439: <a
@@ -42,7 +42,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
      * Date Mapping issue in RAW field
      */
     @Test
-    public void mapping() throws Exception {
+    void mapping() throws Exception {
         crawler = startCrawler();
 
         // We should have one document indexed
@@ -79,9 +79,9 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void disable_raw() throws Exception {
+    void disable_raw() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        if (RandomizedTest.rarely()) {
+        if (RandomizedTest.rarely(randomizedRandomForTests)) {
             // Sometimes we explicitly disable it but this is also the default value
             fsSettings.getFs().setRawMetadata(false);
         }
@@ -95,7 +95,7 @@ public class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void enable_raw() throws Exception {
+    void enable_raw() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setRawMetadata(true);
         crawler = startCrawler(fsSettings);

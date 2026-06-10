@@ -24,11 +24,11 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.util.ArrayList;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
+class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
     @Test
-    public void default_ignored_file() {
+    void default_ignored_file() {
         Assertions.assertThat(FsCrawlerUtil.isIndexable(false, "/~mydoc", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
                 .isFalse();
         Assertions.assertThat(FsCrawlerUtil.isIndexable(false, "/~", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))

@@ -29,7 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test crawler behavior with MockParser files that simulate erratic parser behaviors. See <a
@@ -43,7 +43,7 @@ import org.junit.Test;
  *   <li>Does not crash when encountering problematic files
  * </ul>
  */
-public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test that the crawler continues processing files even when one file causes a parser exception via MockParser.
@@ -60,7 +60,7 @@ public class FsCrawlerTestMockParserIT extends AbstractFsCrawlerITCase {
      * with empty content. This test also verifies that valid content remains searchable.
      */
     @Test
-    public void mock_parser() throws Exception {
+    void mock_parser() throws Exception {
         crawler = startCrawler();
 
         // We expect 3 valid files to be indexed

@@ -20,9 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
-import com.carrotsearch.randomizedtesting.annotations.Timeout;
-import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -32,7 +30,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermsAggregation;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Nightly;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,15 +39,15 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test crawler with subdirs */
-@TimeoutSuite(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
-public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
+@VerySlow
+class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     @Test
-    public void subdirs() throws Exception {
+    void subdirs() throws Exception {
         crawler = startCrawler();
 
         // We expect to have two files
@@ -88,7 +87,7 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    public void subdirs_deep_tree() throws Exception {
+    void subdirs_deep_tree() throws Exception {
         crawler = startCrawler();
 
         // We expect to have 7 files
@@ -215,21 +214,23 @@ public class FsCrawlerTestSubDirsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    @Timeout(millis = 10 * AbstractFSCrawlerTestCase.TIMEOUT_MINUTE_AS_MS)
-    public void subdirs_very_deep_tree() throws Exception {
+    @Nightly
+    @VerySlow
+    void subdirs_very_deep_tree() throws Exception {
 
-        long subdirs = RandomizedTest.randomLongBetween(30, 100);
+        long subdirs = RandomizedTest.randomLongInRange(randomizedRandomForTests, 30, 100);
 
         logger.debug("  --> Generating [{}] dirs [{}]", subdirs, currentTestResourceDir);
 
         Path sourceFile = currentTestResourceDir.resolve("roottxtfile.txt");
         Path mainDir = currentTestResourceDir.resolve("main_dir");
-        Files.createDirectory(mainDir);
+        Files.createDirectories(mainDir);
         Path newDir = mainDir;
 
         for (int i = 0; i < subdirs; i++) {
-            newDir = newDir.resolve(i + "_" + RandomizedTest.randomAsciiLettersOfLengthBetween(2, 5));
-            Files.createDirectory(newDir);
+            newDir = newDir.resolve(
+                    i + "_" + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 2, 5));
+            Files.createDirectories(newDir);
             // Copy the original test file in the new dir
             Files.copy(sourceFile, newDir.resolve("sample.txt"));
         }

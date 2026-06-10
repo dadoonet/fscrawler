@@ -22,40 +22,33 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
 
-    private Path rootDir;
     private FsCrawlerCheckpointFileHandler handler;
 
-    @Before
-    public void setUp() throws IOException {
-        rootDir = rootTmpDir.resolve("checkpoint-test");
-        Files.createDirectories(rootDir);
-        handler = new FsCrawlerCheckpointFileHandler(rootDir);
+    @BeforeEach
+    void setUp() {
+        handler = new FsCrawlerCheckpointFileHandler(testTmpDir);
     }
 
     @Test
-    public void testReadNonExistent() throws IOException {
+    void testReadNonExistent() throws IOException {
         FsCrawlerCheckpoint checkpoint = handler.read("non-existent-job");
         Assertions.assertThat(checkpoint).isNull();
     }
 
     @Test
-    public void testExistsNonExistent() {
+    void testExistsNonExistent() {
         Assertions.assertThat(handler.exists("non-existent-job")).isFalse();
     }
 
     @Test
-    public void testWriteAndRead() throws IOException {
-        String jobName = getCurrentTestName();
-
+    void testWriteAndRead() throws IOException {
         FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint("/test/path");
         checkpoint.setFilesProcessed(42);
         checkpoint.setState(CrawlerState.PAUSED);
@@ -72,9 +65,7 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     }
 
     @Test
-    public void testClean() throws IOException {
-        String jobName = getCurrentTestName();
-
+    void testClean() throws IOException {
         FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint("/test/path");
         handler.write(jobName, checkpoint);
 
@@ -87,15 +78,13 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     }
 
     @Test
-    public void testCleanNonExistent() {
+    void testCleanNonExistent() {
         // Should not throw an exception even if the job does not exist
         Assertions.assertThatNoException().isThrownBy(() -> handler.clean("non-existent-job"));
     }
 
     @Test
-    public void testOverwrite() throws IOException {
-        String jobName = getCurrentTestName();
-
+    void testOverwrite() throws IOException {
         FsCrawlerCheckpoint checkpoint1 = FsCrawlerCheckpoint.newCheckpoint("/path1");
         checkpoint1.setFilesProcessed(10);
         handler.write(jobName, checkpoint1);
@@ -109,9 +98,7 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     }
 
     @Test
-    public void testCompleteCheckpointRoundTrip() throws IOException {
-        String jobName = getCurrentTestName();
-
+    void testCompleteCheckpointRoundTrip() throws IOException {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId("test-scan-id");
         checkpoint.setScanStartTime(LocalDateTime.now());
@@ -143,11 +130,9 @@ public class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCas
     }
 
     @Test
-    public void migrate_from_legacy_status() throws IOException {
-        String jobName = getCurrentTestName();
-
+    void migrate_from_legacy_status() throws IOException {
         // Create a legacy _status.json file
-        FsJobFileHandler legacyHandler = new FsJobFileHandler(rootDir);
+        FsJobFileHandler legacyHandler = new FsJobFileHandler(testTmpDir);
         FsJob legacyJob = new FsJob();
         legacyJob.setLastrun(LocalDateTime.now().minusHours(1));
         legacyJob.setNextCheck(LocalDateTime.now().plusHours(1));

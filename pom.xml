@@ -78,6 +78,10 @@
         <!-- For FSCrawler S3 plugin -->
         <minio.version>9.0.1</minio.version>
 
+        <!-- Tests -->
+        <junit.version>6.0.3</junit.version>
+        <randomizedtesting.version>0.2.0</randomizedtesting.version>
+
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
         <jpeg.version>1.4.0</jpeg.version>
@@ -101,17 +105,12 @@
         <!-- Randomized testing framework -->
         <tests.locale>random</tests.locale>
         <tests.timezone>random</tests.timezone>
-        <tests.output>onError</tests.output>
-        <tests.verbose>false</tests.verbose>
+        <tests.output>false</tests.output>
         <tests.leaveTemporary>false</tests.leaveTemporary>
-        <tests.parallelism>auto</tests.parallelism>
-        <tests.heartbeat>10</tests.heartbeat>
         <tests.seed/>
         <!-- Running the tests with Tesseract OCR might take time -->
-        <tests.timeoutSuite>180000</tests.timeoutSuite>
-        <tests.timeout>120000</tests.timeout>
-        <!-- When we want to run tests which could take a lot of time - ie semantic search -->
-        <tests.nightly/>
+        <tests.timeoutSuite>120</tests.timeoutSuite>
+        <tests.timeout>60</tests.timeout>
 
         <!-- For CVE Audit with Sonatype -->
         <env.SONATYPE_USER/>
@@ -499,6 +498,13 @@
                 <version>${jersey.version}</version>
             </dependency>
 
+            <!-- For the HTTP Client used by ElasticsearchClient -->
+            <dependency>
+                <groupId>org.glassfish.jersey.connectors</groupId>
+                <artifactId>jersey-apache5-connector</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
             <!-- Logging dependencies -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -601,14 +607,41 @@
                 <version>3.27.7</version>
             </dependency>
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.2</version>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-commons</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-launcher</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
-                <artifactId>randomizedtesting-runner</artifactId>
-                <version>2.9.0</version>
+                <artifactId>randomizedtesting-jupiter</artifactId>
+                <version>${randomizedtesting.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
@@ -693,46 +726,34 @@
                     <version>3.11.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>com.carrotsearch.randomizedtesting</groupId>
-                    <artifactId>junit4-maven-plugin</artifactId>
-                    <version>2.9.0</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.5</version>
                     <configuration>
-                        <heartbeat>${tests.heartbeat}</heartbeat>
-                        <jvmOutputAction>pipe,ignore</jvmOutputAction>
-                        <leaveTemporary>${tests.leaveTemporary}</leaveTemporary>
-                        <ifNoTests>warn</ifNoTests>
-                        <parallelism>${tests.parallelism}</parallelism>
-                        <listeners>
-                            <report-text showOutput="${tests.output}" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="${tests.verbose}" showSuiteSummary="${tests.verbose}" showThrowable="true"/>
-                        </listeners>
-                        <seed>${tests.seed}</seed>
-                        <systemProperties combine.children="append">
+                        <failIfNoTests>false</failIfNoTests>
+                        <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                        <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
+                        <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
+                        <systemPropertyVariables combine.children="append">
+                            <!-- classes run sequentially, methods within a class run concurrently -->
+                            <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                            <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                            <junit.jupiter.execution.parallel.mode.classes.default>same_thread</junit.jupiter.execution.parallel.mode.classes.default>
                             <arg.common>arg.common</arg.common>
+                            <tests.seed>${tests.seed}</tests.seed>
                             <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
                             <tests.timeout>${tests.timeout}</tests.timeout>
                             <tests.locale>${tests.locale}</tests.locale>
                             <tests.timezone>${tests.timezone}</tests.timezone>
-                            <tests.nightly>${tests.nightly}</tests.nightly>
                             <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
                             <java.awt.headless>true</java.awt.headless>
-                            <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
-                            <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
-                            <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
-                            <tests.index.prefix>${tests.index.prefix}</tests.index.prefix>
-                            <tests.rest.port>${tests.rest.port}</tests.rest.port>
                             <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
                             <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
-                        </systemProperties>
+                        </systemPropertyVariables>
                     </configuration>
-
                     <executions>
                         <execution>
-                            <id>unit-tests</id>
-                            <goals>
-                                <goal>junit4</goal>
-                            </goals>
-                            <phase>test</phase>
-                            <inherited>true</inherited>
+                            <id>default-test</id>
                             <configuration>
                                 <skipTests>${skipUnitTests}</skipTests>
                                 <includes>
@@ -743,15 +764,47 @@
                                 </excludes>
                             </configuration>
                         </execution>
+                    </executions>
+                </plugin>
+
+                <!-- Integration tests: separate plugin so -Dit.test= never interferes with -Dtest= -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.5.5</version>
+                    <configuration>
+                        <failIfNoTests>false</failIfNoTests>
+                        <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                        <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
+                        <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
+                        <systemPropertyVariables combine.children="append">
+                            <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
+                            <arg.common>arg.common</arg.common>
+                            <tests.seed>${tests.seed}</tests.seed>
+                            <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
+                            <tests.timeout>${tests.timeout}</tests.timeout>
+                            <tests.locale>${tests.locale}</tests.locale>
+                            <tests.timezone>${tests.timezone}</tests.timezone>
+                            <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                            <java.awt.headless>true</java.awt.headless>
+                            <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
+                            <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
+                            <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
+                            <tests.index.prefix>${tests.index.prefix}</tests.index.prefix>
+                            <tests.rest.port>${tests.rest.port}</tests.rest.port>
+                            <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
+                            <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
+                        </systemPropertyVariables>
+                    </configuration>
+                    <executions>
                         <execution>
-                            <id>integration-tests</id>
+                            <id>integration-test</id>
                             <goals>
-                                <goal>junit4</goal>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
                             </goals>
-                            <phase>integration-test</phase>
-                            <inherited>true</inherited>
                             <configuration>
-                                <skipTests>${skipIntegTests}</skipTests>
+                                <skipITs>${skipIntegTests}</skipITs>
                                 <includes>
                                     <include>**/*IT.class</include>
                                 </includes>
@@ -759,18 +812,6 @@
                                     <exclude>**/*$*</exclude>
                                 </excludes>
                             </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <!-- Disable surefire so we can use randomize testing framework -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.6</version>
-                    <executions>
-                        <execution>
-                            <id>default-test</id>
-                            <phase>none</phase>
                         </execution>
                     </executions>
                 </plugin>
@@ -906,7 +947,7 @@
                         </pom>
                         <json>
                             <includes>
-                                <include>src/**/*.json</include>
+                                <include>src/main/*.json</include>
                             </includes>
                             <jackson>
                                 <version>${jackson.version}</version>
@@ -914,14 +955,19 @@
                         </json>
                         <yaml>
                             <includes>
-                                <include>src/**/*.yaml</include>
+                                <include>src/main/*.yaml</include>
                             </includes>
                             <jackson>
                                 <version>${jackson.version}</version>
                             </jackson>
                         </yaml>
                         <shell>
-                            <shfmt/>
+                            <includes>
+                                <include>src/main/*.sh</include>
+                            </includes>
+                            <shfmt>
+                                <version>3.13.1</version>
+                            </shfmt>
                         </shell>
                     </configuration>
                     <executions>
@@ -972,10 +1018,99 @@
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
             </plugin>
+            <!-- Activate Failsafe for integration tests (*IT.java) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <!-- Tests related profiles:
+            -Pdaily: run the default tests (exclude tests tagged with @Nightly)
+            -Pnightly: run the nightly tests (include tests tagged with @Nightly)
+            -Pparallel_tests: run tests in parallel (classes and methods) use it with -Dtests.cluster.url
+         -->
+
+        <!-- Default daily tests: we exclude Tests tagged with Nightly (@Nightly) -->
+        <profile>
+            <id>daily</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludedGroups>Nightly</excludedGroups>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <excludedGroups>Nightly</excludedGroups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Nightly tests: we include Tests tagged with Nightly (@Nightly) -->
+        <!-- When we want to run tests which could take a lot of time - ie semantic search -->
+        <profile>
+            <id>nightly</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>Nightly</groups>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <groups>Nightly</groups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Profile to enable parallel test execution -->
+        <!-- It's recommended to run it with -Dtests.cluster.url pointing to a live ES cluster. -->
+        <!-- This profile configures JUnit 6 to parallelize test methods, not just test classes -->
+        <profile>
+            <id>parallel_tests</id>
+            <build>
+                <plugins>
+                    <!-- Override Failsafe plugin configuration to enable parallel test method execution -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables combine.children="override">
+                                <!-- Enable parallel execution -->
+                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                                <!-- Enable parallel execution of classes -->
+                                <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                                <!-- Enable parallel execution of test methods -->
+                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                                <!-- Define the strategy for the number of threads: we use default: dynamic -->
+                                <!-- junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy-->
+                                <!-- Define the factor to use x * num of cores: we use default: 1 -->
+                                <!-- junit.jupiter.execution.parallel.config.dynamic.factor>1</junit.jupiter.execution.parallel.config.dynamic.factor-->
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!-- Profile for ES8 -->
         <profile>
             <id>es-8x</id>

@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -33,26 +33,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final TestBean PAYLOAD = new TestBean("bar");
     private static final int PAYLOAD_SIZE =
             JsonUtil.serialize(PAYLOAD).getBytes().length + 12 /* for the JSON payload field overhead */;
 
     @Test
-    public void bulkProcessorMaxActions() throws IOException {
-        int maxActions = RandomizedTest.randomIntBetween(1, 1000);
+    void bulkProcessorMaxActions() throws IOException {
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(
-                        new TestEngine(),
-                        listener,
-                        maxActions,
-                        null,
-                        new ByteSizeValue(1, ByteSizeUnit.MB),
-                        TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(maxActions)
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -64,11 +61,13 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void bulkProcessorNullSize() throws IOException {
-        int maxActions = RandomizedTest.randomIntBetween(1, 1000);
+    void bulkProcessorNullSize() throws IOException {
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(new TestEngine(), listener, maxActions, null, null, TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(maxActions)
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -80,17 +79,14 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void bulkProcessorZeroSize() throws IOException {
-        int maxActions = RandomizedTest.randomIntBetween(1, 1000);
+    void bulkProcessorZeroSize() throws IOException {
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(
-                        new TestEngine(),
-                        listener,
-                        maxActions,
-                        null,
-                        new ByteSizeValue(0, ByteSizeUnit.MB),
-                        TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(maxActions)
+                        .setByteSize(new ByteSizeValue(0, ByteSizeUnit.MB))
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -102,17 +98,13 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void bulkProcessorMaxSize() throws IOException {
-        int maxActions = RandomizedTest.randomIntBetween(1, 1000);
+    void bulkProcessorMaxSize() throws IOException {
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(
-                        new TestEngine(),
-                        listener,
-                        0,
-                        null,
-                        new ByteSizeValue((long) maxActions * PAYLOAD_SIZE, ByteSizeUnit.BYTES),
-                        TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setByteSize(new ByteSizeValue((long) maxActions * PAYLOAD_SIZE, ByteSizeUnit.BYTES))
+                        .build();
 
         generatePayload(bulkProcessor, 1, maxActions - 1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
@@ -128,12 +120,15 @@ public class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void bulkProcessorFlushInterval() throws IOException {
-        int maxActions = RandomizedTest.randomIntBetween(1, 1000);
-        TimeValue flushInterval = TimeValue.timeValueMillis(RandomizedTest.randomIntBetween(500, 2000));
+    void bulkProcessorFlushInterval() throws IOException {
+        int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
+        TimeValue flushInterval =
+                TimeValue.timeValueMillis(RandomizedTest.randomIntInRange(randomizedRandomForTests, 500, 2000));
         TestBulkListener listener = new TestBulkListener();
         FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
-                new FsCrawlerBulkProcessor<>(new TestEngine(), listener, 0, flushInterval, null, TestBulkRequest::new);
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setFlushInterval(flushInterval)
+                        .build();
 
         // We don't load immediately the bulk processor
         FsCrawlerUtil.waitFor(Duration.ofMillis(100));

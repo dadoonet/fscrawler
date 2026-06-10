@@ -29,10 +29,10 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test loop crawler settings */
-public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for #227: <a
@@ -40,7 +40,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      * Add support for run only once
      */
     @Test
-    public void single_loop() throws Exception {
+    void single_loop() throws Exception {
         crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 1, false);
         crawler.start();
 
@@ -61,7 +61,7 @@ public class FsCrawlerTestLoopsIT extends AbstractFsCrawlerITCase {
      * Add support for run only once
      */
     @Test
-    public void two_loops() throws Exception {
+    void two_loops() throws Exception {
         crawler = new FsCrawlerImpl(metadataDir, createTestSettings(), 2, false);
         crawler.start();
 

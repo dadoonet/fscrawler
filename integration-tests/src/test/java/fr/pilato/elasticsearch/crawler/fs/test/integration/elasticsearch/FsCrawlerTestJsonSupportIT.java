@@ -32,10 +32,10 @@ import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test json support crawler setting */
-public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
     /**
@@ -44,7 +44,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      * Support JSon documents
      */
     @Test
-    public void json_support() throws Exception {
+    void json_support() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setJsonSupport(true);
         crawler = startCrawler(fsSettings);
@@ -72,7 +72,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      * Support JSon documents
      */
     @Test
-    public void json_disabled() throws Exception {
+    void json_disabled() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setJsonSupport(false);
         crawler = startCrawler(fsSettings);
@@ -116,7 +116,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      * Delete json documents
      */
     @Test
-    public void add_as_inner_object() throws Exception {
+    void add_as_inner_object() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setJsonSupport(true);
         fsSettings.getFs().setAddAsInnerObject(true);
@@ -145,7 +145,7 @@ public class FsCrawlerTestJsonSupportIT extends AbstractFsCrawlerITCase {
      * JSON files are indexed twice
      */
     @Test
-    public void json_support_and_other_files() throws Exception {
+    void json_support_and_other_files() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setJsonSupport(true);
         crawler = startCrawler(fsSettings);

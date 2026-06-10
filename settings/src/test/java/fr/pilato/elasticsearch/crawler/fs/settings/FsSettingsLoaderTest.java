@@ -28,26 +28,48 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
-public class FsSettingsLoaderTest {
+class FsSettingsLoaderTest {
 
     private static final Logger logger = LogManager.getLogger();
 
     // Get the config path from resources
     Path configPath;
 
+    @BeforeEach
+    void cleanupSystemProperties() {
+        System.clearProperty("name");
+        System.clearProperty("fs.url");
+        System.clearProperty("fs.xml_support");
+    }
+
+    @AfterAll
+    static void cleanupAfterAll() {
+        System.clearProperty("name");
+        System.clearProperty("fs.url");
+        System.clearProperty("fs.xml_support");
+    }
+
     public FsSettingsLoaderTest() throws URISyntaxException {
         configPath = Path.of(FsSettingsLoaderTest.class.getResource("/config").toURI());
     }
 
     @Test
-    public void loadWrongSettings() {
+    void loadWrongSettings() {
         AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-wrong"))
                 .withMessageContaining("Syntax error in configuration file [_settings.yaml]")
@@ -56,7 +78,7 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
-    public void loadStructuralWrongSettings() {
+    void loadStructuralWrongSettings() {
         AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsSettingsLoader(configPath).read("yaml-structural-wrong"))
                 .withMessageContaining("Can not load settings")
@@ -64,82 +86,54 @@ public class FsSettingsLoaderTest {
     }
 
     @Test
-    public void loadDeprecatedElasticsearchNodesSettings() throws IOException {
+    void loadDeprecatedElasticsearchNodesSettings() throws IOException {
         FsSettings fsSettings = new FsSettingsLoader(configPath).read("yaml-deprecated");
         Assertions.assertThat(fsSettings.getName()).isEqualTo("test_deprecated_elasticsearch");
     }
 
     @Test
-    public void loadNonExistingSettings() throws IOException {
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    void loadNonExistingSettings() throws IOException {
         FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, doesnotexist);
     }
 
     @Test
-    public void loadNoFile() {
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    void loadNoFile() {
         checkSettings(generateExpectedDefaultFsSettings(), FsSettingsLoader.load());
     }
 
     @Test
-    public void loadJsonSimple() throws IOException {
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    void loadJsonSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("json-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
     }
 
     @Test
-    public void loadJsonFull() throws IOException {
+    void loadJsonFull() throws IOException {
         testLoadFullSettings("json-full");
     }
 
     @Test
-    public void loadYamlFull() throws IOException {
+    void loadYamlFull() throws IOException {
         testLoadFullSettings("yaml-full");
     }
 
     @Test
-    public void loadYamlSplit() throws IOException {
+    void loadYamlSplit() throws IOException {
         testLoadFullSettings("yaml-split");
     }
 
     @Test
-    public void loadYamlSimple() throws IOException {
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    void loadYamlSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
         checkSettings(expected, settings);
-    }
-
-    @Test
-    public void withDefaultNamesForEnvVariables() throws Exception {
-        // Create environment variables
-        System.setProperty("name", "foo");
-        System.setProperty("fs.url", "/tmp/test");
-        System.setProperty("fs.xml_support", "true");
-
-        try {
-            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
-            FsSettings expected = generateExpectedDefaultFsSettings();
-            // Although a value is set by a env variable, the yaml file takes precedence
-            // So we have myname instead of foo
-            expected.setName("myname");
-
-            // Elasticsearch index name depends on the crawler name value ${name}
-            expected.getElasticsearch().setIndex("myname_docs");
-            expected.getElasticsearch().setIndexFolder("myname_folder");
-
-            // This is set by the env variable
-            expected.getFs().setUrl("/tmp/test");
-
-            // This is set by the env variable
-            expected.getFs().setXmlSupport(true);
-            checkSettings(expected, settings);
-        } finally {
-            // Remove the environment variable
-            System.clearProperty("name");
-            System.clearProperty("fs.url");
-            System.clearProperty("fs.xml_support");
-        }
     }
 
     private void testLoadFullSettings(String jobName) throws IOException {
@@ -278,5 +272,49 @@ public class FsSettingsLoaderTest {
         expected.setRest(rest);
 
         return expected;
+    }
+
+    @Nested
+    class WithEnvironmentVariablesTests {
+
+        private final Map<String, String> savedProperties = new HashMap<>();
+        private final String[] propertiesToManage = {"name", "fs.url", "fs.xml_support"};
+
+        @BeforeEach
+        void saveSystemProperties() {
+            for (String prop : propertiesToManage) {
+                savedProperties.put(prop, System.getProperty(prop));
+            }
+        }
+
+        @AfterEach
+        void restoreSystemProperties() {
+            for (String prop : propertiesToManage) {
+                String originalValue = savedProperties.get(prop);
+                if (originalValue == null) {
+                    System.clearProperty(prop);
+                } else {
+                    System.setProperty(prop, originalValue);
+                }
+            }
+            savedProperties.clear();
+        }
+
+        @Test
+        @ResourceLock(Resources.SYSTEM_PROPERTIES)
+        void withDefaultNamesForEnvVariables() throws Exception {
+            System.setProperty("name", "foo");
+            System.setProperty("fs.url", "/tmp/test");
+            System.setProperty("fs.xml_support", "true");
+
+            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
+            FsSettings expected = generateExpectedDefaultFsSettings();
+            expected.setName("myname");
+            expected.getElasticsearch().setIndex("myname_docs");
+            expected.getElasticsearch().setIndexFolder("myname_folder");
+            expected.getFs().setUrl("/tmp/test");
+            expected.getFs().setXmlSupport(true);
+            checkSettings(expected, settings);
+        }
     }
 }

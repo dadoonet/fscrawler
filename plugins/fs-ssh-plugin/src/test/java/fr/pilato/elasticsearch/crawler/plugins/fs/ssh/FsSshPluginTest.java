@@ -24,7 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-// SshTestHelper is in the same package
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,22 +42,21 @@ import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 import org.apache.sshd.sftp.server.SftpSubsystemProxy;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
+class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String SSH_USERNAME = "USERNAME";
     private static final String SSH_PASSWORD = "PASSWORD";
     private SshServer sshd = null;
-    Path testDir = rootTmpDir.resolve("test-ssh");
 
-    @Before
-    public void setup() throws IOException, NoSuchAlgorithmException {
-        if (Files.notExists(testDir)) {
-            Files.createDirectory(testDir);
-        }
+    @BeforeEach
+    void setup() throws IOException, NoSuchAlgorithmException {
+        // Create a dedicated filesystem root for SFTP to avoid mixing keys with test files
+        Path sftpRoot = Files.createDirectories(testTmpDir.resolve("sftp-root"));
+
         // Create a fake filesystem with the following structure:
         /*
         /testfile.txt
@@ -76,17 +74,17 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
             /world.txt
          */
 
-        addFakeFile(testDir, "testfile.txt", "I'm a test file");
+        addFakeFile(sftpRoot, "testfile.txt", "I'm a test file");
 
-        addFakeDir(testDir, "nested");
-        addFakeFile(testDir.resolve("nested"), "foo.txt", "文件名不支持中文");
-        addFakeFile(testDir.resolve("nested"), "bar.txt", "bar file");
+        addFakeDir(sftpRoot, "nested");
+        addFakeFile(sftpRoot.resolve("nested"), "foo.txt", "文件名不支持中文");
+        addFakeFile(sftpRoot.resolve("nested"), "bar.txt", "bar file");
 
-        Path buzzDir = addFakeDir(testDir.resolve("nested"), "buzz");
+        Path buzzDir = addFakeDir(sftpRoot.resolve("nested"), "buzz");
         addFakeFile(buzzDir, "hello.txt", "hello");
         addFakeFile(buzzDir, "world.txt", "world");
 
-        Path permissionDir = addFakeDir(testDir, "permission");
+        Path permissionDir = addFakeDir(sftpRoot, "permission");
         Path allFile = permissionDir.resolve("all.txt");
         if (Files.notExists(allFile)) {
             Files.writeString(allFile, "123");
@@ -102,7 +100,7 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         noneFile.toFile().setWritable(false, false);
         noneFile.toFile().setExecutable(false, false);
 
-        Path subdirWithSpace = addFakeDir(testDir, "subdir_with_space ");
+        Path subdirWithSpace = addFakeDir(sftpRoot, "subdir_with_space ");
         addFakeFile(subdirWithSpace, "hello.txt", "File in dir with space at the end");
         addFakeFile(subdirWithSpace, "world.txt", "File in dir with space at the end");
 
@@ -115,28 +113,31 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
                         if (remotePath.startsWith("/")) {
                             path = remotePath.substring(1);
                         }
-                        return testDir.resolve(path);
+                        return sftpRoot.resolve(path);
                     }
                 })
                 .build();
 
+        // Create SSH key directory to isolate keys from the SFTP filesystem
+        Path sshKeyDir = Files.createDirectories(testTmpDir.resolve(".ssh-keys"));
+
         // Generate key files for SSH tests
-        SshTestHelper.generateAndSaveKeyPair(rootTmpDir);
+        SshTestHelper.generateAndSaveKeyPair(sshKeyDir);
 
         sshd = SshServer.setUpDefaultServer();
         sshd.setHost("localhost");
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(rootTmpDir.resolve("host.ser")));
+        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(sshKeyDir.resolve("host.ser")));
         sshd.setPasswordAuthenticator(
                 (username, password, session) -> SSH_USERNAME.equals(username) && SSH_PASSWORD.equals(password));
-        sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(rootTmpDir.resolve("public.key")));
+        sshd.setPublickeyAuthenticator(new AuthorizedKeysAuthenticator(sshKeyDir.resolve("public.key")));
         sshd.setSubsystemFactories(Collections.singletonList(factory));
         sshd.start();
 
         logger.info(" -> Started fake SSHD service on {}:{}", sshd.getHost(), sshd.getPort());
     }
 
-    @After
-    public void shutDown() throws IOException {
+    @AfterEach
+    void shutDown() throws IOException {
         if (sshd != null) {
             sshd.stop(true);
             sshd.close();
@@ -145,7 +146,7 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void sshPlugin() throws Exception {
+    void sshPlugin() throws Exception {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getServer().setHostname(sshd.getHost());
         fsSettings.getServer().setPort(sshd.getPort());
@@ -222,7 +223,7 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void getType() {
+    void getType() {
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
         Assertions.assertThat(sshPlugin.getType()).isEqualTo("ssh");
     }
@@ -254,10 +255,8 @@ public class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     }
 
     private Path addFakeDir(Path dir, String subDirname) throws IOException {
-        Path testDir = dir.resolve(subDirname);
-        if (Files.notExists(testDir)) {
-            Files.createDirectory(testDir);
-        }
-        return testDir;
+        Path subDir = dir.resolve(subDirname);
+        Files.createDirectories(subDir);
+        return subDir;
     }
 }

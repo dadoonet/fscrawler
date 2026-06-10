@@ -20,34 +20,30 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import org.assertj.core.api.Assertions;
-import org.junit.Assume;
-import org.junit.Test;
-import org.testcontainers.DockerClientFactory;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
 
-public class TestContainerHelperIT {
-
-    private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
+class TestContainerHelperIT {
 
     @Test
-    public void testStartingTestcontainer() {
-        // Don't run it if an external cluster for Elasticsearch is set
-        boolean isExternalClusterSet = System.getProperty("tests.cluster.url") != null
-                && !DEFAULT_TEST_CLUSTER_URL.equals(System.getProperty("tests.cluster.url"));
-        Assume.assumeFalse(
-                "External Elasticsearch cluster is set, skipping TestContainerHelperIT.", isExternalClusterSet);
-
-        // Check if Docker is available on this OS
-        Assume.assumeTrue(
-                "Docker is not available on this machine.",
-                DockerClientFactory.instance().isDockerAvailable());
-
+    @DisabledIfNoDocker
+    @DisabledIf(
+            value = "isExternalClusterSet",
+            disabledReason = "An external cluster is set, so we don't want to start a testcontainer")
+    void testStartingTestcontainer() {
         TestContainerHelper helper = new TestContainerHelper();
         Assertions.assertThat(helper.isStarted()).isFalse();
         Assertions.assertThat(helper.getElasticsearchVersion()).isNotBlank();
         String url = helper.startElasticsearch(false);
         Assertions.assertThat(url).isNotBlank();
         Assertions.assertThat(helper.isStarted()).isTrue();
+    }
+
+    static boolean isExternalClusterSet() {
+        String clusterUrl = System.getProperty("tests.cluster.url");
+        return clusterUrl != null && !"https://127.0.0.1:9200".equals(clusterUrl);
     }
 }

@@ -24,12 +24,12 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
+class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     @SuppressWarnings("resource")
     @Test
-    public void checksum_non_existing_algorithm() {
+    void checksum_non_existing_algorithm() {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("FSCRAWLER");
         AssertionsForClassTypes.assertThatExceptionOfType(RuntimeException.class)
@@ -43,7 +43,7 @@ public class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
      */
     @SuppressWarnings("resource")
     @Test
-    public void xml_and_json_enabled() {
+    void xml_and_json_enabled() {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setXmlSupport(true);
         fsSettings.getFs().setJsonSupport(true);

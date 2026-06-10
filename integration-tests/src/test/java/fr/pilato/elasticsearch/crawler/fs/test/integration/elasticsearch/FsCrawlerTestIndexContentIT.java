@@ -26,17 +26,17 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test all crawler settings */
-public class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestIndexContentIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test for #103: <a
      * href="https://github.com/dadoonet/fscrawler/issues/103">https://github.com/dadoonet/fscrawler/issues/103</a>
      */
     @Test
-    public void index_content() throws Exception {
+    void index_content() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexContent(false);
         crawler = startCrawler(fsSettings);

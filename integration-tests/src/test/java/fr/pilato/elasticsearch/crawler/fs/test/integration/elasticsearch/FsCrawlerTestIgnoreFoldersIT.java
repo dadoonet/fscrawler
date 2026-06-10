@@ -26,10 +26,10 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Test index_folders crawler setting */
-public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
+class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
 
     /**
      * Test case for #155: <a
@@ -37,7 +37,7 @@ public class FsCrawlerTestIgnoreFoldersIT extends AbstractFsCrawlerITCase {
      * New option: do not index folders
      */
     @Test
-    public void ignore_folders() throws Exception {
+    void ignore_folders() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setIndexFolders(false);
         crawler = startCrawler(fsSettings);

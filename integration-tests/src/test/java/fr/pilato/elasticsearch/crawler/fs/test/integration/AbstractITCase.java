@@ -20,8 +20,10 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
+import com.jayway.jsonpath.JsonPath;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
@@ -34,6 +36,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.FsCrawlerUtilForTests;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.NotFoundException;
@@ -56,6 +59,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -70,10 +74,11 @@ import org.assertj.core.api.Assumptions;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on <a
@@ -87,7 +92,12 @@ import org.junit.BeforeClass;
  *
  * <pre><code>mvn verify -DskipIntegTests</code></pre>
  */
-public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
+@DisabledIfSystemProperty(
+        named = "skipIntegTests",
+        matches = "true",
+        disabledReason = "skipIntegTests is true. So we are skipping the integration tests.")
+@Slow
+abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     protected static final Path DEFAULT_RESOURCES = Paths.get(getUrl("samples", "_common"));
     private static final String DEFAULT_TEST_CLUSTER_URL = "https://127.0.0.1:9200";
@@ -99,6 +109,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
     protected static Path metadataDir = null;
+    protected static Path testDocumentsDir;
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
     protected Path currentTestTagDir;
@@ -114,68 +125,59 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
      * readable. The temp folder which is used as a root is automatically cleaned after the test, so we don't have to
      * worry about it.
      */
-    @Before
-    public void copyTestResources() throws IOException {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            Files.createDirectory(testResourceTarget);
-        }
-
-        String currentTestName = getCurrentTestName();
+    @BeforeEach
+    void copyTestResources() throws IOException {
         // We copy files from the src dir to the temp dir
-        logger.info("🎬 Launching test [{}]", currentTestName);
-        currentTestResourceDir = testResourceTarget.resolve(currentTestName);
-        String url = getUrl("samples", currentTestName);
+        logger.info("Launching test [{}]", jobName);
+        currentTestResourceDir = testTmpDir;
+        String url = getUrl("samples", jobName);
         Path from = Paths.get(url);
 
         if (Files.exists(from)) {
-            logger.trace("📂 Copying test resources from [{}]", from);
+            logger.trace("Copying test resources from [{}]", from);
         } else {
-            logger.trace("📂 Copying test resources from [{}]", DEFAULT_RESOURCES);
+            logger.trace("Copying test resources from [{}]", DEFAULT_RESOURCES);
             from = DEFAULT_RESOURCES;
         }
 
         FsCrawlerUtilForTests.copyDirs(from, currentTestResourceDir);
 
-        logger.debug("✅ Test resources ready in [{}]", currentTestResourceDir);
+        logger.debug("Test resources ready in [{}]", currentTestResourceDir);
     }
 
-    @Before
-    public void copyTags() throws IOException {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            Files.createDirectory(testResourceTarget);
-        }
-
-        String currentTestName = getCurrentTestName();
+    @BeforeEach
+    void copyTags() throws IOException {
         // We copy files from the src dir to the temp dir
-        String url = getUrl("tags", currentTestName);
+        String url = getUrl("tags", jobName);
         Path from = Paths.get(url);
 
-        currentTestTagDir = testResourceTarget.resolve(currentTestName + ".tags");
+        currentTestTagDir = rootTmpDir.resolve(jobName + ".tags");
+        logger.info(
+                "Looking for tags: jobName=[{}], from=[{}], currentTestTagDir=[{}]", jobName, from, currentTestTagDir);
         if (Files.exists(from)) {
-            logger.trace("📂 Copying test resources from [{}]", from);
+            logger.info("Tags source exists at [{}]", from);
+            Files.createDirectories(currentTestTagDir.getParent());
             FsCrawlerUtilForTests.copyDirs(from, currentTestTagDir);
-            logger.debug("✅ Tags ready in [{}]", currentTestTagDir);
+            logger.info("Tags ready in [{}]", currentTestTagDir);
+        } else {
+            logger.info("No tags found at [{}]", from);
         }
     }
 
-    @After
-    public void cleanTestResources() {
-        logger.info("🏁 Test [{}] is now stopped", getCurrentTestName());
+    @AfterEach
+    void cleanTestResources() {
+        logger.info("🏁 Test [{}] is now stopped", jobName);
     }
 
-    @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException {
+    @BeforeAll
+    static void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
-        }
+        Files.createDirectories(metadataDir);
         logger.debug("🚦 Test metadata dir ready in [{}]", metadataDir);
     }
 
-    @AfterClass
-    public static void printMetadataDirContent() throws IOException {
+    @AfterAll
+    static void printMetadataDirContent() throws IOException {
         // If something goes wrong while initializing, we might have no metadataDir at all.
         if (metadataDir != null) {
             logger.debug("ls -l {}", metadataDir);
@@ -183,16 +185,15 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    @BeforeClass
-    public static void copyResourcesToTestDir() throws IOException, URISyntaxException {
+    @BeforeAll
+    protected static void copyResourcesToTestDir() throws IOException, URISyntaxException {
         Path testResourceTarget = rootTmpDir.resolve("resources");
-        if (Files.notExists(testResourceTarget)) {
-            logger.debug("⛏️ Creating test resources dir in [{}]", testResourceTarget);
-            Files.createDirectory(testResourceTarget);
-        }
+        logger.debug("⛏️ Creating test resources dir in [{}]", testResourceTarget);
+        Files.createDirectories(testResourceTarget);
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
+        testDocumentsDir = testResourceTarget.resolve("documents");
 
         logger.debug("🚦 Test resources ready in [{}]:", testResourceTarget);
     }
@@ -215,7 +216,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 Path finalTarget = target.resolve(sourceDirName);
                 if (Files.notExists(finalTarget)) {
                     logger.debug("⛏️ Creating test dir named [{}]", finalTarget);
-                    Files.createDirectory(finalTarget);
+                    Files.createDirectories(finalTarget);
                 }
                 // We are running our tests from the IDE most likely and documents are directly available in the
                 // classpath
@@ -230,10 +231,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 break;
             }
             case "jar": {
-                if (Files.notExists(target)) {
-                    logger.debug("⛏️ Creating test dir named [{}]", target);
-                    Files.createDirectory(target);
-                }
+                logger.debug("⛏️ Creating test dir named [{}]", target);
+                Files.createDirectories(target);
                 // We are  running our tests from the CLI most likely and documents are provided within a JAR as a
                 // dependency
                 String fileInJar = resource.getPath();
@@ -273,8 +272,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         }
     }
 
-    @BeforeClass
-    public static void startServices() throws IOException, ElasticsearchClientException {
+    @BeforeAll
+    static void startServices(Random rnd) throws IOException, ElasticsearchClientException {
         logger.debug("⛏️ Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
 
         FsSettings fsSettings = FsSettingsLoader.load();
@@ -365,7 +364,7 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // If the Api Key is not provided, we want to generate it and use in all the tests
         if (testApiKey == null) {
             // Generate the Api-Key
-            testApiKey = client.generateApiKey("fscrawler-" + RandomizedTest.randomAsciiAlphanumOfLength(10));
+            testApiKey = client.generateApiKey("fscrawler-" + RandomizedTest.randomAsciiAlphanumOfLength(rnd, 10));
 
             fsSettings.getElasticsearch().setApiKey(testApiKey);
             fsSettings.getElasticsearch().setUsername(null);
@@ -398,8 +397,8 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         return client;
     }
 
-    @AfterClass
-    public static void stopServices() throws IOException {
+    @AfterAll
+    static void stopServices() throws IOException {
         logger.debug("🏁 Stopping integration tests against an external cluster");
         if (client != null) {
             client.close();
@@ -410,15 +409,6 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             pluginsManager.close();
             pluginsManager = null;
         }
-    }
-
-    @Before
-    public void checkSkipIntegTests() {
-        // In case we are running tests from the IDE with the skipIntegTests option, let make sure we are skipping
-        // those tests
-        RandomizedTest.assumeFalse(
-                "skipIntegTests is true. So we are skipping the integration tests.",
-                getSystemProperty("skipIntegTests", false));
     }
 
     protected static void refresh(String indexName) throws ElasticsearchClientException {
@@ -635,5 +625,19 @@ public abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         // We explicitly set semantic search to false because IT takes too long time
         fsSettings.getElasticsearch().setSemanticSearch(false);
         return fsSettings;
+    }
+
+    /**
+     * Extract a specific hit knowing its filename
+     *
+     * @param response response object to extract from
+     * @param filename filename
+     * @return the found hit or an AssertionError if not found
+     */
+    protected static ESSearchHit findHitByFilename(final ESSearchResponse response, final String filename) {
+        return response.getHits().stream()
+                .filter(hit -> filename.equals(JsonPath.read(hit.getSource(), "$.file.filename")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No hit found with filename: " + filename));
     }
 }

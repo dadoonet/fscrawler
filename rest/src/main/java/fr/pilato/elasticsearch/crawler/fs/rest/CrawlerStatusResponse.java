@@ -23,10 +23,12 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /** Response object for the crawler status endpoint */
-public class CrawlerStatusResponse extends RestResponse {
+public final class CrawlerStatusResponse extends RestResponse {
 
     private CrawlerState state;
     private String currentPath;
@@ -70,10 +72,15 @@ public class CrawlerStatusResponse extends RestResponse {
         this.lastError = checkpoint.getLastError();
 
         if (checkpoint.getScanStartTime() != null) {
-            LocalDateTime end = (checkpoint.getState() == CrawlerState.COMPLETED && checkpoint.getScanEndTime() != null)
-                    ? checkpoint.getScanEndTime()
-                    : LocalDateTime.now();
-            setElapsedTime(Duration.between(checkpoint.getScanStartTime(), end));
+            Instant start =
+                    checkpoint.getScanStartTime().atZone(ZoneId.systemDefault()).toInstant();
+            Instant end;
+            if (checkpoint.getState() == CrawlerState.COMPLETED && checkpoint.getScanEndTime() != null) {
+                end = checkpoint.getScanEndTime().atZone(ZoneId.systemDefault()).toInstant();
+            } else {
+                end = Instant.now();
+            }
+            setElapsedTime(Duration.between(start, end));
         }
     }
 

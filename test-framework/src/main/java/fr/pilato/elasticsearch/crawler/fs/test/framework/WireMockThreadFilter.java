@@ -20,14 +20,14 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
-import com.carrotsearch.randomizedtesting.ThreadFilter;
+import java.util.function.Predicate;
 
 /**
  * Thread filter for WireMock Jetty threads. WireMock uses Jetty internally and may leave threads running after tests.
  */
-public class WireMockThreadFilter implements ThreadFilter {
+public class WireMockThreadFilter implements Predicate<Thread> {
     @Override
-    public boolean reject(Thread t) {
+    public boolean test(Thread t) {
         // WireMock uses Jetty threads with names like "qtp123456789-42"
         return t.getName().startsWith("qtp")
                 || t.getName().contains("WireMock")

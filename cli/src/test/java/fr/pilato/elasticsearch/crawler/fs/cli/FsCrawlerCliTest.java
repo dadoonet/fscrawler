@@ -34,50 +34,33 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /** We want to test FSCrawler main app */
-public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
-    private static final Logger logger = LogManager.getLogger();
-    private static Path metadataDir;
+@Execution(ExecutionMode.SAME_THREAD)
+class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
+    private Path metadataDir;
 
-    @BeforeClass
-    public static void createFsCrawlerJobDir() throws IOException {
-        metadataDir = rootTmpDir.resolve(".fscrawler");
-        if (Files.notExists(metadataDir)) {
-            Files.createDirectory(metadataDir);
-        }
-        logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
+    @BeforeEach
+    void initMetadataDirAndSystemProperties() throws IOException {
+        metadataDir = testTmpDir.resolve(".fscrawler");
+        Files.createDirectories(metadataDir);
+        saveSystemProperties("MY_JOB_NAME", "FSCRAWLER_NAME", "FSCRAWLER_FS_URL");
     }
 
-    @AfterClass
-    public static void printMetadataDirContent() throws IOException {
-        printLs(metadataDir);
-    }
-
-    private static void printLs(Path dir) throws IOException {
-        logger.debug("ls -l {}", dir);
-        Files.list(dir).forEach(path -> {
-            if (Files.isDirectory(path)) {
-                try {
-                    printLs(path);
-                } catch (IOException ignored) {
-                    // It's just for debugging, we don't care if it fails
-                }
-            } else {
-                logger.debug("{}", path);
-            }
-        });
+    @AfterEach
+    void cleanupSystemProperties() {
+        super.restoreSystemProperties();
     }
 
     @Test
-    public void restartCommand() throws Exception {
+    void restartCommand() throws Exception {
         String jobName = "fscrawler_restart_command";
 
         // We generate fake status and checkpoint files first in metadata dir
@@ -111,7 +94,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testWithWrongSettingsFile() throws Exception {
+    void testWithWrongSettingsFile() throws Exception {
         String jobName = "fscrawler_wrong_settings";
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
@@ -128,7 +111,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void withEnvVariables() throws Exception {
+    void withEnvVariables() throws Exception {
         String jobName = "fscrawler_env_variables";
 
         Path jobDir = metadataDir.resolve(jobName);
@@ -140,40 +123,27 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
                 """);
 
         String[] args = {"--config_dir", metadataDir.toString(), jobName};
-        // Create an environment variable
         System.setProperty("MY_JOB_NAME", "fscrawler_env_variables");
 
-        try {
-            Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
-        } finally {
-            // Remove the environment variable
-            System.clearProperty("MY_JOB_NAME");
-        }
+        Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
 
     @Test
-    public void withDefaultNamesForEnvVariables() throws Exception {
+    void withDefaultNamesForEnvVariables() throws Exception {
         String jobName = "fscrawler_env_variables_default";
 
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
 
         String[] args = {"--config_dir", metadataDir.toString(), jobName};
-        // Create an environment variable
         System.setProperty("FSCRAWLER_NAME", "fscrawler_env_variables_default");
         System.setProperty("FSCRAWLER_FS_URL", "/foo/bar");
 
-        try {
-            Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
-        } finally {
-            // Remove the environment variable
-            System.clearProperty("FSCRAWLER_NAME");
-            System.clearProperty("FSCRAWLER_FS_URL");
-        }
+        Assertions.assertThatNoException().isThrownBy(() -> FsCrawlerCli.main(args));
     }
 
     @Test
-    public void withEnvVariablesNotSet() throws IOException {
+    void withEnvVariablesNotSet() throws IOException {
         String jobName = "fscrawler_env_variables";
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
@@ -188,7 +158,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void withEmptySettings() throws Exception {
+    void withEmptySettings() throws Exception {
         String jobName = "fscrawler_empty_settings";
         Path jobDir = metadataDir.resolve(jobName);
         Files.createDirectories(jobDir);
@@ -200,7 +170,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testWithNoJobName() throws Exception {
+    void testWithNoJobName() throws Exception {
         Path jobDir = metadataDir.resolve(Defaults.JOB_NAME_DEFAULT);
         Files.createDirectories(jobDir);
         Files.writeString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML), "");
@@ -211,7 +181,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testSetupJob() throws Exception {
+    void testSetupJob() throws Exception {
         String jobName = "fscrawler_setup_job";
         String[] args = {"--config_dir", metadataDir.toString(), "--setup", jobName};
         FsCrawlerCli.main(args);
@@ -222,7 +192,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void testListJobs() throws Exception {
+    void testListJobs() throws Exception {
         String[] argsJob1 = {"--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_1"};
         FsCrawlerCli.main(argsJob1);
         String[] argsJob2 = {"--config_dir", metadataDir.toString(), "--setup", "fscrawler_list_jobs_2"};
@@ -233,9 +203,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    public void migrate_legacy_job() throws Exception {
-        String jobName = getCurrentTestName();
-
+    void migrate_legacy_job() throws Exception {
         // We generate fake status and checkpoint files first in metadata dir
         FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
         FsJobFileHandler legacyHandler = new FsJobFileHandler(metadataDir);
@@ -254,7 +222,7 @@ public class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         legacyJob.setNextCheck(LocalDateTime.now().plusHours(1));
         legacyJob.setIndexed(50);
         legacyJob.setDeleted(2);
-        legacyHandler.write(getCurrentTestName(), legacyJob);
+        legacyHandler.write(jobName, legacyJob);
 
         Assertions.assertThat(jobDir.resolve(FsJobFileHandler.FILENAME)).exists();
         Assertions.assertThat(jobDir.resolve(FsCrawlerCheckpointFileHandler.FILENAME))
