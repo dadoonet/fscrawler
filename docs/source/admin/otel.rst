@@ -11,9 +11,8 @@ loads it on startup and exports traces to any OpenTelemetry-compatible backend
 
 .. note::
 
-   OTel tracing is **enabled by default** when using the standard FSCrawler distribution.
-   The agent JAR is bundled in ``external/``.  No configuration is required to
-   start collecting traces — just point the exporter at your EDOT Collector.
+   OTel tracing is **disabled by default** when using the standard FSCrawler distribution.
+   To enable it, set the ``OTEL_ENABLED=true`` environment variable before starting FSCrawler.
 
 How it works
 -------------
@@ -51,16 +50,16 @@ FSCrawler uses a hybrid instrumentation approach:
      - ``es.bulk.actions``
      - Elasticsearch bulk indexing request (number of operations in the batch)
 
-Disabling OTel tracing
------------------------
+Enabling OTel tracing
+----------------------
 
-Remove the agent JAR to disable tracing entirely::
+To enable OTel tracing, set the ``OTEL_ENABLED=true`` environment variable before starting FSCrawler::
 
-    rm $FS_HOME/external/elastic-otel-javaagent-*.jar
+    export OTEL_ENABLED=true
+    export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+    export OTEL_SERVICE_NAME=fscrawler
+    export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.version=2.10
 
-Alternatively, keep the JAR but disable the SDK at runtime::
-
-    export OTEL_SDK_DISABLED=true
     ./bin/fscrawler
 
 Configuring the OTel exporter
@@ -71,6 +70,7 @@ Use standard OpenTelemetry environment variables before starting FSCrawler:
 .. code-block:: bash
 
    # Send traces to an EDOT Collector (OTLP HTTP)
+   export OTEL_ENABLED=true
    export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
    export OTEL_SERVICE_NAME=fscrawler
    export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.version=2.10
@@ -93,8 +93,6 @@ Common variables:
      - Comma-separated ``key=value`` resource attributes
    * - ``OTEL_EXPORTER_OTLP_HEADERS``
      - Auth headers, e.g. ``Authorization=Bearer <token>``
-   * - ``OTEL_SDK_DISABLED``
-     - Set to ``true`` to disable without removing the agent
    * - ``OTEL_EXPORTER_OTLP_TIMEOUT``
      - Export timeout in ms (e.g. ``1000``); reduce if the collector is unavailable
    * - ``OTEL_METRIC_EXPORT_INTERVAL``
@@ -110,6 +108,7 @@ Using with Elastic Cloud (managed EDOT)
 
 .. code-block:: bash
 
+   export OTEL_ENABLED=true
    export OTEL_EXPORTER_OTLP_ENDPOINT=https://<your-otel-endpoint>:443
    export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer <api-key>"
    export OTEL_SERVICE_NAME=fscrawler
@@ -121,18 +120,18 @@ You can find your OTel endpoint and API key in Kibana under
 Behavior without a collector
 ------------------------------
 
-If the agent is present but no EDOT Collector is reachable, the OTLP exporter
+If OTEL_ENABLED is set and the collector is unreachable, the OTLP exporter
 will log a ``WARN`` message on each failed export attempt and retry with
 exponential back-off.  FSCrawler continues to run normally — tracing failures
 are non-blocking.
 
-To suppress the warnings when no collector is available::
+To suppress the warnings, you can:
 
-    export OTEL_SDK_DISABLED=true
-
-or reduce the export timeout::
+- Reduce the export timeout::
 
     export OTEL_EXPORTER_OTLP_TIMEOUT=1000
+
+- Or disable OTEL tracing entirely by not setting ``OTEL_ENABLED=true``
 
 Using with other OTel backends (Jaeger, Zipkin, …)
 ----------------------------------------------------
@@ -142,6 +141,7 @@ Example for Jaeger (OTLP/gRPC):
 
 .. code-block:: bash
 
+   export OTEL_ENABLED=true
    export OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger-host:4317
    export OTEL_SERVICE_NAME=fscrawler
    ./bin/fscrawler
@@ -158,21 +158,20 @@ is available under ``contrib/docker-compose-example-edot/``.
      fscrawler:
        image: dadoonet/fscrawler:latest
        environment:
+         - OTEL_ENABLED=true
          - OTEL_EXPORTER_OTLP_ENDPOINT=http://edot-collector:4318
          - OTEL_SERVICE_NAME=fscrawler
          - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=docker
 
-To disable OTel tracing in Docker without rebuilding the image::
-
-    environment:
-      - OTEL_SDK_DISABLED=true
+To disable OTel tracing in Docker, simply omit the ``OTEL_ENABLED=true`` environment variable.
 
 Windows
 --------
 
-The ``bin\fscrawler.bat`` launcher applies the same auto-detection logic.
+The ``bin\fscrawler.bat`` launcher applies the same logic.
 Set environment variables in the same shell before running::
 
+    set OTEL_ENABLED=true
     set OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
     set OTEL_SERVICE_NAME=fscrawler
     bin\fscrawler.bat

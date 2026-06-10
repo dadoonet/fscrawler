@@ -34,18 +34,22 @@ set JAVA_OPTS=%JAVA_OPTS% -Dlog4j.configurationFile=%FS_HOME%/config/log4j2.xml
 REM Fix for CVE-2021-44228
 set JAVA_OPTS=%JAVA_OPTS% -Dlog4j2.formatMsgNoLookups=true
 
-REM Auto-load Elastic OTel javaagent if present in external\ (delete the JAR to disable APM tracing)
-REM To disable without deleting: set OTEL_SDK_DISABLED=true
+REM Always route OTEL agent logs to application logger (Log4j2)
+set JAVA_OPTS=%JAVA_OPTS% -DOTEL_JAVAAGENT_LOGGING=application
+
+REM Load Elastic OTel javaagent only if OTEL_ENABLED=true
 REM PUSHD is guarded so that a missing external\ directory does not unbalance the directory stack.
-IF EXIST "%FS_HOME%\external\" (
-    PUSHD "%FS_HOME%\external"
-    FOR %%I IN (elastic-otel-javaagent-*.jar) DO (
-        set OTEL_AGENT=%FS_HOME%\external\%%I
+IF "%OTEL_ENABLED%"=="true" (
+    IF EXIST "%FS_HOME%\external\" (
+        PUSHD "%FS_HOME%\external"
+        FOR %%I IN (elastic-otel-javaagent-*.jar) DO (
+            set OTEL_AGENT=%FS_HOME%\external\%%I
+        )
+        POPD
     )
-    POPD
-)
-IF DEFINED OTEL_AGENT (
-    set JAVA_OPTS=%JAVA_OPTS% -javaagent:!OTEL_AGENT!
+    IF DEFINED OTEL_AGENT (
+        set JAVA_OPTS=%JAVA_OPTS% -javaagent:!OTEL_AGENT!
+    )
 )
 
 REM If the user defined FS_JAVA_OPTS, we will use it to start the crawler

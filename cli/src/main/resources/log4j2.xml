@@ -85,6 +85,10 @@
          <AppenderRef ref="Console" />
          <AppenderRef ref="RollingFile" />
       </Logger>
+      <Logger name="io.opentelemetry" level="warn" additivity="false">
+         <AppenderRef ref="Console" />
+         <AppenderRef ref="RollingFile" />
+      </Logger>
 
       <Root level="warn">
          <AppenderRef ref="Console" />
