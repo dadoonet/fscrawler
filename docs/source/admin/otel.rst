@@ -70,6 +70,7 @@ Use standard OpenTelemetry environment variables before starting FSCrawler:
 .. code-block:: bash
 
    # Send traces to an EDOT Collector (OTLP HTTP)
+   export OTEL_ENABLED=true
    export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
    export OTEL_SERVICE_NAME=fscrawler
    export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.version=2.10
