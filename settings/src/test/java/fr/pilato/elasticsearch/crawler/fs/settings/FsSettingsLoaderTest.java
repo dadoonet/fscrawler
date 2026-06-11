@@ -20,6 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
+
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
@@ -35,14 +37,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ResourceLock;
-import org.junit.jupiter.api.parallel.Resources;
+import org.junit.jupiter.api.parallel.Execution;
 
+@Execution(SAME_THREAD)
 class FsSettingsLoaderTest {
 
     private static final Logger logger = LogManager.getLogger();
@@ -51,14 +52,8 @@ class FsSettingsLoaderTest {
     Path configPath;
 
     @BeforeEach
+    @AfterEach
     void cleanupSystemProperties() {
-        System.clearProperty("name");
-        System.clearProperty("fs.url");
-        System.clearProperty("fs.xml_support");
-    }
-
-    @AfterAll
-    static void cleanupAfterAll() {
         System.clearProperty("name");
         System.clearProperty("fs.url");
         System.clearProperty("fs.xml_support");
@@ -92,7 +87,6 @@ class FsSettingsLoaderTest {
     }
 
     @Test
-    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadNonExistingSettings() throws IOException {
         FsSettings doesnotexist = new FsSettingsLoader(configPath).read("doesnotexist");
         FsSettings expected = generateExpectedDefaultFsSettings();
@@ -100,13 +94,11 @@ class FsSettingsLoaderTest {
     }
 
     @Test
-    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadNoFile() {
         checkSettings(generateExpectedDefaultFsSettings(), FsSettingsLoader.load());
     }
 
     @Test
-    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadJsonSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("json-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
@@ -129,7 +121,6 @@ class FsSettingsLoaderTest {
     }
 
     @Test
-    @ResourceLock(Resources.SYSTEM_PROPERTIES)
     void loadYamlSimple() throws IOException {
         FsSettings settings = new FsSettingsLoader(configPath).read("yaml-simple");
         FsSettings expected = generateExpectedDefaultFsSettings();
@@ -301,7 +292,6 @@ class FsSettingsLoaderTest {
         }
 
         @Test
-        @ResourceLock(Resources.SYSTEM_PROPERTIES)
         void withDefaultNamesForEnvVariables() throws Exception {
             System.setProperty("name", "foo");
             System.setProperty("fs.url", "/tmp/test");
