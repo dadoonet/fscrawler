@@ -79,7 +79,7 @@
         <minio.version>9.0.2</minio.version>
 
         <!-- Tests -->
-        <junit.version>6.0.3</junit.version>
+        <junit.version>6.1.0</junit.version>
         <randomizedtesting.version>0.3.0</randomizedtesting.version>
 
         <!-- Non Apache2 Compatible licenses -->
