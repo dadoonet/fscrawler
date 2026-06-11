@@ -737,7 +737,7 @@
                         <systemPropertyVariables combine.children="append">
                             <!-- classes run sequentially, methods within a class run concurrently -->
                             <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                            <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                            <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
                             <junit.jupiter.execution.parallel.mode.classes.default>same_thread</junit.jupiter.execution.parallel.mode.classes.default>
                             <arg.common>arg.common</arg.common>
                             <tests.seed>${tests.seed}</tests.seed>
