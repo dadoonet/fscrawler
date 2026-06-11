@@ -80,7 +80,7 @@
 
         <!-- Tests -->
         <junit.version>6.0.3</junit.version>
-        <randomizedtesting.version>0.2.0</randomizedtesting.version>
+        <randomizedtesting.version>0.3.0</randomizedtesting.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
