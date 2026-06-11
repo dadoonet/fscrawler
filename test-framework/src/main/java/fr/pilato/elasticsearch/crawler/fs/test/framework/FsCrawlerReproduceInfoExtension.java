@@ -33,13 +33,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.LifecycleMethodExecutionExceptionHandler;
 import org.opentest4j.TestAbortedException;
 
 /**
  * JUnit 6 extension that prints an exact reproduction command line when a test fails, adapted to the original build
  * tool (Maven or Gradle).
  */
-public class FsCrawlerReproduceInfoExtension implements AfterTestExecutionCallback {
+public class FsCrawlerReproduceInfoExtension
+        implements AfterTestExecutionCallback, LifecycleMethodExecutionExceptionHandler {
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -55,52 +57,85 @@ public class FsCrawlerReproduceInfoExtension implements AfterTestExecutionCallba
         // 1. We only handle failures (successes and ignored assumptions are skipped)
         if (context.getExecutionException().isPresent()) {
             Throwable exception = context.getExecutionException().get();
-            if (exception instanceof TestAbortedException) {
-                return; // Assumption was not met, ignore it.
+            if (!(exception instanceof TestAbortedException)) {
+                logger.fatal(buildReproduceCommand(
+                        context, context.getRequiredTestMethod().getName()));
             }
-
-            StringBuilder commandBuilder = new StringBuilder();
-            commandBuilder.append("\n🐛 REPRODUCE WITH:\n");
-
-            // 2. Retrieve class and method names from the JUnit 6 context
-            Class<?> testClass = context.getRequiredTestClass();
-            String className = testClass.getName();
-            String methodName = context.getRequiredTestMethod().getName();
-            String simpleName = testClass.getSimpleName();
-
-            // 3. Detect test type and build Maven command
-            boolean isIntegrationTest = simpleName.endsWith("IT");
-            commandBuilder.append("mvn verify");
-
-            if (isIntegrationTest) {
-                commandBuilder.append(" -DskipUnitTests");
-                commandBuilder
-                        .append(" -Dit.test=")
-                        .append(className)
-                        .append("#")
-                        .append(methodName);
-            } else {
-                commandBuilder.append(" -DskipIntegTests");
-                commandBuilder.append(" -Dtest=").append(className).append("#").append(methodName);
-            }
-
-            // 4. Default Java/ES environment options
-            appendOpt(commandBuilder, "tests.locale", Locale.getDefault().toLanguageTag());
-            appendOpt(commandBuilder, "tests.timezone", TimeZone.getDefault().getID());
-
-            // 5. Recursively scan custom @Properties annotations
-            List<String> extraProperties = new ArrayList<>();
-            scanProperties(testClass, extraProperties);
-            for (String sysProp : extraProperties) {
-                String val = System.getProperty(sysProp);
-                if (val != null && !val.trim().isEmpty()) {
-                    appendOpt(commandBuilder, sysProp, val);
-                }
-            }
-
-            // 6. Log the reproduction command
-            logger.fatal(commandBuilder.toString());
         }
+    }
+
+    @Override
+    public void handleBeforeAllMethodExecutionException(ExtensionContext context, Throwable throwable)
+            throws Throwable {
+        logLifecycleFailure(context, throwable);
+        throw throwable;
+    }
+
+    @Override
+    public void handleBeforeEachMethodExecutionException(ExtensionContext context, Throwable throwable)
+            throws Throwable {
+        logLifecycleFailure(context, throwable);
+        throw throwable;
+    }
+
+    @Override
+    public void handleAfterEachMethodExecutionException(ExtensionContext context, Throwable throwable)
+            throws Throwable {
+        logLifecycleFailure(context, throwable);
+        throw throwable;
+    }
+
+    @Override
+    public void handleAfterAllMethodExecutionException(ExtensionContext context, Throwable throwable) throws Throwable {
+        logLifecycleFailure(context, throwable);
+        throw throwable;
+    }
+
+    private void logLifecycleFailure(ExtensionContext context, Throwable throwable) {
+        if (throwable instanceof TestAbortedException) {
+            return;
+        }
+        String methodName =
+                context.getTestMethod().map(method -> method.getName()).orElse(null);
+        logger.fatal(buildReproduceCommand(context, methodName));
+    }
+
+    String buildReproduceCommand(ExtensionContext context, String methodName) {
+        StringBuilder commandBuilder = new StringBuilder();
+        commandBuilder.append("\n🐛 REPRODUCE WITH:\n");
+
+        Class<?> testClass = context.getRequiredTestClass();
+        String className = testClass.getName();
+        String simpleName = testClass.getSimpleName();
+
+        boolean isIntegrationTest = simpleName.endsWith("IT");
+        commandBuilder.append("mvn verify");
+
+        if (isIntegrationTest) {
+            commandBuilder.append(" -DskipUnitTests");
+            commandBuilder.append(" -Dit.test=").append(className);
+        } else {
+            commandBuilder.append(" -DskipIntegTests");
+            commandBuilder.append(" -Dtest=").append(className);
+        }
+
+        if (methodName != null) {
+            commandBuilder.append("#").append(methodName);
+        }
+
+        appendOpt(commandBuilder, "tests.locale", Locale.getDefault().toLanguageTag());
+        appendOpt(commandBuilder, "tests.timezone", TimeZone.getDefault().getID());
+
+        List<String> extraProperties = new ArrayList<>();
+        scanProperties(testClass, extraProperties);
+        for (String sysProp : extraProperties) {
+            String val = System.getProperty(sysProp);
+            if (val != null && !val.trim().isEmpty()) {
+                appendOpt(commandBuilder, sysProp, val);
+            }
+        }
+
+        return commandBuilder.toString();
     }
 
     /** Safely append a -D option to the StringBuilder, with space handling. */
