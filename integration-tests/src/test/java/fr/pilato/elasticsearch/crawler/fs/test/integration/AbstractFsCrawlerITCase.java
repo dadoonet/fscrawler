@@ -101,7 +101,7 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     @AfterEach
     void shutdownCrawler() throws InterruptedException, IOException {
         if (crawler != null) {
-            logger.info("🏁 Stopping crawler");
+            logger.info("🏁 Stopping crawler [{}]", getCrawlerName());
             crawler.close();
             crawler = null;
         }
