@@ -800,7 +800,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         for (String templateName : templateNames) {
             try {
                 Awaitility.await()
-                        .atMost(30, TimeUnit.SECONDS)
+                        .atMost(60, TimeUnit.SECONDS)
                         .pollInterval(ExponentialBackoffPollInterval.exponential(
                                 Duration.ofMillis(100), Duration.ofSeconds(5)))
                         .until(() -> {
@@ -817,7 +817,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 logger.debug("Component template [{}] is now available", templateName);
             } catch (ConditionTimeoutException e) {
                 throw new ElasticsearchClientException(
-                        "Component template [" + templateName + "] did not become available within 30 seconds");
+                        "Component template [" + templateName + "] did not become available within 60 seconds");
             }
         }
     }
