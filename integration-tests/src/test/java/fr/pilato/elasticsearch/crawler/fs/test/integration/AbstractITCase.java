@@ -79,6 +79,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Integration tests expect to have an elasticsearch instance running on <a
@@ -97,6 +98,7 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
         matches = "true",
         disabledReason = "skipIntegTests is true. So we are skipping the integration tests.")
 @Slow
+@ExtendWith(FsCrawlerTestSuiteExtension.class)
 abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     protected static final Path DEFAULT_RESOURCES = Paths.get(getUrl("samples", "_common"));
@@ -108,7 +110,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
-    protected static Path metadataDir = null;
+    protected Path metadataDir = null;
     protected static Path testDocumentsDir;
     protected FsCrawlerImpl crawler = null;
     protected Path currentTestResourceDir;
@@ -169,16 +171,15 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         logger.info("🏁 Test [{}] is now stopped", jobName);
     }
 
-    @BeforeAll
-    static void createFsCrawlerJobDir() throws IOException {
+    @BeforeEach
+    void createJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
         Files.createDirectories(metadataDir);
         logger.debug("🚦 Test metadata dir ready in [{}]", metadataDir);
     }
 
-    @AfterAll
-    static void printMetadataDirContent() throws IOException {
-        // If something goes wrong while initializing, we might have no metadataDir at all.
+    @AfterEach
+    void printMetadataDirContent() throws IOException {
         if (metadataDir != null) {
             logger.debug("ls -l {}", metadataDir);
             Files.list(metadataDir).forEach(path -> logger.debug("{}", path));
@@ -186,10 +187,15 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @BeforeAll
-    protected static void copyResourcesToTestDir() throws IOException, URISyntaxException {
-        Path testResourceTarget = rootTmpDir.resolve("resources");
+    protected static synchronized void copyResourcesToTestDir() throws IOException, URISyntaxException {
+        if (testDocumentsDir != null) {
+            logger.debug("Test documents already copied — skipping copyResourcesToTestDir");
+            return;
+        }
+        // rootTmpDir is now a per-method instance field; use an independent temp dir
+        // for test documents which are read-only and shared across the entire suite.
+        Path testResourceTarget = Files.createTempDirectory("fscrawler-test-docs-");
         logger.debug("⛏️ Creating test resources dir in [{}]", testResourceTarget);
-        Files.createDirectories(testResourceTarget);
 
         // We copy files from the src dir to the temp dir
         copyTestDocumentsToTargetDir(testResourceTarget, "documents", "/fscrawler-test-documents-marker.txt");
@@ -273,39 +279,23 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @BeforeAll
-    static void startServices(Random rnd) throws IOException, ElasticsearchClientException {
+    static synchronized void startServices(Random rnd) throws IOException, ElasticsearchClientException {
+        if (client != null) {
+            logger.debug("Shared resources already initialized — skipping startServices");
+            return;
+        }
         logger.debug("⛏️ Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
 
         FsSettings fsSettings = FsSettingsLoader.load();
-        // If we already have the elasticsearch settings, there's no need to load them again
-        if (elasticsearchConfiguration != null) {
-            logger.debug("We already found the cluster settings. No need to set them again.");
-            Elasticsearch elasticsearchLocalConfiguration = clone(elasticsearchConfiguration);
-
-            // If we already launched testcontainers, we need to write the CA certificate file again
-            // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
-            if (testContainerHelper.isStarted() && testContainerHelper.getCertAsBytes() != null) {
-                Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
-                Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
-                testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
-            } else {
-                testCaCertificate = null;
-            }
-            elasticsearchLocalConfiguration.setSslVerification(testCaCertificate != null);
-            elasticsearchLocalConfiguration.setCaCertificate(testCaCertificate);
-            fsSettings.setElasticsearch(elasticsearchLocalConfiguration);
+        // We build the elasticsearch Client based on the parameters
+        fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
+        fsSettings.getElasticsearch().setSslVerification(testCheckCertificate);
+        fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
+        if (testApiKey != null) {
+            fsSettings.getElasticsearch().setApiKey(testApiKey);
         } else {
-            logger.debug("No elasticsearch configuration found, using default settings");
-            // We build the elasticsearch Client based on the parameters
-            fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
-            fsSettings.getElasticsearch().setSslVerification(testCheckCertificate);
-            fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
-            if (testApiKey != null) {
-                fsSettings.getElasticsearch().setApiKey(testApiKey);
-            } else {
-                fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
-                fsSettings.getElasticsearch().setPassword(TestContainerHelper.DEFAULT_PASSWORD);
-            }
+            fsSettings.getElasticsearch().setUsername(DEFAULT_USERNAME);
+            fsSettings.getElasticsearch().setPassword(TestContainerHelper.DEFAULT_PASSWORD);
         }
 
         try {
@@ -343,7 +333,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             testClusterUrl = testContainerHelper.startElasticsearch(TEST_KEEP_DATA);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (testContainerHelper.getCertAsBytes() != null) {
-                Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
+                Path clusterCaCrtPath = Files.createTempFile("fscrawler-ca-", ".crt");
                 Files.write(clusterCaCrtPath, testContainerHelper.getCertAsBytes());
                 testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
             } else {
@@ -386,6 +376,23 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         logger.info("✅ Starting integration tests against an external cluster running elasticsearch [{}]", version);
     }
 
+    /**
+     * Called exactly once per JVM by {@link FsCrawlerTestSuiteExtension#close()},
+     * after all tests and their lifecycle methods have completed.
+     */
+    static void shutdownSuiteResources() throws IOException {
+        logger.debug("🏁 Closing shared suite resources");
+        if (client != null) {
+            client.close();
+            client = null;
+            logger.debug("🏁 Elasticsearch client stopped");
+        }
+        if (pluginsManager != null) {
+            pluginsManager.close();
+            pluginsManager = null;
+        }
+    }
+
     private static ElasticsearchClient startClient(FsSettings fsSettings) throws ElasticsearchClientException {
         logger.debug(
                 "Starting a client against [{}] with [{}] as a CA certificate and ssl check [{}]",
@@ -398,17 +405,9 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     @AfterAll
-    static void stopServices() throws IOException {
-        logger.debug("🏁 Stopping integration tests against an external cluster");
-        if (client != null) {
-            client.close();
-            client = null;
-            logger.debug("🏁 Elasticsearch client stopped");
-        }
-        if (pluginsManager != null) {
-            pluginsManager.close();
-            pluginsManager = null;
-        }
+    static void stopServices() {
+        // Intentionally empty — shutdown is delegated to FsCrawlerTestSuiteExtension.close(),
+        // which fires once after all classes have finished, preventing mid-suite teardown.
     }
 
     protected static void refresh(String indexName) throws ElasticsearchClientException {
