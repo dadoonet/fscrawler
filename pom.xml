@@ -735,10 +735,14 @@
                         <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
                         <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
                         <systemPropertyVariables combine.children="append">
-                            <!-- classes run sequentially, methods within a class run concurrently -->
+                            <!-- Enable parallel execution -->
                             <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                            <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
+                            <!-- Enable parallel execution of classes -->
                             <junit.jupiter.execution.parallel.mode.classes.default>same_thread</junit.jupiter.execution.parallel.mode.classes.default>
+                            <!-- Disable parallel execution of test methods -->
+                            <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
+                            <!-- Try the new WORKER_THREAD_POOL parallel mode -->
+                            <junit.jupiter.execution.parallel.config.executor-service>WORKER_THREAD_POOL</junit.jupiter.execution.parallel.config.executor-service>
                             <arg.common>arg.common</arg.common>
                             <tests.seed>${tests.seed}</tests.seed>
                             <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
@@ -1104,6 +1108,8 @@
                                 <!-- junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy-->
                                 <!-- Define the factor to use x * num of cores: we use default: 1 -->
                                 <!-- junit.jupiter.execution.parallel.config.dynamic.factor>1</junit.jupiter.execution.parallel.config.dynamic.factor-->
+                                <!-- Try the new WORKER_THREAD_POOL parallel mode -->
+                                <junit.jupiter.execution.parallel.config.executor-service>WORKER_THREAD_POOL</junit.jupiter.execution.parallel.config.executor-service>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
