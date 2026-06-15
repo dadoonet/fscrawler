@@ -377,8 +377,8 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     }
 
     /**
-     * Called exactly once per JVM by {@link FsCrawlerTestSuiteExtension#close()},
-     * after all tests and their lifecycle methods have completed.
+     * Called exactly once per JVM by {@link FsCrawlerTestSuiteExtension#close()}, after all tests and their lifecycle
+     * methods have completed.
      */
     static void shutdownSuiteResources() throws IOException {
         logger.debug("🏁 Closing shared suite resources");

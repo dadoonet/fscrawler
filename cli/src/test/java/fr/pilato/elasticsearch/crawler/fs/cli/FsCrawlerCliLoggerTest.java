@@ -35,8 +35,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.LevelMatchFilter;
 import org.apache.logging.log4j.core.filter.LevelRangeFilter;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -46,17 +45,17 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 @Execution(ExecutionMode.SAME_THREAD)
 class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private static Path metadataDir;
+    private Path metadataDir;
 
-    @BeforeAll
-    static void createFsCrawlerJobDir() throws IOException {
+    @BeforeEach
+    void createFsCrawlerJobDir() throws IOException {
         metadataDir = rootTmpDir.resolve(".fscrawler");
         Files.createDirectories(metadataDir);
         logger.debug("  --> Test metadata dir ready in [{}]", metadataDir);
     }
 
-    @AfterAll
-    static void printMetadataDirContent() throws IOException {
+    @AfterEach
+    void printMetadataDirContent() throws IOException {
         printLs(metadataDir);
     }
 

@@ -20,33 +20,32 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration;
 
+import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
-
 /**
- * Ensures shared IT suite resources (Elasticsearch client, plugin manager)
- * are shut down exactly once after all tests complete, even in parallel runs.
+ * Ensures shared IT suite resources (Elasticsearch client, plugin manager) are shut down exactly once after all tests
+ * complete, even in parallel runs.
  *
- * <p>Initialization remains in {@code @BeforeAll startServices()} which is made
- * idempotent via {@code synchronized} + a null-check guard. This extension only
- * registers a {@link ExtensionContext.Store.CloseableResource} in the GLOBAL store
- * so that {@link #close()} fires at true suite teardown time — after every class's
- * {@code @AfterAll} methods have finished, not at per-class teardown time.
+ * <p>Initialization remains in {@code @BeforeAll startServices()} which is made idempotent via {@code synchronized} + a
+ * null-check guard. This extension only registers a {@link ExtensionContext.Store.CloseableResource} in the GLOBAL
+ * store so that {@link #close()} fires at true suite teardown time — after every class's {@code @AfterAll} methods have
+ * finished, not at per-class teardown time.
  */
-class FsCrawlerTestSuiteExtension
-        implements BeforeAllCallback, ExtensionContext.Store.CloseableResource {
+class FsCrawlerTestSuiteExtension implements BeforeAllCallback, ExtensionContext.Store.CloseableResource {
 
     private static final Logger logger = LogManager.getLogger(FsCrawlerTestSuiteExtension.class);
     private static final String STORE_KEY = FsCrawlerTestSuiteExtension.class.getName();
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        context.getRoot().getStore(GLOBAL)
-               .getOrComputeIfAbsent(STORE_KEY, k -> this, FsCrawlerTestSuiteExtension.class);
+        context.getRoot()
+                .getStore(GLOBAL)
+                .getOrComputeIfAbsent(STORE_KEY, k -> this, FsCrawlerTestSuiteExtension.class);
     }
 
     @Override

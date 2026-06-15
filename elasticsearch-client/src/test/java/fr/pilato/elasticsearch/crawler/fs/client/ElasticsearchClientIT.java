@@ -137,7 +137,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             testClusterUrl = TEST_CONTAINER_HELPER.startElasticsearch(TEST_KEEP_DATA);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (TEST_CONTAINER_HELPER.getCertAsBytes() != null) {
-                Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
+                Path clusterCaCrtPath = Files.createTempFile("fscrawler-ca-", ".crt");
                 Files.write(clusterCaCrtPath, TEST_CONTAINER_HELPER.getCertAsBytes());
                 testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
             } else {

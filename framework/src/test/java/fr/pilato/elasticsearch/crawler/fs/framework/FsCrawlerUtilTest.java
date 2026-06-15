@@ -39,17 +39,17 @@ import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
-    private static File file;
+    private File file;
 
-    @BeforeAll
-    static void createTmpFile() throws IOException {
+    @BeforeEach
+    void createTmpFile() throws IOException {
         Path path = rootTmpDir.resolve("test-group.txt");
         if (!OsValidator.WINDOWS) {
             Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwx------");

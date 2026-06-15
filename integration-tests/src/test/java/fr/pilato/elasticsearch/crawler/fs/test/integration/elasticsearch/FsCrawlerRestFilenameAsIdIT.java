@@ -47,7 +47,7 @@ class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
 
     @Test
     void uploadOneDocument() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents").resolve("test.txt");
+        Path from = testDocumentsDir.resolve("test.txt");
         if (Files.notExists(from)) {
             logger.error("file [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
@@ -65,7 +65,7 @@ class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
 
     @Test
     void uploadAllDocuments() throws Exception {
-        Path from = rootTmpDir.resolve("resources").resolve("documents");
+        Path from = testDocumentsDir;
         if (Files.notExists(from)) {
             logger.error("directory [{}] should exist before we start tests", from);
             throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
