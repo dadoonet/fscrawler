@@ -137,7 +137,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             testClusterUrl = TEST_CONTAINER_HELPER.startElasticsearch(TEST_KEEP_DATA);
             // Write the Ca Certificate on disk if exists (with versions < 8, no self-signed certificate)
             if (TEST_CONTAINER_HELPER.getCertAsBytes() != null) {
-                Path clusterCaCrtPath = rootTmpDir.resolve("cluster-ca.crt");
+                Path clusterCaCrtPath = Files.createTempFile("fscrawler-ca-", ".crt");
                 Files.write(clusterCaCrtPath, TEST_CONTAINER_HELPER.getCertAsBytes());
                 testCaCertificate = clusterCaCrtPath.toAbsolutePath().toString();
             } else {
@@ -207,17 +207,25 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         testCaCertificate = null;
     }
 
+    /** Minimal settings carrying this test's index/folder names, to drive template cleanup by exact name. */
+    private FsSettings cleanupSettings() {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(getCrawlerName());
+        fsSettings.getElasticsearch().setIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        fsSettings.getElasticsearch().setIndexFolder(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+        return fsSettings;
+    }
+
     @BeforeEach
     void cleanExistingIndex() throws ElasticsearchClientException {
         logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
         esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
 
-        // Remove existing templates if any
-        String templateName = "fscrawler_" + getCrawlerName() + "_*";
-        logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
-        removeIndexTemplates(templateName);
-        removeComponentTemplates(templateName);
+        // Remove existing templates by their exact names (mirroring what the crawler creates) so a
+        // wildcard cannot delete a prefix-sibling test's templates under parallel execution.
+        logger.debug("🧹 Removing existing index and component templates for [{}]", getCrawlerName());
+        esClient.removeIndexAndComponentTemplates(cleanupSettings());
 
         logger.info("🎬 Starting test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
@@ -228,12 +236,8 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             logger.debug("🧹 Removing index [{}*]", getCrawlerName());
             esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
             esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-
-            // Remove existing templates if any
-            String templateName = "fscrawler_" + getCrawlerName() + "_*";
-            logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
+            // Remove the templates this test may have created, by their exact names.
+            esClient.removeIndexAndComponentTemplates(cleanupSettings());
         }
 
         logger.info("✅ End of test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
@@ -264,6 +268,54 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         createIndex();
         Assertions.assertThatNoException()
                 .isThrownBy(() -> esClient.refresh(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS));
+    }
+
+    @Test
+    void removeIndexAndComponentTemplatesLeavesNoLeftover() throws Exception {
+        // A dedicated client whose settings carry this test's own index/folder names, so
+        // createIndexAndComponentTemplates() and removeIndexAndComponentTemplates() agree.
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getElasticsearch().setUrls(List.of(testClusterUrl));
+        settings.getElasticsearch().setSslVerification(false);
+        settings.getElasticsearch().setApiKey(testApiKey);
+        settings.getElasticsearch().setIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        settings.getElasticsearch().setIndexFolder(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+        settings.getElasticsearch().setPushTemplates(true);
+        settings.getElasticsearch().setSemanticSearch(false);
+        settings.getFs().setIndexFolders(true);
+
+        ElasticsearchClient localClient = startClient(settings);
+        try {
+            localClient.createIndexAndComponentTemplates();
+
+            // Everything create() produced must now exist.
+            for (String name : ElasticsearchClient.componentTemplateNames(settings)) {
+                Assertions.assertThat(localClient.isExistingComponentTemplate(name))
+                        .as("component template [%s] should exist after create", name)
+                        .isTrue();
+            }
+            for (String name : ElasticsearchClient.indexTemplateNames(settings)) {
+                Assertions.assertThat(localClient.isExistingIndexTemplate(name))
+                        .as("index template [%s] should exist after create", name)
+                        .isTrue();
+            }
+
+            // After removal, nothing must be left over.
+            localClient.removeIndexAndComponentTemplates(settings);
+            for (String name : ElasticsearchClient.componentTemplateNames(settings)) {
+                Assertions.assertThat(localClient.isExistingComponentTemplate(name))
+                        .as("component template [%s] should be gone after remove", name)
+                        .isFalse();
+            }
+            for (String name : ElasticsearchClient.indexTemplateNames(settings)) {
+                Assertions.assertThat(localClient.isExistingIndexTemplate(name))
+                        .as("index template [%s] should be gone after remove", name)
+                        .isFalse();
+            }
+        } finally {
+            localClient.removeIndexAndComponentTemplates(settings);
+            localClient.close();
+        }
     }
 
     private void createSearchDataset() throws Exception {

@@ -25,16 +25,16 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import java.nio.file.Path;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** We want to test FSCrawler main app */
 class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
 
-    private static Path metadataDir;
+    private Path metadataDir;
 
-    @BeforeAll
-    static void createFsCrawlerJobDir() {
+    @BeforeEach
+    void createFsCrawlerJobDir() {
         metadataDir = rootTmpDir.resolve(".fscrawler");
     }
 

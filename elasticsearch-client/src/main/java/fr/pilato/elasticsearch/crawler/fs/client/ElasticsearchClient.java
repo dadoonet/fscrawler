@@ -30,6 +30,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.ServiceUnavailableException;
@@ -252,6 +253,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
 
         // Create the BulkProcessor instance
+        initBulkProcessor();
+    }
+
+    /**
+     * Creates the {@link FsCrawlerBulkProcessor} used to batch index/delete operations. Extracted so that tests can
+     * override it — e.g. to avoid starting a background flush thread when only direct, synchronous operations are used.
+     */
+    protected void initBulkProcessor() {
         bulkProcessor = new FsCrawlerBulkProcessor.Builder<>(
                         new ElasticsearchEngine(this),
                         new FsCrawlerRetryBulkProcessorListener<>("es_rejected_execution_exception"),
@@ -790,6 +799,135 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     /**
+     * Removes every index template and component template that {@link #createIndexAndComponentTemplates()} may have
+     * created for the given index and folder names.
+     *
+     * <p><b>Test-only.</b> Not used in production. It lets integration tests clean up by precise template names instead
+     * of a wildcard such as {@code fscrawler_<name>_*}, which under parallel execution would also match (and delete)
+     * the templates of a sibling test whose crawler name shares the same prefix (e.g. {@code store_source} vs
+     * {@code store_source_no_index_content}).
+     *
+     * <p>All variants are attempted (semantic or not, with or without folders) and missing templates are ignored, so
+     * cleanup is idempotent and leaves no dangling reference. Index templates are deleted before component templates,
+     * because a component template still referenced by an index template cannot be removed.
+     *
+     * @param settings the settings providing the index and folder names to clean up
+     * @throws ElasticsearchClientException in case of an unexpected error
+     */
+    public void removeIndexAndComponentTemplates(FsSettings settings) throws ElasticsearchClientException {
+        String index = settings.getElasticsearch().getIndex();
+        String indexFolder = settings.getElasticsearch().getIndexFolder();
+
+        // Index templates first: a component template still referenced by an index template cannot be deleted
+        // (Elasticsearch returns a 400). We attempt every variant the crawler may have created so that no index
+        // template is left referencing the component templates we are about to remove.
+        deleteIndexTemplate(prefixedTemplateName("fscrawler_docs", index));
+        deleteIndexTemplate(prefixedTemplateName("fscrawler_docs_semantic", index));
+        deleteIndexTemplate(prefixedTemplateName("fscrawler_folders", indexFolder));
+
+        // Then the component templates (both content variants and the folder ones).
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_alias", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_settings_total_fields", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_attributes", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_file", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_path", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_attachment", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_content", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_content_semantic", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_meta", index));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_attributes", indexFolder));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_file", indexFolder));
+        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_path", indexFolder));
+    }
+
+    /**
+     * Computes the component template names {@link #createIndexAndComponentTemplates()} creates for the given settings.
+     * Must stay in sync with that method.
+     */
+    static List<String> componentTemplateNames(FsSettings settings) {
+        String index = settings.getElasticsearch().getIndex();
+        List<String> names = new ArrayList<>();
+        // Docs component templates
+        names.add(prefixedTemplateName("fscrawler_alias", index));
+        names.add(prefixedTemplateName("fscrawler_settings_total_fields", index));
+        names.add(prefixedTemplateName("fscrawler_mapping_attributes", index));
+        names.add(prefixedTemplateName("fscrawler_mapping_file", index));
+        names.add(prefixedTemplateName("fscrawler_mapping_path", index));
+        names.add(prefixedTemplateName("fscrawler_mapping_attachment", index));
+        names.add(prefixedTemplateName(
+                settings.getElasticsearch().isSemanticSearch()
+                        ? "fscrawler_mapping_content_semantic"
+                        : "fscrawler_mapping_content",
+                index));
+        names.add(prefixedTemplateName("fscrawler_mapping_meta", index));
+        // Folder component templates
+        if (settings.getFs().isIndexFolders()) {
+            String indexFolder = settings.getElasticsearch().getIndexFolder();
+            names.add(prefixedTemplateName("fscrawler_mapping_attributes", indexFolder));
+            names.add(prefixedTemplateName("fscrawler_mapping_file", indexFolder));
+            names.add(prefixedTemplateName("fscrawler_mapping_path", indexFolder));
+        }
+        return names;
+    }
+
+    /**
+     * Computes the index template names {@link #createIndexAndComponentTemplates()} creates for the given settings.
+     * Must stay in sync with that method.
+     */
+    static List<String> indexTemplateNames(FsSettings settings) {
+        List<String> names = new ArrayList<>();
+        // Docs index template
+        names.add(prefixedTemplateName(
+                settings.getElasticsearch().isSemanticSearch() ? "fscrawler_docs_semantic" : "fscrawler_docs",
+                settings.getElasticsearch().getIndex()));
+        // Folder index template
+        if (settings.getFs().isIndexFolders()) {
+            names.add(prefixedTemplateName(
+                    "fscrawler_folders", settings.getElasticsearch().getIndexFolder()));
+        }
+        return names;
+    }
+
+    /**
+     * Builds the prefixed template name the same way the template loader does, e.g. {@code fscrawler_alias} for index
+     * {@code my_docs} becomes {@code fscrawler_my_docs_alias}.
+     */
+    private static String prefixedTemplateName(String name, String index) {
+        return name.replace("fscrawler_", "fscrawler_" + index + "_");
+    }
+
+    /**
+     * Deletes a component template, ignoring it if it does not exist. Test-only helper used by
+     * {@link #removeIndexAndComponentTemplates(FsSettings)}.
+     */
+    private void deleteComponentTemplate(String name) throws ElasticsearchClientException {
+        logger.debug("delete component template [{}]", name);
+        try {
+            httpDelete("_component_template/" + name, null);
+        } catch (NotFoundException e) {
+            logger.debug("Component template [{}] does not exist. Nothing to delete.", name);
+        } catch (BadRequestException e) {
+            // Still referenced by an index template we do not track (e.g. a custom one). Safe to ignore in tests.
+            logger.debug("Component template [{}] could not be deleted (still in use?). Ignoring.", name);
+        }
+    }
+
+    /**
+     * Deletes an index template, ignoring it if it does not exist. Test-only helper used by
+     * {@link #removeIndexAndComponentTemplates(FsSettings)}.
+     */
+    private void deleteIndexTemplate(String name) throws ElasticsearchClientException {
+        logger.debug("delete index template [{}]", name);
+        try {
+            httpDelete("_index_template/" + name, null);
+        } catch (NotFoundException e) {
+            logger.debug("Index template [{}] does not exist. Nothing to delete.", name);
+        } catch (BadRequestException e) {
+            logger.debug("Index template [{}] could not be deleted. Ignoring.", name);
+        }
+    }
+
+    /**
      * Wait for all component templates to be available
      *
      * @param templateNames list of component template names to wait for
@@ -800,7 +938,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         for (String templateName : templateNames) {
             try {
                 Awaitility.await()
-                        .atMost(30, TimeUnit.SECONDS)
+                        .atMost(60, TimeUnit.SECONDS)
                         .pollInterval(ExponentialBackoffPollInterval.exponential(
                                 Duration.ofMillis(100), Duration.ofSeconds(5)))
                         .until(() -> {
@@ -817,7 +955,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 logger.debug("Component template [{}] is now available", templateName);
             } catch (ConditionTimeoutException e) {
                 throw new ElasticsearchClientException(
-                        "Component template [" + templateName + "] did not become available within 30 seconds");
+                        "Component template [" + templateName + "] did not become available within 60 seconds");
             }
         }
     }

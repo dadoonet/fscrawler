@@ -80,7 +80,7 @@ public abstract class AbstractFSCrawlerTestCase {
     public static final Duration MAX_WAIT_FOR_SEARCH_LONG_TESTS = Duration.ofMinutes(10);
 
     @TempDir
-    protected static Path rootTmpDir;
+    protected Path rootTmpDir;
 
     protected String jobName;
     protected Path testTmpDir;

@@ -38,11 +38,14 @@ class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
     @BeforeEach
     @Override
     protected void cleanExistingIndex() throws ElasticsearchClientException {
-        // Also clean the specific indices for this test suite
+        // Also clean the specific indices and templates for this test suite. The base cleanup only
+        // covers getCrawlerName(); the per-crawler "_1"/"_2" templates need explicit removal by name.
         client.deleteIndex(getCrawlerName() + "_1" + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + "_1" + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
         client.deleteIndex(getCrawlerName() + "_2" + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
         client.deleteIndex(getCrawlerName() + "_2" + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+        client.removeIndexAndComponentTemplates(cleanupSettings(getCrawlerName() + "_1"));
+        client.removeIndexAndComponentTemplates(cleanupSettings(getCrawlerName() + "_2"));
         super.cleanExistingIndex();
     }
 
@@ -55,6 +58,8 @@ class FsCrawlerTestMultipleCrawlersIT extends AbstractFsCrawlerITCase {
             client.deleteIndex(getCrawlerName() + "_1" + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
             client.deleteIndex(getCrawlerName() + "_2" + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
             client.deleteIndex(getCrawlerName() + "_2" + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+            client.removeIndexAndComponentTemplates(cleanupSettings(getCrawlerName() + "_1"));
+            client.removeIndexAndComponentTemplates(cleanupSettings(getCrawlerName() + "_2"));
         }
         super.cleanUp();
     }

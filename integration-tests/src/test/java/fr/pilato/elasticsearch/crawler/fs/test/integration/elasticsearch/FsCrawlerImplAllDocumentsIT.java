@@ -56,14 +56,14 @@ import org.junit.jupiter.api.Test;
 class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
     private static FsCrawlerImpl crawler = null;
+    private static Path classMetadataDir = null;
     private static final String JOB_NAME = getCrawlerName(FsCrawlerImplAllDocumentsIT.class, "all_documents");
 
     @BeforeAll
     static void startCrawling() throws Exception {
-        Path testResourceTarget = rootTmpDir.resolve("resources").resolve("documents");
-        if (Files.notExists(testResourceTarget)) {
-            copyResourcesToTestDir();
-        }
+        // testDocumentsDir is a static field set once by the parent @BeforeAll copyResourcesToTestDir()
+        Path testResourceTarget = testDocumentsDir;
+        classMetadataDir = Files.createTempDirectory("fscrawler-all-docs-meta-");
 
         long numFiles;
 
@@ -77,16 +77,7 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
-        client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-        client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-
-        // Remove existing templates if any
-        String templateName = "fscrawler_" + JOB_NAME + "_*";
-        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-        removeIndexTemplates(templateName);
-        removeComponentTemplates(templateName);
-
+        cleanIndexAndTemplates(cleanupSettings(JOB_NAME), JOB_NAME);
         logger.info("🎬 Starting test [{}]", JOB_NAME);
         logger.debug("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
@@ -106,7 +97,7 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
 
         fsSettings.getFs().setRawMetadata(true);
 
-        crawler = new FsCrawlerImpl(metadataDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false);
+        crawler = new FsCrawlerImpl(classMetadataDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false);
         crawler.start();
 
         // We wait until we have all docs up to 10 minutes
@@ -125,14 +116,7 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             crawler = null;
         }
         if (!TEST_KEEP_DATA) {
-            logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
-            client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-            client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-            // Remove existing templates if any
-            String templateName = "fscrawler_" + JOB_NAME + "_*";
-            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
+            cleanIndexAndTemplates(cleanupSettings(JOB_NAME), JOB_NAME);
         }
 
         logger.info("✅ End of test [{}]", JOB_NAME);
