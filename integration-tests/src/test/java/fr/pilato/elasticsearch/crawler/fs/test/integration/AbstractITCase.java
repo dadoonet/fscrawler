@@ -74,7 +74,6 @@ import org.assertj.core.api.Assumptions;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -399,15 +398,10 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 fsSettings.getElasticsearch().getUrls().get(0),
                 fsSettings.getElasticsearch().getCaCertificate(),
                 fsSettings.getElasticsearch().isSslVerification());
-        ElasticsearchClient client = new ElasticsearchClient(fsSettings);
+        // Use the test-only client (no background bulk flush thread; see ForTestsOnlyElasticsearchClient).
+        ElasticsearchClient client = new ForTestsOnlyElasticsearchClient(fsSettings);
         client.start();
         return client;
-    }
-
-    @AfterAll
-    static void stopServices() {
-        // Intentionally empty — shutdown is delegated to FsCrawlerTestSuiteExtension.close(),
-        // which fires once after all classes have finished, preventing mid-suite teardown.
     }
 
     protected static void refresh(String indexName) throws ElasticsearchClientException {
@@ -638,5 +632,19 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                 .filter(hit -> filename.equals(JsonPath.read(hit.getSource(), "$.file.filename")))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No hit found with filename: " + filename));
+    }
+
+    protected static void cleanIndexAndTemplates(FsSettings currentSettings, String crawlerName)
+            throws ElasticsearchClientException {
+        logger.debug("🧹 Removing existing index [{}*]", crawlerName);
+        client.deleteIndex(crawlerName + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        client.deleteIndex(crawlerName + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+
+        // Remove existing templates by their exact names (mirroring what the crawler creates).
+        // A wildcard like fscrawler_<name>_* would, under parallel execution, also delete the
+        // templates of a sibling test whose crawler name shares this one's prefix.
+        logger.debug("🧹 Removing existing index and component templates for [{}]", crawlerName);
+        client.removeIndexAndComponentTemplates(
+                currentSettings != null ? currentSettings : AbstractFsCrawlerITCase.cleanupSettings(crawlerName));
     }
 }

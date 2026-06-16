@@ -77,16 +77,7 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             throw new RuntimeException(testResourceTarget + " doesn't seem to exist. Check your JUnit tests.");
         }
 
-        logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
-        client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-        client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-
-        // Remove existing templates if any
-        String templateName = "fscrawler_" + JOB_NAME + "_*";
-        logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-        removeIndexTemplates(templateName);
-        removeComponentTemplates(templateName);
-
+        cleanIndexAndTemplates(cleanupSettings(JOB_NAME), JOB_NAME);
         logger.info("🎬 Starting test [{}]", JOB_NAME);
         logger.debug("  --> starting crawler in [{}] which contains [{}] files", testResourceTarget, numFiles);
 
@@ -125,14 +116,7 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
             crawler = null;
         }
         if (!TEST_KEEP_DATA) {
-            logger.debug(" -> Removing existing index [{}*]", JOB_NAME);
-            client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-            client.deleteIndex(JOB_NAME + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-            // Remove existing templates if any
-            String templateName = "fscrawler_" + JOB_NAME + "_*";
-            logger.debug(" -> Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
+            cleanIndexAndTemplates(cleanupSettings(JOB_NAME), JOB_NAME);
         }
 
         logger.info("✅ End of test [{}]", JOB_NAME);

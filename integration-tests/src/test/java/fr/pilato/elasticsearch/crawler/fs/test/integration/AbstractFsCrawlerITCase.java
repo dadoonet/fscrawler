@@ -25,8 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import java.io.IOException;
 import java.time.Duration;
 import org.apache.logging.log4j.LogManager;
@@ -37,65 +36,24 @@ import org.junit.jupiter.api.BeforeEach;
 public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     private static final Logger logger = LogManager.getLogger();
 
+    /**
+     * Settings used by the last {@link #startCrawler} call, so {@code @AfterEach} cleanup can remove exactly the
+     * templates the crawler created (mirroring its create-time options).
+     */
+    private FsSettings currentSettings;
+
     @BeforeEach
     protected void cleanExistingIndex() throws ElasticsearchClientException {
-        logger.debug("🧹 Removing existing index [{}*]", getCrawlerName());
-        client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-        client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-
-        // Remove existing templates if any
-        String templateName = "fscrawler_" + getCrawlerName() + "_*";
-        logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
-        removeIndexTemplates(templateName);
-        removeComponentTemplates(templateName);
-
+        cleanIndexAndTemplates(currentSettings, getCrawlerName());
         logger.info("🎬 Starting test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
 
     @AfterEach
     protected void cleanUp() throws ElasticsearchClientException {
         if (!TEST_KEEP_DATA) {
-            logger.debug("🧹 Removing index [{}*]", getCrawlerName());
-            client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
-            client.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
-            // Remove existing templates if any
-            String templateName = "fscrawler_" + getCrawlerName() + "_*";
-            logger.debug("🧹 Removing existing index and component templates [{}]", templateName);
-            removeIndexTemplates(templateName);
-            removeComponentTemplates(templateName);
+            cleanIndexAndTemplates(currentSettings, getCrawlerName());
         }
-
         logger.info("✅ End of test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
-    }
-
-    protected static void removeComponentTemplates(String componentTemplateName) {
-        logger.trace("🧹 Removing component templates for [{}]", componentTemplateName);
-        try {
-            client.performLowLevelRequest("DELETE", "/_component_template/" + componentTemplateName, null);
-        } catch (ElasticsearchClientException | NotFoundException e) {
-            // We ignore the error
-        } catch (BadRequestException e) {
-            // We ignore the error
-            logger.warn(
-                    "Failed to remove component templates. Got a [{}] when calling [DELETE /_component_template/{}]",
-                    e.getMessage(),
-                    componentTemplateName);
-        }
-    }
-
-    protected static void removeIndexTemplates(String indexTemplateName) {
-        logger.trace("🧹 Removing index templates for [{}]", indexTemplateName);
-        try {
-            client.performLowLevelRequest("DELETE", "/_index_template/" + indexTemplateName, null);
-        } catch (ElasticsearchClientException | NotFoundException e) {
-            // We ignore the error
-        } catch (BadRequestException e) {
-            // We ignore the error
-            logger.warn(
-                    "Failed to remove index templates. Got a [{}] when calling [DELETE /_index_template/{}]",
-                    e.getMessage(),
-                    indexTemplateName);
-        }
     }
 
     @AfterEach
@@ -107,6 +65,19 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
         }
     }
 
+    /**
+     * Builds a minimal settings object carrying the given crawler's index and folder names, used to drive
+     * {@link fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient#removeIndexAndComponentTemplates(FsSettings)}
+     * during cleanup (also reused by multi-crawler subclasses for their {@code _1}/{@code _2} crawler names).
+     */
+    protected static FsSettings cleanupSettings(String crawlerName) {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(crawlerName);
+        fsSettings.getElasticsearch().setIndex(crawlerName + FsCrawlerUtil.INDEX_SUFFIX_DOCS);
+        fsSettings.getElasticsearch().setIndexFolder(crawlerName + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
+        return fsSettings;
+    }
+
     protected FsCrawlerImpl startCrawler() throws Exception {
         return startCrawler(createTestSettings());
     }
@@ -116,6 +87,8 @@ public abstract class AbstractFsCrawlerITCase extends AbstractITCase {
     }
 
     protected FsCrawlerImpl startCrawler(final FsSettings fsSettings, Duration duration) throws Exception {
+        // Remember the settings so @AfterEach cleanup removes exactly the templates we created.
+        this.currentSettings = fsSettings;
         logger.info("🎬 starting crawler [{}]", fsSettings.getName());
         logger.debug("⚙️ with settings [{}]", fsSettings);
 
