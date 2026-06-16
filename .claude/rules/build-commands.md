@@ -13,7 +13,7 @@ mvn clean package -DskipTests
 mvn clean test -DskipIntegTests
 
 # Full build including integration tests
-mvn clean install -Dtests.parallelism=1
+mvn clean install
 
 # Specific Elasticsearch version
 mvn clean install -Pes-8x

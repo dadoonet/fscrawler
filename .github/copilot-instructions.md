@@ -160,7 +160,6 @@ Closes #xxxx.
 ## Development Tips
 
 - **Always build before testing**: Run `mvn clean install -DskipTests` first
-- **Parallel testing**: Use `-Dtests.parallelism=1` to avoid resource conflicts
 - **Test isolation**: Use `-Dtests.leaveTemporary=false` to clean up containers
 - **Maven profiles**: Use `-Pes-8x`, `-Pes-7x`, etc. for specific Elasticsearch versions
 - **Check build logs**: Long operations show progress - Docker builds are especially verbose
@@ -179,7 +178,7 @@ Closes #xxxx.
 mvn clean package -DskipTests
 
 # Build with unit tests
-mvn clean test -DskipIntegTests -Dtests.parallelism=1 -Dtests.leaveTemporary=false
+mvn clean test -DskipIntegTests -Dtests.leaveTemporary=false
 
 # Build distribution only
 mvn clean package -DskipTests -pl distribution

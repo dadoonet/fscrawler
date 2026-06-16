@@ -39,7 +39,6 @@ mvn verify -pl integration-tests -am -DskipUnitTests \
 
 ## Useful Test Flags
 
-- `-Dtests.parallelism=1` — avoid resource conflicts
 - `-Dtests.leaveTemporary=false` — clean up temp files/containers
 - `-Dtests.seed=<SEED>` — reproduce a specific failure (passed as system property)
 - `-Dtests.output=false|true` — show test output (default: false)
