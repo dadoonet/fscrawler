@@ -24,5 +24,3 @@ mvn verify -pl integration-tests -am \
 ```
 
 If using local Elasticsearch, use the `start-elasticsearch` skill first if it's not already running.
-
-Always use `-Dtests.parallelism=1` for integration tests to avoid resource conflicts.
