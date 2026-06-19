@@ -37,7 +37,7 @@ jobs:
     - name: Check Runner Location
       run: |
         curl https://ipapi.co/json/
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Fetch base branch for Spotless ratchet
       run: git fetch origin master --depth=1
     - name: Set up JDK 21
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
         run: git fetch origin master --depth=1
       - name: Set up JDK 21
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
         run: git fetch origin master --depth=1
       - name: Set up JDK 21
@@ -102,7 +102,7 @@ jobs:
       - build
       - get-pr-number
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
       - name: Fetch base branch for Spotless ratchet
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
@@ -133,7 +133,7 @@ jobs:
       - build
       - get-pr-number
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
       - name: Fetch base branch for Spotless ratchet
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
@@ -164,7 +164,7 @@ jobs:
       - build
       - get-pr-number
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
         run: git fetch origin master --depth=1
       - name: Set up JDK 21
@@ -185,7 +185,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
         run: git fetch origin master --depth=1
       - name: Set up JDK 21
