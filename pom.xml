@@ -276,6 +276,16 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!--
+                jackson-dataformat-xml depends directly on stax2-api 4.3.0, but tika-parent's BOM
+                pins woodstox-core to 7.1.1, which itself depends on stax2-api 4.2.2. Pin stax2-api
+                explicitly so both paths converge on the same (backward-compatible) version.
+             -->
+            <dependency>
+                <groupId>org.codehaus.woodstox</groupId>
+                <artifactId>stax2-api</artifactId>
+                <version>4.3.0</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
