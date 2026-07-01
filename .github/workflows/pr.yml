@@ -71,7 +71,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode verify -Ddocker.skip -DskipUnitTests -Dtests.output=always -Dtests.leaveTemporary=false
+        run: mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.output=always -Dtests.leaveTemporary=false
 
   # We run integration tests with elastic stack 8
   it-es8:
@@ -93,7 +93,7 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Run the integration tests
-        run: mvn --batch-mode verify -Ddocker.skip -DskipUnitTests -Pes-8x -Dtests.leaveTemporary=false
+        run: mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Pes-8x -Dtests.leaveTemporary=false
 
   # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
   it-cloud:
@@ -124,7 +124,7 @@ jobs:
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
         run: |
           echo "Running integration tests with Elastic Cloud Elasticsearch service with prefix ${{ needs.get-pr-number.outputs.pr_number }}"
-          mvn --batch-mode verify -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
+          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run integration tests with Elastic Cloud Serverless (if secrets are set)
   it-serverless:
@@ -155,7 +155,7 @@ jobs:
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
         run: |
           echo "Running integration tests with Elastic Cloud Elasticsearch Serverless service with prefix ${{ needs.get-pr-number.outputs.pr_number }}"
-          mvn --batch-mode verify -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_SERVERLESS_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_SERVERLESS_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
+          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_SERVERLESS_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_SERVERLESS_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run integration tests from a Windows machine to Elastic Cloud
   it-windows:
@@ -178,7 +178,7 @@ jobs:
         shell: bash
         run: |
           echo "Running integration tests from Windows with Elastic Cloud Elasticsearch service with prefix win_${{ needs.get-pr-number.outputs.pr_number }}"
-          mvn --batch-mode verify -Ddocker.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=win_${{ needs.get-pr-number.outputs.pr_number }}
+          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=win_${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run this job in parallel after the build
   build-docker:
@@ -200,4 +200,4 @@ jobs:
           key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
         continue-on-error: true
       - name: Build the docker images
-        run: mvn --batch-mode install -DskipTests
+        run: mvn --batch-mode install -DskipTests -Dossindex.skip
