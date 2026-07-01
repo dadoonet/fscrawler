@@ -70,7 +70,7 @@
         <snakeyaml.version>2.6</snakeyaml.version>
 
         <tika.version>3.3.1</tika.version>
-        <jackson.version>2.21.3</jackson.version>
+        <jackson.version>2.22.0</jackson.version>
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.0</log4j.version>
         <jersey.version>4.0.2</jersey.version>
