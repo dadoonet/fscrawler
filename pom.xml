@@ -70,7 +70,7 @@
         <snakeyaml.version>2.6</snakeyaml.version>
 
         <tika.version>3.3.1</tika.version>
-        <jackson.version>2.21.3</jackson.version>
+        <jackson.version>2.22.0</jackson.version>
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.0</log4j.version>
         <jersey.version>4.0.2</jersey.version>
@@ -275,6 +275,16 @@
                 <version>${jackson.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!--
+                jackson-dataformat-xml depends directly on stax2-api 4.3.0, but tika-parent's BOM
+                pins woodstox-core to 7.1.1, which itself depends on stax2-api 4.2.2. Pin stax2-api
+                explicitly so both paths converge on the same (backward-compatible) version.
+             -->
+            <dependency>
+                <groupId>org.codehaus.woodstox</groupId>
+                <artifactId>stax2-api</artifactId>
+                <version>4.3.0</version>
             </dependency>
 
             <dependency>
