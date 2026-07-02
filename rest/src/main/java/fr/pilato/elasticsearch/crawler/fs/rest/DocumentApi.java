@@ -62,11 +62,13 @@ public class DocumentApi extends RestApi {
     private final FsSettings settings;
     private static final TimeBasedUUIDGenerator TIME_UUID_GENERATOR = new TimeBasedUUIDGenerator();
     private final FsCrawlerPluginsManager pluginsManager;
+    private final TikaDocParser tikaDocParser;
 
     DocumentApi(FsSettings settings, FsCrawlerDocumentService documentService, FsCrawlerPluginsManager pluginsManager) {
         this.settings = settings;
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
+        this.tikaDocParser = new TikaDocParser(settings);
     }
 
     @POST
@@ -133,7 +135,7 @@ public class DocumentApi extends RestApi {
             provider.start(settings, document.jsonString());
             try (InputStream inputStream = provider.readFile()) {
                 Doc doc = provider.createDocument();
-                doc = enrichDoc(doc, settings, null, inputStream);
+                doc = enrichDoc(doc, null, inputStream);
                 return uploadToDocumentService(debug, simulate, id, index, doc);
             }
         } catch (Exception e) {
@@ -212,13 +214,12 @@ public class DocumentApi extends RestApi {
         doc.getFile().setFilesize(d.getSize());
 
         try (filecontent) {
-            doc = enrichDoc(doc, settings, tags, filecontent);
+            doc = enrichDoc(doc, tags, filecontent);
             return uploadToDocumentService(debug, simulate, id, index, doc);
         }
     }
 
-    public static Doc enrichDoc(Doc doc, FsSettings settings, InputStream tags, InputStream filecontent)
-            throws IOException {
+    private Doc enrichDoc(Doc doc, InputStream tags, InputStream filecontent) throws IOException {
         // File
         doc.getFile()
                 .setExtension(
@@ -227,7 +228,7 @@ public class DocumentApi extends RestApi {
         // File
 
         // Read the file content
-        TikaDocParser.generate(settings, filecontent, doc, doc.getFile().getFilesize());
+        tikaDocParser.generate(filecontent, doc, doc.getFile().getFilesize());
 
         // We merge tags if any and return the final doc
         return DocUtils.getMergedDoc(doc, tags, JsonUtil.mapper);

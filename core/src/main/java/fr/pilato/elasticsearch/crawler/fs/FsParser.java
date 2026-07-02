@@ -109,6 +109,9 @@ public class FsParser implements Runnable, AutoCloseable {
 
     private final String metadataFilename;
     private final byte[] staticMetadata;
+    /** Null json/xml jobs: documents passed through without Tika extraction. */
+    private final TikaDocParser tikaDocParser;
+
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     // Checkpoint for current scan
@@ -144,6 +147,11 @@ public class FsParser implements Runnable, AutoCloseable {
 
         metadataFilename = resolveMetadataFilename(fsSettings);
         staticMetadata = loadStaticMetadata(fsSettings);
+        // One Tika parser per job; json/xml jobs never extract content with Tika.
+        this.tikaDocParser =
+                fsSettings.getFs().isJsonSupport() || fsSettings.getFs().isXmlSupport()
+                        ? null
+                        : new TikaDocParser(fsSettings);
     }
 
     public CrawlerState getState() {
@@ -1313,7 +1321,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     doc.setObject(XmlDocParser.generateMap(inputStream));
                 } else {
                     // Extracting content with Tika
-                    TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
+                    tikaDocParser.generate(inputStream, doc, filesize);
                 }
 
                 // Merge static metadata if available

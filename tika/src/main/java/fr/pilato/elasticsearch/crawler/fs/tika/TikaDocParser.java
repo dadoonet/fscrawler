@@ -55,11 +55,29 @@ import org.apache.tika.metadata.Office;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 
-/** Parse a binary document and generate a FSCrawler Doc */
+/**
+ * Parse a binary document and generate a FSCrawler Doc. One instance must be created per job so that jobs with
+ * different settings never share Tika parser state. An instance may be used concurrently by several threads of the same
+ * job (e.g. parallel REST uploads).
+ */
 public class TikaDocParser {
-    // TODO Make TikaInstance and TikaDocParser not static
 
     private static final Logger logger = LogManager.getLogger();
+
+    private final FsSettings fsSettings;
+    /** Null when index_content is disabled: no text extraction will ever happen for this job. */
+    private final TikaInstance tikaInstance;
+
+    /**
+     * Creates a document parser for one job. Builds the underlying Tika parser eagerly, unless {@code fs.index_content}
+     * is false in which case no Tika parser is needed at all.
+     *
+     * @param fsSettings the job settings
+     */
+    public TikaDocParser(FsSettings fsSettings) {
+        this.fsSettings = fsSettings;
+        this.tikaInstance = fsSettings.getFs().isIndexContent() ? new TikaInstance(fsSettings.getFs()) : null;
+    }
 
     /**
      * Threshold in bytes below which we keep the file content in memory instead of using a temp file. This avoids disk
@@ -79,8 +97,16 @@ public class TikaDocParser {
         }
     }
 
-    public static void generate(FsSettings fsSettings, InputStream inputStream, Doc doc, long filesize)
-            throws IOException {
+    /**
+     * Parses one document and fills the given {@link Doc} (content, metadata, checksum, attachment) according to this
+     * job's settings.
+     *
+     * @param inputStream the document content; consumed but not closed by this method
+     * @param doc the doc to fill
+     * @param filesize the file size in bytes, or a value &le; 0 when unknown
+     * @throws IOException on stream or temp-file errors
+     */
+    public void generate(InputStream inputStream, Doc doc, long filesize) throws IOException {
         Span tikaSpan = FsCrawlerTracing.startSpan("fscrawler.tika.extract");
         tikaSpan.setAttribute("file.size", filesize);
         try (Scope $ignored = tikaSpan.makeCurrent()) {
@@ -179,7 +205,7 @@ public class TikaDocParser {
                     try {
                         // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
                         logger.trace("Beginning Tika extraction");
-                        parsedContent = TikaInstance.extractText(fsSettings, indexedChars, inputStream, metadata);
+                        parsedContent = tikaInstance.extractText(indexedChars, inputStream, metadata);
                         logger.trace("End of Tika extraction");
                     } catch (Throwable e) {
                         // Build a message from embedded errors

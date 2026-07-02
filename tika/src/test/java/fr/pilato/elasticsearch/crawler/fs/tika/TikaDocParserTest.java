@@ -42,10 +42,7 @@ import org.assertj.core.api.Assumptions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
-@Execution(ExecutionMode.SAME_THREAD)
 class TikaDocParserTest extends DocParserTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static boolean isOcrAvailable;
@@ -798,9 +795,8 @@ class TikaDocParserTest extends DocParserTestCase {
         doc.getPath().setReal("test.txt");
         doc.getFile().setFilename("test.txt");
 
-        TikaInstance.reloadTika();
         // Pass filesize as 0 (unknown) - should use temp file path, not in-memory
-        TikaDocParser.generate(fsSettings, new ByteArrayInputStream(content), doc, 0);
+        new TikaDocParser(fsSettings).generate(new ByteArrayInputStream(content), doc, 0);
 
         // Verify the checksum is still correctly computed
         Assertions.assertThat(doc.getFile().getChecksum())
@@ -843,8 +839,7 @@ class TikaDocParserTest extends DocParserTestCase {
         doc.getPath().setReal("large-binary-file.bin");
         doc.getFile().setFilename("large-binary-file.bin");
 
-        TikaInstance.reloadTika();
-        TikaDocParser.generate(fsSettings, new ByteArrayInputStream(data), doc, size);
+        new TikaDocParser(fsSettings).generate(new ByteArrayInputStream(data), doc, size);
 
         // Verify the checksum is computed over the entire file
         Assertions.assertThat(doc.getFile().getChecksum())
@@ -1206,9 +1201,8 @@ class TikaDocParserTest extends DocParserTestCase {
         doc.getPath().setReal(filename);
         doc.getFile().setFilename(filename);
 
-        // We make sure we reload a new Tika instance any time we test
-        TikaInstance.reloadTika();
-        TikaDocParser.generate(fsSettings, getBinaryContent(filename), doc, 0);
+        // A fresh, isolated parser instance for every extraction under test
+        new TikaDocParser(fsSettings).generate(getBinaryContent(filename), doc, 0);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());
