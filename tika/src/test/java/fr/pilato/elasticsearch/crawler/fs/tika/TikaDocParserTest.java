@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,10 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
@@ -862,6 +867,56 @@ class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.docx");
         Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+    }
+
+    /**
+     * Two jobs with opposite OCR settings running concurrently in the same JVM must not contaminate each other. Guards
+     * against the historical JVM-wide static state in TikaInstance which made the OCR-off job OCR images when an OCR-on
+     * job ran in parallel (race observed in FsCrawlerTestOcrIT.ocr_disabled under parallel integration tests).
+     */
+    @Test
+    @Slow
+    void concurrentJobsWithDifferentOcrSettingsAreIsolated() throws Exception {
+        Assumptions.assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
+
+        FsSettings settingsOcrOn = FsSettingsLoader.load();
+        FsSettings settingsOcrOff = FsSettingsLoader.load();
+        settingsOcrOff.getFs().getOcr().setEnabled(false);
+        TikaDocParser parserOcrOn = new TikaDocParser(settingsOcrOn);
+        TikaDocParser parserOcrOff = new TikaDocParser(settingsOcrOff);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            for (int i = 0; i < 10; i++) {
+                CyclicBarrier barrier = new CyclicBarrier(2);
+                Future<Doc> withOcr = executor.submit(() -> {
+                    barrier.await();
+                    return parseWith(parserOcrOn, "test-ocr.png");
+                });
+                Future<Doc> withoutOcr = executor.submit(() -> {
+                    barrier.await();
+                    return parseWith(parserOcrOff, "test-ocr.png");
+                });
+                Assertions.assertThat(withOcr.get().getContent())
+                        .as("iteration %d: OCR-on job must extract the image text", i)
+                        .contains("This file contains some words.");
+                Assertions.assertThat(withoutOcr.get().getContent())
+                        .as("iteration %d: OCR-off job must never OCR the image", i)
+                        .doesNotContain("This file contains some words.");
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private Doc parseWith(TikaDocParser parser, String filename) throws IOException {
+        Doc doc = new Doc();
+        doc.getPath().setReal(filename);
+        doc.getFile().setFilename(filename);
+        parser.generate(getBinaryContent(filename), doc, 0);
+        return doc;
     }
 
     @Test
