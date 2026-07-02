@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.framework;
 
 import com.carrotsearch.randomizedtesting.jupiter.DetectThreadLeaks;
 import com.carrotsearch.randomizedtesting.jupiter.Randomized;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedContext;
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter;
 import java.io.File;
@@ -36,10 +37,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -66,8 +67,7 @@ public abstract class AbstractFSCrawlerTestCase {
 
     private static final Logger logger = LogManager.getLogger();
     private static final String RANDOM = "random";
-    private static final Locale savedLocale = Locale.getDefault();
-    private static final TimeZone savedTimeZone = TimeZone.getDefault();
+    private static final AtomicBoolean GLOBAL_DEFAULTS_SET = new AtomicBoolean();
     protected static final String indexPrefix = getSystemProperty("tests.index.prefix", "");
 
     /** For tests only: maximum time to wait for a search when we want to be sure that something is in the index. */
@@ -87,33 +87,47 @@ public abstract class AbstractFSCrawlerTestCase {
     protected Random randomizedRandomForTests;
     private Map<String, String> savedSystemProperties;
 
+    /**
+     * Sets the JVM default {@link Locale} and {@link TimeZone} once per JVM (i.e. once per surefire/failsafe fork), and
+     * never restores them.
+     *
+     * <p>{@link Locale#setDefault(Locale)} and {@link TimeZone#setDefault(TimeZone)} mutate JVM-global state. With
+     * parallel class execution enabled, randomizing them per class (with {@code @AfterAll} resets) races with other
+     * classes running concurrently in the same JVM: a class finishing while others are still running would flip the
+     * default {@code TimeZone} under their feet, breaking production code such as {@code FsParser} incremental-scan
+     * checkpoints that rely on {@link java.time.LocalDateTime#now()}.
+     *
+     * <p>The values are derived from the <b>root</b> seed rather than a per-class {@link Random}, so they remain fully
+     * reproducible with {@code -Dtests.seed} regardless of which class is scheduled first, and can still be pinned
+     * explicitly with {@code -Dtests.locale} / {@code -Dtests.timezone}.
+     *
+     * @param context the randomized context, giving access to the root seed
+     */
     @BeforeAll
-    static void setLocale(Random rnd) {
+    static void setGlobalDefaults(RandomizedContext context) {
+        if (!GLOBAL_DEFAULTS_SET.compareAndSet(false, true)) {
+            return;
+        }
+
+        Random random = new Random(context.getRootSeed().value());
+
         String testLocale = getSystemProperty("tests.locale", RANDOM);
         Locale locale = testLocale.equals(RANDOM)
-                ? RandomizedTest.randomLocale(rnd)
+                ? RandomizedTest.randomLocale(random)
                 : new Locale.Builder().setLanguageTag(testLocale).build();
-        logger.debug("Running test suite with Locale [{}]", locale);
-        Locale.setDefault(locale);
-    }
 
-    @AfterAll
-    static void resetLocale() {
-        Locale.setDefault(savedLocale);
-    }
-
-    @BeforeAll
-    static void setTimeZone(Random rnd) {
         String testTimeZone = getSystemProperty("tests.timezone", RANDOM);
-        TimeZone timeZone =
-                testTimeZone.equals(RANDOM) ? RandomizedTest.randomTimeZone(rnd) : TimeZone.getTimeZone(testTimeZone);
-        logger.debug("Running test suite with TimeZone [{}]/[{}]", timeZone.getID(), timeZone.getDisplayName());
-        TimeZone.setDefault(timeZone);
-    }
+        TimeZone timeZone = testTimeZone.equals(RANDOM)
+                ? RandomizedTest.randomTimeZone(random)
+                : TimeZone.getTimeZone(testTimeZone);
 
-    @AfterAll
-    static void resetTimeZone() {
-        TimeZone.setDefault(savedTimeZone);
+        logger.info(
+                "Running this JVM with Locale [{}] and TimeZone [{}]/[{}]",
+                locale.toLanguageTag(),
+                timeZone.getID(),
+                timeZone.getDisplayName());
+        Locale.setDefault(locale);
+        TimeZone.setDefault(timeZone);
     }
 
     /**
