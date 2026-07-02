@@ -128,8 +128,16 @@ class TikaInstance {
                 logger.debug("OCR is activated.");
                 ocrParser = new TesseractOCRParser();
                 if (fs.getOcr().getPath() != null) {
-                    logger.debug("Tesseract Path set to [{}].", fs.getOcr().getPath());
-                    ocrParser.setTesseractPath(fs.getOcr().getPath());
+                    // Tika's setTesseractPath() wants the directory containing the tesseract executable, but
+                    // fs.ocr.path is documented as the path to the binary itself. Accept both: if the path
+                    // points to an existing file, use its parent directory instead.
+                    File ocrPath = new File(fs.getOcr().getPath());
+                    // getAbsoluteFile() so getParent() is never null for a bare relative filename.
+                    String tesseractPath = ocrPath.isFile()
+                            ? ocrPath.getAbsoluteFile().getParent()
+                            : fs.getOcr().getPath();
+                    logger.debug("Tesseract Path set to [{}].", tesseractPath);
+                    ocrParser.setTesseractPath(tesseractPath);
                 }
                 if (fs.getOcr().getDataPath() != null) {
                     logger.debug("Tesseract Data Path set to [{}].", fs.getOcr().getDataPath());

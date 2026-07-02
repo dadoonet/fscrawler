@@ -27,17 +27,22 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
@@ -867,6 +872,37 @@ class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.docx");
         Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+    }
+
+    /**
+     * Test case for the bug where {@code fs.ocr.path} is documented as the path to the tesseract binary, but Tika's
+     * {@code setTesseractPath()} actually requires the directory containing the executable. Pointing
+     * {@code fs.ocr.path} at the executable itself must still activate OCR.
+     */
+    @Test
+    void ocrPathCanPointToTesseractExecutable() throws IOException {
+        Assumptions.assumeThat(isOcrAvailable)
+                .as("Tesseract not installed so we are skipping this test")
+                .isTrue();
+
+        String exec = "tesseract";
+        Optional<Path> tessPath = Stream.of(System.getenv("PATH").split(Pattern.quote(File.pathSeparator)))
+                .map(Paths::get)
+                .filter(p -> Files.exists(p.resolve(exec)))
+                .findFirst();
+        Assumptions.assumeThat(tessPath)
+                .as("tesseract must be locatable in PATH")
+                .isPresent();
+        String tesseractExecutable = tessPath.get().resolve(exec).toString();
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setEnabled(true);
+        fsSettings.getFs().getOcr().setPath(tesseractExecutable);
+
+        Doc doc = parseWith(new TikaDocParser(fsSettings), "test-ocr.png");
+        Assertions.assertThat(doc.getContent())
+                .as("OCR must run when ocr.path points at the tesseract executable")
+                .contains("words");
     }
 
     /**
