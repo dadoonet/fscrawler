@@ -38,7 +38,6 @@ import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 /** Test crawler with FTP */
 class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     private FakeFtpServer fakeFtpServer;
-    private final int port = 5968;
     private final String hostname = "localhost";
     private final String user = "user";
     private final String pass = "pass";
@@ -46,7 +45,7 @@ class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     @BeforeEach
     void setup() {
         fakeFtpServer = new FakeFtpServer();
-        fakeFtpServer.setServerControlPort(port);
+        fakeFtpServer.setServerControlPort(0);
         UserAccount anonymous = new UserAccount("anonymous", "", "/");
         anonymous.setPasswordRequiredForLogin(false);
         fakeFtpServer.addUserAccount(anonymous);
@@ -74,7 +73,7 @@ class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setHostname(hostname);
         fsSettings.getServer().setUsername("anonymous");
         fsSettings.getServer().setProtocol(Server.PROTOCOL.FTP);
-        fsSettings.getServer().setPort(port);
+        fsSettings.getServer().setPort(fakeFtpServer.getServerControlPort());
         crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
@@ -88,7 +87,7 @@ class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
         fsSettings.getServer().setUsername(user);
         fsSettings.getServer().setPassword(pass);
         fsSettings.getServer().setProtocol(Server.PROTOCOL.FTP);
-        fsSettings.getServer().setPort(port);
+        fsSettings.getServer().setPort(fakeFtpServer.getServerControlPort());
         crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);

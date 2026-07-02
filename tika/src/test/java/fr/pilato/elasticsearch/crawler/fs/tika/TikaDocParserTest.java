@@ -25,14 +25,24 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.exception.TikaConfigException;
@@ -42,10 +52,7 @@ import org.assertj.core.api.Assumptions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
-@Execution(ExecutionMode.SAME_THREAD)
 class TikaDocParserTest extends DocParserTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static boolean isOcrAvailable;
@@ -798,9 +805,8 @@ class TikaDocParserTest extends DocParserTestCase {
         doc.getPath().setReal("test.txt");
         doc.getFile().setFilename("test.txt");
 
-        TikaInstance.reloadTika();
         // Pass filesize as 0 (unknown) - should use temp file path, not in-memory
-        TikaDocParser.generate(fsSettings, new ByteArrayInputStream(content), doc, 0);
+        new TikaDocParser(fsSettings).generate(new ByteArrayInputStream(content), doc, 0);
 
         // Verify the checksum is still correctly computed
         Assertions.assertThat(doc.getFile().getChecksum())
@@ -843,8 +849,7 @@ class TikaDocParserTest extends DocParserTestCase {
         doc.getPath().setReal("large-binary-file.bin");
         doc.getFile().setFilename("large-binary-file.bin");
 
-        TikaInstance.reloadTika();
-        TikaDocParser.generate(fsSettings, new ByteArrayInputStream(data), doc, size);
+        new TikaDocParser(fsSettings).generate(new ByteArrayInputStream(data), doc, size);
 
         // Verify the checksum is computed over the entire file
         Assertions.assertThat(doc.getFile().getChecksum())
@@ -867,6 +872,87 @@ class TikaDocParserTest extends DocParserTestCase {
         doc = extractFromFile("test-ocr.docx");
         Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+    }
+
+    /**
+     * Test case for the bug where {@code fs.ocr.path} is documented as the path to the tesseract binary, but Tika's
+     * {@code setTesseractPath()} actually requires the directory containing the executable. Pointing
+     * {@code fs.ocr.path} at the executable itself must still activate OCR.
+     */
+    @Test
+    void ocrPathCanPointToTesseractExecutable() throws IOException {
+        Assumptions.assumeThat(isOcrAvailable)
+                .as("Tesseract not installed so we are skipping this test")
+                .isTrue();
+
+        String exec = "tesseract";
+        Optional<Path> tessPath = Stream.of(System.getenv("PATH").split(Pattern.quote(File.pathSeparator)))
+                .map(Paths::get)
+                .filter(p -> Files.exists(p.resolve(exec)))
+                .findFirst();
+        Assumptions.assumeThat(tessPath)
+                .as("tesseract must be locatable in PATH")
+                .isPresent();
+        String tesseractExecutable = tessPath.get().resolve(exec).toString();
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().getOcr().setEnabled(true);
+        fsSettings.getFs().getOcr().setPath(tesseractExecutable);
+
+        Doc doc = parseWith(new TikaDocParser(fsSettings), "test-ocr.png");
+        Assertions.assertThat(doc.getContent())
+                .as("OCR must run when ocr.path points at the tesseract executable")
+                .contains("words");
+    }
+
+    /**
+     * Two jobs with opposite OCR settings running concurrently in the same JVM must not contaminate each other. Guards
+     * against the historical JVM-wide static state in TikaInstance which made the OCR-off job OCR images when an OCR-on
+     * job ran in parallel (race observed in FsCrawlerTestOcrIT.ocr_disabled under parallel integration tests).
+     */
+    @Test
+    @Slow
+    void concurrentJobsWithDifferentOcrSettingsAreIsolated() throws Exception {
+        Assumptions.assumeThat(isOcrAvailable)
+                .as("Tesseract is not installed so we are skipping this test")
+                .isTrue();
+
+        FsSettings settingsOcrOn = FsSettingsLoader.load();
+        FsSettings settingsOcrOff = FsSettingsLoader.load();
+        settingsOcrOff.getFs().getOcr().setEnabled(false);
+        TikaDocParser parserOcrOn = new TikaDocParser(settingsOcrOn);
+        TikaDocParser parserOcrOff = new TikaDocParser(settingsOcrOff);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            for (int i = 0; i < 10; i++) {
+                CyclicBarrier barrier = new CyclicBarrier(2);
+                Future<Doc> withOcr = executor.submit(() -> {
+                    barrier.await();
+                    return parseWith(parserOcrOn, "test-ocr.png");
+                });
+                Future<Doc> withoutOcr = executor.submit(() -> {
+                    barrier.await();
+                    return parseWith(parserOcrOff, "test-ocr.png");
+                });
+                Assertions.assertThat(withOcr.get().getContent())
+                        .as("iteration %d: OCR-on job must extract the image text", i)
+                        .contains("This file contains some words.");
+                Assertions.assertThat(withoutOcr.get().getContent())
+                        .as("iteration %d: OCR-off job must never OCR the image", i)
+                        .doesNotContain("This file contains some words.");
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private Doc parseWith(TikaDocParser parser, String filename) throws IOException {
+        Doc doc = new Doc();
+        doc.getPath().setReal(filename);
+        doc.getFile().setFilename(filename);
+        parser.generate(getBinaryContent(filename), doc, 0);
+        return doc;
     }
 
     @Test
@@ -1206,9 +1292,8 @@ class TikaDocParserTest extends DocParserTestCase {
         doc.getPath().setReal(filename);
         doc.getFile().setFilename(filename);
 
-        // We make sure we reload a new Tika instance any time we test
-        TikaInstance.reloadTika();
-        TikaDocParser.generate(fsSettings, getBinaryContent(filename), doc, 0);
+        // A fresh, isolated parser instance for every extraction under test
+        new TikaDocParser(fsSettings).generate(getBinaryContent(filename), doc, 0);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());

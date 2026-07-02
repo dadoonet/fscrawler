@@ -75,7 +75,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FsParser implements Runnable, AutoCloseable {
-    static final Object semaphore = new Object();
+    /**
+     * Guards this crawler's pause/resume/between-runs wait. Instance-scoped (not JVM-wide static): a {@code resume()}
+     * or {@code close()} of one job must never wake another job's between-runs wait, which previously perturbed every
+     * crawler's schedule in a multi-job JVM (and caused premature back-to-back runs under parallel tests).
+     */
+    final Object semaphore = new Object();
+
     final AtomicInteger runNumber = new AtomicInteger(0);
     final AtomicBoolean closed = new AtomicBoolean(true);
     final AtomicBoolean paused = new AtomicBoolean(false);
@@ -109,6 +115,9 @@ public class FsParser implements Runnable, AutoCloseable {
 
     private final String metadataFilename;
     private final byte[] staticMetadata;
+    /** Null json/xml jobs: documents passed through without Tika extraction. */
+    private final TikaDocParser tikaDocParser;
+
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
     // Checkpoint for current scan
@@ -144,6 +153,11 @@ public class FsParser implements Runnable, AutoCloseable {
 
         metadataFilename = resolveMetadataFilename(fsSettings);
         staticMetadata = loadStaticMetadata(fsSettings);
+        // One Tika parser per job; json/xml jobs never extract content with Tika.
+        this.tikaDocParser =
+                fsSettings.getFs().isJsonSupport() || fsSettings.getFs().isXmlSupport()
+                        ? null
+                        : new TikaDocParser(fsSettings);
     }
 
     public CrawlerState getState() {
@@ -471,19 +485,23 @@ public class FsParser implements Runnable, AutoCloseable {
             try {
                 if (!closed.get()) {
                     synchronized (semaphore) {
-                        long totalWaitTime = 0;
                         long maxWaitTime = fsSettings.getFs().getUpdateRate().millis();
-                        while ((totalWaitTime < maxWaitTime || userStopped.get()) && paused.get() && !closed.get()) {
+                        // Track the time actually elapsed (not the requested wait): an early wake-up
+                        // (spurious, or a stray notifyAll) must not be counted as a full chunk, or the
+                        // loop would believe updateRate elapsed and start a premature run.
+                        long waitStartNanos = System.nanoTime();
+                        long elapsedMillis = 0;
+                        while ((elapsedMillis < maxWaitTime || userStopped.get()) && paused.get() && !closed.get()) {
                             long waitTime = userStopped.get()
                                     ? CHECK_JOB_INTERVAL.millis()
-                                    : Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - totalWaitTime);
+                                    : Math.min(CHECK_JOB_INTERVAL.millis(), maxWaitTime - elapsedMillis);
+                            if (waitTime <= 0) {
+                                break;
+                            }
                             semaphore.wait(waitTime);
-                            totalWaitTime += waitTime;
+                            elapsedMillis = (System.nanoTime() - waitStartNanos) / 1_000_000L;
                             logger.trace(
-                                    "Waking up after {} ms (resume or timeout). Waited {} / {} ms.",
-                                    waitTime,
-                                    totalWaitTime,
-                                    maxWaitTime);
+                                    "Waking up (resume or timeout). Waited {} / {} ms.", elapsedMillis, maxWaitTime);
                             // When not user-stopped, allow external checkpoint change (e.g. nextCheck in past) to
                             // trigger early run
                             if (!userStopped.get()) {
@@ -503,9 +521,9 @@ public class FsParser implements Runnable, AutoCloseable {
                             }
                         }
                         logger.debug(
-                                "Exiting pause: {} (resume or {} elapsed)",
+                                "Exiting pause: {} (resume or {} ms elapsed)",
                                 paused.get() ? "timeout" : "resume",
-                                totalWaitTime);
+                                elapsedMillis);
                     }
                 }
             } catch (InterruptedException e) {
@@ -1313,7 +1331,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     doc.setObject(XmlDocParser.generateMap(inputStream));
                 } else {
                     // Extracting content with Tika
-                    TikaDocParser.generate(fsSettings, inputStream, doc, filesize);
+                    tikaDocParser.generate(inputStream, doc, filesize);
                 }
 
                 // Merge static metadata if available

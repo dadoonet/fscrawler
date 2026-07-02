@@ -99,6 +99,9 @@ your ``~/.fscrawler/test/_settings.yaml`` file:
      ocr:
        path: "/path/to/tesseract/bin/"
 
+You can point ``fs.ocr.path`` either at the ``tesseract`` executable itself or
+at the directory that contains it: FSCrawler accepts both forms.
+
 When you set it, it’s highly recommended to set the `OCR Data Path`_.
 
 OCR Data Path

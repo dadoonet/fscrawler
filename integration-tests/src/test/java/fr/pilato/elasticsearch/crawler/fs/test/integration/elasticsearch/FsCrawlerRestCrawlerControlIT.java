@@ -241,12 +241,24 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             logger.info("⌫ Clearing Elasticsearch index to verify re-indexing...");
             client.deleteIndex(fsSettings.getElasticsearch().getIndex());
 
+            // Record the current run number so we can deterministically detect the resumed run.
+            // resume() dispatches a new run asynchronously on the crawler thread; asserting the transient
+            // RUNNING state synchronously right after resume() is racy: the resumed run may not have started
+            // yet (state still COMPLETED), or may already have finished/failed (state COMPLETED or PAUSED).
+            // The monotonic run counter is a race-free signal that a new run was actually triggered.
+            int runNumberBeforeResume = fsCrawler.getFsParser().getRunNumber();
+
             // Resume the crawler - it should re-index everything
             logger.info("⏯️ Resuming crawler after checkpoint deletion...");
             SimpleResponse resumeResponse = restResumeCrawler();
             Assertions.assertThat(resumeResponse.isOk()).isTrue();
-            // Verify crawler is now running again
-            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
+
+            // Verify resume triggered a new run. The run number is incremented at the start of every run
+            // (before any work), so this holds regardless of how fast the resumed run scans.
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(10))
+                    .pollInterval(Duration.ofMillis(100))
+                    .until(() -> fsCrawler.getFsParser().getRunNumber() > runNumberBeforeResume);
 
             // Wait for documents to be re-indexed
             logger.info("⏳ Waiting for {} documents to be re-indexed...", expectedDocs);

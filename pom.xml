@@ -792,7 +792,11 @@
                         <parallelTestsTimeoutInSeconds>${tests.timeoutSuite}</parallelTestsTimeoutInSeconds>
                         <redirectTestOutputToFile>${tests.output}</redirectTestOutputToFile>
                         <systemPropertyVariables combine.children="append">
-                            <junit.jupiter.execution.parallel.enabled>${tests.parallelism}</junit.jupiter.execution.parallel.enabled>
+                            <!-- Parallel execution enabled by default; use -P sequential_tests to disable -->
+                            <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                            <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                            <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                            <junit.jupiter.execution.parallel.config.executor-service>WORKER_THREAD_POOL</junit.jupiter.execution.parallel.config.executor-service>
                             <arg.common>arg.common</arg.common>
                             <tests.seed>${tests.seed}</tests.seed>
                             <tests.timeoutSuite>${tests.timeoutSuite}</tests.timeoutSuite>
@@ -1042,9 +1046,9 @@
 
     <profiles>
         <!-- Tests related profiles:
-            -Pdaily: run the default tests (exclude tests tagged with @Nightly)
+            -Pdaily: run the default tests (exclude tests tagged with @Nightly) [active by default]
             -Pnightly: run the nightly tests (include tests tagged with @Nightly)
-            -Pparallel_tests: run tests in parallel (classes and methods) use it with -Dtests.cluster.url
+            -Psequential_tests: run integration tests sequentially (disables the default parallel execution)
          -->
 
         <!-- Default daily tests: we exclude Tests tagged with Nightly (@Nightly) -->
@@ -1095,38 +1099,27 @@
                 </plugins>
             </build>
         </profile>
-        <!-- Profile to enable parallel test execution -->
-        <!-- It's recommended to run it with -Dtests.cluster.url pointing to a live ES cluster. -->
-        <!-- This profile configures JUnit 6 to parallelize test methods, not just test classes -->
+        <!-- Profile to disable parallel test execution (parallel is enabled by default) -->
+        <!-- Use with a live ES cluster: -P sequential_tests -Dtests.cluster.url=http://localhost:9200 -->
         <profile>
-            <id>parallel_tests</id>
+            <id>sequential_tests</id>
             <build>
                 <plugins>
-                    <!-- Override Failsafe plugin configuration to enable parallel test method execution -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <systemPropertyVariables combine.children="override">
-                                <!-- Enable parallel execution -->
-                                <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
-                                <!-- Enable parallel execution of classes -->
-                                <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
-                                <!-- Enable parallel execution of test methods -->
-                                <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
-                                <!-- Define the strategy for the number of threads: we use default: dynamic -->
-                                <!-- junit.jupiter.execution.parallel.config.strategy>dynamic</junit.jupiter.execution.parallel.config.strategy-->
-                                <!-- Define the factor to use x * num of cores: we use default: 1 -->
-                                <!-- junit.jupiter.execution.parallel.config.dynamic.factor>1</junit.jupiter.execution.parallel.config.dynamic.factor-->
-                                <!-- Try the new WORKER_THREAD_POOL parallel mode -->
-                                <junit.jupiter.execution.parallel.config.executor-service>WORKER_THREAD_POOL</junit.jupiter.execution.parallel.config.executor-service>
+                                <!-- Disable parallel execution -->
+                                <junit.jupiter.execution.parallel.enabled>false</junit.jupiter.execution.parallel.enabled>
+                                <junit.jupiter.execution.parallel.mode.classes.default>same_thread</junit.jupiter.execution.parallel.mode.classes.default>
+                                <junit.jupiter.execution.parallel.mode.default>same_thread</junit.jupiter.execution.parallel.mode.default>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
-
         <!-- Profile for ES8 -->
         <profile>
             <id>es-8x</id>
