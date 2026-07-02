@@ -27,6 +27,8 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,6 +66,7 @@ class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
     }
 
     @Test
+    @VerySlow
     void uploadAllDocuments() throws Exception {
         Path from = testDocumentsDir;
         if (Files.notExists(from)) {
