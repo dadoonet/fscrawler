@@ -76,7 +76,7 @@
         <jersey.version>4.0.2</jersey.version>
 
         <!-- For FSCrawler S3 plugin -->
-        <minio.version>9.0.2</minio.version>
+        <minio.version>9.0.3</minio.version>
 
         <!-- Tests -->
         <junit.version>6.1.1</junit.version>
