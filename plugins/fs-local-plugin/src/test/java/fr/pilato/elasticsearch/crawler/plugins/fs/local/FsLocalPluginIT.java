@@ -62,13 +62,13 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(testTmpDir.toString());
-            provider.start(
-                    fsSettings,
-                    "{\n" + "  \"type\": \"local\",\n"
-                            + "  \"local\": {\n"
-                            + "    \"url\": \""
-                            + fileName.toString().replace("\\", "\\\\") + "\"\n" + "  }\n"
-                            + "}");
+            provider.start(fsSettings, """
+                    {
+                      "type": "local",
+                      "local": {
+                        "url": "%s"
+                      }
+                    }""".formatted(fileName.toString().replace("\\", "\\\\")));
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Assertions.assertThat(object).isEqualTo(text);
@@ -94,13 +94,13 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(testTmpDir.toString());
-            provider.start(
-                    fsSettings,
-                    "{\n" + "  \"type\": \"local\",\n"
-                            + "  \"local\": {\n"
-                            + "    \"url\": \"foo.txt\"\n"
-                            + "  }\n"
-                            + "}");
+            provider.start(fsSettings, """
+                    {
+                      "type": "local",
+                      "local": {
+                        "url": "foo.txt"
+                      }
+                    }""");
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Assertions.assertThat(object).isEqualTo(text);
@@ -132,12 +132,13 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(rootDir.toString());
             Assertions.assertThatThrownBy(() -> provider.start(
-                            fsSettings,
-                            "{\n" + "  \"type\": \"local\",\n"
-                                    + "  \"local\": {\n"
-                                    + "    \"url\": \""
-                                    + fileName.toString().replace("\\", "\\\\") + "\"\n" + "  }\n"
-                                    + "}"))
+                            fsSettings, """
+                            {
+                              "type": "local",
+                              "local": {
+                                "url": "%s"
+                              }
+                            }""".formatted(fileName.toString().replace("\\", "\\\\"))))
                     .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                     .hasMessageContaining("is not within");
         }
