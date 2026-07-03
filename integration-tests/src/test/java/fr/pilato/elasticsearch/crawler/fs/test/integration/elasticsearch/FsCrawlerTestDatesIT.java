@@ -96,12 +96,10 @@ class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
     private void compareHits(ESSearchHit hitBefore, ESSearchHit hitAfter, boolean shouldBeIdentical) {
         DocumentContext documentBefore = JsonUtil.parseJsonAsDocumentContext(hitBefore.getSource());
         String hitBeforeCreated = documentBefore.read("$.file.created");
-        String hitBeforeIndexingDate = documentBefore.read("$.file.indexing_date");
         String hitBeforeLastModified = documentBefore.read("$.file.last_modified");
         String hitBeforeLastAccessed = documentBefore.read("$.file.last_accessed");
         DocumentContext documentAfter = JsonUtil.parseJsonAsDocumentContext(hitAfter.getSource());
         String hitAfterCreated = documentAfter.read("$.file.created");
-        String hitAfterIndexingDate = documentAfter.read("$.file.indexing_date");
         String hitAfterLastModified = documentAfter.read("$.file.last_modified");
         String hitAfterLastAccessed = documentAfter.read("$.file.last_accessed");
 
@@ -115,12 +113,15 @@ class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
                     hitBeforeCreated,
                     hitAfterCreated);
         }
+        // We deliberately do NOT compare file.indexing_date here. Unlike created/last_modified/
+        // last_accessed, indexing_date is not a file property: it records when FSCrawler indexed the
+        // document. An unmodified file can be legitimately re-indexed on a later run because the scan
+        // window is widened by 2 seconds to absorb filesystem timestamp truncation (see issue #82),
+        // so indexing_date is not stable and comparing it makes this test flaky.
         if (shouldBeIdentical) {
-            Assertions.assertThat(hitBeforeIndexingDate).isEqualTo(hitAfterIndexingDate);
             Assertions.assertThat(hitBeforeLastModified).isEqualTo(hitAfterLastModified);
             Assertions.assertThat(hitBeforeLastAccessed).isEqualTo(hitAfterLastAccessed);
         } else {
-            Assertions.assertThat(hitBeforeIndexingDate).isNotEqualTo(hitAfterIndexingDate);
             Assertions.assertThat(hitBeforeLastModified).isNotEqualTo(hitAfterLastModified);
             Assertions.assertThat(hitBeforeLastAccessed).isNotEqualTo(hitAfterLastAccessed);
         }
