@@ -23,7 +23,6 @@ package fr.pilato.elasticsearch.crawler.plugins;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
@@ -72,7 +71,7 @@ public class FsCrawlerServiceProviderExtensionFinder extends AbstractExtensionFi
             }
             debugExtensions(bucket);
             result.put(null, bucket);
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             log.error("Failed to read classpath storage {}: {}", SERVICE_RESOURCE, e.getMessage(), e);
         }
         return result;
@@ -95,14 +94,14 @@ public class FsCrawlerServiceProviderExtensionFinder extends AbstractExtensionFi
                 }
                 debugExtensions(bucket);
                 result.put(pluginId, bucket);
-            } catch (IOException | URISyntaxException e) {
+            } catch (IOException e) {
                 log.error("Failed to read plugin '{}' storage {}: {}", pluginId, SERVICE_RESOURCE, e.getMessage(), e);
             }
         }
         return result;
     }
 
-    private void collectFromUrls(Enumeration<URL> urls, Set<String> bucket) throws IOException, URISyntaxException {
+    private void collectFromUrls(Enumeration<URL> urls, Set<String> bucket) throws IOException {
         while (urls.hasMoreElements()) {
             URL url = urls.nextElement();
             log.debug("Reading {}", url.getPath());
