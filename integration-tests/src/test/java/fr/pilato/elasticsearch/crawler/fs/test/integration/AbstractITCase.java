@@ -106,7 +106,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
     protected static String testClusterUrl = getSystemProperty("tests.cluster.url", DEFAULT_TEST_CLUSTER_URL);
     protected static String testApiKey = getSystemProperty("tests.cluster.apiKey", null);
     protected static final boolean TEST_KEEP_DATA = getSystemProperty("tests.leaveTemporary", true);
-    protected static final boolean testCheckCertificate = getSystemProperty("tests.cluster.check_ssl", true);
+    protected static final boolean TEST_CHECK_CERTIFICATE = getSystemProperty("tests.cluster.check_ssl", true);
     private static final TestContainerHelper testContainerHelper = new TestContainerHelper();
 
     protected Path metadataDir = null;
@@ -283,12 +283,12 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
             logger.debug("Shared resources already initialized — skipping startServices");
             return;
         }
-        logger.debug("⛏️ Generate settings against [{}] with ssl check [{}]", testClusterUrl, testCheckCertificate);
+        logger.debug("⛏️ Generate settings against [{}] with ssl check [{}]", testClusterUrl, TEST_CHECK_CERTIFICATE);
 
         FsSettings fsSettings = FsSettingsLoader.load();
         // We build the elasticsearch Client based on the parameters
         fsSettings.getElasticsearch().setUrls(List.of(testClusterUrl));
-        fsSettings.getElasticsearch().setSslVerification(testCheckCertificate);
+        fsSettings.getElasticsearch().setSslVerification(TEST_CHECK_CERTIFICATE);
         fsSettings.getElasticsearch().setCaCertificate(testCaCertificate);
         if (testApiKey != null) {
             fsSettings.getElasticsearch().setApiKey(testApiKey);
@@ -315,7 +315,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                         "❌ Can not connect to Elasticsearch on [{}] with ssl checks [{}]. You can "
                                 + "disable it using -Dtests.cluster.check_ssl=false",
                         testClusterUrl,
-                        testCheckCertificate);
+                        TEST_CHECK_CERTIFICATE);
                 throw e;
             }
             if (testContainerHelper.isStarted()) {
@@ -323,7 +323,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                         "❌ Elasticsearch TestContainer was previously started but we can not connect to it "
                                 + "on [{}] with ssl checks [{}].",
                         testClusterUrl,
-                        testCheckCertificate);
+                        TEST_CHECK_CERTIFICATE);
                 logger.fatal("Full error:", e);
                 throw e;
             }
@@ -544,7 +544,7 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
 
     public static String getUrl(String... subdirs) {
         URL resource = AbstractITCase.class.getResource("/fscrawler-integration-tests-marker.txt");
-        File dir = URLtoFile(resource).getParentFile();
+        File dir = urlToFile(resource).getParentFile();
 
         for (String subdir : subdirs) {
             dir = new File(dir, subdir);

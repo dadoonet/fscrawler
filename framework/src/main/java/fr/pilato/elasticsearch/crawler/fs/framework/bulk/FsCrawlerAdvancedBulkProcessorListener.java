@@ -31,10 +31,8 @@ import org.apache.logging.log4j.Logger;
  * @see FsCrawlerRetryBulkProcessorListener
  */
 public class FsCrawlerAdvancedBulkProcessorListener<
-                O extends FsCrawlerOperation<O>,
-                REQ extends FsCrawlerBulkRequest<O>,
-                RES extends FsCrawlerBulkResponse<O>>
-        extends FsCrawlerSimpleBulkProcessorListener<O, REQ, RES> {
+                O extends FsCrawlerOperation<O>, Q extends FsCrawlerBulkRequest<O>, S extends FsCrawlerBulkResponse<O>>
+        extends FsCrawlerSimpleBulkProcessorListener<O, Q, S> {
     private static final Logger logger = LogManager.getLogger();
 
     private final AtomicInteger successiveErrors = new AtomicInteger(0);
@@ -44,7 +42,7 @@ public class FsCrawlerAdvancedBulkProcessorListener<
     }
 
     @Override
-    public void afterBulk(long executionId, REQ request, RES response) {
+    public void afterBulk(long executionId, Q request, S response) {
         super.afterBulk(executionId, request, response);
         if (response.hasFailures()) {
             int previousErrors = successiveErrors.getAndIncrement();

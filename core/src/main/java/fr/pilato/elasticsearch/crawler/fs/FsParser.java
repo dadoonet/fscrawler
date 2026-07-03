@@ -321,7 +321,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 crawlSpan.setAttribute("fs.provider", crawlerPlugin.getType());
             }
 
-            try (Scope $ignored = crawlSpan.makeCurrent()) {
+            try (Scope ignored = crawlSpan.makeCurrent()) {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
                 filesSinceLastCheckpoint = 0;
 
@@ -672,7 +672,7 @@ public class FsParser implements Runnable, AutoCloseable {
     /** Process directories using a work queue with checkpoint support */
     private void processDirectoriesWithCheckpoint(LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
         Span traverseSpan = FsCrawlerTracing.startSpan("fscrawler.directory.traverse");
-        try (Scope $ignored = traverseSpan.makeCurrent()) {
+        try (Scope ignored = traverseSpan.makeCurrent()) {
             traverseSpan.setAttribute("scan.id", String.valueOf(runNumber.get()));
 
             while (checkpoint.get().hasPendingWork() && !closed.get()) {
@@ -832,7 +832,7 @@ public class FsParser implements Runnable, AutoCloseable {
             throws Exception {
         Span dirSpan = FsCrawlerTracing.startSpan("fscrawler.directory.process");
         dirSpan.setAttribute("fs.path", filepath);
-        try (Scope $ignored = dirSpan.makeCurrent()) {
+        try (Scope ignored = dirSpan.makeCurrent()) {
             logger.debug("indexing [{}] content", filepath);
 
             if (closed.get()) {
@@ -1256,7 +1256,7 @@ public class FsParser implements Runnable, AutoCloseable {
                         ? fileAbstractModel.getFullpath()
                         : dirname + "/" + fileAbstractModel.getName());
         fileSpan.setAttribute("file.size", filesize);
-        try (Scope $ignored = fileSpan.makeCurrent()) {
+        try (Scope ignored = fileSpan.makeCurrent()) {
             final String filename = fileAbstractModel.getName();
             final LocalDateTime created = fileAbstractModel.getCreationDate();
             final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();

@@ -29,10 +29,8 @@ import org.apache.logging.log4j.Logger;
  * es_rejected_execution_exception the same document is sent again to the bulk processor.
  */
 public class FsCrawlerRetryBulkProcessorListener<
-                O extends FsCrawlerOperation<O>,
-                REQ extends FsCrawlerBulkRequest<O>,
-                RES extends FsCrawlerBulkResponse<O>>
-        extends FsCrawlerAdvancedBulkProcessorListener<O, REQ, RES> {
+                O extends FsCrawlerOperation<O>, Q extends FsCrawlerBulkRequest<O>, S extends FsCrawlerBulkResponse<O>>
+        extends FsCrawlerAdvancedBulkProcessorListener<O, Q, S> {
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -48,10 +46,10 @@ public class FsCrawlerRetryBulkProcessorListener<
     }
 
     @Override
-    public void afterBulk(long executionId, REQ request, RES response) {
+    public void afterBulk(long executionId, Q request, S response) {
         super.afterBulk(executionId, request, response);
         if (response.hasFailures()) {
-            for (RES.BulkItemResponse<O> item : response.getItems()) {
+            for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
                 if (item.isFailed()
                         && Arrays.stream(errorMessages)
                                 .anyMatch(s -> item.getFailureMessage().contains(s))) {

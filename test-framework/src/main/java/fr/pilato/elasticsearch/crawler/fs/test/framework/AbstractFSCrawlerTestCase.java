@@ -68,7 +68,7 @@ public abstract class AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String RANDOM = "random";
     private static final AtomicBoolean GLOBAL_DEFAULTS_SET = new AtomicBoolean();
-    protected static final String indexPrefix = getSystemProperty("tests.index.prefix", "");
+    protected static final String INDEX_PREFIX = getSystemProperty("tests.index.prefix", "");
 
     /** For tests only: maximum time to wait for a search when we want to be sure that something is in the index. */
     public static final Duration MAX_WAIT_FOR_SEARCH = Duration.ofMinutes(5);
@@ -171,14 +171,14 @@ public abstract class AbstractFSCrawlerTestCase {
      */
     protected static String getCrawlerName(Class<?> clazz, String methodName) {
         String testName;
-        if (indexPrefix.isEmpty()) {
+        if (INDEX_PREFIX.isEmpty()) {
             testName = "fscrawler_"
                     .concat(toUnderscoreCase(clazz.getSimpleName()))
                     .concat("_")
                     .concat(methodName);
         } else {
             testName = "fscrawler_"
-                    .concat(indexPrefix)
+                    .concat(INDEX_PREFIX)
                     .concat("_")
                     .concat(toUnderscoreCase(clazz.getSimpleName()))
                     .concat("_")
@@ -219,7 +219,7 @@ public abstract class AbstractFSCrawlerTestCase {
         return sb.toString();
     }
 
-    public static File URLtoFile(URL url) {
+    public static File urlToFile(URL url) {
         try {
             return new File(url.toURI());
         } catch (URISyntaxException e) {
