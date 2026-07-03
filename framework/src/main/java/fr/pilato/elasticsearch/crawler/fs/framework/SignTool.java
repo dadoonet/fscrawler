@@ -30,6 +30,22 @@ import java.security.NoSuchAlgorithmException;
  */
 public class SignTool {
 
+    /**
+     * Signs the given input by computing an MD5 digest of its bytes.
+     *
+     * <p>The resulting hash is used as the Elasticsearch document {@code _id}. MD5 is kept here only as a
+     * non-cryptographic checksum: it is <strong>not</strong> used in a security-sensitive context. Changing the
+     * algorithm would change every generated {@code _id} and force a full reindex, so MD5 remains the default for
+     * backward compatibility.
+     *
+     * @param toSign the value to hash (e.g. a file path)
+     * @return the hexadecimal MD5 digest of {@code toSign}
+     * @throws NoSuchAlgorithmException if the MD5 algorithm is not available
+     * @deprecated the hash algorithm should become configurable; this hard-coded MD5 variant is kept for backward
+     *     compatibility. See <a href="https://github.com/dadoonet/fscrawler/issues/2425">#2425</a>.
+     */
+    @Deprecated(since = "2.10")
+    @SuppressWarnings("java:S4790") // MD5 is a non-cryptographic checksum used to derive document ids, not for security
     public static String sign(String toSign) throws NoSuchAlgorithmException {
 
         MessageDigest md = MessageDigest.getInstance("MD5");
