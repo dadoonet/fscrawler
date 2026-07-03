@@ -162,10 +162,10 @@ public class FsCrawlerBulkProcessor<
     }
 
     Q supplyRequestWithLimits(Supplier<Q> requestSupplier, int bulkActions, ByteSizeValue byteSize) {
-        Q bulkRequest = requestSupplier.get();
-        bulkRequest.maxNumberOfActions(bulkActions);
-        bulkRequest.maxBulkSize(byteSize);
-        return bulkRequest;
+        Q br = requestSupplier.get();
+        br.maxNumberOfActions(bulkActions);
+        br.maxBulkSize(byteSize);
+        return br;
     }
 
     public Listener<O, Q, S> getListener() {
