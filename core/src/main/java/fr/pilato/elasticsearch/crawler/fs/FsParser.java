@@ -809,7 +809,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
         try {
             crawlerPlugin.closeConnection();
-            if (!FsCrawlerUtil.waitWithAbortCheck(Duration.ofMillis(delayMs), () -> closed.get())) {
+            if (!FsCrawlerUtil.waitWithAbortCheck(Duration.ofMillis(delayMs), closed::get)) {
                 throw new NetworkErrorRecoveryException("Crawler closed during backoff", null);
             }
             crawlerPlugin.openConnection();

@@ -349,7 +349,7 @@ public class TikaDocParser {
                             metadata,
                             TikaCoreProperties.LANGUAGE,
                             doc.getMeta()::setLanguage,
-                            (lang) -> {
+                            lang -> {
                                 if (lang != null) {
                                     return lang;
                                 } else if (fsSettings.getFs().isLangDetect() && finalParsedContent != null) {
@@ -440,7 +440,7 @@ public class TikaDocParser {
                             metadata,
                             TikaCoreProperties.RATING,
                             doc.getMeta()::setRating,
-                            (value) -> value == null ? null : Integer.parseInt(value));
+                            value -> value == null ? null : Integer.parseInt(value));
                     setMeta(
                             doc.getPath().getReal(),
                             metadata,
