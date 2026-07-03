@@ -201,6 +201,52 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     /**
+     * Test that a "cold" hosted deployment is retried during bootstrap. On Elastic Cloud hosted deployments, the Cloud
+     * proxy can answer 404 on the root endpoint (GET /) while no backing node is routable yet (cluster waking up,
+     * rolling restart, resize...). A healthy Elasticsearch always answers 200 on the root, so this 404 is transient and
+     * must be retried during start(), unlike 404 on regular endpoints (see {@link #testNoRetryOn4xxErrors()}).
+     */
+    @Test
+    void testRetryOnRootNotFoundDuringBootstrap() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        // Simulate: 404 -> 404 -> Success (cluster becomes routable on the third call)
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .inScenario("Cold Cluster")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(WireMock.aResponse()
+                        .withStatus(404)
+                        .withBody("{\"ok\":false,\"message\":\"Unknown deployment.\"}"))
+                .willSetStateTo("First 404"));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .inScenario("Cold Cluster")
+                .whenScenarioStateIs("First 404")
+                .willReturn(WireMock.aResponse()
+                        .withStatus(404)
+                        .withBody("{\"ok\":false,\"message\":\"Unknown deployment.\"}"))
+                .willSetStateTo("Second 404"));
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .inScenario("Cold Cluster")
+                .whenScenarioStateIs("Second 404")
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            // start() calls getVersion() internally, which must retry on the transient 404
+            client.start();
+            Assertions.assertThat(client.getVersion()).isEqualTo(elasticsearchVersion);
+        }
+
+        // Verify that 3 requests were made (2 x 404 + 1 success)
+        WireMock.verify(3, WireMock.getRequestedFor(WireMock.urlEqualTo("/")));
+        logger.info("Test passed: bootstrap retried on cold-cluster 404 and eventually succeeded");
+    }
+
+    /**
      * Test that 429 (Too Many Requests) errors trigger retry. This is important for handling Elasticsearch rate
      * limiting. See: https://github.com/dadoonet/fscrawler/issues/2119
      */
