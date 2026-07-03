@@ -61,6 +61,10 @@ import org.awaitility.Awaitility;
 /** Main entry point to launch FsCrawler */
 public class FsCrawlerCli {
 
+    private FsCrawlerCli() {
+        // Utility class, do not instantiate
+    }
+
     private static final Duration CLOSE_POLLING_WAIT_TIME = Duration.ofMillis(100);
 
     private static final Logger logger = LogManager.getLogger();

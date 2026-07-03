@@ -28,6 +28,10 @@ import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerValidator {
 
+    private FsCrawlerValidator() {
+        // Utility class, do not instantiate
+    }
+
     /**
      * Check if settings are valid. Note that settings can be updated by this method (fallback to defaults if not set)
      *

@@ -22,6 +22,11 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 @SuppressWarnings("WeakerAccess")
 public class OsValidator {
+
+    private OsValidator() {
+        // Utility class, do not instantiate
+    }
+
     public static final String OS;
     public static final boolean WINDOWS;
     public static final boolean MAC;

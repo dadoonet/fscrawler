@@ -27,6 +27,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class OsUtil {
+
+    private OsUtil() {
+        // Utility class, do not instantiate
+    }
+
     private static final Logger logger = LogManager.getLogger();
 
     private static final OperatingSystemMXBean osMxBean = ManagementFactory.getOperatingSystemMXBean();

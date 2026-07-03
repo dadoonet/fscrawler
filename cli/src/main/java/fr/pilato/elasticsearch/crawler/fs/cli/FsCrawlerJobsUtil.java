@@ -32,6 +32,10 @@ import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerJobsUtil {
 
+    private FsCrawlerJobsUtil() {
+        // Utility class, do not instantiate
+    }
+
     private static final Logger logger = LogManager.getLogger();
 
     public static List<String> listExistingJobs(Path configDir) {

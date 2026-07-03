@@ -30,6 +30,10 @@ import java.security.NoSuchAlgorithmException;
  */
 public class SignTool {
 
+    private SignTool() {
+        // Utility class, do not instantiate
+    }
+
     /**
      * Signs the given input by computing an MD5 digest of its bytes.
      *

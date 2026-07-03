@@ -43,6 +43,10 @@ import java.util.Map;
 
 public class JsonUtil {
 
+    private JsonUtil() {
+        // Utility class, do not instantiate
+    }
+
     public static final ObjectMapper prettyMapper;
     public static final ObjectMapper mapper;
     public static final ObjectMapper ymlMapper;

@@ -36,6 +36,10 @@ import org.apache.logging.log4j.Logger;
  */
 public class BootstrapChecks {
 
+    private BootstrapChecks() {
+        // Utility class, do not instantiate
+    }
+
     private static final Logger logger = LogManager.getLogger();
 
     public static void check() {
