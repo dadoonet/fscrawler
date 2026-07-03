@@ -90,7 +90,40 @@ import org.glassfish.jersey.logging.LoggingFeature;
 public class ElasticsearchClient implements IElasticsearchClient {
 
     private static final Logger logger = LogManager.getLogger();
-    private final FsSettings settings;
+
+    // Prefix for all ES objects
+    public static final String FSCRAWLER_PREFIX = "fscrawler_";
+
+    // FSCrawler ES Settings
+    public static final String FSCRAWLER_SETTINGS_TOTAL_FIELDS = FSCRAWLER_PREFIX + "settings_total_fields";
+
+    // FSCrawler ES Alias
+    public static final String FSCRAWLER_ALIAS = FSCRAWLER_PREFIX + "alias";
+
+    // FSCrawler ES Index names
+    public static final String FSCRAWLER_DOCS_SEMANTIC = FSCRAWLER_PREFIX + "docs_semantic";
+    public static final String FSCRAWLER_DOCS = FSCRAWLER_PREFIX + "docs";
+    public static final String FSCRAWLER_FOLDERS = FSCRAWLER_PREFIX + "folders";
+
+    // FSCrawler ES Mappings
+    public static final String FSCRAWLER_MAPPING_ATTACHMENT = FSCRAWLER_PREFIX + "mapping_attachment";
+    public static final String FSCRAWLER_MAPPING_ATTRIBUTES = FSCRAWLER_PREFIX + "mapping_attributes";
+    public static final String FSCRAWLER_MAPPING_FILE = FSCRAWLER_PREFIX + "mapping_file";
+    public static final String FSCRAWLER_MAPPING_PATH = FSCRAWLER_PREFIX + "mapping_path";
+    public static final String FSCRAWLER_MAPPING_CONTENT_SEMANTIC = FSCRAWLER_PREFIX + "mapping_content_semantic";
+    public static final String FSCRAWLER_MAPPING_CONTENT = FSCRAWLER_PREFIX + "mapping_content";
+    public static final String FSCRAWLER_MAPPING_META = FSCRAWLER_PREFIX + "mapping_meta";
+
+    // Doc type _doc
+    public static final String ES_TYPE_DOC = "/_doc/";
+
+    // Elasticsearch API endpoints
+    public static final String API_COMPONENT_TEMPLATE = "_component_template/";
+    public static final String API_INDEX_TEMPLATE = "_index_template/";
+    public static final String API_SEARCH = "/_search";
+    public static final String API_SECURITY_API_KEY = "/_security/api_key";
+
+    // User agent
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
 
     // TODO this should be configurable
@@ -113,6 +146,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration BOOTSTRAP_RETRY_INITIAL_DELAY = Duration.ofSeconds(1);
     private static final Duration BOOTSTRAP_RETRY_MAX_DELAY = Duration.ofSeconds(10);
 
+    private final FsSettings settings;
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
@@ -415,7 +449,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void pushComponentTemplate(String name, String json) throws ElasticsearchClientException {
         logger.debug("push component template [{}]", name);
-        String url = "_component_template/" + name;
+        String url = API_COMPONENT_TEMPLATE + name;
         logger.trace("component template: [{}]", json);
         try {
             httpPut(url, json);
@@ -427,7 +461,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void pushIndexTemplate(String name, String json) throws ElasticsearchClientException {
         logger.debug("push index template [{}]", name);
-        String url = "_index_template/" + name;
+        String url = API_INDEX_TEMPLATE + name;
         logger.trace("index template: [{}]", json);
         try {
             httpPut(url, json);
@@ -488,7 +522,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public boolean isExistingComponentTemplate(String templateName) throws ElasticsearchClientException {
         logger.trace("is existing component template [{}]", templateName);
         try {
-            httpGet("_component_template/" + templateName);
+            httpGet(API_COMPONENT_TEMPLATE + templateName);
             logger.debug("Component template [{}] was found", templateName);
             return true;
         } catch (NotFoundException e) {
@@ -507,7 +541,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public boolean isExistingIndexTemplate(String templateName) throws ElasticsearchClientException {
         logger.trace("is existing index template [{}]", templateName);
         try {
-            httpGet("_index_template/" + templateName);
+            httpGet(API_INDEX_TEMPLATE + templateName);
             logger.debug("Index template [{}] was found", templateName);
             return true;
         } catch (NotFoundException e) {
@@ -631,7 +665,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexSingle(String index, String id, String json, String pipeline) throws ElasticsearchClientException {
         logger.trace("JSon indexed : {}", json);
-        String url = index + "/_doc/" + id;
+        String url = index + ES_TYPE_DOC + id;
         if (!FsCrawlerUtil.isNullOrEmpty(pipeline)) {
             url += "?pipeline=" + pipeline;
         }
@@ -647,7 +681,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public void deleteSingle(String index, String id) throws ElasticsearchClientException {
         logger.debug("Removing document : {}/{}", index, id);
         try {
-            String response = httpDelete(index + "/_doc/" + id, null);
+            String response = httpDelete(index + ES_TYPE_DOC + id, null);
 
             DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
             String result = document.read("$.result");
@@ -681,10 +715,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
             // Check if the index template already exists for docs
             String docsIndexTemplateName =
-                    "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs";
+                    FSCRAWLER_PREFIX + settings.getElasticsearch().getIndex() + "_docs";
             if (semanticSearch) {
                 docsIndexTemplateName =
-                        "fscrawler_" + settings.getElasticsearch().getIndex() + "_docs_semantic";
+                        FSCRAWLER_PREFIX + settings.getElasticsearch().getIndex() + "_docs_semantic";
             }
 
             boolean docsIndexTemplateExists = isExistingIndexTemplate(docsIndexTemplateName);
@@ -702,58 +736,58 @@ public class ElasticsearchClient implements IElasticsearchClient {
                         settings.getElasticsearch().getIndex());
                 componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                         majorVersion,
-                        "fscrawler_alias",
+                        FSCRAWLER_ALIAS,
                         settings.getElasticsearch().getIndex(),
                         settings.getName(),
                         forcePush));
                 componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                         majorVersion,
-                        "fscrawler_settings_total_fields",
+                        FSCRAWLER_SETTINGS_TOTAL_FIELDS,
                         settings.getElasticsearch().getIndex(),
                         null,
                         forcePush));
                 componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                         majorVersion,
-                        "fscrawler_mapping_attributes",
+                        FSCRAWLER_MAPPING_ATTRIBUTES,
                         settings.getElasticsearch().getIndex(),
                         null,
                         forcePush));
                 componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                         majorVersion,
-                        "fscrawler_mapping_file",
+                        FSCRAWLER_MAPPING_FILE,
                         settings.getElasticsearch().getIndex(),
                         null,
                         forcePush));
                 componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                         majorVersion,
-                        "fscrawler_mapping_path",
+                        FSCRAWLER_MAPPING_PATH,
                         settings.getElasticsearch().getIndex(),
                         null,
                         forcePush));
                 componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                         majorVersion,
-                        "fscrawler_mapping_attachment",
+                        FSCRAWLER_MAPPING_ATTACHMENT,
                         settings.getElasticsearch().getIndex(),
                         null,
                         forcePush));
                 if (semanticSearch) {
                     componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                             majorVersion,
-                            "fscrawler_mapping_content_semantic",
+                            FSCRAWLER_MAPPING_CONTENT_SEMANTIC,
                             settings.getElasticsearch().getIndex(),
                             null,
                             forcePush));
                 } else {
                     componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                             majorVersion,
-                            "fscrawler_mapping_content",
+                            FSCRAWLER_MAPPING_CONTENT,
                             settings.getElasticsearch().getIndex(),
                             null,
                             forcePush));
                 }
                 componentTemplates.add(loadAndPushComponentTemplateIfMissing(
                         majorVersion,
-                        "fscrawler_mapping_meta",
+                        FSCRAWLER_MAPPING_META,
                         settings.getElasticsearch().getIndex(),
                         null,
                         forcePush));
@@ -771,12 +805,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
                     if (semanticSearch) {
                         loadAndPushIndexTemplate(
                                 majorVersion,
-                                "fscrawler_docs_semantic",
+                                FSCRAWLER_DOCS_SEMANTIC,
                                 settings.getElasticsearch().getIndex());
                     } else {
                         loadAndPushIndexTemplate(
                                 majorVersion,
-                                "fscrawler_docs",
+                                FSCRAWLER_DOCS,
                                 settings.getElasticsearch().getIndex());
                     }
                 }
@@ -785,7 +819,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             // If needed, we create the component and index templates for the folder index
             if (settings.getFs().isIndexFolders()) {
                 String folderIndexTemplateName =
-                        "fscrawler_" + settings.getElasticsearch().getIndexFolder() + "_folders";
+                        FSCRAWLER_PREFIX + settings.getElasticsearch().getIndexFolder() + "_folders";
                 boolean folderIndexTemplateExists = isExistingIndexTemplate(folderIndexTemplateName);
 
                 if (folderIndexTemplateExists && !forcePush) {
@@ -801,19 +835,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             settings.getElasticsearch().getIndexFolder());
                     folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(
                             majorVersion,
-                            "fscrawler_mapping_attributes",
+                            FSCRAWLER_MAPPING_ATTRIBUTES,
                             settings.getElasticsearch().getIndexFolder(),
                             null,
                             forcePush));
                     folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(
                             majorVersion,
-                            "fscrawler_mapping_file",
+                            FSCRAWLER_MAPPING_FILE,
                             settings.getElasticsearch().getIndexFolder(),
                             null,
                             forcePush));
                     folderComponentTemplates.add(loadAndPushComponentTemplateIfMissing(
                             majorVersion,
-                            "fscrawler_mapping_path",
+                            FSCRAWLER_MAPPING_PATH,
                             settings.getElasticsearch().getIndexFolder(),
                             null,
                             forcePush));
@@ -826,7 +860,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                             settings.getElasticsearch().getIndexFolder());
                     loadAndPushIndexTemplate(
                             majorVersion,
-                            "fscrawler_folders",
+                            FSCRAWLER_FOLDERS,
                             settings.getElasticsearch().getIndexFolder());
                 }
             }
@@ -856,23 +890,23 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // Index templates first: a component template still referenced by an index template cannot be deleted
         // (Elasticsearch returns a 400). We attempt every variant the crawler may have created so that no index
         // template is left referencing the component templates we are about to remove.
-        deleteIndexTemplate(prefixedTemplateName("fscrawler_docs", index));
-        deleteIndexTemplate(prefixedTemplateName("fscrawler_docs_semantic", index));
-        deleteIndexTemplate(prefixedTemplateName("fscrawler_folders", indexFolder));
+        deleteIndexTemplate(prefixedTemplateName(FSCRAWLER_DOCS, index));
+        deleteIndexTemplate(prefixedTemplateName(FSCRAWLER_DOCS_SEMANTIC, index));
+        deleteIndexTemplate(prefixedTemplateName(FSCRAWLER_FOLDERS, indexFolder));
 
         // Then the component templates (both content variants and the folder ones).
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_alias", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_settings_total_fields", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_attributes", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_file", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_path", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_attachment", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_content", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_content_semantic", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_meta", index));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_attributes", indexFolder));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_file", indexFolder));
-        deleteComponentTemplate(prefixedTemplateName("fscrawler_mapping_path", indexFolder));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_ALIAS, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_SETTINGS_TOTAL_FIELDS, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_ATTRIBUTES, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_FILE, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_PATH, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_ATTACHMENT, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_CONTENT, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_CONTENT_SEMANTIC, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_META, index));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_ATTRIBUTES, indexFolder));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_FILE, indexFolder));
+        deleteComponentTemplate(prefixedTemplateName(FSCRAWLER_MAPPING_PATH, indexFolder));
     }
 
     /**
@@ -883,24 +917,24 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String index = settings.getElasticsearch().getIndex();
         List<String> names = new ArrayList<>();
         // Docs component templates
-        names.add(prefixedTemplateName("fscrawler_alias", index));
-        names.add(prefixedTemplateName("fscrawler_settings_total_fields", index));
-        names.add(prefixedTemplateName("fscrawler_mapping_attributes", index));
-        names.add(prefixedTemplateName("fscrawler_mapping_file", index));
-        names.add(prefixedTemplateName("fscrawler_mapping_path", index));
-        names.add(prefixedTemplateName("fscrawler_mapping_attachment", index));
+        names.add(prefixedTemplateName(FSCRAWLER_ALIAS, index));
+        names.add(prefixedTemplateName(FSCRAWLER_SETTINGS_TOTAL_FIELDS, index));
+        names.add(prefixedTemplateName(FSCRAWLER_MAPPING_ATTRIBUTES, index));
+        names.add(prefixedTemplateName(FSCRAWLER_MAPPING_FILE, index));
+        names.add(prefixedTemplateName(FSCRAWLER_MAPPING_PATH, index));
+        names.add(prefixedTemplateName(FSCRAWLER_MAPPING_ATTACHMENT, index));
         names.add(prefixedTemplateName(
                 settings.getElasticsearch().isSemanticSearch()
-                        ? "fscrawler_mapping_content_semantic"
-                        : "fscrawler_mapping_content",
+                        ? FSCRAWLER_MAPPING_CONTENT_SEMANTIC
+                        : FSCRAWLER_MAPPING_CONTENT,
                 index));
-        names.add(prefixedTemplateName("fscrawler_mapping_meta", index));
+        names.add(prefixedTemplateName(FSCRAWLER_MAPPING_META, index));
         // Folder component templates
         if (settings.getFs().isIndexFolders()) {
             String indexFolder = settings.getElasticsearch().getIndexFolder();
-            names.add(prefixedTemplateName("fscrawler_mapping_attributes", indexFolder));
-            names.add(prefixedTemplateName("fscrawler_mapping_file", indexFolder));
-            names.add(prefixedTemplateName("fscrawler_mapping_path", indexFolder));
+            names.add(prefixedTemplateName(FSCRAWLER_MAPPING_ATTRIBUTES, indexFolder));
+            names.add(prefixedTemplateName(FSCRAWLER_MAPPING_FILE, indexFolder));
+            names.add(prefixedTemplateName(FSCRAWLER_MAPPING_PATH, indexFolder));
         }
         return names;
     }
@@ -913,12 +947,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
         List<String> names = new ArrayList<>();
         // Docs index template
         names.add(prefixedTemplateName(
-                settings.getElasticsearch().isSemanticSearch() ? "fscrawler_docs_semantic" : "fscrawler_docs",
+                settings.getElasticsearch().isSemanticSearch() ? FSCRAWLER_DOCS_SEMANTIC : FSCRAWLER_DOCS,
                 settings.getElasticsearch().getIndex()));
         // Folder index template
         if (settings.getFs().isIndexFolders()) {
             names.add(prefixedTemplateName(
-                    "fscrawler_folders", settings.getElasticsearch().getIndexFolder()));
+                    FSCRAWLER_FOLDERS, settings.getElasticsearch().getIndexFolder()));
         }
         return names;
     }
@@ -928,7 +962,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * {@code my_docs} becomes {@code fscrawler_my_docs_alias}.
      */
     private static String prefixedTemplateName(String name, String index) {
-        return name.replace("fscrawler_", "fscrawler_" + index + "_");
+        return name.replace(FSCRAWLER_PREFIX, FSCRAWLER_PREFIX + index + "_");
     }
 
     /**
@@ -938,7 +972,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private void deleteComponentTemplate(String name) throws ElasticsearchClientException {
         logger.debug("delete component template [{}]", name);
         try {
-            httpDelete("_component_template/" + name, null);
+            httpDelete(API_COMPONENT_TEMPLATE + name, null);
         } catch (NotFoundException e) {
             logger.debug("Component template [{}] does not exist. Nothing to delete.", name);
         } catch (BadRequestException e) {
@@ -954,7 +988,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private void deleteIndexTemplate(String name) throws ElasticsearchClientException {
         logger.debug("delete index template [{}]", name);
         try {
-            httpDelete("_index_template/" + name, null);
+            httpDelete(API_INDEX_TEMPLATE + name, null);
         } catch (NotFoundException e) {
             logger.debug("Index template [{}] does not exist. Nothing to delete.", name);
         } catch (BadRequestException e) {
@@ -1008,7 +1042,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private String loadAndPushComponentTemplateIfMissing(
             int version, String name, String index, String alias, boolean forcePush)
             throws IOException, ElasticsearchClientException {
-        String componentTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
+        String componentTemplateName = name.replace(FSCRAWLER_PREFIX, FSCRAWLER_PREFIX + index + "_");
 
         if (!forcePush && isExistingComponentTemplate(componentTemplateName)) {
             logger.debug("Component template [{}] already exists. Skipping.", componentTemplateName);
@@ -1035,7 +1069,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // We need to replace the placeholder values
         json = json.replace("INDEX_NAME", index);
 
-        String indexTemplateName = name.replace("fscrawler_", "fscrawler_" + index + "_");
+        String indexTemplateName = name.replace(FSCRAWLER_PREFIX, FSCRAWLER_PREFIX + index + "_");
         pushIndexTemplate(indexTemplateName, json);
     }
 
@@ -1063,7 +1097,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             url += request.getIndex();
         }
 
-        url += "/_search";
+        url += API_SEARCH;
 
         logger.debug("searching index [{}]", request.getIndex());
 
@@ -1158,7 +1192,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 } catch (PathNotFoundException ignored) {
                     // No stored fields
                 }
-                // hits.hits[].fields":{"foo.bar":["bar"]}}
                 esSearchResponse.addHit(esSearchHit);
             }
 
@@ -1277,7 +1310,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public ESSearchHit get(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
-        String response = httpGet(index + "/_doc/" + id);
+        String response = httpGet(index + ES_TYPE_DOC + id);
 
         // Parse the response
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
@@ -1293,7 +1326,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public boolean exists(String index, String id) throws ElasticsearchClientException {
         logger.debug("get document [{}/{}]", index, id);
         try {
-            httpHead(index + "/_doc/" + id);
+            httpHead(index + ES_TYPE_DOC + id);
             logger.debug("document [{}/{}] exists", index, id);
             return true;
         } catch (NotFoundException e) {
@@ -1312,10 +1345,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public String generateApiKey(String keyName) throws ElasticsearchClientException {
         String request = "{\"name\":\"" + keyName + "\"}";
         logger.debug("delete any existing api key for [{}]", keyName);
-        httpDelete("/_security/api_key", request);
+        httpDelete(API_SECURITY_API_KEY, request);
 
         logger.debug("generate an api key for [{}]", keyName);
-        String response = httpPost("/_security/api_key", request);
+        String response = httpPost(API_SECURITY_API_KEY, request);
 
         // Parse the response
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
