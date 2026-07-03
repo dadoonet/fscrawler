@@ -51,11 +51,12 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve("modify_settings_server_ftp");
         Files.createDirectories(jobDir);
 
-        Files.writeString(
-                jobDir.resolve(FsSettingsLoader.SETTINGS_YAML),
-                "name: \"modify_settings_server_ftp\"\n" + "server:\n"
-                        + "  hostname: \"mynode.mydomain.com\"\n"
-                        + "  protocol: \"ftp\"\n");
+        Files.writeString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML), """
+                name: "modify_settings_server_ftp"
+                server:
+                  hostname: "mynode.mydomain.com"
+                  protocol: "ftp"
+                """);
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ftp");
         Assertions.assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.FTP_PORT);
         Assertions.assertThat(settings.getServer().getUsername()).isEqualTo("anonymous");
@@ -67,11 +68,11 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve("modify_settings_server_ssh");
         Files.createDirectories(jobDir);
 
-        Files.writeString(
-                jobDir.resolve(FsSettingsLoader.SETTINGS_YAML),
-                "name: \"modify_settings_server_ssh\"\n" + "server:\n"
-                        + "  hostname: \"mynode.mydomain.com\"\n"
-                        + "  protocol: \"ssh\"");
+        Files.writeString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML), """
+                name: "modify_settings_server_ssh"
+                server:
+                  hostname: "mynode.mydomain.com"
+                  protocol: "ssh\"""");
 
         logger.info("{}", Files.readString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML)));
 

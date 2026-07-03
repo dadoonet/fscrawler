@@ -65,7 +65,10 @@ class FsMatchContentTest extends AbstractFSCrawlerTestCase {
     @Test
     void regexMultiLinesTextPattern() {
         // Test with multi line text
-        String text = "This is containing foo as one of the words.\n" + "Another line which contains bar also.\n";
+        String text = """
+                This is containing foo as one of the words.
+                Another line which contains bar also.
+                """;
         regexTester(text, Collections.singletonList("^foo$"), false);
         regexTester(text, Collections.singletonList(".*foo.*"), true);
         regexTester(text, Collections.singletonList("^bar$"), false);
