@@ -1238,14 +1238,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     // JSON templates for the hand-built Elasticsearch queries
-    private static final String TERM_QUERY = """
-            "term": { "%s": "%s"}""";
-    private static final String MATCH_QUERY = """
-            "match": { "%s": "%s"}""";
-    private static final String SEMANTIC_QUERY = """
-            "semantic": { "field":"%s", "query":"%s"}""";
-    private static final String PREFIX_QUERY = """
-            "prefix": { "%s": "%s"}""";
+    private static final String TERM_QUERY = "\"term\": { \"%s\": \"%s\"}";
+    private static final String MATCH_QUERY = "\"match\": { \"%s\": \"%s\"}";
+    private static final String SEMANTIC_QUERY = "\"semantic\": { \"field\":\"%s\", \"query\":\"%s\"}";
+    private static final String PREFIX_QUERY = "\"prefix\": { \"%s\": \"%s\"}";
 
     private String toElasticsearchQuery(ESQuery query) {
         if (query instanceof ESTermQuery esQuery) {
