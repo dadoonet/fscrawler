@@ -1168,18 +1168,21 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
             for (int hitNum = 0; hitNum < size; hitNum++) {
                 final ESSearchHit esSearchHit = new ESSearchHit();
-                esSearchHit.setIndex(document.read("$.hits.hits[" + hitNum + "]._index"));
-                esSearchHit.setId(document.read("$.hits.hits[" + hitNum + "]._id"));
-                esSearchHit.setVersion(Integer.toUnsignedLong(document.read("$.hits.hits[" + hitNum + "]._version")));
+                esSearchHit.setIndex(document.read(String.format("$.hits.hits[%d]._index", hitNum)));
+                esSearchHit.setId(document.read(String.format("$.hits.hits[%d]._id", hitNum)));
+                esSearchHit.setVersion(
+                        Integer.toUnsignedLong(document.read(String.format("$.hits.hits[%d]._version", hitNum))));
                 try {
-                    esSearchHit.setSource(extractJsonFromPath(document, "$.hits.hits[" + hitNum + "]._source"));
+                    esSearchHit.setSource(
+                            extractJsonFromPath(document, String.format("$.hits.hits[%d]._source", hitNum)));
                 } catch (PathNotFoundException ignored) {
                     // When no _source, we just ignore
                 }
 
                 // Parse the highlights if any
                 try {
-                    Map<String, List<String>> highlights = document.read("$.hits.hits[" + hitNum + "].highlight");
+                    Map<String, List<String>> highlights =
+                            document.read(String.format("$.hits.hits[%d].highlight", hitNum));
                     highlights.forEach(esSearchHit::addHighlightField);
                 } catch (PathNotFoundException ignored) {
                     // No highlights
@@ -1187,7 +1190,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
                 // Parse the fields if any
                 try {
-                    Map<String, List<String>> fields = document.read("$.hits.hits[" + hitNum + "].fields");
+                    Map<String, List<String>> fields = document.read(String.format("$.hits.hits[%d].fields", hitNum));
                     esSearchHit.setStoredFields(fields);
                 } catch (PathNotFoundException ignored) {
                     // No stored fields
@@ -1234,19 +1237,28 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
+    // JSON templates for the hand-built Elasticsearch queries
+    private static final String TERM_QUERY = """
+            "term": { "%s": "%s"}""";
+    private static final String MATCH_QUERY = """
+            "match": { "%s": "%s"}""";
+    private static final String SEMANTIC_QUERY = """
+            "semantic": { "field":"%s", "query":"%s"}""";
+    private static final String PREFIX_QUERY = """
+            "prefix": { "%s": "%s"}""";
+
     private String toElasticsearchQuery(ESQuery query) {
         if (query instanceof ESTermQuery esQuery) {
-            return "\"term\": { \"" + esQuery.getField() + "\": \"" + esQuery.getValue() + "\"}";
+            return String.format(TERM_QUERY, esQuery.getField(), esQuery.getValue());
         }
         if (query instanceof ESMatchQuery esQuery) {
-            return "\"match\": { \"" + esQuery.getField() + "\": \"" + esQuery.getValue() + "\"}";
+            return String.format(MATCH_QUERY, esQuery.getField(), esQuery.getValue());
         }
         if (query instanceof ESSemanticQuery esQuery) {
-            return "\"semantic\": { \"field\":\"" + esQuery.getField() + "\", \"query\":\"" + esQuery.getValue()
-                    + "\"}";
+            return String.format(SEMANTIC_QUERY, esQuery.getField(), esQuery.getValue());
         }
         if (query instanceof ESPrefixQuery esQuery) {
-            return "\"prefix\": { \"" + esQuery.getField() + "\": \"" + esQuery.getValue() + "\"}";
+            return String.format(PREFIX_QUERY, esQuery.getField(), esQuery.getValue());
         }
         if (query instanceof ESRangeQuery esQuery) {
             String localQuery = "\"range\": { \"" + esQuery.getField() + "\": {";

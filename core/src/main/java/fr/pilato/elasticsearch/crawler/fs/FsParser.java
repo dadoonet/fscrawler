@@ -94,6 +94,8 @@ public class FsParser implements Runnable, AutoCloseable {
 
     private static final String FSCRAWLER_IGNORE_FILENAME = ".fscrawlerignore";
     private static final String FULL_STACKTRACE_LOG_MESSAGE = "Full stacktrace";
+    private static final String ADD_WHILE_CLOSING_MSG =
+            "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored";
 
     // Checkpoint configuration
     private static final int CHECKPOINT_INTERVAL_FILES = 100; // Save checkpoint every N files
@@ -1361,7 +1363,7 @@ public class FsParser implements Runnable, AutoCloseable {
                         rememberCurrentAclHash(id, fileAbstractModel);
                     } else {
                         logger.warn(
-                                "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                ADD_WHILE_CLOSING_MSG,
                                 fsSettings.getElasticsearch().getIndex(),
                                 id);
                     }
@@ -1392,7 +1394,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             rememberCurrentAclHash(id, fileAbstractModel);
                         } else {
                             logger.warn(
-                                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                    ADD_WHILE_CLOSING_MSG,
                                     fsSettings.getElasticsearch().getIndex(),
                                     id);
                         }
@@ -1421,7 +1423,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             rememberCurrentAclHash(id, fileAbstractModel);
                         } else {
                             logger.warn(
-                                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                    ADD_WHILE_CLOSING_MSG,
                                     fsSettings.getElasticsearch().getIndex(),
                                     id);
                         }
@@ -1466,10 +1468,7 @@ public class FsParser implements Runnable, AutoCloseable {
             managementService.storeVisitedDirectory(
                     fsSettings.getElasticsearch().getIndexFolder(), id, folder);
         } else {
-            logger.warn(
-                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                    fsSettings.getElasticsearch().getIndexFolder(),
-                    id);
+            logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndexFolder(), id);
         }
     }
 

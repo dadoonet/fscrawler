@@ -45,6 +45,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     // TODO Optimize it. We can probably use a search for a big array of filenames instead of
     // searching fo 10000 files (which is somehow limited).
     private static final int REQUEST_SIZE = 10000;
+    private static final String FILE_FILENAME_FIELD = "file.filename";
 
     private final IElasticsearchClient client;
     private final FsSettings settings;
@@ -90,15 +91,15 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
             ESSearchResponse response = client.search(new ESSearchRequest()
                     .withIndex(settings.getElasticsearch().getIndex())
                     .withSize(REQUEST_SIZE)
-                    .addStoredField("file.filename")
+                    .addStoredField(FILE_FILENAME_FIELD)
                     .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
 
             if (response.getHits() != null) {
                 for (ESSearchHit hit : response.getHits()) {
                     String name;
-                    if (hit.getStoredFields() != null && hit.getStoredFields().get("file.filename") != null) {
+                    if (hit.getStoredFields() != null && hit.getStoredFields().get(FILE_FILENAME_FIELD) != null) {
                         // In case someone disabled _source which is not recommended
-                        name = hit.getStoredFields().get("file.filename").get(0);
+                        name = hit.getStoredFields().get(FILE_FILENAME_FIELD).get(0);
                     } else {
                         // Houston, we have a problem ! We can't get the old files from ES
                         logger.warn(
