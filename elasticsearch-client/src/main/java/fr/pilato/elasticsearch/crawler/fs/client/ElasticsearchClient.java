@@ -212,7 +212,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         } else {
             // Trusting all certificates. For test purposes only.
             try {
-                sslContext = SSLContext.getInstance("SSL");
+                sslContext = SSLContext.getInstance("TLSv1.2");
                 sslContext.init(null, trustAllCerts, new SecureRandom());
                 clientBuilder.sslContext(sslContext);
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
