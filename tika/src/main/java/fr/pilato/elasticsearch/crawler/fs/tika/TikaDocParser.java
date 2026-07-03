@@ -463,7 +463,7 @@ public class TikaDocParser {
 
                             // We need to remove dots in field names if any. See
                             // https://github.com/dadoonet/fscrawler/issues/256
-                            doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
+                            doc.getMeta().addRaw(metadataName.replace('.', ':'), value);
                         }
                         FSCrawlerLogger.metadata(";");
                     }
