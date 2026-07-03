@@ -253,12 +253,11 @@ public class TikaDocParser {
                         doc.getFile().setIndexedChars(indexedChars);
                     }
 
-                    if (fsSettings.getFs().isAddFilesize()) {
-                        if (metadata.get(HttpHeaders.CONTENT_LENGTH) != null) {
-                            // We try to get CONTENT_LENGTH from Tika first
-                            doc.getFile().setFilesize(Long.parseLong(metadata.get(HttpHeaders.CONTENT_LENGTH)));
-                        }
+                    if (fsSettings.getFs().isAddFilesize() && metadata.get(HttpHeaders.CONTENT_LENGTH) != null) {
+                        // We try to get CONTENT_LENGTH from Tika first
+                        doc.getFile().setFilesize(Long.parseLong(metadata.get(HttpHeaders.CONTENT_LENGTH)));
                     }
+
                     if (messageDigest != null) {
                         byte[] digest = messageDigest.digest();
                         StringBuilder result = new StringBuilder();
