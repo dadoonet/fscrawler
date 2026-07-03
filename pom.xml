@@ -74,6 +74,8 @@
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.1</log4j.version>
         <jersey.version>4.0.2</jersey.version>
+        <!-- Override transitive httpcore5 to patch CVE-2026-54399 / CVE-2026-54428. Pulled by httpclient5:5.5 -->
+        <httpcore5.version>5.4.3</httpcore5.version>
 
         <!-- For FSCrawler S3 plugin -->
         <minio.version>9.0.3</minio.version>
@@ -513,6 +515,18 @@
                 <groupId>org.glassfish.jersey.connectors</groupId>
                 <artifactId>jersey-apache5-connector</artifactId>
                 <version>${jersey.version}</version>
+            </dependency>
+
+            <!-- Force patched httpcore5 (transitive via httpclient5) — CVE-2026-54399 / CVE-2026-54428 -->
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5</artifactId>
+                <version>${httpcore5.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5-h2</artifactId>
+                <version>${httpcore5.version}</version>
             </dependency>
 
             <!-- Logging dependencies -->
