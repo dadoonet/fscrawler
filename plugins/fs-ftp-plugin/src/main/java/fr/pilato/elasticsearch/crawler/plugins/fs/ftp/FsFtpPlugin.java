@@ -225,6 +225,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         // ========== Crawling methods ==========
 
         @Override
+        @SuppressWarnings(
+                "java:S5332") // FTP is insecure by nature; this plugin exists precisely to support FTP servers
         public void openConnection() throws FsCrawlerPluginException {
             try {
                 ftp = new FTPClient();
