@@ -50,6 +50,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.language.detect.LanguageResult;
+import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Office;
 import org.apache.tika.metadata.Property;
@@ -244,7 +245,7 @@ public class TikaDocParser {
                     // Adding what we found to the document we want to index
 
                     // File
-                    doc.getFile().setContentType(metadata.get(Metadata.CONTENT_TYPE));
+                    doc.getFile().setContentType(metadata.get(HttpHeaders.CONTENT_TYPE));
 
                     // We only add `indexed_chars` if we have other value than default or -1
                     if (fsSettings.getFs().getIndexedChars() != null
@@ -253,9 +254,9 @@ public class TikaDocParser {
                     }
 
                     if (fsSettings.getFs().isAddFilesize()) {
-                        if (metadata.get(Metadata.CONTENT_LENGTH) != null) {
+                        if (metadata.get(HttpHeaders.CONTENT_LENGTH) != null) {
                             // We try to get CONTENT_LENGTH from Tika first
-                            doc.getFile().setFilesize(Long.parseLong(metadata.get(Metadata.CONTENT_LENGTH)));
+                            doc.getFile().setFilesize(Long.parseLong(metadata.get(HttpHeaders.CONTENT_LENGTH)));
                         }
                     }
                     if (messageDigest != null) {

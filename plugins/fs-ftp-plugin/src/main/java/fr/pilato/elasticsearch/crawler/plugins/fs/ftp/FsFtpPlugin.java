@@ -264,7 +264,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 if (FTPReply.isPositiveCompletion(utf8Reply)) {
                     isUtf8 = true;
                 }
-                ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
+                ftp.setFileType(FTP.BINARY_FILE_TYPE);
                 ftp.enterLocalPassiveMode();
 
                 logger.debug("FTP connection successful");
