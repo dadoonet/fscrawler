@@ -50,20 +50,26 @@ class FsCrawlerTestRawIT extends AbstractFsCrawlerITCase {
 
         // Let's add manually some documents
         // The 1st document simulates that we are indexing a String field which contains something like a date
-        String json1 = "{\n" + "  \"meta\": {\n"
-                + "    \"raw\": {\n"
-                + "      \"fscrawler_date\": \"1971-12-26\"\n"
-                + "    }\n"
-                + "  }\n"
-                + "}\n";
+        String json1 = """
+                {
+                  "meta": {
+                    "raw": {
+                      "fscrawler_date": "1971-12-26"
+                    }
+                  }
+                }
+                """;
 
         // The 2nd document index a String to the same field
-        String json2 = "{\n" + "  \"meta\": {\n"
-                + "    \"raw\": {\n"
-                + "      \"fscrawler_date\": \"David\"\n"
-                + "    }\n"
-                + "  }\n"
-                + "}\n";
+        String json2 = """
+                {
+                  "meta": {
+                    "raw": {
+                      "fscrawler_date": "David"
+                    }
+                  }
+                }
+                """;
 
         // This should not raise any exception even if the String is not a Date
         // because of the default mapping we are applying defines all meta raw fields as text

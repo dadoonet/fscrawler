@@ -48,17 +48,19 @@ class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         String componentTemplateName = "fscrawler_" + indexName + "_mapping_content";
 
         // Create a custom component template with a French analyzer before starting FSCrawler
-        String customComponentTemplate = "{\n" + "  \"template\": {\n"
-                + "    \"mappings\": {\n"
-                + "      \"properties\": {\n"
-                + "        \"content\": {\n"
-                + "          \"type\": \"text\",\n"
-                + "          \"analyzer\": \"french\"\n"
-                + "        }\n"
-                + "      }\n"
-                + "    }\n"
-                + "  }\n"
-                + "}";
+        String customComponentTemplate = """
+                {
+                  "template": {
+                    "mappings": {
+                      "properties": {
+                        "content": {
+                          "type": "text",
+                          "analyzer": "french"
+                        }
+                      }
+                    }
+                  }
+                }""";
         client.pushComponentTemplate(componentTemplateName, customComponentTemplate);
 
         // Verify the component template exists
@@ -95,17 +97,19 @@ class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         String componentTemplateName = "fscrawler_" + indexName + "_mapping_content";
 
         // Create a custom component template with a French analyzer before starting FSCrawler
-        String customComponentTemplate = "{\n" + "  \"template\": {\n"
-                + "    \"mappings\": {\n"
-                + "      \"properties\": {\n"
-                + "        \"content\": {\n"
-                + "          \"type\": \"text\",\n"
-                + "          \"analyzer\": \"french\"\n"
-                + "        }\n"
-                + "      }\n"
-                + "    }\n"
-                + "  }\n"
-                + "}";
+        String customComponentTemplate = """
+                {
+                  "template": {
+                    "mappings": {
+                      "properties": {
+                        "content": {
+                          "type": "text",
+                          "analyzer": "french"
+                        }
+                      }
+                    }
+                  }
+                }""";
         client.pushComponentTemplate(componentTemplateName, customComponentTemplate);
 
         // Verify the component template exists with french analyzer
@@ -159,17 +163,19 @@ class FsCrawlerTestTemplatesIT extends AbstractFsCrawlerITCase {
         crawler = null;
 
         // Now modify the component template manually
-        String customComponentTemplate = "{\n" + "  \"template\": {\n"
-                + "    \"mappings\": {\n"
-                + "      \"properties\": {\n"
-                + "        \"content\": {\n"
-                + "          \"type\": \"text\",\n"
-                + "          \"analyzer\": \"german\"\n"
-                + "        }\n"
-                + "      }\n"
-                + "    }\n"
-                + "  }\n"
-                + "}";
+        String customComponentTemplate = """
+                {
+                  "template": {
+                    "mappings": {
+                      "properties": {
+                        "content": {
+                          "type": "text",
+                          "analyzer": "german"
+                        }
+                      }
+                    }
+                  }
+                }""";
         client.pushComponentTemplate(componentTemplateName, customComponentTemplate);
 
         // Verify the component template has the German analyzer
