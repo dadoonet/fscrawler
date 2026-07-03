@@ -106,6 +106,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration RETRY_429_INITIAL_DELAY = Duration.ofSeconds(1);
     private static final Duration RETRY_429_MAX_DELAY = Duration.ofSeconds(30);
 
+    // Retry configuration for the root endpoint during bootstrap. On Elastic Cloud hosted deployments, the Cloud proxy
+    // can answer 404 on GET / while the cluster is still "cold" (waking up, rolling restart, resize...) and no backing
+    // node is routable yet. A healthy Elasticsearch always answers 200 on the root, so this 404 is transient.
+    private static final Duration BOOTSTRAP_RETRY_MAX_DURATION = Duration.ofMinutes(1);
+    private static final Duration BOOTSTRAP_RETRY_INITIAL_DELAY = Duration.ofSeconds(1);
+    private static final Duration BOOTSTRAP_RETRY_MAX_DELAY = Duration.ofSeconds(10);
+
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
@@ -304,6 +311,34 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (version != null) {
             return version;
         }
+
+        // On Elastic Cloud hosted deployments, the Cloud proxy may answer 404 on the root endpoint while the cluster
+        // is still "cold" (waking up, rolling restart, resize...). A healthy Elasticsearch always answers 200 on the
+        // root, so we retry on NotFoundException here, mirroring getLicense(). This is scoped to the root endpoint:
+        // 404 on regular endpoints stays non-retryable (see executeWithRetry and testNoRetryOn4xxErrors).
+        try {
+            return Awaitility.await()
+                    .atMost(BOOTSTRAP_RETRY_MAX_DURATION)
+                    .pollInterval(ExponentialBackoffPollInterval.exponential(
+                            BOOTSTRAP_RETRY_INITIAL_DELAY, BOOTSTRAP_RETRY_MAX_DELAY))
+                    .until(
+                            () -> {
+                                try {
+                                    return getVersionInternal();
+                                } catch (NotFoundException e) {
+                                    logger.warn(
+                                            "Root endpoint answered 404. The cluster might still be cold. Retrying...");
+                                    return null;
+                                }
+                            },
+                            Objects::nonNull);
+        } catch (ConditionTimeoutException e) {
+            throw new ElasticsearchClientException(
+                    "Root endpoint is still not ready (404) after " + BOOTSTRAP_RETRY_MAX_DURATION);
+        }
+    }
+
+    private String getVersionInternal() throws ElasticsearchClientException {
         logger.trace("get version");
         String response = httpGet(null);
         // We parse the response
