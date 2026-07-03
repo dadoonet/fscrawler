@@ -23,8 +23,13 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** This class represents a ServerUrl which is basically just a String. This is used in the Elasticsearch.Node class. */
-@Deprecated
+/**
+ * This class represents a ServerUrl which is basically just a String. This is used in the Elasticsearch.Node class.
+ *
+ * @deprecated since 2.10, the {@code elasticsearch.nodes.url} setting has been removed in favor of
+ *     {@code elasticsearch.urls}
+ */
+@Deprecated(since = "2.10", forRemoval = true)
 public class ServerUrl {
     private final Logger logger = LogManager.getLogger();
 
