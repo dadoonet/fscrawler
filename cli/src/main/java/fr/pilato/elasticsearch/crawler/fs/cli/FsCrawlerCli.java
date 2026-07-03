@@ -61,8 +61,9 @@ import org.awaitility.Awaitility;
 /** Main entry point to launch FsCrawler */
 public class FsCrawlerCli {
 
-    private FsCrawlerCli() {
-        // Utility class, do not instantiate
+    protected FsCrawlerCli() {
+        // Subclassed by the packaged entry point (FsCrawler in the distribution module); the constructor
+        // is protected to prevent external instantiation while still allowing that subclass to extend it.
     }
 
     private static final Duration CLOSE_POLLING_WAIT_TIME = Duration.ofMillis(100);
