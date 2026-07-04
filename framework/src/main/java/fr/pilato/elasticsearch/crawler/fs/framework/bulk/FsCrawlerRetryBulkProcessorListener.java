@@ -48,31 +48,45 @@ public class FsCrawlerRetryBulkProcessorListener<
     @Override
     public void afterBulk(long executionId, Q request, S response) {
         super.afterBulk(executionId, request, response);
-        if (response.hasFailures()) {
-            for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
-                if (item.isFailed()
-                        && Arrays.stream(errorMessages)
-                                .anyMatch(s -> item.getFailureMessage().contains(s))) {
-                    logger.debug(
-                            "We are going to retry document [{}] because of [{}]",
-                            item.getOperation(),
-                            item.getFailureMessage());
-                    // Find request
-                    boolean requestFound = false;
-                    for (O operation : request.getOperations()) {
-                        if (operation.compareTo(item.getOperation()) == 0) {
-                            this.bulkProcessor.add(operation);
-                            requestFound = true;
-                            logger.debug("Document [{}] found. Can be retried.", item.getOperation());
-                            break;
-                        }
-                    }
-                    if (!requestFound) {
-                        logger.warn(
-                                "Can not retry document [{}] because we can't find it anymore.", item.getOperation());
-                    }
-                }
+        if (!response.hasFailures()) {
+            return;
+        }
+        for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
+            if (shouldRetry(item)) {
+                retryItem(request, item);
             }
         }
+    }
+
+    /**
+     * Tells whether a failed bulk item should be retried, i.e. it failed with one of the configured error messages.
+     *
+     * @param item the bulk item response to inspect
+     * @return {@code true} if the item failed with a retryable error message
+     */
+    private boolean shouldRetry(FsCrawlerBulkResponse.BulkItemResponse<O> item) {
+        return item.isFailed()
+                && Arrays.stream(errorMessages)
+                        .anyMatch(s -> item.getFailureMessage().contains(s));
+    }
+
+    /**
+     * Re-adds the operation matching the failed item to the bulk processor so that it can be retried.
+     *
+     * @param request the original bulk request holding the operations
+     * @param item the failed bulk item to retry
+     */
+    private void retryItem(Q request, FsCrawlerBulkResponse.BulkItemResponse<O> item) {
+        logger.debug(
+                "We are going to retry document [{}] because of [{}]", item.getOperation(), item.getFailureMessage());
+        // Find the matching operation in the original request
+        for (O operation : request.getOperations()) {
+            if (operation.compareTo(item.getOperation()) == 0) {
+                this.bulkProcessor.add(operation);
+                logger.debug("Document [{}] found. Can be retried.", item.getOperation());
+                return;
+            }
+        }
+        logger.warn("Can not retry document [{}] because we can't find it anymore.", item.getOperation());
     }
 }
