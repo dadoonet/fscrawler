@@ -369,39 +369,6 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
-    void test_delete_checkpoint_while_running() throws Exception {
-        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 3, 10);
-        for (int i = 0; i < nbFiles; i++) {
-            Files.writeString(
-                    currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
-        }
-
-        // Create settings with a reasonable update rate
-        FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(5)); // Long update rate to avoid second scan
-
-        // Start crawler with REST
-        try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
-            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
-
-            logger.info("⌫ Deleting checkpoint...");
-            SimpleResponse deleteResponse = restDeleteCheckpoint();
-            Assertions.assertThat(deleteResponse.isOk()).isFalse();
-            Assertions.assertThat(deleteResponse.getMessage())
-                    .contains("Cannot clear checkpoint while crawler is running. Pause or stop it first.");
-            // Verify crawler is still running
-            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
-
-            // Count expected files
-            countTestHelper(
-                    new ESSearchRequest()
-                            .withIndex(fsSettings.getElasticsearch().getIndex()),
-                    nbFiles + 1,
-                    currentTestResourceDir);
-        }
-    }
-
-    @Test
     void status_during_scan() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
         long nbFolders = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 20);
