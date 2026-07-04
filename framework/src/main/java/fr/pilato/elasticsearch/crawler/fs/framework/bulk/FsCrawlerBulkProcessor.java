@@ -134,27 +134,27 @@ public class FsCrawlerBulkProcessor<
     }
 
     private void execute() {
-        final Q bulkRequest = this.bulkRequest;
+        final Q br = this.bulkRequest;
         this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         final long executionId = executionIdGen.incrementAndGet();
 
         Span bulkSpan = FsCrawlerTracing.startSpan("fscrawler.es.bulk");
-        bulkSpan.setAttribute("es.bulk.actions", bulkRequest.numberOfActions());
+        bulkSpan.setAttribute("es.bulk.actions", br.numberOfActions());
 
         // execute in a blocking fashion...
         boolean afterCalled = false;
         try (Scope ignored = bulkSpan.makeCurrent()) {
-            listener.beforeBulk(executionId, bulkRequest);
-            S bulkItemResponses = engine.bulk(bulkRequest);
+            listener.beforeBulk(executionId, br);
+            S bulkItemResponses = engine.bulk(br);
             afterCalled = true;
-            listener.afterBulk(executionId, bulkRequest, bulkItemResponses);
+            listener.afterBulk(executionId, br, bulkItemResponses);
         } catch (Exception e) {
             bulkSpan.recordException(e);
             bulkSpan.setStatus(
                     StatusCode.ERROR,
                     e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             if (!afterCalled) {
-                listener.afterBulk(executionId, bulkRequest, e);
+                listener.afterBulk(executionId, br, e);
             }
         } finally {
             bulkSpan.end();
