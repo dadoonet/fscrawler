@@ -20,10 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class TimeValueTest {
+class TimeValueTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void timeValueFromString() {

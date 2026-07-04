@@ -22,9 +22,10 @@ package fr.pilato.elasticsearch.crawler.plugins.welcome;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.junit.jupiter.api.Test;
 
-class WelcomePluginTest {
+class WelcomePluginTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void testWelcomePlugin() {

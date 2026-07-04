@@ -27,24 +27,22 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
 @Execution(SAME_THREAD)
-class FsSettingsLoaderTest {
+class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -265,46 +263,21 @@ class FsSettingsLoaderTest {
         return expected;
     }
 
-    @Nested
-    class WithEnvironmentVariablesTests {
+    // System properties set here (name, fs.url, fs.xml_support) are cleared before and after each test by
+    // cleanupSystemProperties(), so no per-test save/restore is needed.
+    @Test
+    void withDefaultNamesForEnvVariables() throws Exception {
+        System.setProperty("name", "foo");
+        System.setProperty("fs.url", "/tmp/test");
+        System.setProperty("fs.xml_support", "true");
 
-        private final Map<String, String> savedProperties = new HashMap<>();
-        private final String[] propertiesToManage = {"name", "fs.url", "fs.xml_support"};
-
-        @BeforeEach
-        void saveSystemProperties() {
-            for (String prop : propertiesToManage) {
-                savedProperties.put(prop, System.getProperty(prop));
-            }
-        }
-
-        @AfterEach
-        void restoreSystemProperties() {
-            for (String prop : propertiesToManage) {
-                String originalValue = savedProperties.get(prop);
-                if (originalValue == null) {
-                    System.clearProperty(prop);
-                } else {
-                    System.setProperty(prop, originalValue);
-                }
-            }
-            savedProperties.clear();
-        }
-
-        @Test
-        void withDefaultNamesForEnvVariables() throws Exception {
-            System.setProperty("name", "foo");
-            System.setProperty("fs.url", "/tmp/test");
-            System.setProperty("fs.xml_support", "true");
-
-            FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
-            FsSettings expected = generateExpectedDefaultFsSettings();
-            expected.setName("myname");
-            expected.getElasticsearch().setIndex("myname_docs");
-            expected.getElasticsearch().setIndexFolder("myname_folder");
-            expected.getFs().setUrl("/tmp/test");
-            expected.getFs().setXmlSupport(true);
-            checkSettings(expected, settings);
-        }
+        FsSettings settings = new FsSettingsLoader(configPath).read("yaml-env-vars");
+        FsSettings expected = generateExpectedDefaultFsSettings();
+        expected.setName("myname");
+        expected.getElasticsearch().setIndex("myname_docs");
+        expected.getElasticsearch().setIndexFolder("myname_folder");
+        expected.getFs().setUrl("/tmp/test");
+        expected.getFs().setXmlSupport(true);
+        checkSettings(expected, settings);
     }
 }

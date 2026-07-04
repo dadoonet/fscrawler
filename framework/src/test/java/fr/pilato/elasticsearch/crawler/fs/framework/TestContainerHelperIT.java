@@ -20,13 +20,14 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
 
-class TestContainerHelperIT {
+class TestContainerHelperIT extends AbstractFSCrawlerTestCase {
 
     @Test
     @DisabledIfNoDocker
