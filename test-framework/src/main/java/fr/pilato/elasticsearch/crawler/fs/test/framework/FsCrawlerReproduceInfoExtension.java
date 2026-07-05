@@ -46,6 +46,28 @@ public class FsCrawlerReproduceInfoExtension
 
     private static final Logger logger = LogManager.getLogger();
 
+    /**
+     * Root seed of randomizedtesting for the current JVM fork, formatted for {@code -Dtests.seed}. It is JVM-wide (one
+     * value per surefire/failsafe fork) and captured once by {@link AbstractFSCrawlerTestCase}. Remains {@code null}
+     * until known (e.g. a {@code @BeforeAll} fails before the base class had a chance to record it).
+     */
+    private static volatile String rootSeed;
+
+    /**
+     * Records the randomizedtesting root seed of the current JVM fork so it can be added to the reproduction command
+     * line. Called once per fork by {@link AbstractFSCrawlerTestCase}.
+     *
+     * @param seed the root seed formatted for {@code -Dtests.seed}, or {@code null} if unknown
+     */
+    public static void rememberRootSeed(String seed) {
+        rootSeed = seed;
+    }
+
+    /** @return the root seed currently recorded for this JVM fork, or {@code null} if none is known yet */
+    public static String getRootSeed() {
+        return rootSeed;
+    }
+
     /** Annotation to put on test classes to inject additional system properties into the reproduction command. */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
@@ -123,6 +145,7 @@ public class FsCrawlerReproduceInfoExtension
             commandBuilder.append("#").append(methodName);
         }
 
+        appendOpt(commandBuilder, "tests.seed", rootSeed);
         appendOpt(commandBuilder, "tests.locale", Locale.getDefault().toLanguageTag());
         appendOpt(commandBuilder, "tests.timezone", TimeZone.getDefault().getID());
 

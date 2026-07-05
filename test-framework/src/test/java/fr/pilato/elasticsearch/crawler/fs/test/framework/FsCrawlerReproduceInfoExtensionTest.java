@@ -50,6 +50,30 @@ class FsCrawlerReproduceInfoExtensionTest {
         Assertions.assertThat(command).doesNotContain("#");
     }
 
+    @Test
+    void shouldIncludeSeedWhenKnown() {
+        String previous = FsCrawlerReproduceInfoExtension.getRootSeed();
+        try {
+            FsCrawlerReproduceInfoExtension.rememberRootSeed("DEADBEEF");
+            String command = extension.buildReproduceCommand(context(PlainTest.class), "myMethod");
+            Assertions.assertThat(command).contains("-Dtests.seed=DEADBEEF");
+        } finally {
+            FsCrawlerReproduceInfoExtension.rememberRootSeed(previous);
+        }
+    }
+
+    @Test
+    void shouldOmitSeedWhenUnknown() {
+        String previous = FsCrawlerReproduceInfoExtension.getRootSeed();
+        try {
+            FsCrawlerReproduceInfoExtension.rememberRootSeed(null);
+            String command = extension.buildReproduceCommand(context(PlainTest.class), "myMethod");
+            Assertions.assertThat(command).doesNotContain("-Dtests.seed=");
+        } finally {
+            FsCrawlerReproduceInfoExtension.rememberRootSeed(previous);
+        }
+    }
+
     private static ExtensionContext context(Class<?> testClass) {
         return (ExtensionContext) Proxy.newProxyInstance(
                 ExtensionContext.class.getClassLoader(),
