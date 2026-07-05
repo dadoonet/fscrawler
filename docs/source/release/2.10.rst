@@ -79,6 +79,11 @@ Updated
 * Update to Tika |Tika_version|_. Thanks to dadoonet.
 * The default alias name is now the job name and not forced to ``fscrawler`` anymore. Thanks to dadoonet.
 * The default REST endpoint is now running at ``/`` instead of ``/fscrawler/``. Thanks to dadoonet.
+* Upgrade to Jackson 3.x. Closes `#2419 <https://github.com/dadoonet/fscrawler/issues/2419>`_. Thanks to dadoonet.
+* As a consequence of the Jackson 3 upgrade, the JSON and YAML documents produced by FSCrawler now serialize their
+  fields in alphabetical order. This affects the indexed documents, the generated ``_settings.yaml`` and
+  ``_checkpoint.json`` files, and the REST API responses. This is purely cosmetic (field order is not significant in
+  JSON), but users who version their configuration files may notice a one-time reordering. Thanks to dadoonet.
 
 Removed
 -------

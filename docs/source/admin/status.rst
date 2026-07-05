@@ -34,11 +34,11 @@ For example, a checkpoint for a completed scan:
 .. code-block:: json
 
    {
-     "state": "COMPLETED",
-     "scan_end_time": "2025-07-01T12:00:00",
-     "next_check": "2025-07-01T12:15:00",
+     "files_deleted": 0,
      "files_processed": 100,
-     "files_deleted": 0
+     "next_check": "2025-07-01T12:15:00",
+     "scan_end_time": "2025-07-01T12:00:00",
+     "state": "COMPLETED"
    }
 
 A checkpoint for a running scan:
@@ -46,15 +46,15 @@ A checkpoint for a running scan:
 .. code-block:: json
 
    {
-     "scan_id": "abc123-def456",
-     "state": "RUNNING",
-     "scan_start_time": "2025-07-01T12:00:00",
-     "current_path": "/data/documents/subfolder",
-     "pending_paths": ["/data/documents/other"],
      "completed_paths": ["/data/documents", "/data/documents/processed"],
-     "files_processed": 50,
+     "current_path": "/data/documents/subfolder",
      "files_deleted": 0,
-     "retry_count": 0
+     "files_processed": 50,
+     "pending_paths": ["/data/documents/other"],
+     "retry_count": 0,
+     "scan_id": "abc123-def456",
+     "scan_start_time": "2025-07-01T12:00:00",
+     "state": "RUNNING"
    }
 
 Forcing a new scan

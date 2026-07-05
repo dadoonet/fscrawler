@@ -51,10 +51,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.jakarta.rs.json.JacksonJsonProvider;
 
 /**
  * Integration tests for the REST API crawler control endpoints (pause, resume, checkpoint). These tests use a real
@@ -79,7 +79,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
         // Create HTTP client
         httpClient = ClientBuilder.newBuilder()
                 .register(RestJsonProvider.class)
-                .register(JacksonFeature.class)
+                .register(JacksonJsonProvider.class)
                 .build();
         target = httpClient.target("http://127.0.0.1:" + restPort + "/fscrawler");
     }

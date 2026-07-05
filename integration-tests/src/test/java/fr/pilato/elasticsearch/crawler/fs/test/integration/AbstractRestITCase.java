@@ -56,7 +56,6 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -65,6 +64,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import tools.jackson.jakarta.rs.json.JacksonJsonProvider;
 
 @SuppressWarnings("ALL")
 @ResourceLock("rest-server")
@@ -208,7 +208,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         httpClient = ClientBuilder.newBuilder()
                 .register(MultiPartFeature.class)
                 .register(RestJsonProvider.class)
-                .register(JacksonFeature.class)
+                .register(JacksonJsonProvider.class)
                 .build();
 
         target = httpClient.target("http://127.0.0.1:" + getRestPort() + "/fscrawler");

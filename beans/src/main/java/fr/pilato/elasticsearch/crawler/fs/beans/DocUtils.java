@@ -20,10 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.io.IOException;
@@ -31,9 +27,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Iterator;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 public class DocUtils {
 
@@ -123,10 +123,8 @@ public class DocUtils {
      * @return the merged nodes
      */
     private static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
-        Iterator<String> fieldNames = updateNode.fieldNames();
-
-        while (fieldNames.hasNext()) {
-            String fieldName = fieldNames.next();
+        for (Map.Entry<String, JsonNode> entry : updateNode.properties()) {
+            String fieldName = entry.getKey();
             JsonNode jsonNode = mainNode.get(fieldName);
 
             if (jsonNode != null) {
@@ -152,7 +150,7 @@ public class DocUtils {
     public static String prettyPrint(Doc doc) {
         try {
             return JsonUtil.prettyMapper.writeValueAsString(doc);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.warn("Can not pretty print the document as json", e);
             return null;
         }

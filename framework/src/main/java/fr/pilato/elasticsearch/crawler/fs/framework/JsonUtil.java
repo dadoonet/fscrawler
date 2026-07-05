@@ -21,25 +21,25 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.spi.json.JsonSmartJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.Version;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 public class JsonUtil {
 
@@ -65,44 +65,45 @@ public class JsonUtil {
         fscrawler.addSerializer(new ByteSizeValueSerializer());
         fscrawler.addDeserializer(ByteSizeValue.class, new ByteSizeValueDeserializer());
 
-        mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.registerModule(fscrawler);
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-        mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
+        // Jackson 3 mappers are immutable: they are configured through their builder.
+        // The java.time support is now built into jackson-databind, so no JavaTimeModule registration is needed.
+        mapper = JsonMapper.builder()
+                .addModule(fscrawler)
+                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .disable(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                .build();
 
-        prettyMapper = new ObjectMapper();
-        prettyMapper.registerModule(new JavaTimeModule());
-        prettyMapper.registerModule(fscrawler);
-        prettyMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        prettyMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-        prettyMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        prettyMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        prettyMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        prettyMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        prettyMapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
+        prettyMapper = JsonMapper.builder()
+                .addModule(fscrawler)
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .disable(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                .build();
 
-        YAMLFactory yamlFactory = new YAMLFactory();
-        ymlMapper = new ObjectMapper(yamlFactory);
-        ymlMapper.registerModule(new JavaTimeModule());
-        ymlMapper.registerModule(fscrawler);
-        ymlMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        ymlMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-        ymlMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        ymlMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        ymlMapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        ymlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        ymlMapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
+        ymlMapper = YAMLMapper.builder()
+                .addModule(fscrawler)
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .disable(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                .build();
     }
 
     public static String serialize(Object object) {
         try {
             return mapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -110,7 +111,7 @@ public class JsonUtil {
     public static <T> T deserialize(String json, Class<T> clazz) {
         try {
             return mapper.readValue(json, clazz);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -118,7 +119,7 @@ public class JsonUtil {
     public static Map<String, Object> asMap(InputStream stream) {
         try {
             return mapper.readValue(stream, new TypeReference<>() {});
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

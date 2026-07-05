@@ -30,9 +30,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import tools.jackson.jakarta.rs.json.JacksonJsonProvider;
 
 public class RestServer implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
@@ -78,7 +78,7 @@ public class RestServer implements AutoCloseable {
                             new CrawlerApi(fsParser, settings.getName()))
                     .register(MultiPartFeature.class)
                     .register(RestJsonProvider.class)
-                    .register(JacksonFeature.class)
+                    .register(JacksonJsonProvider.class)
                     .register(new CORSFilter(settings.getRest()))
                     .packages("fr.pilato.elasticsearch.crawler.fs.rest");
 

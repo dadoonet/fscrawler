@@ -39,18 +39,8 @@
             <artifactId>jersey-hk2</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-json-jackson</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.glassfish.jersey.connectors</groupId>
             <artifactId>jersey-apache5-connector</artifactId>
-        </dependency>
-
-        <!-- Needed for Jersey -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jaxb-annotations</artifactId>
         </dependency>
 
         <!-- jsonpath -->

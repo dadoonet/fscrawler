@@ -45,63 +45,63 @@ It will give you a response similar to:
    :substitutions:
 
    {
-     "ok" : true,
-     "version" : "|FSCrawler_version|",
      "elasticsearch" : "|ES_stack_version|",
+     "ok" : true,
      "settings" : {
-       "name" : "fscrawler",
+       "elasticsearch" : {
+         "bulk_size" : 100,
+         "byte_size" : "10mb",
+         "flush_interval" : "5s",
+         "index" : "fscrawler_docs",
+         "index_folder" : "fscrawler_folder",
+         "push_templates" : true,
+         "semantic_search" : true,
+         "ssl_verification" : true,
+         "urls" : [ "http://es-fscrawler:9200" ],
+         "username" : "elastic"
+       },
        "fs" : {
-         "url" : "/tmp/es",
-         "update_rate" : "15m",
-         "excludes" : [ "*/~*" ],
-         "json_support" : false,
+         "acl_support" : false,
          "add_as_inner_object" : false,
-         "xml_support" : false,
-         "follow_symlinks" : false,
-         "remove_deleted" : true,
-         "continue_on_error" : false,
-         "filename_as_id" : false,
          "add_filesize" : true,
          "attributes_support" : false,
-         "store_source" : false,
+         "continue_on_error" : false,
+         "excludes" : [ "*/~*" ],
+         "filename_as_id" : false,
+         "follow_symlinks" : false,
          "index_content" : true,
-         "acl_support" : false,
-         "raw_metadata" : true,
          "index_folders" : true,
+         "json_support" : false,
          "lang_detect" : false,
          "ocr" : {
            "enabled" : true,
            "language" : "eng",
            "output_type" : "txt",
-           "pdf_strategy" : "ocr_and_text",
            "page_seg_mode" : 1,
+           "pdf_strategy" : "ocr_and_text",
            "preserve_interword_spacing" : false
-         }
+         },
+         "raw_metadata" : true,
+         "remove_deleted" : true,
+         "store_source" : false,
+         "update_rate" : "15m",
+         "url" : "/tmp/es",
+         "xml_support" : false
+       },
+       "name" : "fscrawler",
+       "rest" : {
+         "enable_cors" : false,
+         "url" : "http://127.0.0.1:8080"
        },
        "server" : {
          "port" : 0,
          "protocol" : "local"
        },
-       "elasticsearch" : {
-         "urls" : [ "http://es-fscrawler:9200" ],
-         "index" : "fscrawler_docs",
-         "index_folder" : "fscrawler_folder",
-         "bulk_size" : 100,
-         "flush_interval" : "5s",
-         "byte_size" : "10mb",
-         "username" : "elastic",
-         "ssl_verification" : true,
-         "push_templates" : true,
-         "semantic_search" : true
-       },
-       "rest" : {
-         "url" : "http://127.0.0.1:8080",
-         "enable_cors" : false
-       },
        "tags" : {
          "meta_filename" : ".meta.yml"
        }
-     }
+     },
+     "version" : "|FSCrawler_version|"
    }
 
 Uploading a binary document
@@ -119,8 +119,8 @@ It will give you a response similar to:
 .. code:: json
 
    {
-     "ok" : true,
      "filename" : "test.txt",
+     "ok" : true,
      "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
    }
 
@@ -143,6 +143,12 @@ You will get back your document as it has been stored by elasticsearch:
      "found" : true,
      "_source" : {
        "content" : "This file contains some words.\n",
+       "file" : {
+         "content_type" : "text/plain; charset=ISO-8859-1",
+         "extension" : "txt",
+         "filename" : "test.txt",
+         "indexing_date" : "2017-01-04T21:01:08.043"
+       },
        "meta" : {
          "raw" : {
            "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
@@ -150,15 +156,9 @@ You will get back your document as it has been stored by elasticsearch:
            "Content-Type" : "text/plain; charset=ISO-8859-1"
          }
        },
-       "file" : {
-         "extension" : "txt",
-         "content_type" : "text/plain; charset=ISO-8859-1",
-         "indexing_date" : "2017-01-04T21:01:08.043",
-         "filename" : "test.txt"
-       },
        "path" : {
-         "virtual" : "test.txt",
-         "real" : "test.txt"
+         "real" : "test.txt",
+         "virtual" : "test.txt"
        }
      }
    }
@@ -177,11 +177,14 @@ will give
 .. code:: json
 
    {
-     "ok" : true,
-     "filename" : "test.txt",
-     "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534",
      "doc" : {
        "content" : "This file contains some words.\n",
+       "file" : {
+         "content_type" : "text/plain; charset=ISO-8859-1",
+         "extension" : "txt",
+         "filename" : "test.txt",
+         "indexing_date" : "2017-01-04T14:05:10.325"
+       },
        "meta" : {
          "raw" : {
            "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
@@ -189,17 +192,14 @@ will give
            "Content-Type" : "text/plain; charset=ISO-8859-1"
          }
        },
-       "file" : {
-         "extension" : "txt",
-         "content_type" : "text/plain; charset=ISO-8859-1",
-         "indexing_date" : "2017-01-04T14:05:10.325",
-         "filename" : "test.txt"
-       },
        "path" : {
-         "virtual" : "test.txt",
-         "real" : "test.txt"
+         "real" : "test.txt",
+         "virtual" : "test.txt"
        }
-     }
+     },
+     "filename" : "test.txt",
+     "ok" : true,
+     "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
    }
 
 Uploading a binary document from a 3rd party service
@@ -541,10 +541,10 @@ It will give you a response similar to:
 .. code:: json
 
     {
-      "ok": true,
       "filename": "test.txt",
+      "id": "dd18bf3a8ea2a3e53e2661c7fb53534",
       "index": "rest",
-      "id": "dd18bf3a8ea2a3e53e2661c7fb53534"
+      "ok": true
     }
 
 If you know the document id, you can pass it to FSCrawler within the url:
@@ -558,11 +558,11 @@ If the document does not exist, you will get the following response:
 .. code:: json
 
     {
-      "ok": false,
-      "message": "Can not remove document [rest/test.txt]: Can not remove document rest/dd18bf3a8ea2a3e53e2661c7fb53534 cause: NOT_FOUND",
       "filename": "test.txt",
+      "id": "dd18bf3a8ea2a3e53e2661c7fb53534",
       "index": "rest",
-      "id": "dd18bf3a8ea2a3e53e2661c7fb53534"
+      "message": "Can not remove document [rest/test.txt]: Can not remove document rest/dd18bf3a8ea2a3e53e2661c7fb53534 cause: NOT_FOUND",
+      "ok": false
     }
 
 Specifying an elasticsearch index
@@ -664,19 +664,19 @@ It will give you a response similar to:
 .. code:: json
 
    {
-     "state" : "RUNNING",
-     "scan_id" : "abc123-def456",
-     "current_path" : "/data/documents/subfolder",
-     "pending_directories" : 42,
      "completed_directories" : 158,
-     "files_processed" : 1523,
-     "files_deleted" : 12,
-     "scan_start_time" : "2024-01-15T10:30:00",
-     "scan_end_time" : null,
-     "next_check" : null,
+     "current_path" : "/data/documents/subfolder",
      "elapsed_time" : "15m 32s",
+     "files_deleted" : 12,
+     "files_processed" : 1523,
+     "last_error" : null,
+     "next_check" : null,
+     "pending_directories" : 42,
      "retry_count" : 0,
-     "last_error" : null
+     "scan_end_time" : null,
+     "scan_id" : "abc123-def456",
+     "scan_start_time" : "2024-01-15T10:30:00",
+     "state" : "RUNNING"
    }
 
 When a scan is completed, the response will also include the ``scan_end_time`` and ``next_check`` fields:
@@ -684,13 +684,13 @@ When a scan is completed, the response will also include the ``scan_end_time`` a
 .. code:: json
 
    {
-     "state" : "COMPLETED",
-     "files_processed" : 2500,
+     "elapsed_time" : "1h 15m",
      "files_deleted" : 25,
-     "scan_start_time" : "2024-01-15T10:30:00",
-     "scan_end_time" : "2024-01-15T11:45:00",
+     "files_processed" : 2500,
      "next_check" : "2024-01-15T12:00:00",
-     "elapsed_time" : "1h 15m"
+     "scan_end_time" : "2024-01-15T11:45:00",
+     "scan_start_time" : "2024-01-15T10:30:00",
+     "state" : "COMPLETED"
    }
 
 The possible states are:
@@ -738,8 +738,8 @@ Success response (200):
 .. code:: json
 
    {
-     "ok" : true,
-     "message" : "Crawler paused. Checkpoint saved."
+     "message" : "Crawler paused. Checkpoint saved.",
+     "ok" : true
    }
 
 If the crawler is already paused, you get 200 with:
@@ -747,8 +747,8 @@ If the crawler is already paused, you get 200 with:
 .. code:: json
 
    {
-     "ok" : true,
-     "message" : "Crawler is already paused."
+     "message" : "Crawler is already paused.",
+     "ok" : true
    }
 
 Error response (400) when the crawler is not running:
@@ -756,8 +756,8 @@ Error response (400) when the crawler is not running:
 .. code:: json
 
    {
-     "ok" : false,
-     "message" : "Crawler is not running"
+     "message" : "Crawler is not running",
+     "ok" : false
    }
 
 Resuming the crawler
@@ -774,8 +774,8 @@ Success response (200) when resuming from pause:
 .. code:: json
 
    {
-     "ok" : true,
-     "message" : "Crawler resumed."
+     "message" : "Crawler resumed.",
+     "ok" : true
    }
 
 If the crawler is not paused, you get 200 with no action taken:
@@ -783,8 +783,8 @@ If the crawler is not paused, you get 200 with no action taken:
 .. code:: json
 
    {
-     "ok" : true,
-     "message" : "Crawler is not paused. No action needed."
+     "message" : "Crawler is not paused. No action needed.",
+     "ok" : true
    }
 
 Error response (400) when the crawler is closed:
@@ -792,8 +792,8 @@ Error response (400) when the crawler is closed:
 .. code:: json
 
    {
-     "ok" : false,
-     "message" : "Crawler is closed. Cannot resume."
+     "message" : "Crawler is closed. Cannot resume.",
+     "ok" : false
    }
 
 Clearing the checkpoint
@@ -811,8 +811,8 @@ Success response (200):
 .. code:: json
 
    {
-     "ok" : true,
-     "message" : "Checkpoint cleared"
+     "message" : "Checkpoint cleared",
+     "ok" : true
    }
 
 Error response (400) when the crawler is running and not paused:
@@ -820,8 +820,8 @@ Error response (400) when the crawler is running and not paused:
 .. code:: json
 
    {
-     "ok" : false,
-     "message" : "Cannot clear checkpoint while crawler is running. Pause or stop it first."
+     "message" : "Cannot clear checkpoint while crawler is running. Pause or stop it first.",
+     "ok" : false
    }
 
 Error response (404) when there is no active crawler (e.g. started with ``--loop 0``):
@@ -829,8 +829,8 @@ Error response (404) when there is no active crawler (e.g. started with ``--loop
 .. code:: json
 
    {
-     "ok" : false,
-     "message" : "Failed to clear checkpoint as we don't have a checkpoint handler. This probably means there's no active crawler. Did you start with --loop 0?"
+     "message" : "Failed to clear checkpoint as we don't have a checkpoint handler. This probably means there's no active crawler. Did you start with --loop 0?",
+     "ok" : false
    }
 
 On I/O error, the server returns 500 with a message starting with ``Failed to clear checkpoint:``.

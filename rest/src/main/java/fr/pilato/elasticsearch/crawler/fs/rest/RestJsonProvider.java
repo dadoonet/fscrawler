@@ -20,11 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import jakarta.ws.rs.ext.ContextResolver;
 import jakarta.ws.rs.ext.Provider;
 import org.apache.logging.log4j.LogManager;
+import tools.jackson.databind.ObjectMapper;
 
 @Provider
 public class RestJsonProvider implements ContextResolver<ObjectMapper> {

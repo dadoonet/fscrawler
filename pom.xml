@@ -70,7 +70,9 @@
         <snakeyaml.version>2.6</snakeyaml.version>
 
         <tika.version>3.3.1</tika.version>
-        <jackson.version>2.22.0</jackson.version>
+        <jackson.version>3.1.2</jackson.version>
+        <!-- Spotless still relies on Jackson 2.x internally to format JSON/YAML sources -->
+        <spotless.jackson.version>2.22.0</spotless.jackson.version>
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.1</log4j.version>
         <jersey.version>4.0.2</jersey.version>
@@ -273,7 +275,7 @@
             </dependency>
 
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
+                <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>${jackson.version}</version>
                 <type>pom</type>
@@ -990,7 +992,7 @@
                                 <include>src/main/*.json</include>
                             </includes>
                             <jackson>
-                                <version>${jackson.version}</version>
+                                <version>${spotless.jackson.version}</version>
                             </jackson>
                         </json>
                         <yaml>
@@ -998,7 +1000,7 @@
                                 <include>src/main/*.yaml</include>
                             </includes>
                             <jackson>
-                                <version>${jackson.version}</version>
+                                <version>${spotless.jackson.version}</version>
                             </jackson>
                         </yaml>
                         <shell>
