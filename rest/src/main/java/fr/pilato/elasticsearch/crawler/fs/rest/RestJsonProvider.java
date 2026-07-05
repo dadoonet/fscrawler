@@ -24,17 +24,22 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import jakarta.ws.rs.ext.ContextResolver;
 import jakarta.ws.rs.ext.Provider;
 import org.apache.logging.log4j.LogManager;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
+/**
+ * Supplies the FSCrawler {@link JsonMapper} to the Jackson 3 Jakarta-RS provider. The provider looks up a
+ * {@code ContextResolver<JsonMapper>} (not {@code ObjectMapper}), so this must be typed on {@link JsonMapper} to be
+ * picked up; otherwise the provider falls back to a default mapper and our custom (de)serializers are ignored.
+ */
 @Provider
-public class RestJsonProvider implements ContextResolver<ObjectMapper> {
+public class RestJsonProvider implements ContextResolver<JsonMapper> {
 
     // We initialize the object mapper depending on debug mode
-    private static final ObjectMapper jsonMapper =
+    private static final JsonMapper jsonMapper =
             LogManager.getLogger(RestJsonProvider.class).isDebugEnabled() ? JsonUtil.prettyMapper : JsonUtil.mapper;
 
     @Override
-    public ObjectMapper getContext(Class<?> type) {
+    public JsonMapper getContext(Class<?> type) {
         return jsonMapper;
     }
 }

@@ -47,8 +47,8 @@ public class JsonUtil {
         // Utility class, do not instantiate
     }
 
-    public static final ObjectMapper prettyMapper;
-    public static final ObjectMapper mapper;
+    public static final JsonMapper prettyMapper;
+    public static final JsonMapper mapper;
     public static final ObjectMapper ymlMapper;
     public static final Configuration configuration = new Configuration.ConfigurationBuilder()
             .jsonProvider(new JsonSmartJsonProvider())
