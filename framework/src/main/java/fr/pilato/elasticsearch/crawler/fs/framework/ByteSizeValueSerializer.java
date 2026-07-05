@@ -20,10 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import java.io.IOException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 /** Jackson Serializer for ByteSizeValue object */
 public class ByteSizeValueSerializer extends StdSerializer<ByteSizeValue> {
@@ -32,7 +31,7 @@ public class ByteSizeValueSerializer extends StdSerializer<ByteSizeValue> {
     }
 
     @Override
-    public void serialize(ByteSizeValue value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    public void serialize(ByteSizeValue value, JsonGenerator gen, SerializationContext ctxt) {
         gen.writeString(value.toString());
     }
 }

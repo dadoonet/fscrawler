@@ -20,7 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 
 public class FsSettingsParser {
@@ -29,7 +28,7 @@ public class FsSettingsParser {
         // Utility class, do not instantiate
     }
 
-    public static String toYaml(FsSettings settings) throws JsonProcessingException {
+    public static String toYaml(FsSettings settings) {
         return JsonUtil.ymlMapper.writeValueAsString(settings);
     }
 }

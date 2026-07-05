@@ -39,8 +39,8 @@ elasticsearch URL for the created document, like:
 .. code:: json
 
    {
-     "ok" : true,
      "filename" : "test.txt",
+     "ok" : true,
      "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/doc/dd18bf3a8ea2a3e53e2661c7fb53534"
    }
 

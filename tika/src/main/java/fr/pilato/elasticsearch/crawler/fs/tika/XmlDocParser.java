@@ -20,15 +20,14 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.xml.XmlMapper;
 
 /** Parse a XML document and generate a FSCrawler Doc */
 @SuppressWarnings("unchecked")
@@ -42,10 +41,10 @@ public class XmlDocParser {
     private static final ObjectMapper xmlMapper;
 
     static {
-        xmlMapper = XmlMapper.xmlBuilder().nameForTextElement("$").build();
+        xmlMapper = XmlMapper.builder().nameForTextElement("$").build();
     }
 
-    public static String generate(InputStream inputStream) throws JsonProcessingException {
+    public static String generate(InputStream inputStream) {
         logger.trace("Converting XML document");
         // Extracting XML content
         // See #185: https://github.com/dadoonet/fscrawler/issues/185
@@ -76,7 +75,7 @@ public class XmlDocParser {
     private static Map<String, Object> asMap(InputStream stream) {
         try {
             return (Map<String, Object>) xmlMapper.readValue(stream, Object.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

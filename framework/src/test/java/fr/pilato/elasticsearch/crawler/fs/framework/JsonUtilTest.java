@@ -20,15 +20,15 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import java.io.IOException;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 class JsonUtilTest extends AbstractFSCrawlerTestCase {
 
@@ -101,56 +101,57 @@ class JsonUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void mappersWithStringsArray() throws IOException {
-        // We try with multiple elements in the cities field as an array
+    void mappersWithStringsArray() {
+        // We try with multiple elements in the cities field as an array.
+        // Jackson 3 serializes properties in alphabetical order by default, so "cities" comes before "name".
         mapperTester(
                 JsonUtil.mapper,
-                "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\",\"Tamassint\"]}",
+                "{\"cities\":[\"Amsterdam\",\"Tamassint\"],\"name\":\"Netherlands\"}",
                 List.of("Amsterdam", "Tamassint"));
         mapperTester(JsonUtil.prettyMapper, """
                 {
-                  "name" : "Netherlands",
-                  "cities" : [ "Amsterdam", "Tamassint" ]
+                  "cities" : [ "Amsterdam", "Tamassint" ],
+                  "name" : "Netherlands"
                 }""", List.of("Amsterdam", "Tamassint"));
         mapperTester(JsonUtil.ymlMapper, """
                 ---
-                name: "Netherlands"
                 cities:
                 - "Amsterdam"
                 - "Tamassint"
+                name: "Netherlands"
                 """, List.of("Amsterdam", "Tamassint"));
         // We try with one single element in the cities field as an array
-        mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\"]}", List.of("Amsterdam"));
+        mapperTester(JsonUtil.mapper, "{\"cities\":[\"Amsterdam\"],\"name\":\"Netherlands\"}", List.of("Amsterdam"));
         mapperTester(JsonUtil.prettyMapper, """
                 {
-                  "name" : "Netherlands",
-                  "cities" : [ "Amsterdam" ]
+                  "cities" : [ "Amsterdam" ],
+                  "name" : "Netherlands"
                 }""", List.of("Amsterdam"));
         mapperTester(JsonUtil.ymlMapper, """
                 ---
-                name: "Netherlands"
                 cities:
                 - "Amsterdam"
+                name: "Netherlands"
                 """, List.of("Amsterdam"));
         // We try with one single element in the cities field as a string and this should fail
         Assertions.assertThatThrownBy(() ->
                         JsonUtil.mapper.readValue("{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
-                .isInstanceOf(IOException.class)
+                .isInstanceOf(JacksonException.class)
                 .hasMessageContaining(
-                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+                        "Cannot deserialize value of type `java.util.ArrayList<java.lang.String>` from String value");
         Assertions.assertThatThrownBy(() -> JsonUtil.prettyMapper.readValue(
                         "{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
-                .isInstanceOf(IOException.class)
+                .isInstanceOf(JacksonException.class)
                 .hasMessageContaining(
-                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+                        "Cannot deserialize value of type `java.util.ArrayList<java.lang.String>` from String value");
         Assertions.assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue("""
                         ---
                         name: "Netherlands"
                         cities: "Amsterdam"
                         """, Country.class))
-                .isInstanceOf(IOException.class)
+                .isInstanceOf(JacksonException.class)
                 .hasMessageContaining(
-                        "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
+                        "Cannot deserialize value of type `java.util.ArrayList<java.lang.String>` from String value");
     }
 
     /**
@@ -160,9 +161,8 @@ class JsonUtilTest extends AbstractFSCrawlerTestCase {
      * @param mapper the mapper to test
      * @param input the input to use
      * @param expectedCities the expected cities list
-     * @throws IOException in case of error
      */
-    private void mapperTester(ObjectMapper mapper, String input, List<String> expectedCities) throws IOException {
+    private void mapperTester(ObjectMapper mapper, String input, List<String> expectedCities) {
         logger.debug("Testing mapper: {} with {}", mapper.version().toFullString(), input);
         Country country = mapper.readValue(input, Country.class);
         Assertions.assertThat(country.name).isEqualTo("Netherlands");
