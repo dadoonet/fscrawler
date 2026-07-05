@@ -369,6 +369,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
+    @VerySlow
     void status_during_scan() throws Exception {
         // Create a deep directory structure with many files to slow down scanning
         long nbFolders = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 20);
