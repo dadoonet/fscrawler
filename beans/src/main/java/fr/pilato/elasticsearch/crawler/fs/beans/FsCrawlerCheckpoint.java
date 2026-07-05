@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
@@ -160,7 +161,7 @@ public class FsCrawlerCheckpoint {
     public static FsCrawlerCheckpoint newCheckpoint(String rootPath) {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId(UUID.randomUUID().toString());
-        checkpoint.setScanStartTime(LocalDateTime.now());
+        checkpoint.setScanStartTime(LocalDateTime.now(ZoneId.systemDefault()));
         checkpoint.addPath(rootPath);
         checkpoint.setState(CrawlerState.RUNNING);
         return checkpoint;
