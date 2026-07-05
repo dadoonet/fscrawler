@@ -72,9 +72,9 @@
         <tika.version>3.3.1</tika.version>
         <jackson.version>3.1.4</jackson.version>
         <!--
-            Jackson 2.x is still pulled transitively (e.g. by Gestalt) and is also used by Spotless to
-            format JSON/YAML sources. Pin it to a patched release: 2.22.0 is outside the vulnerable range
-            of CVE-2026-54512 / CVE-2026-54513 (fixed in 2.21.4) via the jackson-bom import below.
+            Jackson 2.x is still pulled transitively by Tika (jackson-databind). Pin it to a patched
+            release (2.22.0 is outside the vulnerable range of CVE-2026-54512 / CVE-2026-54513, fixed in
+            2.21.4) via the jackson-bom import below. Also used by the Spotless plugin (its own classpath).
         -->
         <jackson2.version>2.22.0</jackson2.version>
         <jsonpath.version>3.0.0</jsonpath.version>
@@ -285,7 +285,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- Manage the Jackson 2.x artifacts still pulled transitively (Gestalt, ...) to a patched release -->
+            <!-- Manage the Jackson 2.x artifacts still pulled transitively by Tika to a patched release -->
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
@@ -333,12 +333,12 @@
             </dependency>
             <dependency>
                 <groupId>com.github.gestalt-config</groupId>
-                <artifactId>gestalt-yaml</artifactId>
+                <artifactId>gestalt-yaml-jackson3</artifactId>
                 <version>${gestalt.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.gestalt-config</groupId>
-                <artifactId>gestalt-json</artifactId>
+                <artifactId>gestalt-json-jackson3</artifactId>
                 <version>${gestalt.version}</version>
             </dependency>
 

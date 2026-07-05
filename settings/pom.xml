@@ -23,11 +23,11 @@
         </dependency>
         <dependency>
             <groupId>com.github.gestalt-config</groupId>
-            <artifactId>gestalt-yaml</artifactId>
+            <artifactId>gestalt-yaml-jackson3</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.gestalt-config</groupId>
-            <artifactId>gestalt-json</artifactId>
+            <artifactId>gestalt-json-jackson3</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
