@@ -109,6 +109,9 @@ public abstract class AbstractFSCrawlerTestCase {
             return;
         }
 
+        // Expose the root seed to the reproduce-info extension so it can print -Dtests.seed on failures.
+        FsCrawlerReproduceInfoExtension.rememberRootSeed(context.getRootSeed().toString());
+
         Random random = new Random(context.getRootSeed().value());
 
         String testLocale = getSystemProperty("tests.locale", RANDOM);
