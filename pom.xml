@@ -74,6 +74,8 @@
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.1</log4j.version>
         <jersey.version>4.0.2</jersey.version>
+        <!-- Override transitive httpcore5 to patch CVE-2026-54399 / CVE-2026-54428. Pulled by httpclient5:5.5 -->
+        <httpcore5.version>5.4.3</httpcore5.version>
 
         <!-- For FSCrawler S3 plugin -->
         <minio.version>9.0.3</minio.version>
@@ -81,6 +83,7 @@
         <!-- Tests -->
         <junit.version>6.1.1</junit.version>
         <randomizedtesting.version>0.3.0</randomizedtesting.version>
+        <mockito.version>5.19.0</mockito.version>
 
         <!-- Non Apache2 Compatible licenses -->
         <imageio.version>3.0.3</imageio.version>
@@ -515,6 +518,18 @@
                 <version>${jersey.version}</version>
             </dependency>
 
+            <!-- Force patched httpcore5 (transitive via httpclient5) — CVE-2026-54399 / CVE-2026-54428 -->
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5</artifactId>
+                <version>${httpcore5.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5-h2</artifactId>
+                <version>${httpcore5.version}</version>
+            </dependency>
+
             <!-- Logging dependencies -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -645,6 +660,13 @@
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-bom</artifactId>
+                <version>${mockito.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

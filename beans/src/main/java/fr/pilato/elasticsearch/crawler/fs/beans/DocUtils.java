@@ -37,6 +37,10 @@ import org.apache.logging.log4j.Logger;
 
 public class DocUtils {
 
+    private DocUtils() {
+        // Utility class, do not instantiate
+    }
+
     private static final Logger logger = LogManager.getLogger(DocUtils.class);
 
     /**

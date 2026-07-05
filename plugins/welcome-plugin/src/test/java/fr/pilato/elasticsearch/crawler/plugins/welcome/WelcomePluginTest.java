@@ -20,4 +20,18 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.welcome;
 
-class WelcomePluginTest {}
+import static org.assertj.core.api.Assertions.assertThat;
+
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import org.junit.jupiter.api.Test;
+
+class WelcomePluginTest extends AbstractFSCrawlerTestCase {
+
+    @Test
+    void testWelcomePlugin() {
+        WelcomePlugin plugin = new WelcomePlugin();
+        plugin.start();
+        assertThat(plugin.getName()).isEqualTo("welcome");
+        plugin.stop();
+    }
+}

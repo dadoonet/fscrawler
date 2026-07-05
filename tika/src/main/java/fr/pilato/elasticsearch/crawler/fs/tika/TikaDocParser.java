@@ -50,6 +50,7 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.language.detect.LanguageResult;
+import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Office;
 import org.apache.tika.metadata.Property;
@@ -109,7 +110,7 @@ public class TikaDocParser {
     public void generate(InputStream inputStream, Doc doc, long filesize) throws IOException {
         Span tikaSpan = FsCrawlerTracing.startSpan("fscrawler.tika.extract");
         tikaSpan.setAttribute("file.size", filesize);
-        try (Scope $ignored = tikaSpan.makeCurrent()) {
+        try (Scope scope = tikaSpan.makeCurrent()) {
             logger.trace("Generating document [{}]", doc.getPath().getReal());
             // Extracting content with Tika
             // See #38: https://github.com/dadoonet/fscrawler/issues/38
@@ -244,7 +245,7 @@ public class TikaDocParser {
                     // Adding what we found to the document we want to index
 
                     // File
-                    doc.getFile().setContentType(metadata.get(Metadata.CONTENT_TYPE));
+                    doc.getFile().setContentType(metadata.get(HttpHeaders.CONTENT_TYPE));
 
                     // We only add `indexed_chars` if we have other value than default or -1
                     if (fsSettings.getFs().getIndexedChars() != null
@@ -252,12 +253,11 @@ public class TikaDocParser {
                         doc.getFile().setIndexedChars(indexedChars);
                     }
 
-                    if (fsSettings.getFs().isAddFilesize()) {
-                        if (metadata.get(Metadata.CONTENT_LENGTH) != null) {
-                            // We try to get CONTENT_LENGTH from Tika first
-                            doc.getFile().setFilesize(Long.parseLong(metadata.get(Metadata.CONTENT_LENGTH)));
-                        }
+                    if (fsSettings.getFs().isAddFilesize() && metadata.get(HttpHeaders.CONTENT_LENGTH) != null) {
+                        // We try to get CONTENT_LENGTH from Tika first
+                        doc.getFile().setFilesize(Long.parseLong(metadata.get(HttpHeaders.CONTENT_LENGTH)));
                     }
+
                     if (messageDigest != null) {
                         byte[] digest = messageDigest.digest();
                         StringBuilder result = new StringBuilder();
@@ -349,7 +349,7 @@ public class TikaDocParser {
                             metadata,
                             TikaCoreProperties.LANGUAGE,
                             doc.getMeta()::setLanguage,
-                            (lang) -> {
+                            lang -> {
                                 if (lang != null) {
                                     return lang;
                                 } else if (fsSettings.getFs().isLangDetect() && finalParsedContent != null) {
@@ -440,7 +440,7 @@ public class TikaDocParser {
                             metadata,
                             TikaCoreProperties.RATING,
                             doc.getMeta()::setRating,
-                            (value) -> value == null ? null : Integer.parseInt(value));
+                            value -> value == null ? null : Integer.parseInt(value));
                     setMeta(
                             doc.getPath().getReal(),
                             metadata,
@@ -463,7 +463,7 @@ public class TikaDocParser {
 
                             // We need to remove dots in field names if any. See
                             // https://github.com/dadoonet/fscrawler/issues/256
-                            doc.getMeta().addRaw(metadataName.replaceAll("\\.", ":"), value);
+                            doc.getMeta().addRaw(metadataName.replace('.', ':'), value);
                         }
                         FSCrawlerLogger.metadata(";");
                     }

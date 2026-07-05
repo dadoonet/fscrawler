@@ -24,21 +24,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerSimpleBulkProcessorListener<
-                O extends FsCrawlerOperation<O>,
-                REQ extends FsCrawlerBulkRequest<O>,
-                RES extends FsCrawlerBulkResponse<O>>
-        implements FsCrawlerBulkProcessor.Listener<O, REQ, RES> {
+                O extends FsCrawlerOperation<O>, Q extends FsCrawlerBulkRequest<O>, S extends FsCrawlerBulkResponse<O>>
+        implements FsCrawlerBulkProcessor.Listener<O, Q, S> {
     private static final Logger logger = LogManager.getLogger();
 
-    protected FsCrawlerBulkProcessor<O, REQ, RES> bulkProcessor;
+    protected FsCrawlerBulkProcessor<O, Q, S> bulkProcessor;
 
     @Override
-    public void beforeBulk(long executionId, REQ request) {
+    public void beforeBulk(long executionId, Q request) {
         logger.debug("Going to execute new bulk composed of {} actions", request.numberOfActions());
     }
 
     @Override
-    public void afterBulk(long executionId, REQ request, RES response) {
+    public void afterBulk(long executionId, Q request, S response) {
         logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
         if (response.hasFailures()) {
             if (logger.isDebugEnabled()) {
@@ -59,12 +57,12 @@ public class FsCrawlerSimpleBulkProcessorListener<
     }
 
     @Override
-    public void afterBulk(long executionId, REQ request, Throwable failure) {
+    public void afterBulk(long executionId, Q request, Throwable failure) {
         logger.warn("Error executing bulk", failure);
     }
 
     @Override
-    public void setBulkProcessor(FsCrawlerBulkProcessor<O, REQ, RES> bulkProcessor) {
+    public void setBulkProcessor(FsCrawlerBulkProcessor<O, Q, S> bulkProcessor) {
         this.bulkProcessor = bulkProcessor;
     }
 }

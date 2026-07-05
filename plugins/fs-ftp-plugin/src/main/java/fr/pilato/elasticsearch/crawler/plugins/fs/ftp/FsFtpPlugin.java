@@ -225,6 +225,8 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         // ========== Crawling methods ==========
 
         @Override
+        @SuppressWarnings(
+                "java:S5332") // FTP is insecure by nature; this plugin exists precisely to support FTP servers
         public void openConnection() throws FsCrawlerPluginException {
             try {
                 ftp = new FTPClient();
@@ -262,7 +264,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 if (FTPReply.isPositiveCompletion(utf8Reply)) {
                     isUtf8 = true;
                 }
-                ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
+                ftp.setFileType(FTP.BINARY_FILE_TYPE);
                 ftp.enterLocalPassiveMode();
 
                 logger.debug("FTP connection successful");

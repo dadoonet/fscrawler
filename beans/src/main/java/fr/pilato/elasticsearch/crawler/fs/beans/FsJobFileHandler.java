@@ -30,7 +30,7 @@ import java.nio.file.Path;
  *
  * @deprecated since 2.10, use {@link FsCrawlerCheckpointFileHandler} instead
  */
-@Deprecated
+@Deprecated(since = "2.10", forRemoval = true)
 public class FsJobFileHandler extends MetaFileHandler {
 
     public static final String FILENAME = "_status.json";

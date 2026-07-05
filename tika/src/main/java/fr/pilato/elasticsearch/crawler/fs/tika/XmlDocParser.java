@@ -34,6 +34,10 @@ import org.apache.logging.log4j.Logger;
 @SuppressWarnings("unchecked")
 public class XmlDocParser {
 
+    private XmlDocParser() {
+        // Utility class, do not instantiate
+    }
+
     private static final Logger logger = LogManager.getLogger();
     private static final ObjectMapper xmlMapper;
 

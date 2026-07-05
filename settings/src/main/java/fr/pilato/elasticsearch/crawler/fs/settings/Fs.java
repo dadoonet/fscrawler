@@ -289,7 +289,13 @@ public class Fs {
         this.continueOnError = continueOnError;
     }
 
-    @Deprecated
+    /**
+     * Enables or disables OCR on PDF documents.
+     *
+     * @param pdfOcr {@code true} to enable OCR on PDF files
+     * @deprecated since 2.10, replaced by the {@code ocr.pdf_strategy} setting
+     */
+    @Deprecated(since = "2.10", forRemoval = true)
     public void setPdfOcr(boolean pdfOcr) {
         String strategy;
         if (pdfOcr) {

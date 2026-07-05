@@ -21,30 +21,34 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerHelper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIf;
 
-class TestContainerHelperIT extends AbstractFSCrawlerTestCase {
+class BannerTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    @DisabledIfNoDocker
-    @DisabledIf(
-            value = "isExternalClusterSet",
-            disabledReason = "An external cluster is set, so we don't want to start a testcontainer")
-    void testStartingTestcontainer() {
-        TestContainerHelper helper = new TestContainerHelper();
-        Assertions.assertThat(helper.isStarted()).isFalse();
-        Assertions.assertThat(helper.getElasticsearchVersion()).isNotBlank();
-        String url = helper.startElasticsearch(false);
-        Assertions.assertThat(url).isNotBlank();
-        Assertions.assertThat(helper.isStarted()).isTrue();
+    void renderContainsMessagesAndVersion() {
+        String banner = Banner.render("9.9.9-TEST");
+
+        Assertions.assertThat(banner)
+                // The injected version appears in the banner
+                .contains("9.9.9-TEST")
+                // The four message lines are present
+                .contains("You know, for Files!")
+                .contains("Made from France with Love")
+                .contains("Source: https://github.com/dadoonet/fscrawler/")
+                .contains("Documentation: https://fscrawler.readthedocs.io/")
+                // A recognizable fragment of the ASCII art is present
+                .contains(",---,.");
     }
 
-    static boolean isExternalClusterSet() {
-        String clusterUrl = System.getProperty("tests.cluster.url");
-        return clusterUrl != null && !"https://127.0.0.1:9200".equals(clusterUrl);
+    @Test
+    void renderProducesFixedWidthBorderedLines() {
+        String banner = Banner.render("9.9.9-TEST");
+
+        // Every bordered content line ("|...|") is WIDTH+2 = 102 chars wide
+        banner.lines()
+                .filter(line -> line.startsWith("|") && line.endsWith("|"))
+                .forEach(line -> Assertions.assertThat(line).hasSize(102));
     }
 }

@@ -107,24 +107,31 @@ class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 JsonUtil.mapper,
                 "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\",\"Tamassint\"]}",
                 List.of("Amsterdam", "Tamassint"));
-        mapperTester(
-                JsonUtil.prettyMapper,
-                "{\n" + "  \"name\" : \"Netherlands\",\n" + "  \"cities\" : [ \"Amsterdam\", \"Tamassint\" ]\n" + "}",
-                List.of("Amsterdam", "Tamassint"));
-        mapperTester(
-                JsonUtil.ymlMapper,
-                "---\n" + "name: \"Netherlands\"\n" + "cities:\n" + "- \"Amsterdam\"\n" + "- \"Tamassint\"\n",
-                List.of("Amsterdam", "Tamassint"));
+        mapperTester(JsonUtil.prettyMapper, """
+                {
+                  "name" : "Netherlands",
+                  "cities" : [ "Amsterdam", "Tamassint" ]
+                }""", List.of("Amsterdam", "Tamassint"));
+        mapperTester(JsonUtil.ymlMapper, """
+                ---
+                name: "Netherlands"
+                cities:
+                - "Amsterdam"
+                - "Tamassint"
+                """, List.of("Amsterdam", "Tamassint"));
         // We try with one single element in the cities field as an array
         mapperTester(JsonUtil.mapper, "{\"name\":\"Netherlands\",\"cities\":[\"Amsterdam\"]}", List.of("Amsterdam"));
-        mapperTester(
-                JsonUtil.prettyMapper,
-                "{\n" + "  \"name\" : \"Netherlands\",\n" + "  \"cities\" : [ \"Amsterdam\" ]\n" + "}",
-                List.of("Amsterdam"));
-        mapperTester(
-                JsonUtil.ymlMapper,
-                "---\n" + "name: \"Netherlands\"\n" + "cities:\n" + "- \"Amsterdam\"\n",
-                List.of("Amsterdam"));
+        mapperTester(JsonUtil.prettyMapper, """
+                {
+                  "name" : "Netherlands",
+                  "cities" : [ "Amsterdam" ]
+                }""", List.of("Amsterdam"));
+        mapperTester(JsonUtil.ymlMapper, """
+                ---
+                name: "Netherlands"
+                cities:
+                - "Amsterdam"
+                """, List.of("Amsterdam"));
         // We try with one single element in the cities field as a string and this should fail
         Assertions.assertThatThrownBy(() ->
                         JsonUtil.mapper.readValue("{\"name\":\"Netherlands\",\"cities\":\"Amsterdam\"}", Country.class))
@@ -136,8 +143,11 @@ class JsonUtilTest extends AbstractFSCrawlerTestCase {
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining(
                         "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");
-        Assertions.assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue(
-                        "---\n" + "name: \"Netherlands\"\n" + "cities: \"Amsterdam\"\n", Country.class))
+        Assertions.assertThatThrownBy(() -> JsonUtil.ymlMapper.readValue("""
+                        ---
+                        name: "Netherlands"
+                        cities: "Amsterdam"
+                        """, Country.class))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining(
                         "Cannot construct instance of `java.util.ArrayList` (although at least one Creator exists)");

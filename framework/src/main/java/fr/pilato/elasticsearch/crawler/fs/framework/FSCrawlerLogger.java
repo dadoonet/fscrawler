@@ -25,6 +25,10 @@ import org.apache.logging.log4j.Logger;
 
 public class FSCrawlerLogger {
 
+    private FSCrawlerLogger() {
+        // Utility class, do not instantiate
+    }
+
     /** This logger is for the console */
     private static final Logger consoleLogger = LogManager.getLogger("fscrawler.console");
 

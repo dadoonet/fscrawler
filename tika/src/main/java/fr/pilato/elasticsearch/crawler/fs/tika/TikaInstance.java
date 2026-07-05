@@ -36,7 +36,6 @@ import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
-import org.apache.tika.langdetect.optimaize.OptimaizeLangDetector;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -251,7 +250,7 @@ class TikaInstance {
     static synchronized LanguageDetector langDetector() {
         if (detector == null) {
             try {
-                detector = OptimaizeLangDetector.getDefaultLanguageDetector();
+                detector = LanguageDetector.getDefaultLanguageDetector();
                 detector.loadModels();
             } catch (IOException e) {
                 logger.warn("Can not load lang detector models", e);

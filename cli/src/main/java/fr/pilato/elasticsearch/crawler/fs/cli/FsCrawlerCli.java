@@ -25,11 +25,11 @@ import com.beust.jcommander.Parameter;
 import fr.pilato.elasticsearch.crawler.fs.FsCrawlerImpl;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
+import fr.pilato.elasticsearch.crawler.fs.framework.Banner;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
-import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
 import fr.pilato.elasticsearch.crawler.fs.settings.Defaults;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
@@ -45,7 +45,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.Scanner;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,6 +60,11 @@ import org.awaitility.Awaitility;
 /** Main entry point to launch FsCrawler */
 public class FsCrawlerCli {
 
+    protected FsCrawlerCli() {
+        // Subclassed by the packaged entry point (FsCrawler in the distribution module); the constructor
+        // is protected to prevent external instantiation while still allowing that subclass to extend it.
+    }
+
     private static final Duration CLOSE_POLLING_WAIT_TIME = Duration.ofMillis(100);
 
     private static final Logger logger = LogManager.getLogger();
@@ -74,18 +78,20 @@ public class FsCrawlerCli {
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         String configDir = null;
 
+        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-Delasticsearch.api-key"} instead */
         @Parameter(
                 names = "--api_key",
                 description = "Elasticsearch api key. (Deprecated - use "
                         + "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
-        @Deprecated
+        @Deprecated(since = "2.10", forRemoval = true)
         String apiKey = null;
 
+        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-Delasticsearch.api-key"} instead */
         @Parameter(
                 names = "--username",
                 description = "Elasticsearch username. (Deprecated - use "
                         + "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
-        @Deprecated
+        @Deprecated(since = "2.10", forRemoval = true)
         String username = null;
 
         @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
@@ -111,13 +117,15 @@ public class FsCrawlerCli {
         @Parameter(names = "--list", description = "List FSCrawler jobs if any.")
         boolean list = false;
 
-        @Deprecated
+        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-DLOG_LEVEL=debug"} instead */
+        @Deprecated(since = "2.10", forRemoval = true)
         @Parameter(
                 names = "--debug",
                 description = "Debug mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead)")
         boolean debug = false;
 
-        @Deprecated
+        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-DLOG_LEVEL=trace"} instead */
+        @Deprecated(since = "2.10", forRemoval = true)
         @Parameter(
                 names = "--trace",
                 description = "Trace mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" instead)")
@@ -147,7 +155,7 @@ public class FsCrawlerCli {
             changeLoggerContext(command);
 
             // Display the welcome banner
-            banner();
+            Banner.print();
 
             // We can now launch the crawler
             runner(command);
@@ -162,7 +170,7 @@ public class FsCrawlerCli {
         // Check the expected parameters when in silent mode
         if (commands.silent) {
             if (commands.jobName == null) {
-                banner();
+                Banner.print();
                 logger.warn(
                         "--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
                 jCommander.usage();
@@ -418,62 +426,5 @@ public class FsCrawlerCli {
             logger.fatal("We can not start FSCrawler Thread and Services. Exiting.", t);
             return false;
         }
-    }
-
-    private static final int BANNER_LENGTH = 100;
-
-    /**
-     * This is coming from: <a
-     * href="https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler">https://patorjk.com/software/taag/#p=display&f=3D%20Diagonal&t=FSCrawler</a>
-     */
-    private static final String ASCII_ART =
-            "    ,---,.  .--.--.     ,----..                                     ,--,                      \n"
-                    + "  ,'  .' | /  /    '.  /   /   \\                                  ,--.'|                      \n"
-                    + ",---.'   ||  :  /`. / |   :     :  __  ,-.                   .---.|  | :               __  ,-.\n"
-                    + "|   |   .';  |  |--`  .   |  ;. /,' ,'/ /|                  /. ./|:  : '             ,' ,'/ /|\n"
-                    + ":   :  :  |  :  ;_    .   ; /--` '  | |' | ,--.--.       .-'-. ' ||  ' |      ,---.  '  | |' |\n"
-                    + ":   |  |-, \\  \\    `. ;   | ;    |  |   ,'/       \\     /___/ \\: |'  | |     /     \\ |  |   ,'\n"
-                    + "|   :  ;/|  `----.   \\|   : |    '  :  / .--.  .-. | .-'.. '   ' .|  | :    /    /  |'  :  /  \n"
-                    + "|   |   .'  __ \\  \\  |.   | '___ |  | '   \\__\\/: . ./___/ \\:     ''  : |__ .    ' / ||  | '   \n"
-                    + "'   :  '   /  /`--'  /'   ; : .'|;  : |   ,\" .--.; |.   \\  ' .\\   |  | '.'|'   ;   /|;  : |   \n"
-                    + "|   |  |  '--'.     / '   | '/  :|  , ;  /  /  ,.  | \\   \\   ' \\ |;  :    ;'   |  / ||  , ;   \n"
-                    + "|   :  \\    `--'---'  |   :    /  ---'  ;  :   .'   \\ \\   \\  |--\" |  ,   / |   :    | ---'    \n"
-                    + "|   | ,'               \\   \\ .'         |  ,     .-./  \\   \\ |     ---`-'   \\   \\  /          \n"
-                    + "`----'                  `---`            `--`---'       '---\"                `----'           \n";
-
-    private static void banner() {
-        FSCrawlerLogger.console(separatorLine(",", ".")
-                + centerAsciiArt()
-                + separatorLine("+", "+")
-                + bannerLine("You know, for Files!")
-                + bannerLine("Made from France with Love")
-                + bannerLine("Source: https://github.com/dadoonet/fscrawler/")
-                + bannerLine("Documentation: https://fscrawler.readthedocs.io/")
-                + separatorLine("`", "'"));
-    }
-
-    private static String centerAsciiArt() {
-        String[] lines = StringUtils.split(ASCII_ART, '\n');
-
-        // Edit line 0 as we want to add the version
-        String version = Version.getVersion();
-        String firstLine = StringUtils.stripEnd(StringUtils.center(lines[0], BANNER_LENGTH), null);
-        String pad = StringUtils.rightPad(firstLine, BANNER_LENGTH - version.length() - 1) + version;
-        lines[0] = pad;
-
-        StringBuilder content = new StringBuilder();
-        for (String line : lines) {
-            content.append(bannerLine(line));
-        }
-
-        return content.toString();
-    }
-
-    private static String bannerLine(String text) {
-        return "|" + StringUtils.center(text, BANNER_LENGTH) + "|\n";
-    }
-
-    private static String separatorLine(String first, String last) {
-        return first + StringUtils.center("", BANNER_LENGTH, "-") + last + "\n";
     }
 }

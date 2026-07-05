@@ -65,7 +65,7 @@ public class Elasticsearch {
      * @deprecated Use apiKey or accessToken instead
      */
     @Config
-    @Deprecated
+    @Deprecated(since = "2.10", forRemoval = true)
     @Nullable
     private String username;
     /**
@@ -74,7 +74,7 @@ public class Elasticsearch {
      * @deprecated Use apiKey or accessToken instead
      */
     @Config
-    @Deprecated
+    @Deprecated(since = "2.10", forRemoval = true)
     @JsonIgnore
     @Nullable
     private String password;
@@ -103,7 +103,12 @@ public class Elasticsearch {
     @Config(defaultVal = "true")
     private boolean semanticSearch;
 
-    @Deprecated
+    /**
+     * List of Elasticsearch nodes.
+     *
+     * @deprecated since 2.10, replaced by the {@code elasticsearch.urls} setting
+     */
+    @Deprecated(since = "2.10", forRemoval = true)
     @Config
     @Nullable
     private List<ServerUrl> nodes;
@@ -175,7 +180,7 @@ public class Elasticsearch {
      * @param username The username
      * @deprecated Use {@link #setApiKey(String)} instead
      */
-    @Deprecated
+    @Deprecated(since = "2.10", forRemoval = true)
     public void setUsername(String username) {
         this.username = username;
     }
@@ -191,7 +196,7 @@ public class Elasticsearch {
      * @param password The password
      * @deprecated Use {@link #setApiKey(String)} instead
      */
-    @Deprecated
+    @Deprecated(since = "2.10", forRemoval = true)
     @JsonProperty
     public void setPassword(String password) {
         this.password = password;

@@ -29,7 +29,7 @@ public class ESSearchRequest {
     private String index;
     private String sort;
     private Integer size;
-    private ESQuery ESQuery;
+    private ESQuery esQuery;
     private final List<String> storedFields = new ArrayList<>();
     private final List<String> highlighters = new ArrayList<>();
     private final List<ESTermsAggregation> aggregations = new ArrayList<>();
@@ -53,11 +53,11 @@ public class ESSearchRequest {
     }
 
     public ESQuery getESQuery() {
-        return ESQuery;
+        return esQuery;
     }
 
     public ESSearchRequest withESQuery(ESQuery query) {
-        this.ESQuery = query;
+        this.esQuery = query;
         return this;
     }
 

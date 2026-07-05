@@ -59,6 +59,7 @@ import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,6 +95,8 @@ public class FsParser implements Runnable, AutoCloseable {
 
     private static final String FSCRAWLER_IGNORE_FILENAME = ".fscrawlerignore";
     private static final String FULL_STACKTRACE_LOG_MESSAGE = "Full stacktrace";
+    private static final String ADD_WHILE_CLOSING_MSG =
+            "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored";
 
     // Checkpoint configuration
     private static final int CHECKPOINT_INTERVAL_FILES = 100; // Save checkpoint every N files
@@ -319,7 +322,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 crawlSpan.setAttribute("fs.provider", crawlerPlugin.getType());
             }
 
-            try (Scope $ignored = crawlSpan.makeCurrent()) {
+            try (Scope ignored = crawlSpan.makeCurrent()) {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
                 filesSinceLastCheckpoint = 0;
 
@@ -328,7 +331,8 @@ public class FsParser implements Runnable, AutoCloseable {
                     // REST-only (no provider) or no folder to monitor: no-op run, checkpoint completed with 0 files
                     logger.info(
                             "Run #{}: job [{}]: skipping crawl (REST-only or no fs.url).", run, fsSettings.getName());
-                    LocalDateTime scanDatenew = LocalDateTime.now().minusSeconds(2);
+                    LocalDateTime scanDatenew =
+                            LocalDateTime.now(ZoneId.systemDefault()).minusSeconds(2);
                     LocalDateTime nextCheck =
                             scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
                     setCurrentCheckpoint(FsCrawlerCheckpoint.newCheckpoint(""));
@@ -336,7 +340,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
                 } else {
                     ScanStatistic stats = new ScanStatistic(url);
-                    LocalDateTime startDate = LocalDateTime.now();
+                    LocalDateTime startDate = LocalDateTime.now(ZoneId.systemDefault());
                     stats.setStartTime(startDate);
 
                     crawlerPlugin.openConnection();
@@ -379,7 +383,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     // Process directories using work queue instead of recursion
                     processDirectoriesWithCheckpoint(effectiveScanDate, stats);
 
-                    stats.setEndTime(LocalDateTime.now());
+                    stats.setEndTime(LocalDateTime.now(ZoneId.systemDefault()));
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
                     stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
 
@@ -509,7 +513,8 @@ public class FsParser implements Runnable, AutoCloseable {
                                     FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
                                     if (savedCheckpoint == null
                                             || savedCheckpoint.getNextCheck() == null
-                                            || LocalDateTime.now().isAfter(savedCheckpoint.getNextCheck())) {
+                                            || LocalDateTime.now(ZoneId.systemDefault())
+                                                    .isAfter(savedCheckpoint.getNextCheck())) {
                                         logger.debug(
                                                 "Fs crawler is waking up because next check time [{}] is in the past.",
                                                 savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
@@ -670,7 +675,7 @@ public class FsParser implements Runnable, AutoCloseable {
     /** Process directories using a work queue with checkpoint support */
     private void processDirectoriesWithCheckpoint(LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
         Span traverseSpan = FsCrawlerTracing.startSpan("fscrawler.directory.traverse");
-        try (Scope $ignored = traverseSpan.makeCurrent()) {
+        try (Scope ignored = traverseSpan.makeCurrent()) {
             traverseSpan.setAttribute("scan.id", String.valueOf(runNumber.get()));
 
             while (checkpoint.get().hasPendingWork() && !closed.get()) {
@@ -807,7 +812,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
         try {
             crawlerPlugin.closeConnection();
-            if (!FsCrawlerUtil.waitWithAbortCheck(Duration.ofMillis(delayMs), () -> closed.get())) {
+            if (!FsCrawlerUtil.waitWithAbortCheck(Duration.ofMillis(delayMs), closed::get)) {
                 throw new NetworkErrorRecoveryException("Crawler closed during backoff", null);
             }
             crawlerPlugin.openConnection();
@@ -830,7 +835,7 @@ public class FsParser implements Runnable, AutoCloseable {
             throws Exception {
         Span dirSpan = FsCrawlerTracing.startSpan("fscrawler.directory.process");
         dirSpan.setAttribute("fs.path", filepath);
-        try (Scope $ignored = dirSpan.makeCurrent()) {
+        try (Scope ignored = dirSpan.makeCurrent()) {
             logger.debug("indexing [{}] content", filepath);
 
             if (closed.get()) {
@@ -1254,7 +1259,7 @@ public class FsParser implements Runnable, AutoCloseable {
                         ? fileAbstractModel.getFullpath()
                         : dirname + "/" + fileAbstractModel.getName());
         fileSpan.setAttribute("file.size", filesize);
-        try (Scope $ignored = fileSpan.makeCurrent()) {
+        try (Scope ignored = fileSpan.makeCurrent()) {
             final String filename = fileAbstractModel.getName();
             final LocalDateTime created = fileAbstractModel.getCreationDate();
             final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
@@ -1278,7 +1283,8 @@ public class FsParser implements Runnable, AutoCloseable {
                 doc.getFile().setCreated(FsCrawlerUtil.localDateTimeToDate(created));
                 doc.getFile().setLastModified(FsCrawlerUtil.localDateTimeToDate(lastModified));
                 doc.getFile().setLastAccessed(FsCrawlerUtil.localDateTimeToDate(lastAccessed));
-                doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
+                doc.getFile()
+                        .setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now(ZoneId.systemDefault())));
                 if (fsSettings.getServer() == null
                         || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
                     doc.getFile().setUrl("file://" + fullFilename);
@@ -1361,7 +1367,7 @@ public class FsParser implements Runnable, AutoCloseable {
                         rememberCurrentAclHash(id, fileAbstractModel);
                     } else {
                         logger.warn(
-                                "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                ADD_WHILE_CLOSING_MSG,
                                 fsSettings.getElasticsearch().getIndex(),
                                 id);
                     }
@@ -1392,7 +1398,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             rememberCurrentAclHash(id, fileAbstractModel);
                         } else {
                             logger.warn(
-                                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                    ADD_WHILE_CLOSING_MSG,
                                     fsSettings.getElasticsearch().getIndex(),
                                     id);
                         }
@@ -1421,7 +1427,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             rememberCurrentAclHash(id, fileAbstractModel);
                         } else {
                             logger.warn(
-                                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
+                                    ADD_WHILE_CLOSING_MSG,
                                     fsSettings.getElasticsearch().getIndex(),
                                     id);
                         }
@@ -1466,10 +1472,7 @@ public class FsParser implements Runnable, AutoCloseable {
             managementService.storeVisitedDirectory(
                     fsSettings.getElasticsearch().getIndexFolder(), id, folder);
         } else {
-            logger.warn(
-                    "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored",
-                    fsSettings.getElasticsearch().getIndexFolder(),
-                    id);
+            logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndexFolder(), id);
         }
     }
 

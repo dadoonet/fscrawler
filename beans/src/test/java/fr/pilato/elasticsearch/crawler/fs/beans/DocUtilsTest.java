@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.ByteArrayInputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class DocUtilsTest {
+class DocUtilsTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger(DocUtilsTest.class);
 
     // Get the tags path from resources

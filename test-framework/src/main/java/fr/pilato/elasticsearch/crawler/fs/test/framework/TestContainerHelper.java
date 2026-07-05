@@ -38,7 +38,10 @@ public class TestContainerHelper {
 
     private static final Logger log = LogManager.getLogger(TestContainerHelper.class);
 
+    // Default password of the Elasticsearch test container, not a production secret
+    @SuppressWarnings("java:S2068")
     public static final String DEFAULT_PASSWORD = "changeme";
+
     private static final String HTTPS_URL = "https://%s";
     private static final String HTTP_URL = "http://%s";
 

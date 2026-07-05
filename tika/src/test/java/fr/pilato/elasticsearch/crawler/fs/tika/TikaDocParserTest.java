@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CyclicBarrier;
@@ -148,7 +149,7 @@ class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         Assertions.assertThat(doc.getMeta().getAuthor()).isNotNull();
         Assertions.assertThat(doc.getMeta().getDate())
-                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 9, 20, 9, 38, 56)));
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, Month.SEPTEMBER, 20, 9, 38, 56)));
         Assertions.assertThat(doc.getMeta().getKeywords()).isNotEmpty();
         Assertions.assertThat(doc.getMeta().getTitle()).contains("Recherche");
 
@@ -164,7 +165,7 @@ class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         Assertions.assertThat(doc.getMeta().getAuthor()).isNull();
         Assertions.assertThat(doc.getMeta().getDate())
-                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 9, 19, 14, 29, 37)));
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, Month.SEPTEMBER, 19, 14, 29, 37)));
         Assertions.assertThat(doc.getMeta().getKeywords()).isNull();
         Assertions.assertThat(doc.getMeta().getTitle()).isNull();
     }
@@ -213,7 +214,7 @@ class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
         Assertions.assertThat(doc.getMeta().getDate())
-                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, Month.JULY, 7, 8, 37, 0)));
         Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
         Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
@@ -261,7 +262,7 @@ class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
         Assertions.assertThat(doc.getMeta().getDate())
-                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 36, 0)));
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, Month.JULY, 7, 8, 36, 0)));
         Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
         Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
@@ -397,7 +398,7 @@ class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
         Assertions.assertThat(doc.getMeta().getDate())
-                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 0)));
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, Month.JULY, 7, 8, 37, 0)));
         Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", "  keyword2");
         Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 
@@ -441,7 +442,7 @@ class TikaDocParserTest extends DocParserTestCase {
         // Meta data
         Assertions.assertThat(doc.getMeta().getAuthor()).isEqualTo("David Pilato");
         Assertions.assertThat(doc.getMeta().getDate())
-                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, 7, 7, 8, 37, 42)));
+                .isEqualTo(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.of(2016, Month.JULY, 7, 8, 37, 42)));
         Assertions.assertThat(doc.getMeta().getKeywords()).containsExactlyInAnyOrder("keyword1", " keyword2");
         Assertions.assertThat(doc.getMeta().getTitle()).isEqualTo("Test Tika title");
 

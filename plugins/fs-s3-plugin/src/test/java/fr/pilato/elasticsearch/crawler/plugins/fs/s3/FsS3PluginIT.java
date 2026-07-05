@@ -106,17 +106,17 @@ class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
-            provider.start(
-                    FsSettingsLoader.load(),
-                    "{\n" + "  \"type\": \"s3\",\n"
-                            + "  \"s3\": {\n"
-                            + "    \"url\": \""
-                            + s3Url + "\",\n" + "    \"bucket\": \"foo\",\n"
-                            + "    \"object\": \"foo.txt\",\n"
-                            + "    \"access_key\": \""
-                            + s3Username + "\",\n" + "    \"secret_key\": \""
-                            + s3Password + "\"\n" + "  }\n"
-                            + "}");
+            provider.start(FsSettingsLoader.load(), """
+                    {
+                      "type": "s3",
+                      "s3": {
+                        "url": "%s",
+                        "bucket": "foo",
+                        "object": "foo.txt",
+                        "access_key": "%s",
+                        "secret_key": "%s"
+                      }
+                    }""".formatted(s3Url, s3Username, s3Password));
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Assertions.assertThat(object).isEqualTo(text);

@@ -26,6 +26,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+// Intentionally does NOT extend AbstractFSCrawlerTestCase: that base registers the very extension under test
+// (@ExtendWith(FsCrawlerReproduceInfoExtension.class)), which would apply the extension-under-test to its own test.
 class FsCrawlerReproduceInfoExtensionTest {
 
     private final FsCrawlerReproduceInfoExtension extension = new FsCrawlerReproduceInfoExtension();

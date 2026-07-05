@@ -20,12 +20,13 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.time.Duration;
 import org.assertj.core.api.Assertions;
 import org.awaitility.pollinterval.PollInterval;
 import org.junit.jupiter.api.Test;
 
-class ExponentialBackoffPollIntervalTest {
+class ExponentialBackoffPollIntervalTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void testExponentialBackoffPollInterval() {

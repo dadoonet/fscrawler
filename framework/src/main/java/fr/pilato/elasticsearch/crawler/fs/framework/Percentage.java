@@ -43,17 +43,17 @@ public class Percentage {
 
     private double value;
 
-    private boolean percentage;
+    private boolean isPercentage;
 
     public Percentage(String value) {
         Percentage parsed = parse(value);
         this.value = parsed.value;
-        this.percentage = parsed.percentage;
+        this.isPercentage = parsed.isPercentage;
     }
 
     public Percentage() {
         value = 0;
-        percentage = false;
+        isPercentage = false;
     }
 
     public Percentage(double value) {
@@ -62,7 +62,7 @@ public class Percentage {
 
     public Percentage(double value, boolean percentage) {
         this.value = value;
-        this.percentage = percentage;
+        this.isPercentage = percentage;
     }
 
     public double value() {
@@ -74,15 +74,15 @@ public class Percentage {
     }
 
     public boolean percentage() {
-        return percentage;
+        return isPercentage;
     }
 
     public void percentage(boolean percentage) {
-        this.percentage = percentage;
+        this.isPercentage = percentage;
     }
 
     public double asDouble() {
-        if (percentage) {
+        if (isPercentage) {
             return value / 100.0;
         } else {
             throw new UnsupportedOperationException("Can not convert to double a non percentage value");
@@ -90,7 +90,7 @@ public class Percentage {
     }
 
     public String format() {
-        return "" + value + (percentage ? "%" : "");
+        return "" + value + (isPercentage ? "%" : "");
     }
 
     @Override
@@ -124,7 +124,7 @@ public class Percentage {
         Percentage that = (Percentage) o;
 
         if (Double.compare(that.value, value) != 0) return false;
-        return percentage == that.percentage;
+        return isPercentage == that.isPercentage;
     }
 
     @Override
@@ -133,7 +133,7 @@ public class Percentage {
         long temp;
         temp = Double.doubleToLongBits(value);
         result = (int) (temp ^ (temp >>> 32));
-        result = 31 * result + (percentage ? 1 : 0);
+        result = 31 * result + (isPercentage ? 1 : 0);
         return result;
     }
 }

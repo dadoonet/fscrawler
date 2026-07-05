@@ -23,6 +23,11 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 import java.util.Properties;
 
 public class Version {
+
+    private Version() {
+        // Utility class, do not instantiate
+    }
+
     private static final String FSCRAWLER_PROPERTIES = "fscrawler.properties";
     private static final Properties properties;
 

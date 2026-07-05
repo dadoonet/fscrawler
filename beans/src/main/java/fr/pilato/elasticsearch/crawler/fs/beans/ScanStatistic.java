@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -115,7 +116,8 @@ public class ScanStatistic {
 
     public Duration computeDuration() {
         if (startTime != null && endTime != null) {
-            return Duration.between(startTime, endTime);
+            ZoneId zone = ZoneId.systemDefault();
+            return Duration.between(startTime.atZone(zone), endTime.atZone(zone));
         }
         return Duration.ZERO;
     }

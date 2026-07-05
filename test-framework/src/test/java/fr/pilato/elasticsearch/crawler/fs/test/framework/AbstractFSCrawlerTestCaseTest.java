@@ -39,12 +39,12 @@ class AbstractFSCrawlerTestCaseTest extends AbstractFSCrawlerTestCase {
         String crawlerName = getCrawlerName();
 
         // The test depends on the env variable "test.index.prefix" being set to something"
-        if (indexPrefix.isEmpty()) {
+        if (INDEX_PREFIX.isEmpty()) {
             Assertions.assertThat(crawlerName)
                     .isEqualTo("fscrawler_abstract_f_s_crawler_test_case_test_test_crawler_name");
         } else {
             Assertions.assertThat(crawlerName)
-                    .isEqualTo("fscrawler_" + indexPrefix + "_abstract_f_s_crawler_test_case_test_test_crawler_name");
+                    .isEqualTo("fscrawler_" + INDEX_PREFIX + "_abstract_f_s_crawler_test_case_test_test_crawler_name");
         }
     }
 }

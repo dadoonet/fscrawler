@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
+import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -40,7 +41,7 @@ import org.junit.jupiter.api.Test;
  * @see <a href="https://github.com/dadoonet/fscrawler/issues/474">Issue 474</a>
  * @see <a href="https://github.com/eclipse-ee4j/jersey/issues/728>Issue 728 in Jersey</a>
  */
-class RestServerTest {
+class RestServerTest extends AbstractFSCrawlerTestCase {
 
     // This test should fail when Jersey is upgraded with a fix for this issue.
     // Then we could remove this test class.

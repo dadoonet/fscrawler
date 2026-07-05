@@ -48,6 +48,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -224,7 +225,7 @@ public class DocumentApi extends RestApi {
         doc.getFile()
                 .setExtension(
                         FilenameUtils.getExtension(doc.getFile().getFilename()).toLowerCase());
-        doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now()));
+        doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now(ZoneId.systemDefault())));
         // File
 
         // Read the file content

@@ -38,29 +38,27 @@ import org.apache.logging.log4j.Logger;
 
 /** Bulk processor */
 public class FsCrawlerBulkProcessor<
-                O extends FsCrawlerOperation<O>,
-                Req extends FsCrawlerBulkRequest<O>,
-                Res extends FsCrawlerBulkResponse<O>>
+                O extends FsCrawlerOperation<O>, Q extends FsCrawlerBulkRequest<O>, S extends FsCrawlerBulkResponse<O>>
         implements Closeable {
 
     private static final Logger logger = LogManager.getLogger();
 
     private final int bulkActions;
     private final ByteSizeValue byteSize;
-    private final Listener<O, Req, Res> listener;
-    private final Engine<O, Req, Res> engine;
-    private Req bulkRequest;
-    private final Supplier<Req> requestSupplier;
+    private final Listener<O, Q, S> listener;
+    private final Engine<O, Q, S> engine;
+    private Q bulkRequest;
+    private final Supplier<Q> requestSupplier;
     private final ScheduledExecutorService executor;
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
 
     private FsCrawlerBulkProcessor(
-            Engine<O, Req, Res> engine,
-            Listener<O, Req, Res> listener,
+            Engine<O, Q, S> engine,
+            Listener<O, Q, S> listener,
             int bulkActions,
             ByteSizeValue byteSize,
-            Supplier<Req> requestSupplier,
+            Supplier<Q> requestSupplier,
             ScheduledExecutorService executor) {
         this.engine = engine;
         this.listener = listener;
@@ -108,7 +106,7 @@ public class FsCrawlerBulkProcessor<
      * @param request request to add
      * @return this so we can link methods.
      */
-    public synchronized FsCrawlerBulkProcessor<O, Req, Res> add(O request) {
+    public synchronized FsCrawlerBulkProcessor<O, Q, S> add(O request) {
         ensureOpen();
         bulkRequest.add(request);
         executeIfNeeded();
@@ -136,41 +134,41 @@ public class FsCrawlerBulkProcessor<
     }
 
     private void execute() {
-        final Req bulkRequest = this.bulkRequest;
+        final Q br = this.bulkRequest;
         this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         final long executionId = executionIdGen.incrementAndGet();
 
         Span bulkSpan = FsCrawlerTracing.startSpan("fscrawler.es.bulk");
-        bulkSpan.setAttribute("es.bulk.actions", bulkRequest.numberOfActions());
+        bulkSpan.setAttribute("es.bulk.actions", br.numberOfActions());
 
         // execute in a blocking fashion...
         boolean afterCalled = false;
-        try (Scope $ignored = bulkSpan.makeCurrent()) {
-            listener.beforeBulk(executionId, bulkRequest);
-            Res bulkItemResponses = engine.bulk(bulkRequest);
+        try (Scope ignored = bulkSpan.makeCurrent()) {
+            listener.beforeBulk(executionId, br);
+            S bulkItemResponses = engine.bulk(br);
             afterCalled = true;
-            listener.afterBulk(executionId, bulkRequest, bulkItemResponses);
+            listener.afterBulk(executionId, br, bulkItemResponses);
         } catch (Exception e) {
             bulkSpan.recordException(e);
             bulkSpan.setStatus(
                     StatusCode.ERROR,
                     e.getMessage() != null ? e.getMessage() : e.getClass().getName());
             if (!afterCalled) {
-                listener.afterBulk(executionId, bulkRequest, e);
+                listener.afterBulk(executionId, br, e);
             }
         } finally {
             bulkSpan.end();
         }
     }
 
-    Req supplyRequestWithLimits(Supplier<Req> requestSupplier, int bulkActions, ByteSizeValue byteSize) {
-        Req bulkRequest = requestSupplier.get();
-        bulkRequest.maxNumberOfActions(bulkActions);
-        bulkRequest.maxBulkSize(byteSize);
-        return bulkRequest;
+    Q supplyRequestWithLimits(Supplier<Q> requestSupplier, int bulkActions, ByteSizeValue byteSize) {
+        Q br = requestSupplier.get();
+        br.maxNumberOfActions(bulkActions);
+        br.maxBulkSize(byteSize);
+        return br;
     }
 
-    public Listener<O, Req, Res> getListener() {
+    public Listener<O, Q, S> getListener() {
         return listener;
     }
 
@@ -179,39 +177,37 @@ public class FsCrawlerBulkProcessor<
     }
 
     public static class Builder<
-            O extends FsCrawlerOperation<O>,
-            Req extends FsCrawlerBulkRequest<O>,
-            Res extends FsCrawlerBulkResponse<O>> {
+            O extends FsCrawlerOperation<O>, Q extends FsCrawlerBulkRequest<O>, S extends FsCrawlerBulkResponse<O>> {
 
         private int bulkActions;
         private TimeValue flushInterval;
         private ByteSizeValue byteSize;
-        private final Engine<O, Req, Res> engine;
-        private final Listener<O, Req, Res> listener;
-        private final Supplier<Req> requestSupplier;
+        private final Engine<O, Q, S> engine;
+        private final Listener<O, Q, S> listener;
+        private final Supplier<Q> requestSupplier;
 
-        public Builder(Engine<O, Req, Res> engine, Listener<O, Req, Res> listener, Supplier<Req> requestSupplier) {
+        public Builder(Engine<O, Q, S> engine, Listener<O, Q, S> listener, Supplier<Q> requestSupplier) {
             this.engine = engine;
             this.listener = listener;
             this.requestSupplier = requestSupplier;
         }
 
-        public Builder<O, Req, Res> setBulkActions(int bulkActions) {
+        public Builder<O, Q, S> setBulkActions(int bulkActions) {
             this.bulkActions = bulkActions;
             return this;
         }
 
-        public Builder<O, Req, Res> setFlushInterval(TimeValue flushInterval) {
+        public Builder<O, Q, S> setFlushInterval(TimeValue flushInterval) {
             this.flushInterval = flushInterval;
             return this;
         }
 
-        public Builder<O, Req, Res> setByteSize(ByteSizeValue byteSizeValue) {
+        public Builder<O, Q, S> setByteSize(ByteSizeValue byteSizeValue) {
             this.byteSize = byteSizeValue;
             return this;
         }
 
-        public FsCrawlerBulkProcessor<O, Req, Res> build() {
+        public FsCrawlerBulkProcessor<O, Q, S> build() {
             ScheduledExecutorService exec = flushInterval != null ? Executors.newScheduledThreadPool(1) : null;
             var processor =
                     new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, byteSize, requestSupplier, exec);
@@ -225,16 +221,14 @@ public class FsCrawlerBulkProcessor<
     }
 
     public interface Listener<
-            O extends FsCrawlerOperation<O>,
-            Req extends FsCrawlerBulkRequest<O>,
-            Res extends FsCrawlerBulkResponse<O>> {
+            O extends FsCrawlerOperation<O>, Q extends FsCrawlerBulkRequest<O>, S extends FsCrawlerBulkResponse<O>> {
 
-        void beforeBulk(long executionId, Req request);
+        void beforeBulk(long executionId, Q request);
 
-        void afterBulk(long executionId, Req request, Res response);
+        void afterBulk(long executionId, Q request, S response);
 
-        void afterBulk(long executionId, Req request, Throwable failure);
+        void afterBulk(long executionId, Q request, Throwable failure);
 
-        void setBulkProcessor(FsCrawlerBulkProcessor<O, Req, Res> bulkProcessor);
+        void setBulkProcessor(FsCrawlerBulkProcessor<O, Q, S> bulkProcessor);
     }
 }

@@ -738,14 +738,14 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                         getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS,
                         "" + i,
                         null,
-                        "{\"foo\":{\"bar\":\"bar\"},\"number\":\"bar\"}"));
+                        "{\"foo\":{\"bar\":\"bar\",\"number\":\"bar\"}}"));
                 nbErrors++;
             } else {
                 bulkRequest.add(new ElasticsearchIndexOperation(
                         getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS,
                         "" + i,
                         null,
-                        "{\"foo\":{\"bar\":\"bar\"},\"number\": " + i + "}"));
+                        "{\"foo\":{\"bar\":\"bar\",\"number\": " + i + "}}"));
             }
         }
         logger.info("🎯 We index {} items: {} good ✅ and {} bad ❌", nbItems, nbItems - nbErrors, nbErrors);

@@ -25,6 +25,10 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 
 public class FsSettingsParser {
 
+    private FsSettingsParser() {
+        // Utility class, do not instantiate
+    }
+
     public static String toYaml(FsSettings settings) throws JsonProcessingException {
         return JsonUtil.ymlMapper.writeValueAsString(settings);
     }
