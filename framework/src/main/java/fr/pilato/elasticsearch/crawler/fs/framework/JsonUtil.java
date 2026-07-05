@@ -74,7 +74,10 @@ public class JsonUtil {
                 .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                // Jackson 2's setDefaultPropertyInclusion(NON_EMPTY) applied to both value and content
+                // (map/collection entries); reproduce it so empty map values are omitted too.
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY)
+                        .withContentInclusion(JsonInclude.Include.NON_EMPTY))
                 .build();
 
         prettyMapper = JsonMapper.builder()
@@ -85,7 +88,10 @@ public class JsonUtil {
                 .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                // Jackson 2's setDefaultPropertyInclusion(NON_EMPTY) applied to both value and content
+                // (map/collection entries); reproduce it so empty map values are omitted too.
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY)
+                        .withContentInclusion(JsonInclude.Include.NON_EMPTY))
                 .build();
 
         ymlMapper = YAMLMapper.builder()
@@ -96,7 +102,10 @@ public class JsonUtil {
                 .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY))
+                // Jackson 2's setDefaultPropertyInclusion(NON_EMPTY) applied to both value and content
+                // (map/collection entries); reproduce it so empty map values are omitted too.
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_EMPTY)
+                        .withContentInclusion(JsonInclude.Include.NON_EMPTY))
                 .build();
     }
 
