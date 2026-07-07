@@ -43,13 +43,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tika.parser.external.ExternalParser;
+import org.apache.tika.exception.TikaConfigException;
+import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.Assumptions;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
 
 /** Test all type of documents we have */
 @VerySlow
@@ -253,12 +254,26 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     }
 
     @Test
+    @DisabledIf(value = "tesseractNotInstalled", disabledReason = "Tesseract is not installed")
     void ocr() throws ElasticsearchClientException {
-        Assumptions.assumeThat(ExternalParser.check("tesseract"))
-                .as("Tesseract is not installed so we are skipping this test")
-                .isTrue();
         runSearch("test-ocr.png", "words");
         runSearch("test-ocr.pdf", "words");
+    }
+
+    /**
+     * Condition for {@link #ocr()}. Tika 4 removed {@code ExternalParser.check()}, so we reuse the same Tesseract
+     * availability check as production code. Returns {@code true} (disabling the test) when Tesseract is not installed
+     * or cannot be configured.
+     *
+     * @return {@code true} when Tesseract is unavailable
+     */
+    @SuppressWarnings("unused")
+    static boolean tesseractNotInstalled() {
+        try {
+            return !new TesseractOCRParser().hasTesseract();
+        } catch (TikaConfigException e) {
+            return true;
+        }
     }
 
     @Test
