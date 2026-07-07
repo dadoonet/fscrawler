@@ -17,6 +17,18 @@ enough. Thanks to dadoonet.
 * We don't support anymore the ``elasticsearch.nodes.url`` setting. You need to use ``elasticsearch.urls``
   instead. Thanks to dadoonet.
 * The ``_upload`` REST endpoint has been removed. Please now use the ``_document`` endpoint. Thanks to dadoonet.
+* The Apache Tika 4 upgrade changes several ``meta.raw.*`` metadata key names. If you search, aggregate or
+  map these fields, you will need to update your queries and index templates accordingly:
+
+  * Image and EXIF metadata (JPEG, PNG, TIFF, …) keys are now namespaced under ``img:``. For example
+    ``Number of Tables`` becomes ``img:Number of Tables`` and ``Exif IFD0:Orientation`` becomes
+    ``img:Exif IFD0:Orientation``.
+  * The resource name key ``resourceName`` is renamed to ``X-TIKA:resourceName``.
+  * New keys are now produced, such as ``Content-Type-Magic-Detected``, ``X-TIKA:Parsed-By-Full-Set`` and,
+    for text documents, the encoding detection keys ``X-TIKA:detectedEncoding``,
+    ``X-TIKA:encodingDetectionTrace`` and ``X-TIKA:encodingDetector``.
+
+  Thanks to dadoonet.
 
 New
 ---
