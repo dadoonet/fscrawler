@@ -372,7 +372,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         checkDocument("replace_meta_only.txt", hit -> {
             Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
                     .contains("This file content will be extracted");
-            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.meta.raw.resourceName"))
+            Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.meta.raw['X-TIKA:resourceName']"))
                     .isEqualTo("another-file-name.txt");
             Assertions.assertThatThrownBy(() -> JsonPath.read(hit.getSource(), "$.external"))
                     .isInstanceOf(PathNotFoundException.class);
