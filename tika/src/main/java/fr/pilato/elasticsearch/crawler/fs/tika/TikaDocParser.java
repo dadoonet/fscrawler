@@ -450,8 +450,7 @@ public class TikaDocParser {
                                 .forEach(metadataName -> {
                                     String value = finalMetadata.get(metadataName);
                                     // This is a logger trick which helps to generate our unit tests
-                                    // You need to change test/resources/log4j2.xml
-                                    // fr.pilato.elasticsearch.crawler.fs.tika
+                                    // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika
                                     // level to trace
                                     FSCrawlerLogger.metadata("    .containsEntry(\"{}\", \"{}\")", metadataName, value);
 
