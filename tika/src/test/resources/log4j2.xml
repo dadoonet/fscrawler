@@ -12,7 +12,7 @@
       <Logger name="fr.pilato.elasticsearch.crawler.fs.tika" level="info" additivity="false">
          <AppenderRef ref="CONSOLE"/>
       </Logger>
-      <Logger name="fscrawler.metadata" level="debug" additivity="false">
+      <Logger name="fscrawler.metadata" level="info" additivity="false">
          <AppenderRef ref="CONSOLE_NO_DECORATOR"/>
       </Logger>
       <Logger name="org.apache.tika" level="error" additivity="false">
