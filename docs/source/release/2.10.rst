@@ -38,6 +38,8 @@ New
 * You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. See :ref:`rest-service`. Thanks to dadoonet.
 * Implement our own HTTP Client for Elasticsearch. Thanks to dadoonet.
 * Add option to set path to custom tika config file. See :ref:`local-fs-settings`. Thanks to iadcode.
+  **Note**: this option is temporarily disabled after the Apache Tika 4 upgrade, which removed the XML-based
+  configuration file mechanism. It is expected to return on top of Tika 4's JSON-based configuration.
 * Support for Index Templates. See :ref:`mappings`. Thanks to dadoonet.
 * Support for Aliases. You can now index to an alias. Thanks to dadoonet.
 * Support for Access Token and Api Keys instead of Basic Authentication. See :ref:`credentials`. Thanks to dadoonet.

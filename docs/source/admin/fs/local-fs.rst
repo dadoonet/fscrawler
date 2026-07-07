@@ -512,42 +512,53 @@ For example, a PDF document could generate:
 .. code:: json
 
    {
-      "date" : "2016-07-07T08:37:42Z",
-      "pdf:PDFVersion" : "1.5",
-      "xmp:CreatorTool" : "Microsoft Word",
-      "Keywords" : "keyword1, keyword2",
-      "access_permission:modify_annotations" : "true",
-      "access_permission:can_print_degraded" : "true",
-      "subject" : "Test Tika Object",
-      "dc:creator" : "David Pilato",
-      "dcterms:created" : "2016-07-07T08:37:42Z",
-      "Last-Modified" : "2016-07-07T08:37:42Z",
-      "dcterms:modified" : "2016-07-07T08:37:42Z",
-      "dc:format" : "application/pdf; version=1.5",
-      "title" : "Test Tika title",
-      "Last-Save-Date" : "2016-07-07T08:37:42Z",
-      "access_permission:fill_in_form" : "true",
-      "meta:save-date" : "2016-07-07T08:37:42Z",
-      "pdf:encrypted" : "false",
-      "dc:title" : "Test Tika title",
-      "modified" : "2016-07-07T08:37:42Z",
-      "cp:subject" : "Test Tika Object",
-      "Content-Type" : "application/pdf",
-      "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
-      "creator" : "David Pilato",
-      "meta:author" : "David Pilato",
-      "dc:subject" : "keyword1, keyword2",
-      "meta:creation-date" : "2016-07-07T08:37:42Z",
-      "created" : "Thu Jul 07 10:37:42 CEST 2016",
-      "access_permission:extract_for_accessibility" : "true",
       "access_permission:assemble_document" : "true",
-      "xmpTPg:NPages" : "2",
-      "Creation-Date" : "2016-07-07T08:37:42Z",
-      "access_permission:extract_content" : "true",
+      "access_permission:can_modify" : "true",
       "access_permission:can_print" : "true",
-      "meta:keyword" : "keyword1, keyword2",
-      "Author" : "David Pilato",
-      "access_permission:can_modify" : "true"
+      "access_permission:can_print_faithful" : "true",
+      "access_permission:extract_content" : "true",
+      "access_permission:extract_for_accessibility" : "true",
+      "access_permission:fill_in_form" : "true",
+      "access_permission:modify_annotations" : "true",
+      "Content-Length" : "101643",
+      "Content-Type" : "application/pdf",
+      "Content-Type-Magic-Detected" : "application/pdf",
+      "dc:creator" : "David Pilato",
+      "dc:format" : "application/pdf; version=1.5",
+      "dc:language" : "en-US",
+      "dc:subject" : "keyword1, keyword2",
+      "dc:title" : "Test Tika title",
+      "dcterms:created" : "2016-07-07T08:37:42Z",
+      "dcterms:modified" : "2016-07-07T08:37:42Z",
+      "pdf:charsPerPage" : "42",
+      "pdf:containsDamagedFont" : "false",
+      "pdf:containsNonEmbeddedFont" : "false",
+      "pdf:docinfo:created" : "2016-07-07T08:37:42Z",
+      "pdf:docinfo:creator" : "David Pilato",
+      "pdf:docinfo:creator_tool" : "Microsoft Word",
+      "pdf:docinfo:keywords" : "keyword1, keyword2",
+      "pdf:docinfo:modified" : "2016-07-07T08:37:42Z",
+      "pdf:docinfo:subject" : "Test Tika Object",
+      "pdf:docinfo:title" : "Test Tika title",
+      "pdf:encrypted" : "false",
+      "pdf:eofOffsets" : "101460",
+      "pdf:hasCollection" : "false",
+      "pdf:hasMarkedContent" : "true",
+      "pdf:hasXFA" : "false",
+      "pdf:hasXMP" : "false",
+      "pdf:incrementalUpdateCount" : "1",
+      "pdf:num3DAnnotations" : "0",
+      "pdf:ocrPageCount" : "0",
+      "pdf:overallPercentageUnmappedUnicodeChars" : "0.0",
+      "pdf:PDFVersion" : "1.5",
+      "pdf:totalUnmappedUnicodeChars" : "0",
+      "pdf:unmappedUnicodeCharsPerPage" : "0",
+      "X-TIKA:Parsed-By" : "org.apache.tika.parser.pdf.PDFParser",
+      "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.pdf.PDFParser",
+      "X-TIKA:resourceName" : "test.pdf",
+      "X-TIKA:versionCount" : "1",
+      "xmp:CreatorTool" : "Microsoft Word",
+      "xmpTPg:NPages" : "2"
    }
 
 Where a MP3 file would generate:
@@ -555,27 +566,26 @@ Where a MP3 file would generate:
 .. code:: json
 
    {
-      "xmpDM:genre" : "Vocal",
-      "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
-      "creator" : "David Pilato",
-      "xmpDM:album" : "FS Crawler",
-      "xmpDM:trackNumber" : "1",
-      "xmpDM:releaseDate" : "2016",
-      "meta:author" : "David Pilato",
-      "xmpDM:artist" : "David Pilato",
-      "dc:creator" : "David Pilato",
-      "xmpDM:audioCompressor" : "MP3",
-      "title" : "Test Tika",
-      "xmpDM:audioChannelType" : "Stereo",
-      "version" : "MPEG 3 Layer III Version 1",
-      "xmpDM:logComment" : "Hello but reverted",
-      "xmpDM:audioSampleRate" : "44100",
       "channels" : "2",
-      "dc:title" : "Test Tika",
-      "Author" : "David Pilato",
-      "xmpDM:duration" : "1018.775146484375",
       "Content-Type" : "audio/mpeg",
-      "samplerate" : "44100"
+      "Content-Type-Magic-Detected" : "audio/mpeg",
+      "dc:creator" : "David Pilato",
+      "dc:title" : "Test Tika",
+      "samplerate" : "44100",
+      "version" : "MPEG 3 Layer III Version 1",
+      "X-TIKA:Parsed-By" : "org.apache.tika.parser.DefaultParser",
+      "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.DefaultParser",
+      "X-TIKA:resourceName" : "test.mp3",
+      "xmpDM:album" : "FS Crawler",
+      "xmpDM:artist" : "David Pilato",
+      "xmpDM:audioChannelType" : "Stereo",
+      "xmpDM:audioCompressor" : "MP3",
+      "xmpDM:audioSampleRate" : "44100",
+      "xmpDM:duration" : "1.0187751054763794",
+      "xmpDM:genre" : "Vocal",
+      "xmpDM:logComment" : "Hello but reverted",
+      "xmpDM:releaseDate" : "2016",
+      "xmpDM:trackNumber" : "1"
    }
 
 .. note::
@@ -879,31 +889,19 @@ Tika Config Path
 
 .. versionadded:: 2.10
 
-If you want to override the default tika parser configuration, you can set the path to a custom tika
-configuration file, which will be used instead.
+.. warning::
+
+   Since the upgrade to Apache Tika 4, ``fs.tika_config_path`` is **temporarily not supported**. Tika 4
+   removed the XML-based Tika configuration file mechanism, and there is currently no drop-in replacement
+   to assemble a parser from a configuration file. If this setting is provided, FSCrawler fails fast with
+   a clear configuration error. Support is expected to return on top of Tika 4's new JSON-based
+   configuration.
+
+This setting used to let you override the default Tika parser configuration by pointing to a custom Tika
+configuration file:
 
 .. code:: yaml
 
    name: "test"
    fs:
      tika_config_path: '/path/to/tikaConfig.xml'
-
-An example tika config file is shown below. See |Tika_configuring|_ for more information.
-
-.. code:: xml
-
-  <?xml version="1.0" encoding="UTF-8"?>
-  <properties>
-    <service-loader dynamic="true"/>
-    <service-loader loadErrorHandler="IGNORE"/>
-    <parsers>
-      <!-- Use Default Parser for files, but Default Parser will never use HTML parser -->
-      <parser class="org.apache.tika.parser.DefaultParser">
-        <parser-exclude class="org.apache.tika.parser.html.JsoupParser"/>
-      </parser>
-      <!-- Use a different parser for XHTML -->
-      <parser class="org.apache.tika.parser.xml.XMLParser">
-        <mime>application/xhtml+xml</mime>
-      </parser>
-    </parsers>
-  </properties>
