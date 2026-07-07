@@ -1,7 +1,7 @@
 {
   "meta":{
     "raw":{
-      "resourceName":"another-file-name.txt"
+      "X-TIKA:resourceName":"another-file-name.txt"
     }
   }
 }
