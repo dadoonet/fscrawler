@@ -456,12 +456,12 @@ public class TikaDocParser {
                         FSCrawlerLogger.metadata("  Assertions.assertThat(raw)");
                         FSCrawlerLogger.metadata("    .hasSize({})", metadata.size());
                         Arrays.stream(metadata.names())
-                                .sorted()
-                                // .sorted(String.CASE_INSENSITIVE_ORDER)
+                                .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .forEach(metadataName -> {
                                     String value = metadata.get(metadataName);
                                     // This is a logger trick which helps to generate our unit tests
-                                    // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika
+                                    // You need to change test/resources/log4j2.xml
+                                    // fr.pilato.elasticsearch.crawler.fs.tika
                                     // level to trace
                                     FSCrawlerLogger.metadata("    .containsEntry(\"{}\", \"{}\")", metadataName, value);
 
