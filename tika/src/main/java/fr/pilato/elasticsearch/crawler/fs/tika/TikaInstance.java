@@ -102,6 +102,7 @@ class TikaInstance {
             // Apache Tika 4 removed the XML-based Tika configuration file mechanism (configuration moved to
             // per-component JSON, and there is no drop-in way to assemble an AutoDetectParser from a file).
             // Fail fast with a clear message instead of silently ignoring the setting.
+            // TODO Re-introduce custom Tika configuration on top of Tika 4's JSON config mechanism (temporary removal).
             throw new FsCrawlerIllegalConfigurationException(
                     "fs.tika_config_path is not supported with Apache Tika 4.x: "
                             + "the XML Tika configuration file mechanism was removed upstream. Please remove this setting ["
