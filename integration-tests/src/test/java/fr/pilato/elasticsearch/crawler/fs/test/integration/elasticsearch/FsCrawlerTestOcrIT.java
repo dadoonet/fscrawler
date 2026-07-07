@@ -174,7 +174,7 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                 .containsEntry("Exif SubIFD:Components Configuration", "YCbCr")
                 .containsEntry("tiff:BitsPerSample", "8")
                 .containsEntry("Exif IFD0:YCbCr Positioning", "Center of pixel array")
-                .containsEntry("resourceName", "test-ocr.jpg")
+                .containsEntry("X-TIKA:resourceName", "test-ocr.jpg")
                 .containsEntry("Exif IFD0:Orientation", "Top, left side (Horizontal / normal)")
                 .containsEntry("tiff:Orientation", "1")
                 .containsKey("ICC:Version")

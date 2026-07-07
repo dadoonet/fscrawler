@@ -43,6 +43,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Consumer;
@@ -452,19 +453,22 @@ public class TikaDocParser {
 
                     if (fsSettings.getFs().isRawMetadata()) {
                         FSCrawlerLogger.metadata("Listing all available metadata:");
-                        FSCrawlerLogger.metadata("  assertThat(raw)");
+                        FSCrawlerLogger.metadata("  Assertions.assertThat(raw)");
                         FSCrawlerLogger.metadata("    .hasSize({})", metadata.size());
-                        for (String metadataName : metadata.names()) {
-                            String value = metadata.get(metadataName);
-                            // This is a logger trick which helps to generate our unit tests
-                            // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika
-                            // level to trace
-                            FSCrawlerLogger.metadata("    .containsEntry(\"{}\", \"{}\")", metadataName, value);
+                        Arrays.stream(metadata.names())
+                                .sorted()
+                                // .sorted(String.CASE_INSENSITIVE_ORDER)
+                                .forEach(metadataName -> {
+                                    String value = metadata.get(metadataName);
+                                    // This is a logger trick which helps to generate our unit tests
+                                    // You need to change test/resources/log4j2.xml fr.pilato.elasticsearch.crawler.fs.tika
+                                    // level to trace
+                                    FSCrawlerLogger.metadata("    .containsEntry(\"{}\", \"{}\")", metadataName, value);
 
-                            // We need to remove dots in field names if any. See
-                            // https://github.com/dadoonet/fscrawler/issues/256
-                            doc.getMeta().addRaw(metadataName.replace('.', ':'), value);
-                        }
+                                    // We need to remove dots in field names if any. See
+                                    // https://github.com/dadoonet/fscrawler/issues/256
+                                    doc.getMeta().addRaw(metadataName.replace('.', ':'), value);
+                                });
                         FSCrawlerLogger.metadata(";");
                     }
                     // Meta
