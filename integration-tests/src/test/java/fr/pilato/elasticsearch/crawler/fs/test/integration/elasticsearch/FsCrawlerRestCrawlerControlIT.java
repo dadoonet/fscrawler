@@ -515,7 +515,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
      * {@link fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase#countTestHelper}, this tolerates bulk
      * flushes that skip intermediate hit counts.
      */
-    private ESSearchResponse awaitMinDocumentCount(String index, long minCount) throws Exception {
+    private ESSearchResponse awaitMinDocumentCount(String index, long minCount) {
         AtomicReference<ESSearchResponse> responseRef = new AtomicReference<>();
         Awaitility.await()
                 .atMost(Duration.ofMinutes(5))
@@ -533,7 +533,7 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
      * Poll until the document count in Elasticsearch stops increasing. Used after pausing the crawler so in-flight bulk
      * requests and files already past the pause gate are not mistaken for indexing during pause.
      */
-    private long awaitStableDocumentCount(String index) throws Exception {
+    private long awaitStableDocumentCount(String index) {
         AtomicLong lastCount = new AtomicLong(-1);
         AtomicInteger stableSamples = new AtomicInteger(0);
         Awaitility.await()
