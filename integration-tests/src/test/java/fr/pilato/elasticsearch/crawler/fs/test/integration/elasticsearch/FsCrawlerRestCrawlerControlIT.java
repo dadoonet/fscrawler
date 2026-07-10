@@ -45,8 +45,10 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -324,12 +326,17 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
     @Test
     void test_pause_already_paused() throws Exception {
-        // Enough files to keep the first scan running while we wait for RUNNING (see below).
-        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 50, 150);
-        for (int i = 0; i < nbFiles; i++) {
-            Files.writeString(
-                    currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
+        // Flat file sets finish in ~100 ms on CI; subdirs keep the first scan observable long enough to pause.
+        long nbFolders = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 10);
+        long nbFilesPerFolder = RandomizedTest.randomLongInRange(randomizedRandomForTests, 30, 50);
+        for (long i = 0; i < nbFolders; i++) {
+            Path subDir = currentTestResourceDir.resolve("status_paused_" + i);
+            Files.createDirectories(subDir);
+            for (long j = 0; j < nbFilesPerFolder; j++) {
+                Files.writeString(subDir.resolve("file_" + j + ".txt"), "Already Paused test " + i + "_" + j);
+            }
         }
+        long expectedDocs = 1L + nbFolders * nbFilesPerFolder;
 
         // Create settings with a reasonable update rate
         FsSettings fsSettings = createTestSettings();
@@ -337,17 +344,29 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
         // Start crawler with REST
         try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
-            // crawler.start() runs before the REST server is up. On fast CI, a tiny scan can finish and enter the
-            // between-runs auto-pause before POST /pause, which then returns "already paused" on the first call.
+            // RUNNING is transient; poll frequently and pause on the first observation so we do not miss the window.
+            AtomicBoolean pauseRequested = new AtomicBoolean(false);
+            AtomicReference<SimpleResponse> pauseResponseRef = new AtomicReference<>();
             Awaitility.await()
-                    .atMost(Duration.ofSeconds(30))
-                    .pollInterval(Duration.ofMillis(50))
-                    .until(() -> fsCrawler.getFsParser().getState() == CrawlerState.RUNNING);
+                    .atMost(Duration.ofSeconds(60))
+                    .pollInterval(Duration.ofMillis(10))
+                    .until(() -> {
+                        CrawlerState state = fsCrawler.getFsParser().getState();
+                        if (state == CrawlerState.RUNNING && pauseRequested.compareAndSet(false, true)) {
+                            pauseResponseRef.set(restPauseCrawler());
+                        }
+                        SimpleResponse pauseResponse = pauseResponseRef.get();
+                        if (pauseResponse != null) {
+                            return pauseResponse.getMessage().contains("Crawler paused. Checkpoint saved.");
+                        }
+                        if (fsCrawler.getFsParser().getRunNumber() > 0 && state == CrawlerState.COMPLETED) {
+                            throw new AssertionError("First scan completed before REST pause could save a checkpoint");
+                        }
+                        return false;
+                    });
 
-            logger.info("⏸️ Pausing crawler.");
-            SimpleResponse pauseResponse = restPauseCrawler();
+            SimpleResponse pauseResponse = pauseResponseRef.get();
             Assertions.assertThat(pauseResponse.isOk()).isTrue();
-            Assertions.assertThat(pauseResponse.getMessage()).contains("Crawler paused. Checkpoint saved.");
             Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
             logger.info("⏸️ Pausing again the crawler.");
@@ -356,18 +375,21 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             Assertions.assertThat(pauseResponse2.getMessage()).contains("Crawler is already paused.");
             Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
-            // Resume the crawler
+            int runNumberBeforeResume = fsCrawler.getFsParser().getRunNumber();
             logger.info("⏯️ Resuming crawler...");
             SimpleResponse resumeResponse = restResumeCrawler();
             Assertions.assertThat(resumeResponse.isOk()).isTrue();
             Assertions.assertThat(resumeResponse.getMessage()).contains("Crawler resumed.");
-            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(10))
+                    .pollInterval(Duration.ofMillis(100))
+                    .until(() -> fsCrawler.getFsParser().getRunNumber() > runNumberBeforeResume);
 
             // Count expected files
             countTestHelper(
                     new ESSearchRequest()
                             .withIndex(fsSettings.getElasticsearch().getIndex()),
-                    nbFiles + 1,
+                    expectedDocs,
                     currentTestResourceDir);
         }
     }
@@ -465,11 +487,11 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 crawler.getPluginsManager(),
                 crawler.getFsParser());
 
+        // Start the REST server before the crawler so POST /pause is available as soon as the first run starts.
+        restServer.start();
+
         // Start the crawler
         crawler.start();
-
-        // Start the REST server
-        restServer.start();
 
         return crawler;
     }
