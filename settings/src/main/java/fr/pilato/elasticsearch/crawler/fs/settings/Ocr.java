@@ -44,7 +44,7 @@ public class Ocr {
     @Nullable
     private String outputType;
     // Pdf OCR Strategy
-    @Config(defaultVal = "ocr_and_text")
+    @Config(defaultVal = "auto")
     private String pdfStrategy;
     // PDF Page Seg Mode
     @Config
@@ -110,7 +110,7 @@ public class Ocr {
     }
 
     /**
-     * Get the PDF Strategy. Could be "no_ocr", "auto", "ocr_only" or "ocr_and_text" (default)
+     * Get the PDF Strategy. Could be "no_ocr", "auto" (default), "ocr_only" or "ocr_and_text"
      *
      * @return the PDF Strategy
      */
