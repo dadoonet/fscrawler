@@ -37,6 +37,7 @@ import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
@@ -275,9 +276,10 @@ class TikaInstance {
      */
     String extractText(int indexedChars, InputStream stream, Metadata metadata) throws IOException, TikaException {
         WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
-        // Tika 4 requires a TikaInputStream for Parser.parse(). Wrapping here keeps the caller unaware of the
-        // change; closing the wrapper releases any temporary resources Tika spooled while detecting the type.
-        try (TikaInputStream tikaInputStream = TikaInputStream.get(stream, metadata)) {
+        // Tika 4 requires a TikaInputStream for Parser.parse(). Use TemporaryResources so Tika can spool/cache
+        // without closing the caller's stream (required for FTP/SFTP wrappers that finalize the transfer on close).
+        try (TemporaryResources tmp = new TemporaryResources()) {
+            TikaInputStream tikaInputStream = TikaInputStream.get(stream, tmp, metadata);
             parser.parse(tikaInputStream, new BodyContentHandler(handler), metadata, context);
         } catch (WriteLimitReachedException e) {
             String resourceName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
