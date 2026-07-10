@@ -230,7 +230,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         ocr.setEnabled(true);
         ocr.setLanguage("eng");
         ocr.setOutputType("txt");
-        ocr.setPdfStrategy("ocr_and_text");
+        ocr.setPdfStrategy("auto");
         ocr.setPageSegMode(1);
         fs.setOcr(ocr);
         expected.setFs(fs);

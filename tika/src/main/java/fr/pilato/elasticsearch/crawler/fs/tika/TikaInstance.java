@@ -217,9 +217,10 @@ class TikaInstance {
     }
 
     /**
-     * Maps an FSCrawler PDF OCR strategy string to the Tika 4 {@link OcrConfig.Strategy} enum. The FSCrawler value
-     * {@code ocr_and_text} (the default) maps to {@link OcrConfig.Strategy#OCR_AND_TEXT_EXTRACTION}. Unknown values
-     * fall back to {@link OcrConfig.Strategy#AUTO}.
+     * Maps an FSCrawler PDF OCR strategy string to the Tika 4 {@link OcrConfig.Strategy} enum. When the strategy is
+     * null, {@link OcrConfig.Strategy#AUTO} is used (the FSCrawler default). The FSCrawler value {@code ocr_and_text}
+     * maps to {@link OcrConfig.Strategy#OCR_AND_TEXT_EXTRACTION}. Unknown values fall back to
+     * {@link OcrConfig.Strategy#AUTO}.
      *
      * @param strategy the FSCrawler strategy string (may be null)
      * @return the matching Tika strategy

@@ -78,7 +78,7 @@ It will give you a response similar to:
            "language" : "eng",
            "output_type" : "txt",
            "page_seg_mode" : 1,
-           "pdf_strategy" : "ocr_and_text",
+           "pdf_strategy" : "auto",
            "preserve_interword_spacing" : false
          },
          "raw_metadata" : true,

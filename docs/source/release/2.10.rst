@@ -29,6 +29,9 @@ enough. Thanks to dadoonet.
     ``X-TIKA:encodingDetectionTrace`` and ``X-TIKA:encodingDetector``.
 
   Thanks to dadoonet.
+* The default ``fs.ocr.pdf_strategy`` is now ``auto`` instead of ``ocr_and_text``. With ``auto``, OCR is skipped on
+  PDF pages that already contain more than 10 characters of text. If you relied on the previous behaviour and want
+  OCR on every PDF page, explicitly set ``fs.ocr.pdf_strategy`` to ``ocr_and_text``. Thanks to dadoonet.
 
 New
 ---
