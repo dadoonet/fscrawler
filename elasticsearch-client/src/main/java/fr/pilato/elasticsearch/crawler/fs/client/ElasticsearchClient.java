@@ -1155,86 +1155,80 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.trace("Elasticsearch query to run: {}", query);
 
         try {
-            String response = httpPost(url, query, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
-            ESSearchResponse esSearchResponse = new ESSearchResponse(response);
-
-            // Parse
-            DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
-            esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
-
-            int numHits = document.read("$.hits.hits.length()");
-            if (numHits < size) {
-                size = numHits;
-            }
-            for (int hitNum = 0; hitNum < size; hitNum++) {
-                final ESSearchHit esSearchHit = new ESSearchHit();
-                esSearchHit.setIndex(document.read(String.format("$.hits.hits[%d]._index", hitNum)));
-                esSearchHit.setId(document.read(String.format("$.hits.hits[%d]._id", hitNum)));
-                esSearchHit.setVersion(
-                        Integer.toUnsignedLong(document.read(String.format("$.hits.hits[%d]._version", hitNum))));
-                try {
-                    esSearchHit.setSource(
-                            extractJsonFromPath(document, String.format("$.hits.hits[%d]._source", hitNum)));
-                } catch (PathNotFoundException ignored) {
-                    // When no _source, we just ignore
-                }
-
-                // Parse the highlights if any
-                try {
-                    Map<String, List<String>> highlights =
-                            document.read(String.format("$.hits.hits[%d].highlight", hitNum));
-                    highlights.forEach(esSearchHit::addHighlightField);
-                } catch (PathNotFoundException ignored) {
-                    // No highlights
-                }
-
-                // Parse the fields if any
-                try {
-                    Map<String, List<String>> fields = document.read(String.format("$.hits.hits[%d].fields", hitNum));
-                    esSearchHit.setStoredFields(fields);
-                } catch (PathNotFoundException ignored) {
-                    // No stored fields
-                }
-                esSearchResponse.addHit(esSearchHit);
-            }
-
-            // Aggregations
-            try {
-                Map<String, Object> aggs = document.read("$.aggregations");
-                aggs.forEach((aggName, v) -> {
-                    ESTermsAggregation aggregation = new ESTermsAggregation(aggName, null);
-                    List<Map<String, Object>> buckets = document.read("$.aggregations." + aggName + ".buckets");
-                    buckets.forEach(map -> {
-                        String key = (String) map.get("key");
-                        long docCount = Integer.toUnsignedLong((Integer) map.get("doc_count"));
-                        aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(key, docCount));
-                    });
-                    esSearchResponse.addAggregation(aggName, aggregation);
-                });
-            } catch (PathNotFoundException ignored) {
-                // No aggregation
-            }
-
-            return esSearchResponse;
+            String response = httpPostWithRetry(url, query, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
+            return parseSearchResponse(response, size);
         } catch (NotFoundException e) {
             logger.debug("index {} does not exist.", request.getIndex());
             throw new ElasticsearchClientException("index " + request.getIndex() + " does not exist.");
         } catch (ServiceUnavailableException e) {
-            if (serverless) {
-                logger.debug(
-                        "on serverless this might happen if we just created the index as shards may not be "
-                                + "fully allocated for index [{}].",
-                        request.getIndex());
-                throw new ElasticsearchClientException(
-                        "index " + request.getIndex() + " might not be fully allocated on serverless.");
-            }
-            logger.error(
-                    "search on index [{}] thrown a [{}] error but we are not on serverless.",
+            logger.warn(
+                    "search on index [{}] still unavailable after retries ({}). Shards may not be allocated yet.",
                     request.getIndex(),
                     e.getResponse().getStatus());
-            logger.error("full stack trace", e);
             throw e;
         }
+    }
+
+    private ESSearchResponse parseSearchResponse(String response, int size) {
+        ESSearchResponse esSearchResponse = new ESSearchResponse(response);
+
+        // Parse
+        DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
+        esSearchResponse.setTotalHits(document.read("$.hits.total.value"));
+
+        int numHits = document.read("$.hits.hits.length()");
+        if (numHits < size) {
+            size = numHits;
+        }
+        for (int hitNum = 0; hitNum < size; hitNum++) {
+            final ESSearchHit esSearchHit = new ESSearchHit();
+            esSearchHit.setIndex(document.read(String.format("$.hits.hits[%d]._index", hitNum)));
+            esSearchHit.setId(document.read(String.format("$.hits.hits[%d]._id", hitNum)));
+            esSearchHit.setVersion(
+                    Integer.toUnsignedLong(document.read(String.format("$.hits.hits[%d]._version", hitNum))));
+            try {
+                esSearchHit.setSource(extractJsonFromPath(document, String.format("$.hits.hits[%d]._source", hitNum)));
+            } catch (PathNotFoundException ignored) {
+                // When no _source, we just ignore
+            }
+
+            // Parse the highlights if any
+            try {
+                Map<String, List<String>> highlights =
+                        document.read(String.format("$.hits.hits[%d].highlight", hitNum));
+                highlights.forEach(esSearchHit::addHighlightField);
+            } catch (PathNotFoundException ignored) {
+                // No highlights
+            }
+
+            // Parse the fields if any
+            try {
+                Map<String, List<String>> fields = document.read(String.format("$.hits.hits[%d].fields", hitNum));
+                esSearchHit.setStoredFields(fields);
+            } catch (PathNotFoundException ignored) {
+                // No stored fields
+            }
+            esSearchResponse.addHit(esSearchHit);
+        }
+
+        // Aggregations
+        try {
+            Map<String, Object> aggs = document.read("$.aggregations");
+            aggs.forEach((aggName, v) -> {
+                ESTermsAggregation aggregation = new ESTermsAggregation(aggName, null);
+                List<Map<String, Object>> buckets = document.read("$.aggregations." + aggName + ".buckets");
+                buckets.forEach(map -> {
+                    String key = (String) map.get("key");
+                    long docCount = Integer.toUnsignedLong((Integer) map.get("doc_count"));
+                    aggregation.addBucket(new ESTermsAggregation.ESTermsBucket(key, docCount));
+                });
+                esSearchResponse.addAggregation(aggName, aggregation);
+            });
+        } catch (PathNotFoundException ignored) {
+            // No aggregation
+        }
+
+        return esSearchResponse;
     }
 
     // JSON templates for the hand-built Elasticsearch queries
@@ -1400,6 +1394,16 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return httpCall("POST", path, data, params);
     }
 
+    /**
+     * Execute an idempotent POST request with retry logic (e.g. {@code _search}). Retries on 5xx and 429 with the same
+     * policy as {@link #httpCallWithRetry}.
+     */
+    @SafeVarargs
+    final String httpPostWithRetry(String path, Object data, Map.Entry<String, Object>... params)
+            throws ElasticsearchClientException {
+        return httpCallWithRetry("POST", path, data, params);
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     @SafeVarargs
     final String httpPut(String path, Object data, Map.Entry<String, Object>... params)
@@ -1415,13 +1419,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final String SUCCESS_MARKER = "__SUCCESS__";
 
     /**
-     * Execute an HTTP call with retry logic for GET and HEAD methods. This method will retry the call with exponential
-     * backoff when a 5xx server error or a 429 (Too Many Requests) rate limiting error is received.
+     * Execute an HTTP call with retry logic for idempotent requests (GET, HEAD, and read-only POST such as
+     * {@code _search}). This method will retry the call with exponential backoff when a 5xx server error or a 429 (Too
+     * Many Requests) rate limiting error is received.
      *
      * <p>For 5xx errors, uses short retry intervals (500ms to 5s, max 10s total). For 429 errors, uses longer retry
      * intervals (1s to 30s, max 5 minutes total) to allow server recovery.
      *
-     * @param method HTTP method (should be GET or HEAD for retry to be applied)
+     * @param method HTTP method (GET, HEAD, or idempotent POST)
      * @param path the path to call
      * @param data the data to send (should be null for GET/HEAD)
      * @param params optional query parameters

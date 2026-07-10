@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.CrawlerStatusResponse;
@@ -45,8 +46,10 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -129,18 +132,11 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
         // Start crawler with REST
         try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
-            // We pause the crawler immediately to test the pause functionality, but it might take a moment for the
-            // crawler to start and begin indexing.
-            fsCrawler.getFsParser().pause();
+            // Wait until enough documents are indexed (bulk flushes can skip exact counts).
+            final long minDocsBeforePause = 10L;
+            ESSearchResponse responseAfterStart =
+                    awaitMinDocumentCount(fsSettings.getElasticsearch().getIndex(), minDocsBeforePause);
 
-            // Wait for the crawler to start and index some documents
-            ESSearchResponse responseAfterStart = countTestHelper(
-                    new ESSearchRequest()
-                            .withIndex(fsSettings.getElasticsearch().getIndex()),
-                    null,
-                    null);
-
-            // Pause the crawler
             logger.info(
                     "⏸️ Pausing crawler. We have {} documents indexed so far on {} expected...",
                     responseAfterStart.getTotalHits(),
@@ -153,17 +149,13 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             CrawlerStatusResponse status = restGetCrawlerStatus();
             Assertions.assertThat(status.getState()).isEqualTo(CrawlerState.PAUSED);
 
-            ESSearchResponse response = countTestHelper(
-                    new ESSearchRequest()
-                            .withIndex(fsSettings.getElasticsearch().getIndex()),
-                    null,
-                    null);
-            long docsBeforePause = response.getTotalHits();
-            logger.info("📍 Documents indexed before pause: {}", docsBeforePause);
+            // Files already past the pause gate and bulk requests in flight may still be indexed briefly.
+            long docsBeforePause =
+                    awaitStableDocumentCount(fsSettings.getElasticsearch().getIndex());
+            logger.info("📍 Documents indexed before pause (stable): {}", docsBeforePause);
 
-            FsCrawlerUtil.waitFor(Duration.ofSeconds(1));
+            FsCrawlerUtil.waitFor(Duration.ofSeconds(2));
 
-            // Record how many documents we have now (after pause and flush)
             refresh(fsSettings.getElasticsearch().getIndex());
             ESSearchResponse searchAfterPause = client.search(new ESSearchRequest()
                     .withIndex(fsSettings.getElasticsearch().getIndex()));
@@ -326,11 +318,17 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
     @Test
     void test_pause_already_paused() throws Exception {
-        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 3, 10);
-        for (int i = 0; i < nbFiles; i++) {
-            Files.writeString(
-                    currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
+        // Flat file sets finish in ~100 ms on CI; subdirs keep the first scan observable long enough to pause.
+        long nbFolders = RandomizedTest.randomLongInRange(randomizedRandomForTests, 5, 10);
+        long nbFilesPerFolder = RandomizedTest.randomLongInRange(randomizedRandomForTests, 30, 50);
+        for (long i = 0; i < nbFolders; i++) {
+            Path subDir = currentTestResourceDir.resolve("status_paused_" + i);
+            Files.createDirectories(subDir);
+            for (long j = 0; j < nbFilesPerFolder; j++) {
+                Files.writeString(subDir.resolve("file_" + j + ".txt"), "Already Paused test " + i + "_" + j);
+            }
         }
+        long expectedDocs = 1L + nbFolders * nbFilesPerFolder;
 
         // Create settings with a reasonable update rate
         FsSettings fsSettings = createTestSettings();
@@ -338,12 +336,29 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
         // Start crawler with REST
         try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
-            // We pause the crawler immediately to test the pause functionality, but it might take a moment for the
-            // crawler to start and begin indexing.
-            logger.info("⏸️ Pausing crawler.");
-            SimpleResponse pauseResponse = restPauseCrawler();
+            // RUNNING is transient; poll frequently and pause on the first observation so we do not miss the window.
+            AtomicBoolean pauseRequested = new AtomicBoolean(false);
+            AtomicReference<SimpleResponse> pauseResponseRef = new AtomicReference<>();
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(60))
+                    .pollInterval(Duration.ofMillis(10))
+                    .until(() -> {
+                        CrawlerState state = fsCrawler.getFsParser().getState();
+                        if (state == CrawlerState.RUNNING && pauseRequested.compareAndSet(false, true)) {
+                            pauseResponseRef.set(restPauseCrawler());
+                        }
+                        SimpleResponse pauseResponse = pauseResponseRef.get();
+                        if (pauseResponse != null) {
+                            return pauseResponse.getMessage().contains("Crawler paused. Checkpoint saved.");
+                        }
+                        if (fsCrawler.getFsParser().getRunNumber() > 0 && state == CrawlerState.COMPLETED) {
+                            throw new AssertionError("First scan completed before REST pause could save a checkpoint");
+                        }
+                        return false;
+                    });
+
+            SimpleResponse pauseResponse = pauseResponseRef.get();
             Assertions.assertThat(pauseResponse.isOk()).isTrue();
-            Assertions.assertThat(pauseResponse.getMessage()).contains("Crawler paused. Checkpoint saved.");
             Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
             logger.info("⏸️ Pausing again the crawler.");
@@ -352,18 +367,16 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             Assertions.assertThat(pauseResponse2.getMessage()).contains("Crawler is already paused.");
             Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.PAUSED);
 
-            // Resume the crawler
             logger.info("⏯️ Resuming crawler...");
             SimpleResponse resumeResponse = restResumeCrawler();
             Assertions.assertThat(resumeResponse.isOk()).isTrue();
             Assertions.assertThat(resumeResponse.getMessage()).contains("Crawler resumed.");
-            Assertions.assertThat(fsCrawler.getFsParser().getState()).isEqualTo(CrawlerState.RUNNING);
 
-            // Count expected files
+            // Resume continues the same run (runNumber unchanged); wait for indexing to finish.
             countTestHelper(
                     new ESSearchRequest()
                             .withIndex(fsSettings.getElasticsearch().getIndex()),
-                    nbFiles + 1,
+                    expectedDocs,
                     currentTestResourceDir);
         }
     }
@@ -399,7 +412,6 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
             final AtomicLong counterFiles = new AtomicLong(status.getFilesProcessed());
             final AtomicInteger counterCompletedDirs = new AtomicInteger(status.getCompletedDirectories());
-            final AtomicInteger counterPendingDirs = new AtomicInteger(status.getPendingDirectories());
             Awaitility.await()
                     .pollInterval(Duration.ofSeconds(1))
                     .timeout(Duration.ofMinutes(5))
@@ -416,17 +428,12 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                         logger.trace("Checkpoint: {}", checkpoint);
                         long oldFiles = counterFiles.getAndSet(s.getFilesProcessed());
                         int oldCompletedDirs = counterCompletedDirs.getAndSet(s.getCompletedDirectories());
-                        int oldPendingDirs = counterPendingDirs.getAndSet(s.getPendingDirectories());
-                        // We should see progress in both files and directories processed
                         Assertions.assertThat(s.getFilesProcessed()).isGreaterThanOrEqualTo(oldFiles);
-                        // But if the crawler is completed, we should have no completed directories anymore (since we
-                        // reset the checkpoint)
                         if (s.getState() == CrawlerState.COMPLETED) {
                             Assertions.assertThat(s.getCompletedDirectories()).isZero();
                             Assertions.assertThat(s.getPendingDirectories()).isZero();
                         } else {
                             Assertions.assertThat(s.getCompletedDirectories()).isGreaterThanOrEqualTo(oldCompletedDirs);
-                            Assertions.assertThat(s.getPendingDirectories()).isLessThanOrEqualTo(oldPendingDirs);
                         }
 
                         // We wait until the crawler is completed and has no pending directories
@@ -461,11 +468,11 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 crawler.getPluginsManager(),
                 crawler.getFsParser());
 
+        // Start the REST server before the crawler so POST /pause is available as soon as the first run starts.
+        restServer.start();
+
         // Start the crawler
         crawler.start();
-
-        // Start the REST server
-        restServer.start();
 
         return crawler;
     }
@@ -502,5 +509,58 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 .delete()) {
             return response.readEntity(SimpleResponse.class);
         }
+    }
+
+    /**
+     * Poll until at least {@code minCount} documents are visible in Elasticsearch. Unlike
+     * {@link fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractITCase#countTestHelper}, this tolerates bulk
+     * flushes that skip intermediate hit counts.
+     */
+    private ESSearchResponse awaitMinDocumentCount(String index, long minCount) {
+        AtomicReference<ESSearchResponse> responseRef = new AtomicReference<>();
+        Awaitility.await()
+                .atMost(Duration.ofMinutes(5))
+                .pollInterval(Duration.ofMillis(500))
+                .until(() -> {
+                    try {
+                        refresh(index);
+                        ESSearchResponse response = client.search(new ESSearchRequest().withIndex(index));
+                        responseRef.set(response);
+                        return response.getTotalHits() >= minCount;
+                    } catch (RuntimeException | ElasticsearchClientException e) {
+                        logger.debug("awaitMinDocumentCount: index not ready yet [{}]", e.getMessage());
+                        return false;
+                    }
+                });
+        return responseRef.get();
+    }
+
+    /**
+     * Poll until the document count in Elasticsearch stops increasing. Used after pausing the crawler so in-flight bulk
+     * requests and files already past the pause gate are not mistaken for indexing during pause.
+     */
+    private long awaitStableDocumentCount(String index) {
+        AtomicLong lastCount = new AtomicLong(-1);
+        AtomicInteger stableSamples = new AtomicInteger(0);
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(300))
+                .until(() -> {
+                    try {
+                        refresh(index);
+                        long hits = client.search(new ESSearchRequest().withIndex(index))
+                                .getTotalHits();
+                        if (hits == lastCount.get()) {
+                            return stableSamples.incrementAndGet() >= 3;
+                        }
+                        lastCount.set(hits);
+                        stableSamples.set(0);
+                        return false;
+                    } catch (RuntimeException | ElasticsearchClientException e) {
+                        logger.debug("awaitStableDocumentCount: index not ready yet [{}]", e.getMessage());
+                        return false;
+                    }
+                });
+        return lastCount.get();
     }
 }

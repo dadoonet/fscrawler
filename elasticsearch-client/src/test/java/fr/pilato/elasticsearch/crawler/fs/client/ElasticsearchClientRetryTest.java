@@ -50,8 +50,8 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /**
- * Integration tests for the retry mechanism on GET/HEAD requests. Uses WireMock to simulate server errors (503) and
- * verify retry behavior.
+ * Integration tests for the retry mechanism on GET/HEAD requests and idempotent POST requests such as {@code _search}.
+ * Uses WireMock to simulate server errors (503) and verify retry behavior.
  */
 @DetectThreadLeaks.ExcludeThreads({
     WireMockThreadFilter.class,
@@ -381,6 +381,89 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         // Verify 2 HEAD requests were made (1 failure + 1 success)
         WireMock.verify(2, WireMock.headRequestedFor(WireMock.urlEqualTo("/test-index/_doc/doc1")));
         logger.info("Test passed: HEAD request retry on server error works correctly");
+    }
+
+    /** Test that search retries on 503 (no_shard_available) and eventually succeeds. */
+    @Test
+    void testSearchRetryOnServerError() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        String searchResponse = """
+                {"hits":{"total":{"value":0},"hits":[]}}
+                """;
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_search"))
+                .inScenario("Search Retry")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"search_phase_execution_exception","reason":"all shards failed",\
+                                "status":503}}
+                                """))
+                .willSetStateTo("First Failure"));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_search"))
+                .inScenario("Search Retry")
+                .whenScenarioStateIs("First Failure")
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"search_phase_execution_exception","reason":"all shards failed",\
+                                "status":503}}
+                                """))
+                .willSetStateTo("Recovered"));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_search"))
+                .inScenario("Search Retry")
+                .whenScenarioStateIs("Recovered")
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(searchResponse)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            ESSearchResponse response = client.search(new ESSearchRequest().withIndex("test-index"));
+            Assertions.assertThat(response.getTotalHits()).isZero();
+        }
+
+        WireMock.verify(3, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
+        logger.info("Test passed: search retry on server error works correctly");
+    }
+
+    /** Test that search throws a clear error when retries are exhausted on 503. */
+    @Test
+    @Slow
+    void testSearchRetriesExhaustedOnServerError() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_search"))
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"no_shard_available_action_exception","status":503}}
+                                """)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            Assertions.assertThatExceptionOfType(ServiceUnavailableException.class)
+                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")));
+        }
+
+        WireMock.verify(
+                WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
+        logger.info("Test passed: search retries exhausted and exception propagated");
     }
 
     /**
