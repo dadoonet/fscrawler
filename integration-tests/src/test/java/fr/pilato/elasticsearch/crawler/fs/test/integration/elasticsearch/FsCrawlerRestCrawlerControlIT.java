@@ -326,7 +326,8 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
     @Test
     void test_pause_already_paused() throws Exception {
-        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 3, 10);
+        // Enough files to keep the first scan running while we wait for RUNNING (see below).
+        long nbFiles = RandomizedTest.randomLongInRange(randomizedRandomForTests, 50, 150);
         for (int i = 0; i < nbFiles; i++) {
             Files.writeString(
                     currentTestResourceDir.resolve("status_paused_" + i + ".txt"), "Already Paused test " + i);
@@ -338,8 +339,13 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
         // Start crawler with REST
         try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
-            // We pause the crawler immediately to test the pause functionality, but it might take a moment for the
-            // crawler to start and begin indexing.
+            // crawler.start() runs before the REST server is up. On fast CI, a tiny scan can finish and enter the
+            // between-runs auto-pause before POST /pause, which then returns "already paused" on the first call.
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .pollInterval(Duration.ofMillis(50))
+                    .until(() -> fsCrawler.getFsParser().getState() == CrawlerState.RUNNING);
+
             logger.info("⏸️ Pausing crawler.");
             SimpleResponse pauseResponse = restPauseCrawler();
             Assertions.assertThat(pauseResponse.isOk()).isTrue();
