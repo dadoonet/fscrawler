@@ -129,18 +129,20 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
 
         // Start crawler with REST
         try (FsCrawlerImpl fsCrawler = startCrawlerWithRest(fsSettings)) {
-            // We pause the crawler immediately to test the pause functionality, but it might take a moment for the
-            // crawler to start and begin indexing.
-            fsCrawler.getFsParser().pause();
+            // Wait until the crawler is actively scanning before pausing via REST.
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(60))
+                    .pollInterval(Duration.ofMillis(100))
+                    .until(() -> fsCrawler.getFsParser().getState() == CrawlerState.RUNNING);
 
-            // Wait for the crawler to start and index some documents
+            // Index enough documents to prove the scan is underway, then pause.
+            final long minDocsBeforePause = 10L;
             ESSearchResponse responseAfterStart = countTestHelper(
                     new ESSearchRequest()
                             .withIndex(fsSettings.getElasticsearch().getIndex()),
-                    null,
+                    minDocsBeforePause,
                     null);
 
-            // Pause the crawler
             logger.info(
                     "⏸️ Pausing crawler. We have {} documents indexed so far on {} expected...",
                     responseAfterStart.getTotalHits(),
@@ -153,17 +155,13 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
             CrawlerStatusResponse status = restGetCrawlerStatus();
             Assertions.assertThat(status.getState()).isEqualTo(CrawlerState.PAUSED);
 
-            ESSearchResponse response = countTestHelper(
-                    new ESSearchRequest()
-                            .withIndex(fsSettings.getElasticsearch().getIndex()),
-                    null,
-                    null);
-            long docsBeforePause = response.getTotalHits();
-            logger.info("📍 Documents indexed before pause: {}", docsBeforePause);
+            // Files already past the pause gate and bulk requests in flight may still be indexed briefly.
+            long docsBeforePause =
+                    awaitStableDocumentCount(fsSettings.getElasticsearch().getIndex());
+            logger.info("📍 Documents indexed before pause (stable): {}", docsBeforePause);
 
-            FsCrawlerUtil.waitFor(Duration.ofSeconds(1));
+            FsCrawlerUtil.waitFor(Duration.ofSeconds(2));
 
-            // Record how many documents we have now (after pause and flush)
             refresh(fsSettings.getElasticsearch().getIndex());
             ESSearchResponse searchAfterPause = client.search(new ESSearchRequest()
                     .withIndex(fsSettings.getElasticsearch().getIndex()));
@@ -508,5 +506,29 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 .delete()) {
             return response.readEntity(SimpleResponse.class);
         }
+    }
+
+    /**
+     * Poll until the document count in Elasticsearch stops increasing. Used after pausing the crawler so in-flight bulk
+     * requests and files already past the pause gate are not mistaken for indexing during pause.
+     */
+    private long awaitStableDocumentCount(String index) throws Exception {
+        AtomicLong lastCount = new AtomicLong(-1);
+        AtomicInteger stableSamples = new AtomicInteger(0);
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(300))
+                .until(() -> {
+                    refresh(index);
+                    long hits = client.search(new ESSearchRequest().withIndex(index))
+                            .getTotalHits();
+                    if (hits == lastCount.get()) {
+                        return stableSamples.incrementAndGet() >= 3;
+                    }
+                    lastCount.set(hits);
+                    stableSamples.set(0);
+                    return false;
+                });
+        return lastCount.get();
     }
 }
