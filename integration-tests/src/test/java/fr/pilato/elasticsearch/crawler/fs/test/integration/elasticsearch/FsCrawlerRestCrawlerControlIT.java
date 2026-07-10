@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.rest.CrawlerStatusResponse;
@@ -521,10 +522,15 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 .atMost(Duration.ofMinutes(5))
                 .pollInterval(Duration.ofMillis(500))
                 .until(() -> {
-                    refresh(index);
-                    ESSearchResponse response = client.search(new ESSearchRequest().withIndex(index));
-                    responseRef.set(response);
-                    return response.getTotalHits() >= minCount;
+                    try {
+                        refresh(index);
+                        ESSearchResponse response = client.search(new ESSearchRequest().withIndex(index));
+                        responseRef.set(response);
+                        return response.getTotalHits() >= minCount;
+                    } catch (RuntimeException | ElasticsearchClientException e) {
+                        logger.debug("awaitMinDocumentCount: index not ready yet [{}]", e.getMessage());
+                        return false;
+                    }
                 });
         return responseRef.get();
     }
@@ -540,15 +546,20 @@ class FsCrawlerRestCrawlerControlIT extends AbstractFsCrawlerITCase {
                 .atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofMillis(300))
                 .until(() -> {
-                    refresh(index);
-                    long hits = client.search(new ESSearchRequest().withIndex(index))
-                            .getTotalHits();
-                    if (hits == lastCount.get()) {
-                        return stableSamples.incrementAndGet() >= 3;
+                    try {
+                        refresh(index);
+                        long hits = client.search(new ESSearchRequest().withIndex(index))
+                                .getTotalHits();
+                        if (hits == lastCount.get()) {
+                            return stableSamples.incrementAndGet() >= 3;
+                        }
+                        lastCount.set(hits);
+                        stableSamples.set(0);
+                        return false;
+                    } catch (RuntimeException | ElasticsearchClientException e) {
+                        logger.debug("awaitStableDocumentCount: index not ready yet [{}]", e.getMessage());
+                        return false;
                     }
-                    lastCount.set(hits);
-                    stableSamples.set(0);
-                    return false;
                 });
         return lastCount.get();
     }
