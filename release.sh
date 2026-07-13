@@ -14,6 +14,7 @@ readonly TAG_PREFIX="fscrawler"
 readonly SCRIPT_NAME="${0##*/}"
 readonly RELEASE_STATE_FILE_NAME=".release"
 readonly LOCAL_TEST_EMAIL="david@pilato.fr"
+readonly LOG_TAIL_LINES=50
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RELEASE_STATE_FILE="${ROOT_DIR}/${RELEASE_STATE_FILE_NAME}"
@@ -23,6 +24,8 @@ DRY_RUN=false
 LOCAL_MODE=false
 ROLLBACK_ONLY=false
 RELEASE_APPROVED=false
+RELEASE_TRACKING=false
+FAILURE_HANDLED=false
 
 ORIGINAL_BRANCH=""
 RELEASE_VERSION=""
@@ -47,19 +50,19 @@ Options:
   -n, --dry-run    Simulate the release without mutating git, Maven, or remotes
   -l, --local      Full local rehearsal: branch, build, sign, release notes
                    (no Maven Central, Docker Hub, git push, or public email)
-      --rollback   Undo a previous --local run using ${RELEASE_STATE_FILE_NAME}
+      --rollback   Undo a local or failed release using ${RELEASE_STATE_FILE_NAME}
 
 Modes:
   default          Interactive production release (deploy/push when confirmed)
   --dry-run        Log commands only; repository stays unchanged
-  --local          Execute locally and write ${RELEASE_STATE_FILE_NAME} for rollback
+  --local          Execute locally; ${RELEASE_STATE_FILE_NAME} written as soon as changes start
   --rollback       Delete local release branch/tag and return to the original branch
 
 Local mode:
   - Creates the release branch, commits, builds with -Prelease, tags, generates notes
   - Skips deploy, git push, Docker Hub, and Central Portal checks
   - Optionally sends a test announcement email to ${LOCAL_TEST_EMAIL} only
-  - Keeps branch/tag for inspection; run --rollback to clean up
+  - ${RELEASE_STATE_FILE_NAME} is saved early so --rollback works after a failure
 
 Examples:
   ${SCRIPT_NAME} --help
@@ -145,13 +148,64 @@ warn() {
 	printf '⚠ %s\n' "$*" >&2
 }
 
-die() {
-	printf '✗ %s\n' "$*" >&2
-	if [[ -n "${LOG_FILE}" && -f "${LOG_FILE}" ]]; then
-		printf '\nLast 20 log lines (%s):\n' "${LOG_FILE}" >&2
-		tail -20 "${LOG_FILE}" >&2 || true
+report_failure() {
+	local message=$1
+
+	if [[ "${FAILURE_HANDLED}" == true ]]; then
+		return
 	fi
+	FAILURE_HANDLED=true
+
+	printf '\n✗ %s\n' "${message}" >&2
+
+	if release_state_exists; then
+		printf 'ℹ Rollback local release changes with:\n' >&2
+		printf '    %s --rollback\n' "${SCRIPT_NAME}" >&2
+	fi
+
+	if [[ -n "${LOG_FILE}" && -f "${LOG_FILE}" ]]; then
+		printf 'ℹ Full log:\n' >&2
+		printf '    less %q\n' "${LOG_FILE}" >&2
+		printf '    tail -f %q\n' "${LOG_FILE}" >&2
+		printf '\n--- Last %s log lines (%s) ---\n' "${LOG_TAIL_LINES}" "${LOG_FILE}" >&2
+		tail -"${LOG_TAIL_LINES}" "${LOG_FILE}" >&2 || true
+		printf '--- end of log tail ---\n' >&2
+	fi
+}
+
+die() {
+	report_failure "$*"
 	exit 1
+}
+
+handle_release_failure() {
+	local exit_code=$1
+
+	trap - ERR
+	[[ "${exit_code}" -eq 0 ]] && return 0
+	report_failure "Release step failed (exit ${exit_code})"
+	exit "${exit_code}"
+}
+
+handle_release_interrupt() {
+	trap - INT TERM
+	report_failure "Release interrupted"
+	exit 130
+}
+
+enable_release_tracking() {
+	is_dry_run && return 0
+	[[ "${RELEASE_TRACKING}" == true ]] && return 0
+
+	RELEASE_TRACKING=true
+	save_release_state "in_progress"
+	trap 'handle_release_failure $?' ERR
+	trap 'handle_release_interrupt' INT TERM
+}
+
+disable_release_tracking() {
+	RELEASE_TRACKING=false
+	trap - ERR INT TERM
 }
 
 show_log_tail() {
@@ -184,6 +238,7 @@ ensure_no_release_state() {
 }
 
 save_release_state() {
+	local status=${1:-in_progress}
 	local mode="production"
 	is_local && mode="local"
 
@@ -195,8 +250,9 @@ RELEASE_VERSION=${RELEASE_VERSION}
 NEXT_VERSION=${NEXT_VERSION}
 LOG_FILE=${LOG_FILE}
 MODE=${mode}
+STATUS=${status}
 EOF
-	log "Saved release state to ${RELEASE_STATE_FILE_NAME}"
+	log "Saved release state to ${RELEASE_STATE_FILE_NAME} (${status})"
 }
 
 load_release_state() {
@@ -217,7 +273,7 @@ rollback_from_state_file() {
 
 	load_release_state
 
-	info "Rolling back local release ${RELEASE_VERSION}"
+	info "Rolling back release ${RELEASE_VERSION} (${STATUS:-unknown})"
 	info "  original branch: ${ORIGINAL_BRANCH}"
 	info "  release branch:  ${RELEASE_BRANCH}"
 	info "  release tag:     ${RELEASE_TAG}"
@@ -227,23 +283,24 @@ rollback_from_state_file() {
 
 	if [[ "${current_branch}" != "${ORIGINAL_BRANCH}" ]]; then
 		log "Checking out ${ORIGINAL_BRANCH}"
-		git_run checkout -q "${ORIGINAL_BRANCH}"
+		git -C "${ROOT_DIR}" checkout -q "${ORIGINAL_BRANCH}"
 	fi
 
-	if git_run show-ref --verify --quiet "refs/heads/${RELEASE_BRANCH}"; then
+	if git -C "${ROOT_DIR}" show-ref --verify --quiet "refs/heads/${RELEASE_BRANCH}"; then
 		log "Deleting branch ${RELEASE_BRANCH}"
-		git_run branch -D "${RELEASE_BRANCH}"
+		git -C "${ROOT_DIR}" branch -D "${RELEASE_BRANCH}"
 	else
 		info "Release branch ${RELEASE_BRANCH} not found (already removed)."
 	fi
 
-	if git_run show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
+	if git -C "${ROOT_DIR}" show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
 		log "Deleting tag ${RELEASE_TAG}"
-		git_run tag -d "${RELEASE_TAG}"
+		git -C "${ROOT_DIR}" tag -d "${RELEASE_TAG}"
 	else
 		info "Release tag ${RELEASE_TAG} not found (already removed)."
 	fi
 
+	disable_release_tracking
 	clear_release_state
 	info "Rollback complete — back on ${ORIGINAL_BRANCH}."
 }
@@ -334,7 +391,10 @@ mvn_run() {
 	fi
 
 	log "mvn $*"
-	mvn "$@" >>"${LOG_FILE}" 2>&1
+	if ! mvn "$@" >>"${LOG_FILE}" 2>&1; then
+		report_failure "Maven command failed: mvn $*"
+		exit 1
+	fi
 }
 
 git_run() {
@@ -344,7 +404,10 @@ git_run() {
 		return 0
 	fi
 
-	git -C "${ROOT_DIR}" "$@"
+	if ! git -C "${ROOT_DIR}" "$@"; then
+		report_failure "Git command failed: git $*"
+		exit 1
+	fi
 }
 
 set_project_version() {
@@ -494,6 +557,7 @@ gather_inputs() {
 prepare_release_branch() {
 	remove_tag_if_requested "${RELEASE_TAG}"
 	create_release_branch
+	enable_release_tracking
 	set_project_version "${RELEASE_VERSION}"
 	commit_all "prepare release ${RELEASE_TAG}"
 }
@@ -556,7 +620,7 @@ verify_publications() {
 
 finalize_local_release() {
 	git_run checkout -q "${ORIGINAL_BRANCH}"
-	save_release_state
+	save_release_state "completed"
 	maybe_send_local_test_announcement
 
 	info "Local release rehearsal complete."
@@ -612,6 +676,8 @@ finalize_release() {
 
 	git_run push origin "${ORIGINAL_BRANCH}" "${RELEASE_TAG}"
 	maybe_send_announcement
+	disable_release_tracking
+	clear_release_state
 }
 
 maybe_send_announcement() {
@@ -642,6 +708,7 @@ rollback_release() {
 	if confirm "Delete branch ${RELEASE_BRANCH} and tag ${RELEASE_TAG}?" y; then
 		git_run branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
 		git_run tag -d "${RELEASE_TAG}" 2>/dev/null || true
+		disable_release_tracking
 		clear_release_state
 		info "Local release branch and tag removed."
 	else
@@ -649,7 +716,7 @@ rollback_release() {
 		info "  branch: ${RELEASE_BRANCH}"
 		info "  tag:    ${RELEASE_TAG}"
 		info "  rollback later: ${SCRIPT_NAME} --rollback"
-		save_release_state
+		save_release_state "in_progress"
 	fi
 }
 
