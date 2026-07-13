@@ -164,12 +164,12 @@ report_failure() {
 	fi
 
 	if [[ -n "${LOG_FILE}" && -f "${LOG_FILE}" ]]; then
-		printf 'ℹ Full log:\n' >&2
+		printf '%s\n' 'ℹ Full log:' >&2
 		printf '    less %q\n' "${LOG_FILE}" >&2
 		printf '    tail -f %q\n' "${LOG_FILE}" >&2
-		printf '\n--- Last %s log lines (%s) ---\n' "${LOG_TAIL_LINES}" "${LOG_FILE}" >&2
+		printf '%s\n' "--- Last ${LOG_TAIL_LINES} log lines (${LOG_FILE}) ---" >&2
 		tail -"${LOG_TAIL_LINES}" "${LOG_FILE}" >&2 || true
-		printf '--- end of log tail ---\n' >&2
+		printf '%s\n' '--- end of log tail ---' >&2
 	fi
 }
 
@@ -286,16 +286,16 @@ rollback_from_state_file() {
 		git -C "${ROOT_DIR}" checkout -q "${ORIGINAL_BRANCH}"
 	fi
 
-	if git -C "${ROOT_DIR}" show-ref --verify --quiet "refs/heads/${RELEASE_BRANCH}"; then
+	if git_branch_exists "${RELEASE_BRANCH}"; then
 		log "Deleting branch ${RELEASE_BRANCH}"
-		git -C "${ROOT_DIR}" branch -D "${RELEASE_BRANCH}"
+		git_cmd branch -D "${RELEASE_BRANCH}"
 	else
 		info "Release branch ${RELEASE_BRANCH} not found (already removed)."
 	fi
 
-	if git -C "${ROOT_DIR}" show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
+	if git_tag_exists "${RELEASE_TAG}"; then
 		log "Deleting tag ${RELEASE_TAG}"
-		git -C "${ROOT_DIR}" tag -d "${RELEASE_TAG}"
+		git_cmd tag -d "${RELEASE_TAG}"
 	else
 		info "Release tag ${RELEASE_TAG} not found (already removed)."
 	fi
@@ -383,6 +383,26 @@ suggest_next_snapshot() {
 # Maven & Git helpers
 # ---------------------------------------------------------------------------
 
+git_cmd() {
+	git -C "${ROOT_DIR}" "$@"
+}
+
+git_ref_exists() {
+	git_cmd show-ref --verify --quiet "$1"
+}
+
+git_tag_exists() {
+	git_ref_exists "refs/tags/$1"
+}
+
+git_branch_exists() {
+	git_ref_exists "refs/heads/$1"
+}
+
+working_tree_clean() {
+	git_cmd diff-index --quiet HEAD --
+}
+
 mvn_run() {
 	if is_dry_run; then
 		log "[dry-run] mvn $*"
@@ -462,7 +482,7 @@ ensure_clean_enough_tree() {
 		return
 	fi
 
-	if ! git_run diff-index --quiet HEAD --; then
+	if ! working_tree_clean; then
 		warn "Working tree has uncommitted changes."
 		confirm "Continue anyway?" y || die "Aborting — commit or stash your changes first."
 	fi
@@ -475,7 +495,7 @@ remove_tag_if_requested() {
 		return
 	fi
 
-	if git_run show-ref --verify --quiet "refs/tags/${tag}"; then
+	if git_tag_exists "${tag}"; then
 		confirm "Tag ${tag} already exists. Delete it?" y || die "Remove the tag manually: git tag -d ${tag}"
 		git_run tag -d "${tag}"
 	fi
@@ -483,7 +503,9 @@ remove_tag_if_requested() {
 
 create_release_branch() {
 	log "Creating branch ${RELEASE_BRANCH}"
-	git_run branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
+	if git_branch_exists "${RELEASE_BRANCH}"; then
+		git_cmd branch -D "${RELEASE_BRANCH}"
+	fi
 	git_run checkout -q -b "${RELEASE_BRANCH}"
 }
 
@@ -706,8 +728,12 @@ rollback_release() {
 	warn "Release was not completed."
 
 	if confirm "Delete branch ${RELEASE_BRANCH} and tag ${RELEASE_TAG}?" y; then
-		git_run branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
-		git_run tag -d "${RELEASE_TAG}" 2>/dev/null || true
+	if git_branch_exists "${RELEASE_BRANCH}"; then
+		git_cmd branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
+	fi
+	if git_tag_exists "${RELEASE_TAG}"; then
+		git_cmd tag -d "${RELEASE_TAG}" 2>/dev/null || true
+	fi
 		disable_release_tracking
 		clear_release_state
 		info "Local release branch and tag removed."
