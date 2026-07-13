@@ -584,7 +584,7 @@ open_url() {
 # ---------------------------------------------------------------------------
 
 gather_inputs() {
-	local current_version current_branch default_release default_next maven_opts
+	local current_version current_branch default_release default_next default_maven_opts maven_opts
 
 	cd "${ROOT_DIR}"
 	announce_mode
@@ -595,13 +595,15 @@ gather_inputs() {
 	current_version="$(current_maven_version)"
 	default_release="$(strip_snapshot "${current_version}")"
 	default_next="$(suggest_next_snapshot "${default_release}")"
+	default_maven_opts=""
+	is_skip_tests && default_maven_opts="-DskipTests"
 
 	info "Branch: ${ORIGINAL_BRANCH}"
 	info "Current version: ${current_version}"
 
 	RELEASE_VERSION="$(prompt_default "Release version" "${default_release}")"
 	NEXT_VERSION="$(prompt_default "Next snapshot version" "${default_next}")"
-	maven_opts="$(prompt_default "Extra Maven options (optional)" "")"
+	maven_opts="$(prompt_default "Extra Maven options (optional)" "${default_maven_opts}")"
 
 	if [[ -n "${maven_opts}" ]]; then
 		# shellcheck disable=SC2206
