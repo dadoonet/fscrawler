@@ -137,15 +137,23 @@ is_rollback() {
 # ---------------------------------------------------------------------------
 
 log() {
-	printf '▸ %s\n' "$*"
+	printf '▶️  %s\n' "$*"
 }
 
 info() {
-	printf 'ℹ %s\n' "$*"
+	printf 'ℹ️  %s\n' "$*"
 }
 
 warn() {
-	printf '⚠ %s\n' "$*" >&2
+	printf '⚠️  %s\n' "$*" >&2
+}
+
+success() {
+	printf '✅ %s\n' "$*"
+}
+
+fail_msg() {
+	printf '❌ %s\n' "$*" >&2
 }
 
 report_failure() {
@@ -156,15 +164,16 @@ report_failure() {
 	fi
 	FAILURE_HANDLED=true
 
-	printf '\n✗ %s\n' "${message}" >&2
+	printf '\n' >&2
+	fail_msg "${message}"
 
 	if release_state_exists; then
-		printf 'ℹ Rollback local release changes with:\n' >&2
+		printf 'ℹ️  Rollback local release changes with:\n' >&2
 		printf '    %s --rollback\n' "${SCRIPT_NAME}" >&2
 	fi
 
 	if [[ -n "${LOG_FILE}" && -f "${LOG_FILE}" ]]; then
-		printf '%s\n' 'ℹ Full log:' >&2
+		printf 'ℹ️  Full log:\n' >&2
 		printf '    less %q\n' "${LOG_FILE}" >&2
 		printf '    tail -f %q\n' "${LOG_FILE}" >&2
 		printf '%s\n' "--- Last ${LOG_TAIL_LINES} log lines (${LOG_FILE}) ---" >&2
@@ -302,7 +311,7 @@ rollback_from_state_file() {
 
 	disable_release_tracking
 	clear_release_state
-	info "Rollback complete — back on ${ORIGINAL_BRANCH}."
+	success "Rollback complete — back on ${ORIGINAL_BRANCH}."
 }
 
 # ---------------------------------------------------------------------------
@@ -645,7 +654,7 @@ finalize_local_release() {
 	save_release_state "completed"
 	maybe_send_local_test_announcement
 
-	info "Local release rehearsal complete."
+	success "Local release rehearsal complete."
 	info "Release branch: ${RELEASE_BRANCH}"
 	info "Release tag:    ${RELEASE_TAG}"
 	info "Log file:       ${LOG_FILE}"
@@ -661,7 +670,7 @@ maybe_send_local_test_announcement() {
 
 	git_run checkout -q "${RELEASE_TAG}"
 	if send_announcement; then
-		info "Test announcement sent to ${LOCAL_TEST_EMAIL}."
+		success "Test announcement sent to ${LOCAL_TEST_EMAIL}."
 	else
 		warn "Failed to send test announcement — see ${LOG_FILE}"
 	fi
@@ -712,7 +721,7 @@ maybe_send_announcement() {
 
 	git_run checkout -q "${RELEASE_TAG}"
 	if send_announcement; then
-		info "Announcement sent."
+		success "Announcement sent."
 	else
 		warn "Failed to send announcement — see ${LOG_FILE}"
 	fi
@@ -728,15 +737,15 @@ rollback_release() {
 	warn "Release was not completed."
 
 	if confirm "Delete branch ${RELEASE_BRANCH} and tag ${RELEASE_TAG}?" y; then
-	if git_branch_exists "${RELEASE_BRANCH}"; then
-		git_cmd branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
-	fi
-	if git_tag_exists "${RELEASE_TAG}"; then
-		git_cmd tag -d "${RELEASE_TAG}" 2>/dev/null || true
-	fi
+		if git_branch_exists "${RELEASE_BRANCH}"; then
+			git_cmd branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
+		fi
+		if git_tag_exists "${RELEASE_TAG}"; then
+			git_cmd tag -d "${RELEASE_TAG}" 2>/dev/null || true
+		fi
 		disable_release_tracking
 		clear_release_state
-		info "Local release branch and tag removed."
+		success "Local release branch and tag removed."
 	else
 		info "Left in place for manual inspection:"
 		info "  branch: ${RELEASE_BRANCH}"
@@ -771,11 +780,11 @@ main() {
 
 	cd "${START_DIR}"
 	if is_dry_run; then
-		info "Dry-run complete — repository state unchanged."
+		success "Dry-run complete — repository state unchanged."
 	elif is_local; then
-		info "Done (local mode — use --rollback to clean up)."
+		success "Done (local mode — use --rollback to clean up)."
 	else
-		info "Done."
+		success "Done."
 	fi
 }
 
