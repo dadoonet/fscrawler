@@ -23,6 +23,7 @@ START_DIR="$(pwd)"
 DRY_RUN=false
 LOCAL_MODE=false
 ROLLBACK_ONLY=false
+SKIP_TESTS=false
 RELEASE_APPROVED=false
 RELEASE_TRACKING=false
 FAILURE_HANDLED=false
@@ -51,6 +52,7 @@ Options:
   -l, --local      Full local rehearsal: branch, build, sign, release notes
                    (no Maven Central, Docker Hub, git push, or public email)
       --rollback   Undo a local or failed release using ${RELEASE_STATE_FILE_NAME}
+      --skip-tests Add -DskipTests to Maven build commands
 
 Modes:
   default          Interactive production release (deploy/push when confirmed)
@@ -68,6 +70,7 @@ Examples:
   ${SCRIPT_NAME} --help
   ${SCRIPT_NAME} --dry-run
   ${SCRIPT_NAME} --local
+  ${SCRIPT_NAME} --local --skip-tests
   ${SCRIPT_NAME} --rollback
 
 Prerequisites (default and --local):
@@ -96,6 +99,10 @@ parse_args() {
 			;;
 		--rollback)
 			ROLLBACK_ONLY=true
+			shift
+			;;
+		--skip-tests)
+			SKIP_TESTS=true
 			shift
 			;;
 		--)
@@ -130,6 +137,10 @@ is_local() {
 
 is_rollback() {
 	[[ "${ROLLBACK_ONLY}" == true ]]
+}
+
+is_skip_tests() {
+	[[ "${SKIP_TESTS}" == true ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -388,6 +399,30 @@ suggest_next_snapshot() {
 	printf '%s-SNAPSHOT' "$(increment_version "$1")"
 }
 
+append_maven_arg_if_missing() {
+	local arg=$1
+	local existing
+
+	for existing in "${MAVEN_EXTRA_ARGS[@]}"; do
+		if [[ "${existing}" == "${arg}" ]]; then
+			return 0
+		fi
+	done
+
+	MAVEN_EXTRA_ARGS+=("${arg}")
+}
+
+apply_maven_options() {
+	if is_skip_tests; then
+		append_maven_arg_if_missing "-DskipTests"
+		info "Skip tests enabled (-DskipTests)"
+	fi
+
+	if ((${#MAVEN_EXTRA_ARGS[@]} > 0)); then
+		info "Maven options: ${MAVEN_EXTRA_ARGS[*]}"
+	fi
+}
+
 # ---------------------------------------------------------------------------
 # Maven & Git helpers
 # ---------------------------------------------------------------------------
@@ -572,6 +607,8 @@ gather_inputs() {
 		# shellcheck disable=SC2206
 		MAVEN_EXTRA_ARGS=(${maven_opts})
 	fi
+
+	apply_maven_options
 
 	RELEASE_BRANCH="release-${RELEASE_VERSION}"
 	RELEASE_TAG="${TAG_PREFIX}-${RELEASE_VERSION}"
