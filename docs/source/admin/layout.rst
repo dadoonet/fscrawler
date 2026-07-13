@@ -27,7 +27,7 @@ The ``bin`` directory contains the scripts to run FSCrawler.
 
 The ``lib`` directory contains the FSCrawler jar file and all the dependencies.
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 The ``config`` directory contains the configuration files. See :ref:`logger`.
 

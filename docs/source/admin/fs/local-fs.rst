@@ -70,7 +70,7 @@ Here is a list of Local FS settings (under ``fs.`` prefix):
 Crawler Provider
 ^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 The ``fs.provider`` setting specifies which crawler plugin to use for scanning files.
 Available providers are:
@@ -837,7 +837,7 @@ such as ``MD5`` or ``SHA-1``.
 Temporary Directory
 ^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 When ``checksum`` or ``store_source`` is enabled, FSCrawler may need to create
 temporary files to process large documents without loading them entirely into memory.
@@ -877,7 +877,7 @@ If you want FSCrawler to follow the symbolic links, you need to be explicit abou
 Tika Config Path
 ^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 If you want to override the default tika parser configuration, you can set the path to a custom tika
 configuration file, which will be used instead.

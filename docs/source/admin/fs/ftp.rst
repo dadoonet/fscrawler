@@ -21,7 +21,7 @@ Here is a list of FTP settings:
 | ``server.password`` | ``FSCRAWLER_SERVER_PASSWORD`` | ``null``      | :ref:`ftp_login`                     |
 +---------------------+-------------------------------+---------------+--------------------------------------+
 
-.. deprecated:: 2.10
+.. deprecated:: 3.0
 
    The ``server.protocol`` setting is deprecated. Use ``fs.provider`` instead.
 

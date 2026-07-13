@@ -183,16 +183,14 @@ git commit -q -a -m "prepare for next development iteration"
 git checkout -q ${CURRENT_BRANCH}
 
 if [ ${DRY_RUN} -eq 0 ]; then
-	echo "Inspect Sonatype staging repositories"
-	open https://s01.oss.sonatype.org/#stagingRepositories
+	echo "Inspect Maven Central publishing deployments"
+	open https://central.sonatype.com/publishing/deployments
 
-	if promptyn "Is the staging repository ok?"; then
-		echo "releasing the nexus repository"
-		mvn nexus-staging:release >>/tmp/fscrawler-${RELEASE_VERSION}.log
+	if promptyn "Is the Maven Central deployment ok?"; then
+		echo "Maven Central deployment confirmed."
 	else
-		echo "dropping the nexus repository"
+		echo "Maven Central deployment rejected - cancel release process."
 		RELEASE=0
-		mvn nexus-staging:drop >>/tmp/fscrawler-${RELEASE_VERSION}.log
 	fi
 fi
 

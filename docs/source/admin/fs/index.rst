@@ -22,7 +22,7 @@ in multiple files, like:
 Using placeholders
 ------------------
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 FSCrawler supports placeholders in the job file. This is useful when you want to use environment variables in your job file.
 For example, you can define the following job file:

@@ -23,7 +23,7 @@ FSCrawler is a Java-based file system crawler for Elasticsearch that helps index
 - **Basic build (NEVER CANCEL - takes ~1-2 minutes)**:
   ```bash
   mvn clean package -DskipTests
-  # Distribution artifact: distribution/target/fscrawler-distribution-2.10-SNAPSHOT.zip
+  # Distribution artifact: distribution/target/fscrawler-distribution-3.0-SNAPSHOT.zip
   ```
 
 - **Unit tests (NEVER CANCEL - takes ~45-60 seconds)**:
@@ -40,8 +40,8 @@ FSCrawler is a Java-based file system crawler for Elasticsearch that helps index
 - **Extract and test distribution**:
   ```bash
   # After building
-  cd /tmp && unzip distribution/target/fscrawler-distribution-2.10-SNAPSHOT.zip
-  cd fscrawler-distribution-2.10-SNAPSHOT
+  cd /tmp && unzip distribution/target/fscrawler-distribution-3.0-SNAPSHOT.zip
+  cd fscrawler-distribution-3.0-SNAPSHOT
   ./bin/fscrawler --help
   ```
 

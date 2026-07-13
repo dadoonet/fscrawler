@@ -77,7 +77,7 @@ the crawler name (``name`` property) plus ``_folder`` suffix, like
 Mappings
 ~~~~~~~~
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 FSCrawler defines the following `Component Templates <https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html>`__
 to define the index settings and mappings (replace ``INDEX`` with the index name):
@@ -235,7 +235,7 @@ though.
 Semantic search
 """""""""""""""
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 FSCrawler can use `semantic search <https://www.elastic.co/guide/en/elasticsearch/reference/current/semantic-search.html>`__
 to improve the search results.
@@ -433,7 +433,7 @@ to it:
 API Key
 ~~~~~~~
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 Let's create an API Key named ``fscrawler``:
 

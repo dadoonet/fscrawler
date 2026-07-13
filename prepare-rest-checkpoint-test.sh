@@ -62,7 +62,7 @@ fi
 echo "Using: $ZIP"
 cd "$DIST_TARGET"
 unzip -o -q "$(basename "$ZIP")"
-# Top-level dir created by unzip (e.g. fscrawler-distribution-2.10-SNAPSHOT)
+# Top-level dir created by unzip (e.g. fscrawler-distribution-3.0-SNAPSHOT)
 EXTRACTED=$(find . -maxdepth 1 -type d -name 'fscrawler*' ! -name '.' | head -1)
 if [ -z "$EXTRACTED" ]; then
 	EXTRACTED="."

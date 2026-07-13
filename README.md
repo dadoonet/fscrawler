@@ -18,15 +18,15 @@ Current "most stable" versions are:
 
 | Elasticsearch | FS Crawler    | Released   | Docs                                                                          |
 |---------------|---------------|------------|-------------------------------------------------------------------------------|
-| 7.x, 8.x, 9.x | 2.10-SNAPSHOT |            | [2.10-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
+| 7.x, 8.x, 9.x | 3.0-SNAPSHOT |            | [3.0-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
 
 [![Maven Central](https://img.shields.io/maven-central/v/fr.pilato.elasticsearch.crawler/fscrawler-distribution)](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
 ![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)
-[![Maven metadata URL](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fs01.oss.sonatype.org%2Fcontent%2Frepositories%2Fsnapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2Fmaven-metadata.xml&label=Latest%20SNAPSHOT&link=https%3A%2F%2Fs01.oss.sonatype.org%2Fcontent%2Frepositories%2Fsnapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2F)](https://s01.oss.sonatype.org/content/repositories/snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
+[![Maven metadata URL](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2Fmaven-metadata.xml&label=Latest%20SNAPSHOT&link=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2F)](https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
 ![GitHub last commit](https://img.shields.io/github/last-commit/dadoonet/fscrawler)
 
 ![Docker Pulls](https://img.shields.io/docker/pulls/dadoonet/fscrawler)
-![Docker Image Size (tag)](https://img.shields.io/docker/image-size/dadoonet/fscrawler/2.10-SNAPSHOT?label=Docker%20image%20size)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/dadoonet/fscrawler/3.0-SNAPSHOT?label=Docker%20image%20size)
 ![Docker Image Version (latest semver)](https://img.shields.io/docker/v/dadoonet/fscrawler)
 
 ## Build and Quality Status

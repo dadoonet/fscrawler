@@ -260,20 +260,20 @@ If you prefer to run FSCrawler from a ZIP distribution on your machine instead o
             still be able to publish and consume SNAPSHOT releases as usual, but you cannot
             browse them via the UI.
 
-        So you must now download the `maven-metadata.xml <https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/maven-metadata.xml>`__
+        So you must now download the `maven-metadata.xml <https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/maven-metadata.xml>`__
         file. Check the ``<snapshotVersion>`` tag to find the latest SNAPSHOT version of the ``zip`` file.
 
         .. code:: xml
 
             <snapshotVersion>
               <extension>zip</extension>
-              <value>2.10-20250801.161301-75</value>
-              <updated>20250801161301</updated>
+              <value>3.0-YYYYMMDD.HHMMSS-NN</value>
+              <updated>YYYYMMDDHHMMSS</updated>
             </snapshotVersion>
 
         Note the ``value`` tag which contains the version you need to download. And use that value in the following URL:
 
-        https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/fscrawler-distribution-2.10-20250801.161301-75.zip
+        https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/fscrawler-distribution-3.0-YYYYMMDD.HHMMSS-NN.zip
 
 .. ifconfig:: release == version
 

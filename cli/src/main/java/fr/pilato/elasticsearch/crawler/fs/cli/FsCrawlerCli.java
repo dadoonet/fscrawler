@@ -78,20 +78,20 @@ public class FsCrawlerCli {
         @Parameter(names = "--config_dir", description = "Config directory. Default to ~/.fscrawler")
         String configDir = null;
 
-        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-Delasticsearch.api-key"} instead */
+        /** @deprecated since 3.0, use {@code FS_JAVA_OPTS="-Delasticsearch.api-key"} instead */
         @Parameter(
                 names = "--api_key",
                 description = "Elasticsearch api key. (Deprecated - use "
                         + "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
-        @Deprecated(since = "2.10", forRemoval = true)
+        @Deprecated(since = "3.0", forRemoval = true)
         String apiKey = null;
 
-        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-Delasticsearch.api-key"} instead */
+        /** @deprecated since 3.0, use {@code FS_JAVA_OPTS="-Delasticsearch.api-key"} instead */
         @Parameter(
                 names = "--username",
                 description = "Elasticsearch username. (Deprecated - use "
                         + "FS_JAVA_OPTS=\"-Delasticsearch.api-key\" instead)")
-        @Deprecated(since = "2.10", forRemoval = true)
+        @Deprecated(since = "3.0", forRemoval = true)
         String username = null;
 
         @Parameter(names = "--loop", description = "Number of scan loop before exiting.")
@@ -117,15 +117,15 @@ public class FsCrawlerCli {
         @Parameter(names = "--list", description = "List FSCrawler jobs if any.")
         boolean list = false;
 
-        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-DLOG_LEVEL=debug"} instead */
-        @Deprecated(since = "2.10", forRemoval = true)
+        /** @deprecated since 3.0, use {@code FS_JAVA_OPTS="-DLOG_LEVEL=debug"} instead */
+        @Deprecated(since = "3.0", forRemoval = true)
         @Parameter(
                 names = "--debug",
                 description = "Debug mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\" instead)")
         boolean debug = false;
 
-        /** @deprecated since 2.10, use {@code FS_JAVA_OPTS="-DLOG_LEVEL=trace"} instead */
-        @Deprecated(since = "2.10", forRemoval = true)
+        /** @deprecated since 3.0, use {@code FS_JAVA_OPTS="-DLOG_LEVEL=trace"} instead */
+        @Deprecated(since = "3.0", forRemoval = true)
         @Parameter(
                 names = "--trace",
                 description = "Trace mode (Deprecated - use FS_JAVA_OPTS=\"-DLOG_LEVEL=trace\" instead)")

@@ -72,7 +72,7 @@ Migration from previous versions
 
 .. note::
 
-   In versions prior to 2.10, FSCrawler used a ``_status.json`` file to store scan information.
-   When upgrading to 2.10 or later, FSCrawler will automatically migrate the data from 
+   In versions prior to 3.0, FSCrawler used a ``_status.json`` file to store scan information.
+   When upgrading to 3.0 or later, FSCrawler will automatically migrate the data from
    ``_status.json`` to the new ``_checkpoint.json`` format. The old ``_status.json`` file 
    will be removed after successful migration.

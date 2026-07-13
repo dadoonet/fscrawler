@@ -25,7 +25,7 @@ Here is a list of SSH settings:
 | ``server.pem_path`` | ``FSCRAWLER_SERVER_PEM_PATH`` | ``null``      | :ref:`ssh_pem`                       |
 +---------------------+-------------------------------+---------------+--------------------------------------+
 
-.. deprecated:: 2.10
+.. deprecated:: 3.0
 
    The ``server.protocol`` setting is deprecated. Use ``fs.provider`` instead.
 
