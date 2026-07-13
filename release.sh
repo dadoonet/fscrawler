@@ -415,7 +415,6 @@ append_maven_arg_if_missing() {
 apply_maven_options() {
 	if is_skip_tests; then
 		append_maven_arg_if_missing "-DskipTests"
-		info "Skip tests enabled (-DskipTests)"
 	fi
 
 	if ((${#MAVEN_EXTRA_ARGS[@]} > 0)); then
