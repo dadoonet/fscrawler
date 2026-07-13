@@ -9,6 +9,19 @@ MAX_DURATION_SECONDS="${TESTS_CLUSTER_WARMUP_SECONDS:-300}"
 
 CLUSTER_URL="${CLUSTER_URL%/}"
 
+get_public_ip() {
+  curl -fsSL --max-time 5 https://api.ipify.org 2>/dev/null \
+    || curl -fsSL --max-time 5 https://ifconfig.me/ip 2>/dev/null \
+    || echo "unknown (could not determine public IP)"
+}
+
+report_error() {
+  local message="$1"
+  local public_ip="$2"
+  echo "ERROR: ${message}" >&2
+  echo "Public outbound IP (as seen by external services): ${public_ip}" >&2
+}
+
 start_time=$(date +%s)
 delay=1
 
@@ -18,7 +31,8 @@ while true; do
   now=$(date +%s)
   elapsed=$((now - start_time))
   if [ "$elapsed" -ge "$MAX_DURATION_SECONDS" ]; then
-    echo "ERROR: Cluster root endpoint did not return HTTP 200 within ${MAX_DURATION_SECONDS}s."
+    public_ip=$(get_public_ip)
+    report_error "Cluster root endpoint did not return HTTP 200 within ${MAX_DURATION_SECONDS}s." "${public_ip}"
     exit 1
   fi
 
@@ -31,7 +45,8 @@ while true; do
     exit 0
   fi
 
-  echo "Root endpoint returned HTTP ${http_code}. Cluster might still be cold. Retrying in ${delay}s..."
+  public_ip=$(get_public_ip)
+  echo "Root endpoint returned HTTP ${http_code} from public IP ${public_ip}. Cluster might still be cold. Retrying in ${delay}s..."
   sleep "$delay"
   delay=$((delay * 2))
   if [ "$delay" -gt 10 ]; then
