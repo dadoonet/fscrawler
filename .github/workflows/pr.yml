@@ -107,6 +107,12 @@ jobs:
       - name: Fetch base branch for Spotless ratchet
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
         run: git fetch origin master --depth=1
+      - name: Warm up Elastic Cloud cluster
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        env:
+          TESTS_CLUSTER_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
+          TESTS_CLUSTER_APIKEY: ${{ secrets.ELASTIC_CLOUD_APIKEY }}
+        run: bash .github/scripts/warm-up-elasticsearch.sh
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
@@ -138,6 +144,12 @@ jobs:
       - name: Fetch base branch for Spotless ratchet
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
         run: git fetch origin master --depth=1
+      - name: Warm up Elastic Cloud Serverless cluster
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
+        env:
+          TESTS_CLUSTER_URL: ${{ secrets.ELASTIC_SERVERLESS_URL }}
+          TESTS_CLUSTER_APIKEY: ${{ secrets.ELASTIC_SERVERLESS_APIKEY }}
+        run: bash .github/scripts/warm-up-elasticsearch.sh
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
@@ -173,6 +185,13 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
+      - name: Warm up Elastic Cloud cluster
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        shell: bash
+        env:
+          TESTS_CLUSTER_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
+          TESTS_CLUSTER_APIKEY: ${{ secrets.ELASTIC_CLOUD_APIKEY }}
+        run: bash .github/scripts/warm-up-elasticsearch.sh
       - name: Run the integration tests
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
         shell: bash
