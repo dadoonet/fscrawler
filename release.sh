@@ -341,6 +341,11 @@ confirm() {
 	local prompt=$1
 	local default=${2:-y}
 	local answer
+	local prompt_suffix="[Y/n]"
+
+	if [[ "${default}" == [Nn]* ]]; then
+		prompt_suffix="[y/N]"
+	fi
 
 	if is_dry_run; then
 		info "[dry-run] ${prompt} → ${default}"
@@ -349,7 +354,7 @@ confirm() {
 	fi
 
 	while true; do
-		read -r -p "${prompt} [Y/n]? " answer
+		read -r -p "${prompt} ${prompt_suffix}? " answer
 		answer=${answer:-${default}}
 		case "${answer}" in
 		[Yy]*) return 0 ;;
