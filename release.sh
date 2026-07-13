@@ -706,7 +706,7 @@ finalize_local_release() {
 }
 
 maybe_send_local_test_announcement() {
-	if ! confirm "Send test announcement email to ${LOCAL_TEST_EMAIL}?" n; then
+	if ! confirm "Send test announcement email to ${LOCAL_TEST_EMAIL}?" y; then
 		info "Skipped test email. Preview remains in target/announcement/announcement.vm"
 		return
 	fi
