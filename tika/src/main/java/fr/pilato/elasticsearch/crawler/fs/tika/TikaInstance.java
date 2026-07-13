@@ -38,6 +38,7 @@ import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.exception.ZeroByteFileException;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.AutoDetectParser;
@@ -236,12 +237,12 @@ class TikaInstance {
         try {
             parser.parse(stream, new BodyContentHandler(handler), metadata, context);
         } catch (WriteLimitReachedException e) {
-            String resourceName = metadata.get("resourceName");
+            String resourceName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
             logger.debug("We reached the limit we set ({}) for {}: {}", indexedChars, resourceName, e.getMessage());
         } catch (SAXException e) {
             throw new TikaException("Unexpected SAX processing failure", e);
         } catch (ZeroByteFileException e) {
-            String resourceName = metadata.get("resourceName");
+            String resourceName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
             logger.debug("Got an empty file for {}, so we are just skipping it.", resourceName);
         }
         return handler.toString();
