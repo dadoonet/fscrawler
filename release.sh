@@ -12,12 +12,19 @@ readonly CENTRAL_DEPLOYMENTS_URL="https://central.sonatype.com/publishing/deploy
 readonly DOCKERHUB_TAGS_URL="https://hub.docker.com/r/dadoonet/fscrawler/tags"
 readonly TAG_PREFIX="fscrawler"
 readonly SCRIPT_NAME="${0##*/}"
+readonly RELEASE_STATE_FILE_NAME=".release"
+readonly LOCAL_TEST_EMAIL="david@pilato.fr"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RELEASE_STATE_FILE="${ROOT_DIR}/${RELEASE_STATE_FILE_NAME}"
 START_DIR="$(pwd)"
+
 DRY_RUN=false
+LOCAL_MODE=false
+ROLLBACK_ONLY=false
 RELEASE_APPROVED=false
 
+ORIGINAL_BRANCH=""
 RELEASE_VERSION=""
 NEXT_VERSION=""
 RELEASE_BRANCH=""
@@ -36,26 +43,34 @@ Usage: ${SCRIPT_NAME} [OPTIONS]
 Interactive release workflow for FSCrawler.
 
 Options:
-  -h, --help     Show this help message and exit
-  -n, --dry-run  Simulate the release without mutating git, Maven, or remotes
-                 (no build, deploy, push, browser, or email)
+  -h, --help       Show this help message and exit
+  -n, --dry-run    Simulate the release without mutating git, Maven, or remotes
+  -l, --local      Full local rehearsal: branch, build, sign, release notes
+                   (no Maven Central, Docker Hub, git push, or public email)
+      --rollback   Undo a previous --local run using ${RELEASE_STATE_FILE_NAME}
 
-Dry-run behaviour:
-  - Prompts still appear; destructive confirmations default to safe answers
-  - Deploy, push, and email are skipped automatically
-  - Git branch/tag/commit and Maven commands are logged but not executed
-  - Useful to validate the workflow on a throwaway branch
+Modes:
+  default          Interactive production release (deploy/push when confirmed)
+  --dry-run        Log commands only; repository stays unchanged
+  --local          Execute locally and write ${RELEASE_STATE_FILE_NAME} for rollback
+  --rollback       Delete local release branch/tag and return to the original branch
+
+Local mode:
+  - Creates the release branch, commits, builds with -Prelease, tags, generates notes
+  - Skips deploy, git push, Docker Hub, and Central Portal checks
+  - Optionally sends a test announcement email to ${LOCAL_TEST_EMAIL} only
+  - Keeps branch/tag for inspection; run --rollback to clean up
 
 Examples:
   ${SCRIPT_NAME} --help
   ${SCRIPT_NAME} --dry-run
-  ${SCRIPT_NAME} --dry-run    # extra Maven opts when prompted: -DskipTests -Ddocker.skip
+  ${SCRIPT_NAME} --local
+  ${SCRIPT_NAME} --rollback
 
-Real release prerequisites:
+Prerequisites (default and --local):
   - Clean-ish git working tree on your integration branch
   - GPG signing configured for the Maven release profile
-  - ~/.m2/settings.xml server id "central" (Sonatype Central token)
-  - Docker Hub credentials when pushing images (or pass -Ddocker.skip)
+  - ~/.m2/settings.xml server id "central" for production deploy only
 
 Logs are written to /tmp/fscrawler-<release-version>.log
 EOF
@@ -72,6 +87,14 @@ parse_args() {
 			DRY_RUN=true
 			shift
 			;;
+		-l | --local)
+			LOCAL_MODE=true
+			shift
+			;;
+		--rollback)
+			ROLLBACK_ONLY=true
+			shift
+			;;
 		--)
 			shift
 			break
@@ -84,10 +107,26 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if is_dry_run && is_local; then
+		die "--dry-run and --local are mutually exclusive."
+	fi
+
+	if is_rollback && { is_dry_run || is_local; }; then
+		die "--rollback cannot be combined with other modes."
+	fi
 }
 
 is_dry_run() {
 	[[ "${DRY_RUN}" == true ]]
+}
+
+is_local() {
+	[[ "${LOCAL_MODE}" == true ]]
+}
+
+is_rollback() {
+	[[ "${ROLLBACK_ONLY}" == true ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -123,9 +162,90 @@ show_log_tail() {
 	[[ -f "${LOG_FILE}" ]] && tail -7 "${LOG_FILE}"
 }
 
-announce_dry_run_mode() {
-	is_dry_run || return 0
-	warn "Dry-run mode enabled — no git, Maven, browser, or remote changes will be made."
+announce_mode() {
+	if is_dry_run; then
+		warn "Dry-run mode — no git, Maven, browser, or remote changes will be made."
+	elif is_local; then
+		warn "Local mode — remote publish, push, and public email are disabled."
+	fi
+}
+
+# ---------------------------------------------------------------------------
+# Release state (${RELEASE_STATE_FILE_NAME})
+# ---------------------------------------------------------------------------
+
+release_state_exists() {
+	[[ -f "${RELEASE_STATE_FILE}" ]]
+}
+
+ensure_no_release_state() {
+	release_state_exists || return 0
+	die "Existing release state found (${RELEASE_STATE_FILE_NAME}). Run: ${SCRIPT_NAME} --rollback"
+}
+
+save_release_state() {
+	local mode="production"
+	is_local && mode="local"
+
+	cat >"${RELEASE_STATE_FILE}" <<EOF
+ORIGINAL_BRANCH=${ORIGINAL_BRANCH}
+RELEASE_BRANCH=${RELEASE_BRANCH}
+RELEASE_TAG=${RELEASE_TAG}
+RELEASE_VERSION=${RELEASE_VERSION}
+NEXT_VERSION=${NEXT_VERSION}
+LOG_FILE=${LOG_FILE}
+MODE=${mode}
+EOF
+	log "Saved release state to ${RELEASE_STATE_FILE_NAME}"
+}
+
+load_release_state() {
+	# shellcheck disable=SC1090
+	source "${RELEASE_STATE_FILE}"
+}
+
+clear_release_state() {
+	rm -f "${RELEASE_STATE_FILE}"
+}
+
+rollback_from_state_file() {
+	cd "${ROOT_DIR}"
+
+	if ! release_state_exists; then
+		die "No release state file (${RELEASE_STATE_FILE_NAME}). Nothing to rollback."
+	fi
+
+	load_release_state
+
+	info "Rolling back local release ${RELEASE_VERSION}"
+	info "  original branch: ${ORIGINAL_BRANCH}"
+	info "  release branch:  ${RELEASE_BRANCH}"
+	info "  release tag:     ${RELEASE_TAG}"
+
+	local current_branch
+	current_branch="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
+
+	if [[ "${current_branch}" != "${ORIGINAL_BRANCH}" ]]; then
+		log "Checking out ${ORIGINAL_BRANCH}"
+		git_run checkout -q "${ORIGINAL_BRANCH}"
+	fi
+
+	if git_run show-ref --verify --quiet "refs/heads/${RELEASE_BRANCH}"; then
+		log "Deleting branch ${RELEASE_BRANCH}"
+		git_run branch -D "${RELEASE_BRANCH}"
+	else
+		info "Release branch ${RELEASE_BRANCH} not found (already removed)."
+	fi
+
+	if git_run show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"; then
+		log "Deleting tag ${RELEASE_TAG}"
+		git_run tag -d "${RELEASE_TAG}"
+	else
+		info "Release tag ${RELEASE_TAG} not found (already removed)."
+	fi
+
+	clear_release_state
+	info "Rollback complete — back on ${ORIGINAL_BRANCH}."
 }
 
 # ---------------------------------------------------------------------------
@@ -257,11 +377,20 @@ generate_announcement() {
 
 send_announcement() {
 	local username password
-	username="$(prompt_default "SMTP username" "david@pilato.fr")"
+	local -a mail_args=()
+
+	username="$(prompt_default "SMTP username" "${LOCAL_TEST_EMAIL}")"
 	password="$(prompt_default "SMTP password" "")"
+
+	if is_local; then
+		mail_args=(-Dchanges.toAddresses="${LOCAL_TEST_EMAIL}")
+		info "Local mode — announcement will be sent to ${LOCAL_TEST_EMAIL} only."
+	fi
+
 	mvn_run changes:announcement-mail \
 		-Dchanges.username="${username}" \
-		-Dchanges.password="${password}"
+		-Dchanges.password="${password}" \
+		"${mail_args[@]}"
 }
 
 ensure_clean_enough_tree() {
@@ -307,8 +436,8 @@ create_release_tag() {
 
 open_url() {
 	local url=$1
-	if is_dry_run; then
-		info "[dry-run] Would open ${url}"
+	if is_dry_run || is_local; then
+		info "[local] Reference URL: ${url}"
 		return
 	fi
 
@@ -329,15 +458,16 @@ gather_inputs() {
 	local current_version current_branch default_release default_next maven_opts
 
 	cd "${ROOT_DIR}"
-	announce_dry_run_mode
+	announce_mode
+	ensure_no_release_state
 	ensure_clean_enough_tree
 
-	current_branch="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
+	ORIGINAL_BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
 	current_version="$(current_maven_version)"
 	default_release="$(strip_snapshot "${current_version}")"
 	default_next="$(suggest_next_snapshot "${default_release}")"
 
-	info "Branch: ${current_branch}"
+	info "Branch: ${ORIGINAL_BRANCH}"
 	info "Current version: ${current_version}"
 
 	RELEASE_VERSION="$(prompt_default "Release version" "${default_release}")"
@@ -353,7 +483,7 @@ gather_inputs() {
 	RELEASE_TAG="${TAG_PREFIX}-${RELEASE_VERSION}"
 	LOG_FILE="/tmp/fscrawler-${RELEASE_VERSION}.log"
 
-	if [[ "${current_branch}" == "${RELEASE_BRANCH}" ]]; then
+	if [[ "${ORIGINAL_BRANCH}" == "${RELEASE_BRANCH}" ]]; then
 		warn "You are already on ${RELEASE_BRANCH}. Consider switching to your integration branch first."
 	fi
 
@@ -387,8 +517,8 @@ review_announcement() {
 }
 
 maybe_deploy() {
-	if is_dry_run; then
-		info "[dry-run] Skipping deployment."
+	if is_dry_run || is_local; then
+		info "Skipping deployment (no Maven Central / Docker Hub publish)."
 		return
 	fi
 
@@ -424,17 +554,48 @@ verify_publications() {
 	confirm "Are the Docker images OK?" y || RELEASE_APPROVED=false
 }
 
-finalize_release() {
-	local original_branch=$1
+finalize_local_release() {
+	git_run checkout -q "${ORIGINAL_BRANCH}"
+	save_release_state
+	maybe_send_local_test_announcement
 
-	git_run checkout -q "${original_branch}"
+	info "Local release rehearsal complete."
+	info "Release branch: ${RELEASE_BRANCH}"
+	info "Release tag:    ${RELEASE_TAG}"
+	info "Log file:       ${LOG_FILE}"
+	info "When finished inspecting, rollback with:"
+	info "  ${SCRIPT_NAME} --rollback"
+}
+
+maybe_send_local_test_announcement() {
+	if ! confirm "Send test announcement email to ${LOCAL_TEST_EMAIL}?" n; then
+		info "Skipped test email. Preview remains in target/announcement/announcement.vm"
+		return
+	fi
+
+	git_run checkout -q "${RELEASE_TAG}"
+	if send_announcement; then
+		info "Test announcement sent to ${LOCAL_TEST_EMAIL}."
+	else
+		warn "Failed to send test announcement — see ${LOG_FILE}"
+	fi
+	git_run checkout -q "${ORIGINAL_BRANCH}"
+}
+
+finalize_release() {
+	git_run checkout -q "${ORIGINAL_BRANCH}"
+
+	if is_local; then
+		finalize_local_release
+		return
+	fi
 
 	if [[ "${RELEASE_APPROVED}" != true ]]; then
 		rollback_release
 		return
 	fi
 
-	log "Merging ${RELEASE_BRANCH} into ${original_branch}"
+	log "Merging ${RELEASE_BRANCH} into ${ORIGINAL_BRANCH}"
 	git_run merge -q "${RELEASE_BRANCH}"
 	git_run branch -q -d "${RELEASE_BRANCH}"
 
@@ -443,19 +604,17 @@ finalize_release() {
 		return
 	fi
 
-	if ! confirm "Push ${original_branch} and tag ${RELEASE_TAG} to origin?" n; then
+	if ! confirm "Push ${ORIGINAL_BRANCH} and tag ${RELEASE_TAG} to origin?" n; then
 		info "Not pushed. When ready:"
-		info "  git push origin ${original_branch} ${RELEASE_TAG}"
+		info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
 		return
 	fi
 
-	git_run push origin "${original_branch}" "${RELEASE_TAG}"
-	maybe_send_announcement "${original_branch}"
+	git_run push origin "${ORIGINAL_BRANCH}" "${RELEASE_TAG}"
+	maybe_send_announcement
 }
 
 maybe_send_announcement() {
-	local original_branch=$1
-
 	if ! confirm "Send the release announcement email?" n; then
 		info "Send manually from the tag checkout:"
 		info "  git checkout ${RELEASE_TAG}"
@@ -469,7 +628,7 @@ maybe_send_announcement() {
 	else
 		warn "Failed to send announcement — see ${LOG_FILE}"
 	fi
-	git_run checkout -q "${original_branch}"
+	git_run checkout -q "${ORIGINAL_BRANCH}"
 }
 
 rollback_release() {
@@ -483,11 +642,14 @@ rollback_release() {
 	if confirm "Delete branch ${RELEASE_BRANCH} and tag ${RELEASE_TAG}?" y; then
 		git_run branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
 		git_run tag -d "${RELEASE_TAG}" 2>/dev/null || true
+		clear_release_state
 		info "Local release branch and tag removed."
 	else
 		info "Left in place for manual inspection:"
 		info "  branch: ${RELEASE_BRANCH}"
 		info "  tag:    ${RELEASE_TAG}"
+		info "  rollback later: ${SCRIPT_NAME} --rollback"
+		save_release_state
 	fi
 }
 
@@ -496,11 +658,15 @@ rollback_release() {
 # ---------------------------------------------------------------------------
 
 main() {
-	local original_branch
-
 	parse_args "$@"
+
+	if is_rollback; then
+		rollback_from_state_file
+		cd "${START_DIR}"
+		return
+	fi
+
 	gather_inputs
-	original_branch="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
 
 	prepare_release_branch
 	validate_build_and_tag
@@ -508,11 +674,13 @@ main() {
 	maybe_deploy
 	bump_development_version
 	verify_publications
-	finalize_release "${original_branch}"
+	finalize_release
 
 	cd "${START_DIR}"
 	if is_dry_run; then
 		info "Dry-run complete — repository state unchanged."
+	elif is_local; then
+		info "Done (local mode — use --rollback to clean up)."
 	else
 		info "Done."
 	fi
