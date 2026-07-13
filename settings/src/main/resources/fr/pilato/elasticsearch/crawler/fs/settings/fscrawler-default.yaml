@@ -85,7 +85,7 @@
     # optional: the OCR output type, either txt or hocr
     #output_type: txt
     # optional: the OCR strategy, either auto, no_ocr, ocr_only, ocr_and_text
-    #pdf_strategy: ocr_and_text
+    #pdf_strategy: auto
     # optional: the mode to use for page orientation from 0 to 13
     #page_seg_mode: 1 # automatic mode
     # optional: if true, we will try to preserve interword spacing

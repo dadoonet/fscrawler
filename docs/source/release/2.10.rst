@@ -17,6 +17,21 @@ enough. Thanks to dadoonet.
 * We don't support anymore the ``elasticsearch.nodes.url`` setting. You need to use ``elasticsearch.urls``
   instead. Thanks to dadoonet.
 * The ``_upload`` REST endpoint has been removed. Please now use the ``_document`` endpoint. Thanks to dadoonet.
+* The Apache Tika 4 upgrade changes several ``meta.raw.*`` metadata key names. If you search, aggregate or
+  map these fields, you will need to update your queries and index templates accordingly:
+
+  * Image and EXIF metadata (JPEG, PNG, TIFF, …) keys are now namespaced under ``img:``. For example
+    ``Number of Tables`` becomes ``img:Number of Tables`` and ``Exif IFD0:Orientation`` becomes
+    ``img:Exif IFD0:Orientation``.
+  * The resource name key ``resourceName`` is renamed to ``X-TIKA:resourceName``.
+  * New keys are now produced, such as ``Content-Type-Magic-Detected``, ``X-TIKA:Parsed-By-Full-Set`` and,
+    for text documents, the encoding detection keys ``X-TIKA:detectedEncoding``,
+    ``X-TIKA:encodingDetectionTrace`` and ``X-TIKA:encodingDetector``.
+
+  Thanks to dadoonet.
+* The default ``fs.ocr.pdf_strategy`` is now ``auto`` instead of ``ocr_and_text``. With ``auto``, OCR is skipped on
+  PDF pages that already contain more than 10 characters of text. If you relied on the previous behaviour and want
+  OCR on every PDF page, explicitly set ``fs.ocr.pdf_strategy`` to ``ocr_and_text``. Thanks to dadoonet.
 
 New
 ---
@@ -38,6 +53,8 @@ New
 * You can now remove a document in Elasticsearch using FSCrawler ``_document`` endpoint. See :ref:`rest-service`. Thanks to dadoonet.
 * Implement our own HTTP Client for Elasticsearch. Thanks to dadoonet.
 * Add option to set path to custom tika config file. See :ref:`local-fs-settings`. Thanks to iadcode.
+  **Note**: this option is temporarily disabled after the Apache Tika 4 upgrade, which removed the XML-based
+  configuration file mechanism. It is expected to return on top of Tika 4's JSON-based configuration.
 * Support for Index Templates. See :ref:`mappings`. Thanks to dadoonet.
 * Support for Aliases. You can now index to an alias. Thanks to dadoonet.
 * Support for Access Token and Api Keys instead of Basic Authentication. See :ref:`credentials`. Thanks to dadoonet.

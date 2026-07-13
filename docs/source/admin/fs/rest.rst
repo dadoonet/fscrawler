@@ -78,7 +78,7 @@ It will give you a response similar to:
            "language" : "eng",
            "output_type" : "txt",
            "page_seg_mode" : 1,
-           "pdf_strategy" : "ocr_and_text",
+           "pdf_strategy" : "auto",
            "preserve_interword_spacing" : false
          },
          "raw_metadata" : true,
@@ -151,9 +151,12 @@ You will get back your document as it has been stored by elasticsearch:
        },
        "meta" : {
          "raw" : {
-           "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
            "Content-Encoding" : "ISO-8859-1",
-           "Content-Type" : "text/plain; charset=ISO-8859-1"
+           "Content-Type" : "text/plain; charset=ISO-8859-1",
+           "Content-Type-Magic-Detected" : "text/plain",
+           "X-TIKA:Parsed-By" : "org.apache.tika.parser.DefaultParser",
+           "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.DefaultParser",
+           "X-TIKA:resourceName" : "test.txt"
          }
        },
        "path" : {
@@ -187,9 +190,12 @@ will give
        },
        "meta" : {
          "raw" : {
-           "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
            "Content-Encoding" : "ISO-8859-1",
-           "Content-Type" : "text/plain; charset=ISO-8859-1"
+           "Content-Type" : "text/plain; charset=ISO-8859-1",
+           "Content-Type-Magic-Detected" : "text/plain",
+           "X-TIKA:Parsed-By" : "org.apache.tika.parser.DefaultParser",
+           "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.DefaultParser",
+           "X-TIKA:resourceName" : "test.txt"
          }
        },
        "path" : {

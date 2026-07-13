@@ -30,7 +30,7 @@ Here is a list of OCR settings (under ``fs.ocr`` prefix):
 +---------------------------------------+-------------------------------------------------+------------------+-----------------------------------+
 | ``fs.ocr.output_type``                | ``FSCRAWLER_FS_OCR_OUTPUT_TYPE``                | ``txt``          | `OCR Output Type`_                |
 +---------------------------------------+-------------------------------------------------+------------------+-----------------------------------+
-| ``fs.ocr.pdf_strategy``               | ``FSCRAWLER_FS_OCR_PDF_STRATEGY``               | ``ocr_and_text`` | `OCR PDF Strategy`_               |
+| ``fs.ocr.pdf_strategy``               | ``FSCRAWLER_FS_OCR_PDF_STRATEGY``               | ``auto``         | `OCR PDF Strategy`_               |
 +---------------------------------------+-------------------------------------------------+------------------+-----------------------------------+
 | ``fs.ocr.page_seg_mode``              | ``FSCRAWLER_FS_OCR_PAGE_SEG_MODE``              | ``01``           | `OCR Page Seg Mode`_              |
 +---------------------------------------+-------------------------------------------------+------------------+-----------------------------------+
@@ -165,8 +165,8 @@ Supported strategies are:
 
 * ``ocr_and_text``: OCR and text extraction is performed.
 
-.. note:: When omitted, ``ocr_and_text`` value is used. If you have performance issues, it's worth using the ``auto`` option
-    instead as only documents with barely no text will go through the OCR process.
+.. note:: When omitted, ``auto`` value is used. OCR is skipped on PDF pages that already contain more than
+    10 characters of text. If you need OCR on every page regardless, set ``ocr_and_text`` or ``ocr_only``.
 
 OCR Page Seg Mode
 -----------------

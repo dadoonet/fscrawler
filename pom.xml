@@ -69,7 +69,7 @@
         <gestalt.version>0.38.0</gestalt.version>
         <snakeyaml.version>2.6</snakeyaml.version>
 
-        <tika.version>3.3.1</tika.version>
+        <tika.version>4.0.0-beta-1</tika.version>
         <jackson.version>3.1.4</jackson.version>
         <!--
             Jackson 2.x is still pulled transitively by Tika (jackson-databind). Pin it to a patched
@@ -394,6 +394,7 @@
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-parsers-standard-package</artifactId>
                 <version>${tika.version}</version>
+                <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.tika</groupId>
