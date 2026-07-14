@@ -102,8 +102,9 @@ See ``.env.example`` at the repository root:
 | SMTP_HOST      | SMTP server hostname                                     |
 | SMTP_PORT      | SMTP port (465 for SSL)                                  |
 | SMTP_USER      | SMTP username                                            |
-| SMTP_PASS      | SMTP password                                            |
-| ANNOUNCE_FROM  | Sender address (defaults to SMTP_USER)                   |
+| SMTP_PASS      | Mailbox password (quote special chars: ``SMTP_PASS='...'``) |
+| SMTP_SECURITY  | Optional: ``ssl`` (port 465) or ``starttls`` (port 587)      |
+| ANNOUNCE_FROM  | Sender address (must match ``SMTP_USER`` for Ionos)        |
 | ANNOUNCE_TO    | Recipient (personal address for local, Elastic list for  |
 |                | production)                                              |
 +----------------+----------------------------------------------------------+
