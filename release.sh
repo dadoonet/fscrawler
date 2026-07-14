@@ -13,8 +13,8 @@ readonly DOCKERHUB_TAGS_URL="https://hub.docker.com/r/dadoonet/fscrawler/tags"
 readonly TAG_PREFIX="fscrawler"
 readonly SCRIPT_NAME="${0##*/}"
 readonly RELEASE_STATE_FILE_NAME=".release"
-readonly LOCAL_TEST_EMAIL="david@pilato.fr"
 readonly LOG_TAIL_LINES=50
+readonly RELEASE_NOTES_FILE_NAME="target/release-notes.md"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RELEASE_STATE_FILE="${ROOT_DIR}/${RELEASE_STATE_FILE_NAME}"
@@ -33,8 +33,10 @@ RELEASE_VERSION=""
 NEXT_VERSION=""
 RELEASE_BRANCH=""
 RELEASE_TAG=""
+PREVIOUS_TAG=""
 MAVEN_EXTRA_ARGS=()
 LOG_FILE=""
+RELEASE_NOTES_FILE=""
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -50,7 +52,7 @@ Options:
   -h, --help       Show this help message and exit
   -n, --dry-run    Simulate the release without mutating git, Maven, or remotes
   -l, --local      Full local rehearsal: branch, build, sign, release notes
-                   (no Maven Central, Docker Hub, git push, or public email)
+                   (no Maven Central, Docker Hub, git push, or GitHub release)
       --rollback   Undo a local or failed release using ${RELEASE_STATE_FILE_NAME}
       --skip-tests Add -DskipTests to Maven build commands
 
@@ -62,8 +64,8 @@ Modes:
 
 Local mode:
   - Creates the release branch, commits, builds with -Prelease, tags, generates notes
-  - Skips deploy, git push, Docker Hub, and Central Portal checks
-  - Optionally sends a test announcement email to ${LOCAL_TEST_EMAIL} only
+  - Skips deploy, git push, Docker Hub, GitHub release, and production email
+  - Optionally sends a test announcement email to ANNOUNCE_TO from .env
   - ${RELEASE_STATE_FILE_NAME} is saved early so --rollback works after a failure
 
 Examples:
@@ -74,9 +76,13 @@ Examples:
   ${SCRIPT_NAME} --rollback
 
 Prerequisites (default and --local):
+  - Copy .env.example to .env and configure SMTP / GITHUB_REPO
+  - python3, gh CLI authenticated (gh auth login)
   - Clean-ish git working tree on your integration branch
   - GPG signing configured for the Maven release profile
   - ~/.m2/settings.xml server id "central" for production deploy only
+
+See docs/source/dev/release.rst for the full release workflow.
 
 Logs are written to /tmp/fscrawler-<release-version>.log
 EOF
@@ -242,6 +248,81 @@ announce_mode() {
 	elif is_local; then
 		warn "Local mode — remote publish, push, and public email are disabled."
 	fi
+}
+
+# ---------------------------------------------------------------------------
+# Environment & prerequisites
+# ---------------------------------------------------------------------------
+
+load_dotenv() {
+	if is_dry_run || is_rollback; then
+		return 0
+	fi
+
+	if [[ ! -f "${ROOT_DIR}/.env" ]]; then
+		die "Missing ${ROOT_DIR}/.env — copy .env.example to .env and configure it."
+	fi
+
+	# shellcheck disable=SC1091
+	set -a && source "${ROOT_DIR}/.env" && set +a
+}
+
+require_command() {
+	local name=$1 hint=${2:-}
+
+	if command -v "${name}" >/dev/null 2>&1; then
+		return 0
+	fi
+
+	if [[ -n "${hint}" ]]; then
+		die "Required command not found: ${name}. ${hint}"
+	fi
+	die "Required command not found: ${name}."
+}
+
+check_gh_auth() {
+	require_command gh "Install from https://cli.github.com/ and run: gh auth login"
+	if ! gh auth status >/dev/null 2>&1; then
+		die "GitHub CLI is not authenticated. Run: gh auth login"
+	fi
+
+	local repo="${GITHUB_REPO:-dadoonet/fscrawler}"
+	if ! gh repo view "${repo}" >/dev/null 2>&1; then
+		die "Cannot access GitHub repository ${repo}. Check GITHUB_REPO in .env."
+	fi
+}
+
+check_env_var() {
+	local name=$1
+	if [[ -z "${!name:-}" ]]; then
+		die "Missing required variable in .env: ${name}"
+	fi
+}
+
+check_prerequisites() {
+	if is_dry_run || is_rollback; then
+		return 0
+	fi
+
+	require_command python3
+	check_gh_auth
+
+	if ! command -v pandoc >/dev/null 2>&1; then
+		info "pandoc not found (optional — only needed for one-time RST migration)."
+	fi
+}
+
+check_release_notes_file() {
+	local version=$1
+	local notes_file="${ROOT_DIR}/docs/source/release/${version}.md"
+
+	if [[ ! -f "${notes_file}" ]]; then
+		die "Release notes not found: docs/source/release/${version}.md"
+	fi
+}
+
+suggest_previous_tag() {
+	git_cmd tag --sort=-v:refname | grep "^${TAG_PREFIX}-" | head -1 || true
 }
 
 # ---------------------------------------------------------------------------
@@ -502,26 +583,61 @@ deploy_release() {
 }
 
 generate_announcement() {
-	log "Generating release announcement"
-	mvn_run changes:announcement-generate
+	log "Generating release notes"
+	if is_dry_run; then
+		log "[dry-run] python3 scripts/prepare-release-notes.py --version ${RELEASE_VERSION} --since-tag ${PREVIOUS_TAG}"
+		printf '[dry-run] prepare-release-notes.py\n' >>"${LOG_FILE}"
+		return 0
+	fi
+
+	python3 "${ROOT_DIR}/scripts/prepare-release-notes.py" \
+		--version "${RELEASE_VERSION}" \
+		--since-tag "${PREVIOUS_TAG}" \
+		--output "${RELEASE_NOTES_FILE}" >>"${LOG_FILE}" 2>&1
 }
 
 send_announcement() {
-	local username password
-	local -a mail_args=()
+	local subject="FSCrawler ${RELEASE_VERSION} released"
 
-	username="$(prompt_default "SMTP username" "${LOCAL_TEST_EMAIL}")"
-	password="$(prompt_default "SMTP password" "")"
-
-	if is_local; then
-		mail_args=(-Dchanges.toAddresses="${LOCAL_TEST_EMAIL}")
-		info "Local mode — announcement will be sent to ${LOCAL_TEST_EMAIL} only."
+	if is_dry_run; then
+		log "[dry-run] python3 scripts/send-announcement.py ${RELEASE_NOTES_FILE} --subject ${subject}"
+		return 0
 	fi
 
-	mvn_run changes:announcement-mail \
-		-Dchanges.username="${username}" \
-		-Dchanges.password="${password}" \
-		"${mail_args[@]}"
+	check_env_var SMTP_HOST
+	check_env_var SMTP_PORT
+	check_env_var SMTP_USER
+	check_env_var SMTP_PASS
+	check_env_var ANNOUNCE_TO
+
+	python3 "${ROOT_DIR}/scripts/send-announcement.py" \
+		"${RELEASE_NOTES_FILE}" \
+		--subject "${subject}" >>"${LOG_FILE}" 2>&1
+}
+
+create_github_release() {
+	if is_dry_run || is_local; then
+		info "[local] Skipping GitHub release creation."
+		return 0
+	fi
+
+	if ! confirm "Create GitHub release ${RELEASE_TAG}?" y; then
+		info "Create manually when ready:"
+		info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE}"
+		return
+	fi
+
+	log "Creating GitHub release ${RELEASE_TAG}"
+	if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+		warn "GitHub release ${RELEASE_TAG} already exists."
+		if confirm "Update release notes with gh release edit?" y; then
+			gh release edit "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}"
+		fi
+		return
+	fi
+
+	gh release create "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}"
+	success "GitHub release ${RELEASE_TAG} created."
 }
 
 ensure_clean_enough_tree() {
@@ -607,7 +723,14 @@ gather_inputs() {
 
 	RELEASE_VERSION="$(prompt_default "Release version" "${default_release}")"
 	NEXT_VERSION="$(prompt_default "Next snapshot version" "${default_next}")"
+	PREVIOUS_TAG="$(prompt_default "Previous release tag" "$(suggest_previous_tag)")"
 	maven_opts="$(prompt_default "Extra Maven options (optional)" "${default_maven_opts}")"
+
+	check_release_notes_file "${RELEASE_VERSION}"
+
+	if [[ -z "${PREVIOUS_TAG}" ]]; then
+		die "Previous release tag is required for GitHub generate-notes."
+	fi
 
 	if [[ -n "${maven_opts}" ]]; then
 		# shellcheck disable=SC2206
@@ -618,6 +741,7 @@ gather_inputs() {
 
 	RELEASE_BRANCH="release-${RELEASE_VERSION}"
 	RELEASE_TAG="${TAG_PREFIX}-${RELEASE_VERSION}"
+	RELEASE_NOTES_FILE="${ROOT_DIR}/${RELEASE_NOTES_FILE_NAME}"
 	LOG_FILE="/tmp/fscrawler-${RELEASE_VERSION}.log"
 
 	if [[ "${ORIGINAL_BRANCH}" == "${RELEASE_BRANCH}" ]]; then
@@ -645,13 +769,13 @@ validate_build_and_tag() {
 review_announcement() {
 	generate_announcement
 	if is_dry_run; then
-		info "[dry-run] Announcement preview skipped (generation not executed)."
+		info "[dry-run] Release notes preview skipped (generation not executed)."
 	else
-		info "Announcement preview:"
-		cat "${ROOT_DIR}/target/announcement/announcement.vm"
+		info "Release notes preview:"
+		cat "${RELEASE_NOTES_FILE}"
 		echo
 	fi
-	confirm "Is the announcement message OK?" y || die "Release aborted — fix the announcement and retry."
+	confirm "Are the release notes OK?" y || die "Release aborted — fix docs/source/release/${RELEASE_VERSION}.md and retry."
 }
 
 maybe_deploy() {
@@ -706,14 +830,14 @@ finalize_local_release() {
 }
 
 maybe_send_local_test_announcement() {
-	if ! confirm "Send test announcement email to ${LOCAL_TEST_EMAIL}?" y; then
-		info "Skipped test email. Preview remains in target/announcement/announcement.vm"
+	if ! confirm "Send test announcement email to ${ANNOUNCE_TO:-ANNOUNCE_TO from .env}?" y; then
+		info "Skipped test email. Preview remains in ${RELEASE_NOTES_FILE_NAME}"
 		return
 	fi
 
 	git_run checkout -q "${RELEASE_TAG}"
 	if send_announcement; then
-		success "Test announcement sent to ${LOCAL_TEST_EMAIL}."
+		success "Test announcement sent to ${ANNOUNCE_TO}."
 	else
 		warn "Failed to send test announcement — see ${LOG_FILE}"
 	fi
@@ -749,6 +873,7 @@ finalize_release() {
 	fi
 
 	git_run push origin "${ORIGINAL_BRANCH}" "${RELEASE_TAG}"
+	create_github_release
 	maybe_send_announcement
 	disable_release_tracking
 	clear_release_state
@@ -758,7 +883,7 @@ maybe_send_announcement() {
 	if ! confirm "Send the release announcement email?" n; then
 		info "Send manually from the tag checkout:"
 		info "  git checkout ${RELEASE_TAG}"
-		info "  mvn changes:announcement-mail"
+		info "  python3 scripts/send-announcement.py ${RELEASE_NOTES_FILE_NAME} --subject \"FSCrawler ${RELEASE_VERSION} released\""
 		return
 	fi
 
@@ -811,6 +936,8 @@ main() {
 		return
 	fi
 
+	load_dotenv
+	check_prerequisites
 	gather_inputs
 
 	prepare_release_branch

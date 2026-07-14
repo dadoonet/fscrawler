@@ -937,32 +937,6 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-changes-plugin</artifactId>
-                    <version>2.12.1</version>
-                    <configuration>
-                        <smtpHost>auth.smtp.1and1.fr</smtpHost>
-                        <smtpPort implementation="java.lang.Integer">465</smtpPort>
-                        <sslMode>true</sslMode>
-                        <fromDeveloperId>dadoonet</fromDeveloperId>
-                        <toAddresses>
-                            <toAddress implementation="java.lang.String">discuss+community-plugins@elastic.co</toAddress>
-                        </toAddresses>
-                        <issueManagementSystems>
-                            <issueManagementSystem>GitHub</issueManagementSystem>
-                        </issueManagementSystems>
-                        <issueTypes>
-                            <add>new,doc</add>
-                            <fix>bug</fix>
-                            <update>update</update>
-                            <remove>remove</remove>
-                        </issueTypes>
-                        <onlyCurrentVersion>true</onlyCurrentVersion>
-                        <urlDownload>https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/${project.version}/fscrawler-distribution-${project.version}.zip</urlDownload>
-                        <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
                     <version>3.2.8</version>
                 </plugin>
