@@ -62,7 +62,8 @@ Release notes
 
 Release notes live in Markdown under ``docs/source/release/`` (for example ``3.0.md``).
 They are included in the ReadTheDocs documentation via MyST Parser and reused by the release
-script to build ``target/release-notes.md``.
+script to build ``/tmp/fscrawler-{version}-release-notes.md`` (outside ``target/`` so ``mvn clean``
+does not remove them).
 
 The final notes combine:
 
@@ -71,7 +72,7 @@ The final notes combine:
 * Merged pull requests from ``gh api .../releases/generate-notes``
 
 To update notes after a GitHub release was already published, edit the Markdown file and run
-``gh release edit fscrawler-{version} --notes-file target/release-notes.md``.
+``gh release edit fscrawler-{version} --notes-file /tmp/fscrawler-{version}-release-notes.md``.
 
 Before releasing
 ^^^^^^^^^^^^^^^^

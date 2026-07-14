@@ -14,7 +14,6 @@ readonly TAG_PREFIX="fscrawler"
 readonly SCRIPT_NAME="${0##*/}"
 readonly RELEASE_STATE_FILE_NAME=".release"
 readonly LOG_TAIL_LINES=50
-readonly RELEASE_NOTES_FILE_NAME="target/release-notes.md"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RELEASE_STATE_FILE="${ROOT_DIR}/${RELEASE_STATE_FILE_NAME}"
@@ -596,6 +595,23 @@ generate_announcement() {
 		--output "${RELEASE_NOTES_FILE}" >>"${LOG_FILE}" 2>&1
 }
 
+ensure_release_notes_file() {
+	if is_dry_run; then
+		return 0
+	fi
+
+	if [[ -f "${RELEASE_NOTES_FILE}" ]]; then
+		return 0
+	fi
+
+	warn "Release notes file missing (${RELEASE_NOTES_FILE}) — regenerating."
+	generate_announcement
+
+	if [[ ! -f "${RELEASE_NOTES_FILE}" ]]; then
+		die "Release notes file not found after regeneration: ${RELEASE_NOTES_FILE}"
+	fi
+}
+
 send_announcement() {
 	local subject="FSCrawler ${RELEASE_VERSION} released"
 
@@ -603,6 +619,8 @@ send_announcement() {
 		log "[dry-run] python3 scripts/send-announcement.py ${RELEASE_NOTES_FILE} --subject ${subject}"
 		return 0
 	fi
+
+	ensure_release_notes_file
 
 	check_env_var SMTP_HOST
 	check_env_var SMTP_PORT
@@ -626,6 +644,8 @@ create_github_release() {
 		info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE}"
 		return
 	fi
+
+	ensure_release_notes_file
 
 	log "Creating GitHub release ${RELEASE_TAG}"
 	if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
@@ -741,8 +761,8 @@ gather_inputs() {
 
 	RELEASE_BRANCH="release-${RELEASE_VERSION}"
 	RELEASE_TAG="${TAG_PREFIX}-${RELEASE_VERSION}"
-	RELEASE_NOTES_FILE="${ROOT_DIR}/${RELEASE_NOTES_FILE_NAME}"
 	LOG_FILE="/tmp/fscrawler-${RELEASE_VERSION}.log"
+	RELEASE_NOTES_FILE="/tmp/fscrawler-${RELEASE_VERSION}-release-notes.md"
 
 	if [[ "${ORIGINAL_BRANCH}" == "${RELEASE_BRANCH}" ]]; then
 		warn "You are already on ${RELEASE_BRANCH}. Consider switching to your integration branch first."
@@ -825,23 +845,22 @@ finalize_local_release() {
 	info "Release branch: ${RELEASE_BRANCH}"
 	info "Release tag:    ${RELEASE_TAG}"
 	info "Log file:       ${LOG_FILE}"
+	info "Release notes:  ${RELEASE_NOTES_FILE}"
 	info "When finished inspecting, rollback with:"
 	info "  ${SCRIPT_NAME} --rollback"
 }
 
 maybe_send_local_test_announcement() {
 	if ! confirm "Send test announcement email to ${ANNOUNCE_TO:-ANNOUNCE_TO from .env}?" y; then
-		info "Skipped test email. Preview remains in ${RELEASE_NOTES_FILE_NAME}"
+		info "Skipped test email. Preview remains in ${RELEASE_NOTES_FILE}"
 		return
 	fi
 
-	git_run checkout -q "${RELEASE_TAG}"
 	if send_announcement; then
 		success "Test announcement sent to ${ANNOUNCE_TO}."
 	else
 		warn "Failed to send test announcement — see ${LOG_FILE}"
 	fi
-	git_run checkout -q "${ORIGINAL_BRANCH}"
 }
 
 finalize_release() {
@@ -881,19 +900,16 @@ finalize_release() {
 
 maybe_send_announcement() {
 	if ! confirm "Send the release announcement email?" n; then
-		info "Send manually from the tag checkout:"
-		info "  git checkout ${RELEASE_TAG}"
-		info "  python3 scripts/send-announcement.py ${RELEASE_NOTES_FILE_NAME} --subject \"FSCrawler ${RELEASE_VERSION} released\""
+		info "Send manually when ready:"
+		info "  python3 scripts/send-announcement.py ${RELEASE_NOTES_FILE} --subject \"FSCrawler ${RELEASE_VERSION} released\""
 		return
 	fi
 
-	git_run checkout -q "${RELEASE_TAG}"
 	if send_announcement; then
 		success "Announcement sent."
 	else
 		warn "Failed to send announcement — see ${LOG_FILE}"
 	fi
-	git_run checkout -q "${ORIGINAL_BRANCH}"
 }
 
 rollback_release() {
