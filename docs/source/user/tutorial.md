@@ -44,17 +44,25 @@ cd C:\Users\myuser\.fscrawler\resumes
 ```
 
 * Edit the `_settings.yaml` file which is in this folder and change the `url` value to your folder
-  which contains the resumes you would like to index:
+  which contains the resumes you would like to index.
 
-```yaml
----
-name: "resumes"
-fs:
-  # On Linux/macOS
-  url: "/path/to/resumes"
-  # On Windows
-  url: "c:\\path\\to\\resumes"
-```
+  On Linux/macOS:
+  
+  ```yaml
+  ---
+  name: "resumes"
+  fs:
+    url: "/path/to/resumes"
+  ```
+  
+  On Windows:
+  
+  ```yaml
+  ---
+  name: "resumes"
+  fs:
+    url: "c:\\path\\to\\resumes"
+  ```
 
 * Start again FSCrawler:
 
@@ -67,18 +75,18 @@ bin/fscrawler resumes
 
 FSCrawler should index all the documents inside your directory.
 
-```{note}
+````{note}
 
  If you want to start again reindexing from scratch instead of monitoring the changes, stop FSCrawler, restart it
  with the `--restart` option:
 
- .. code:: sh
-
-    # On Linux/Mac
-    bin/fscrawler resumes --restart
-    # On Windows
-    .\bin\fscrawler resumes --restart
-```
+ ```bash
+ # On Linux/Mac
+ bin/fscrawler resumes --restart
+ # On Windows
+ .\bin\fscrawler resumes --restart
+ ```
+````
 
 ## Create Index pattern
 
