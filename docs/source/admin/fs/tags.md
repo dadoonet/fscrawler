@@ -97,7 +97,7 @@ tags:
   metaFilename: "meta_tags.json"
 ```
 
-### Static Metadata
+## Static Metadata
 
 ```{versionadded} 2.10
 ```
