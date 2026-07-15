@@ -246,7 +246,7 @@ will be indexed.
 If you want to index JSON files directly without parsing with Tika, you
 can set `json_support` to `true`. JSON contents will be stored
 directly under \_source. If you need to keep JSON documents synchronized
-to the index, set option `Add as Inner Object`_
+to the index, set option [Add as Inner Object](#add-as-inner-object)
 which stores additional metadata and the JSON contents under field
 `object`.
 
@@ -264,7 +264,7 @@ Elasticsearch will auto guess the mapping.
 If you want to index XML files and convert them to JSON, you can set
 `xml_support` to `true`. The content of XML files will be added
 directly under \_source. If you need to keep XML documents synchronized
-to the index, set option `Add as Inner Object`_
+to the index, set option [Add as Inner Object](#add-as-inner-object)
 which stores additional metadata and the XML contents under field
 `object`.
 

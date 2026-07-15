@@ -41,7 +41,7 @@ If you did not create the directory, FSCrawler will complain until you fix it:
 17:41:45,397 WARN  [f.p.e.c.f.FsParser] Error while crawling /tmp/es: /tmp/es doesn't exists.
 ```
 
-### Searching for docs
+## Searching for docs
 
 This is a common use case in elasticsearch, we want to search for something! ðŸ˜‰
 
@@ -58,7 +58,7 @@ This is a common use case in elasticsearch, we want to search for something! ðŸ˜
 
 See {ref}`search-examples` for more examples.
 
-### Ignoring folders
+## Ignoring folders
 
 If you would like to ignore some folders to be scanned, just add a `.fscrawlerignore` file in it.
 The folder content and all sub folders will be ignored.

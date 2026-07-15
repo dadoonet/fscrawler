@@ -89,7 +89,7 @@ fs:
 You can point `fs.ocr.path` either at the `tesseract` executable itself or
 at the directory that contains it: FSCrawler accepts both forms.
 
-When you set it, it’s highly recommended to set the `OCR Data Path`_.
+When you set it, it’s highly recommended to set the [OCR Data Path](#ocr-data-path).
 
 ## OCR Data Path
 
@@ -145,7 +145,7 @@ Supported strategies are:
 
 * `auto`: No OCR is performed on PDF documents if there is more than 10 characters extracted. See [PDFParser OCR Options ](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=109454066).
 
-* `no_ocr`: No OCR is performed on PDF documents. OCR might be performed on images though if OCR is not disabled. See `Disable/Enable OCR`_.
+* `no_ocr`: No OCR is performed on PDF documents. OCR might be performed on images though if OCR is not disabled. See [Disable/Enable OCR](#disableenable-ocr).
 
 * `ocr_only`: Only OCR is performed.
 

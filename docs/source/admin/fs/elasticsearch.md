@@ -445,7 +445,7 @@ elasticsearch:
 
 ## Basic Authentication (deprecated)
 
-The best practice is to use `API Key`_. But if you have no other choice, you can still use Basic Authentication.
+The best practice is to use [API Key](#api-key). But if you have no other choice, you can still use Basic Authentication.
 
 You can provide the `username` and `password` to FSCrawler:
 
@@ -477,7 +477,7 @@ If you want to use another user than the default `elastic` (which is admin), you
 * `indices:fsc/all`
 * `indices:fsc_folder/all`
 
-where `fsc` is the FSCrawler index name as defined in `Index settings for documents`_.
+where `fsc` is the FSCrawler index name as defined in [Index settings for documents](#index-settings-for-documents).
 
 This can be done by defining the following role:
 

@@ -31,6 +31,12 @@ SUBSTITUTIONS = [
 
 UNDERLINE_LEVEL = {"=": 1, "-": 2, "~": 3, "^": 4, '"': 5, "'": 6}
 
+
+def slugify(text: str) -> str:
+    text = text.strip().lower().replace("'", "")
+    text = re.sub(r"[^\w\s-]", "", text)
+    return re.sub(r"[\s_]+", "-", text).strip("-")
+
 DIRECTIVE_RE = re.compile(
     r"^\.\. (note|warning|hint|important|caution|tip|deprecated|versionadded|versionchanged)"
     r"(?:::|\s+::)\s*(.*)$"
@@ -53,6 +59,11 @@ def convert_inline(text: str) -> str:
     text = re.sub(r":ref:`([^`]+)`", r"{ref}`\1`", text)
     text = re.sub(r"`([^<`]+)\s*<([^>]+)>`__", r"[\1](\2)", text)
     text = re.sub(r"`([^<`]+)\s*<([^>]+)>`_", r"[\1](\2)", text)
+    text = re.sub(
+        r"`([^`]+)`_",
+        lambda m: f"[{m.group(1)}](#{slugify(m.group(1))})",
+        text,
+    )
     text = re.sub(r"``([^`]+)``", r"`\1`", text)
     return text
 

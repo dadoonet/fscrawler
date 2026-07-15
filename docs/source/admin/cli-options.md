@@ -3,11 +3,11 @@
 
 -  `--config_dir` defines directory where jobs are stored instead of default `~/.fscrawler`.
 -  `--help` displays help
--  `--list` lists all jobs. See `List`_.
--  `--loop x` defines the number of runs we want before exiting. See `Loop`_.
--  `--restart` restart a job from scratch. See `Restart`_.
--  `--rest` starts the REST service. See `Rest`_.
--  `--setup` creates a job configuration. See `Setup`_.
+-  `--list` lists all jobs. See [List](#list).
+-  `--loop x` defines the number of runs we want before exiting. See [Loop](#loop).
+-  `--restart` restart a job from scratch. See [Restart](#restart).
+-  `--rest` starts the REST service. See [Rest](#rest).
+-  `--setup` creates a job configuration. See [Setup](#setup).
 -  `--silent` runs in silent mode. No output is generated on the console.
 
 Job settings can also be passed as command line arguments. For example, if you

@@ -10,7 +10,7 @@ using Kibana. For example location worked or the previous company, etc.
 * Java {{ java_version }}\ + must be installed
 * `JAVA_HOME` must be defined
 
-### Install Elastic stack
+## Install Elastic stack
 
 * Download [Elasticsearch ](https://www.elastic.co/downloads/elasticsearch)
 * Download [Kibana ](https://www.elastic.co/downloads/kibana)
@@ -18,7 +18,7 @@ using Kibana. For example location worked or the previous company, etc.
 * Start Kibana server
 * Check that Kibana is running by opening http://localhost:5601
 
-### Start FSCrawler
+## Start FSCrawler
 
 * Download FSCrawler. See {ref}`installation`.
 * Open a terminal and navigate to the `fscrawler` folder.
@@ -103,11 +103,11 @@ FSCrawler should index all the documents inside your directory.
 
 ![](images/kibana-step3.jpg)
 
-### Search for the CVs
+## Search for the CVs
 
-* Open [Kibana ](http://localhost:5601)
-* Go to the [Discover ](http://0.0.0.0:5601/app/kibana#/discover/) page
-* Depending on the date you selected in the `Create Index pattern`_ step, you should see something similar to the
+* Open [Kibana ](https://localhost:5601)
+* Go to the [Discover ](https://localhost:5601/app/discover#/) page
+* Depending on the date you selected in the [Create Index pattern](#create-index-pattern) step, you should see something similar to the
   following image. If you don't see it, you probably have to adjust the time picker to make sure you are looking
   at the right period of time.
 
@@ -122,23 +122,23 @@ FSCrawler should index all the documents inside your directory.
 
 ![](images/kibana-step6.jpg)
 
-### Adding new files
+## Adding new files
 
 Just copy new files in the `resumes` folder. It could take up to 15 minutes for FSCrawler to
 detect the change. This is the default value for `update_rate` option. You can also change this
 value. See {ref}`local-fs-update_rate`.
 
-```{note}
+````{note}
 
  On some OS, moving files won't touch the modified date and the "new" files won't be detected.
  It's then better probably to copy the files instead.
 
  You might have to "touch" the files like:
 
- .. code:: sh
-
-     touch /path/to/resumes/CV2.pdf
-```
+ ```bash
+ touch /path/to/resumes/CV2.pdf
+ ```
+````
 
 Just hit the Kibana refresh button and see the changes.
 
