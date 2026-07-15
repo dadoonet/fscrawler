@@ -78,6 +78,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.githubpages',
     'sphinx_substitution_extensions',
+    'myst_parser',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -86,8 +87,18 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
+myst_enable_extensions = [
+    'colon_fence',
+    'deflist',
+    'substitution',
+]
+
+myst_heading_anchors = 3
 
 # The master toctree document.
 master_doc = 'index'
@@ -260,4 +271,31 @@ fmt_es_stack_version=es_stack_version,
 fmt_fscrawler_version=release,
 fmt_java_version=java_version
 )
+
+_tika_version = config.get('3rdParty', 'TikaVersion')
+_es_version7 = config.get('3rdParty', 'ElasticsearchVersion7')
+_es_version8 = config.get('3rdParty', 'ElasticsearchVersion8')
+_es_version9 = config.get('3rdParty', 'ElasticsearchVersion9')
+_jpeg_version = config.get('3rdParty', 'JpegVersion')
+
+myst_substitutions = {
+    'year': str(year),
+    'release': release,
+    'version': version,
+    'Tika': 'Tika',
+    'ES': '[Elasticsearch](https://www.elastic.co/elasticsearch)',
+    'Tika_format': f'[Tika](https://tika.apache.org/{_tika_version}/formats.html#Supported_Document_Formats)',
+    'Tika_version': f'[Tika {_tika_version}](https://tika.apache.org/{_tika_version}/)',
+    'Tika_configuring': f'[Configuring Tika](https://tika.apache.org/{_tika_version}/configuring.html)',
+    'ES_version7': f'[Elasticsearch {_es_version7}](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/index.html)',
+    'ES_version8': f'[Elasticsearch {_es_version8}](https://www.elastic.co/guide/en/elasticsearch/reference/8.18/index.html)',
+    'ES_version9': f'[Elasticsearch {_es_version9}](https://www.elastic.co/docs/solutions/search)',
+    'ES_stack_version': es_stack_version,
+    'FSCrawler_version': release,
+    'JPEG2000_version': f'[jai-imageio-jpeg2000:{_jpeg_version}](https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{_jpeg_version}/)',
+    'Download_URL': f'[Sonatype]({downloadUrl})',
+    'Maven_Central': '[Maven Central](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)',
+    'Sonatype': '[Sonatype](https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)',
+    'java_version': java_version,
+}
 # End of conf.py
