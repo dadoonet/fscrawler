@@ -1,0 +1,852 @@
+(local-fs-settings)=
+# Local FS settings
+
+```{contents}
+:backlinks: entry
+```
+
+Here is a list of Local FS settings (under `fs.` prefix):
+
+| Name                     | Environment Variable               | Default value   | Documentation                                           |
+|--------------------------|------------------------------------|-----------------|---------------------------------------------------------|
+| `fs.provider`            | `FSCRAWLER_FS_PROVIDER`            | `"local"`       | [Crawler Provider](#crawler-provider)                   |
+| `fs.url`                 | `FSCRAWLER_FS_URL`                 | `"/tmp/es"`     | [Root directory](#root-directory)                       |
+| `fs.update_rate`         | `FSCRAWLER_FS_UPDATE_RATE`         | `"15m"`         | [Update Rate](#update-rate)                             |
+| `fs.includes`            | `FSCRAWLER_FS_INCLUDES`            | `null`          | [Includes and excludes](#includes-and-excludes)         |
+| `fs.excludes`            | `FSCRAWLER_FS_EXCLUDES`            | `["*/~*"]`      | [Includes and excludes](#includes-and-excludes)         |
+| `fs.filters`             | `FSCRAWLER_FS_FILTERS`             | `null`          | [Filter content](#filter-content)                       |
+| `fs.json_support`        | `FSCRAWLER_FS_JSON_SUPPORT`        | `false`         | [Indexing JSON docs](#indexing-json-docs)               |
+| `fs.xml_support`         | `FSCRAWLER_FS_XML_SUPPORT`         | `false`         | [Indexing XML docs](#indexing-xml-docs)                 |
+| `fs.add_as_inner_object` | `FSCRAWLER_FS_ADD_AS_INNER_OBJECT` | `false`         | [Add as Inner Object](#add-as-inner-object)             |
+| `fs.index_folders`       | `FSCRAWLER_FS_INDEX_FOLDERS`       | `true`          | [Index folders](#index-folders)                         |
+| `fs.attributes_support`  | `FSCRAWLER_FS_ATTRIBUTES_SUPPORT`  | `false`         | [Adding file attributes](#adding-file-attributes)       |
+| `fs.acl_support`         | `FSCRAWLER_FS_ACL_SUPPORT`         | `false`         | [Collecting ACL metadata](#collecting-acl-metadata)     |
+| `fs.raw_metadata`        | `FSCRAWLER_FS_RAW_METADATA`        | `false`         | [Enabling raw metadata](#enabling-raw-metadata)         |
+| `fs.filename_as_id`      | `FSCRAWLER_FS_FILENAME_AS_ID`      | `false`         | {ref}`filename-as-id`                                   |
+| `fs.add_filesize`        | `FSCRAWLER_FS_ADD_FILESIZE`        | `true`          | [Disabling file size field](#disabling-file-size-field) |
+| `fs.remove_deleted`      | `FSCRAWLER_FS_REMOVE_DELETED`      | `true`          | [Ignore deleted files](#ignore-deleted-files)           |
+| `fs.store_source`        | `FSCRAWLER_FS_STORE_SOURCE`        | `false`         | {ref}`store_binary`                                     |
+| `fs.index_content`       | `FSCRAWLER_FS_INDEX_CONTENT`       | `true`          | [Ignore content](#ignore-content)                       |
+| `fs.lang_detect`         | `FSCRAWLER_FS_LANG_DETECT`         | `false`         | [Language detection](#language-detection)               |
+| `fs.continue_on_error`   | `FSCRAWLER_FS_CONTINUE_ON_ERROR`   | `false`         | {ref}`continue_on_error`                                |
+| `fs.indexed_chars`       | `FSCRAWLER_FS_INDEXED_CHARS`       | `100000.0`      | [Extracted characters](#extracted-characters)           |
+| `fs.ignore_above`        | `FSCRAWLER_FS_IGNORE_ABOVE`        | `null`          | [Ignore above](#ignore-above)                           |
+| `fs.checksum`            | `FSCRAWLER_FS_CHECKSUM`            | `null`          | [File Checksum](#file-checksum)                         |
+| `fs.temp_dir`            | `FSCRAWLER_FS_TEMP_DIR`            | `null`          | [Temporary Directory](#temporary-directory)             |
+| `fs.follow_symlinks`     | `FSCRAWLER_FS_FOLLOW_SYMLINKS`     | `false`         | [Follow Symlinks](#follow-symlinks)                     |
+| `fs.tika_config_path`    | `FSCRAWLER_FS_TIKA_CONFIG_PATH`    | `null`          | [Tika Config Path](#tika-config-path)                   |
+| `fs.ocr.enabled`         | `FSCRAWLER_FS_OCR_ENABLED`         | `true`          | {ref}`ocr_integration`                                  |
+
+
+(crawler-provider)=
+## Crawler Provider
+
+```{versionadded} 3.0
+```
+
+The `fs.provider` setting specifies which crawler plugin to use for scanning files.
+Available providers are:
+
+* `local` (default): Crawl files from the local filesystem
+* `ftp`: Crawl files from a remote FTP server (see {ref}`ftp-settings`)
+* `ssh`: Crawl files from a remote server via SSH/SFTP (see {ref}`ssh-settings`)
+
+```yaml
+name: "test"
+fs:
+  provider: "local"
+  url: "/path/to/data/dir"
+```
+
+````{note}
+
+The `fs.provider` setting replaces the deprecated `server.protocol` setting.
+If you are currently using `server.protocol`, you should migrate to `fs.provider`.
+
+Old configuration (deprecated):
+
+```yaml
+name: "test"
+fs:
+  url: "/path/to/data/dir"
+server:
+  hostname: "mynode.mydomain.com"
+  protocol: "ftp"
+```
+
+New configuration (recommended):
+
+```yaml
+name: "test"
+fs:
+  provider: "ftp"
+  url: "/path/to/data/dir"
+server:
+  hostname: "mynode.mydomain.com"
+```
+````
+
+(root-directory)=
+## Root directory
+
+Define `fs.url` property in your `~/.fscrawler/test/_settings.yaml`
+file:
+
+```yaml
+name: "test"
+fs:
+  url: "/path/to/data/dir"
+```
+
+For Windows users, use a form like `c:/tmp` or `c:\\tmp`.
+
+(local-fs-update_rate)=
+## Update rate
+
+By default, `update_rate` is set to `15m`. You can modify this value using any compatible 
+[time unit](https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#time-units).
+
+For example, here is a 15 minutes update rate:
+
+```yaml
+name: "test"
+fs:
+  update_rate: "15m"
+```
+
+Or a 3 hours update rate:
+
+```yaml
+name: "test"
+fs:
+  update_rate: "3h"
+```
+
+`update_rate` is the pause duration between the last time we read the
+file system and another run. Which means that if you set it to `15m`,
+the next scan will happen on 15 minutes after the end of the current
+scan, whatever its duration.
+
+The supported units for duration are:
+
+* `d` for days
+* `h` for hours
+* `m` for minutes
+* `s` for seconds
+* `ms` for milliseconds
+
+```{note}
+
+ If you don't want to wait for the next scan, you can manually edit the `~/.fscrawler/{job_name}/_checkpoint.json` file and
+ set `next_check` to the current time or to `null`. FSCrawler will then start a new scan at most after 5 seconds.
+
+ See {ref}`status-files` for more information.
+```
+
+(includes_excludes)=
+## Includes and excludes
+
+Let’s say you want to index only docs like `*.doc` and `*.pdf` but
+`resume*`. So `resume_david.pdf` won’t be indexed.
+
+Define `fs.includes` and `fs.excludes` properties in your
+`~/.fscrawler/test/_settings.yaml` file:
+
+```yaml
+name: "test"
+fs:
+  includes:
+  - "*/*.doc"
+  - "*/*.pdf"
+  excludes:
+  - "*/resume*"
+```
+
+By default, FSCrawler will exclude files starting with `~`.
+
+It also applies to directory names. So if you want to ignore `.ignore`
+dir, just add `.ignore` as an excluded name. Note that `includes` and `excludes`
+apply to directory names as well.
+
+Let's take the following example with the `root` dir as `/tmp`:
+
+```
+ /tmp
+ ├── folderA
+ │   ├── subfolderA
+ │   ├── subfolderB
+ │   └── subfolderC
+ ├── folderB
+ │   ├── subfolderA
+ │   ├── subfolderB
+ │   └── subfolderC
+ └── folderC
+     ├── subfolderA
+     ├── subfolderB
+     └── subfolderC
+```
+
+If you define the following `fs.excludes` property in your
+`~/.fscrawler/test/_settings.yaml` file:
+
+```yaml
+name: "test"
+fs:
+  excludes:
+  - "/folderB/subfolder*"
+```
+
+Then all files but the ones in `/folderB/subfolderA`, `/folderB/subfolderB` and
+`/folderB/subfolderC` will be indexed.
+
+If you want to exclude a specific folder, you need to use a wildcard character at the end of the folder name, like:
+
+```yaml
+name: "test"
+fs:
+  excludes:
+  - "/folderB/subfolderB/*"
+```
+
+Since the includes and excludes work on the entire *path of the file* you must consider that when using wildcards. Below are some includes and excludes pattern to help convey the idea better.
+
+| Pattern         | Includes                                      | Excludes                                      |
+|-----------------|-----------------------------------------------|-----------------------------------------------|
+| `*.jpg`         | Include all jpg files                         | exclude all jpg files                         |
+| `/images/*.jpg` | Include all jpg files in the images directory | Exclude all jpg files in the images directory |
+| `*/old-*.jpg`   | Include all jpg files that start with `old-`  | Exclude all jpg files that start with `old-`  |
+
+
+If a folder contains a file named `.fscrawlerignore`, this folder and its subfolders will be entirely skipped.
+
+## Filter content
+
+You can filter out documents you would like to index by adding one or more
+regular expression that match the extracted content.
+Documents which are not matching will be simply ignored and not indexed.
+
+If you define the following `fs.filters` property in your
+`~/.fscrawler/test/_settings.yaml` file:
+
+```yaml
+name: "test"
+fs:
+  filters:
+  - ".*foo.*"
+  - "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"
+```
+
+With this example, only documents which contains the word `foo` and a VISA credit card number
+with the form like `4012888888881881`, `4012 8888 8888 1881` or `4012-8888-8888-1881`
+will be indexed.
+
+## Indexing JSON docs
+
+If you want to index JSON files directly without parsing with Tika, you
+can set `json_support` to `true`. JSON contents will be stored
+directly under \_source. If you need to keep JSON documents synchronized
+to the index, set option [Add as Inner Object](#add-as-inner-object)
+which stores additional metadata and the JSON contents under field
+`object`.
+
+```yaml
+name: "test"
+fs:
+  json_support: true
+```
+
+Of course, if you did not define a mapping before launching the crawler,
+Elasticsearch will auto guess the mapping.
+
+## Indexing XML docs
+
+If you want to index XML files and convert them to JSON, you can set
+`xml_support` to `true`. The content of XML files will be added
+directly under \_source. If you need to keep XML documents synchronized
+to the index, set option [Add as Inner Object](#add-as-inner-object)
+which stores additional metadata and the XML contents under field
+`object`.
+
+```yaml
+name: "test"
+fs:
+  xml_support: true
+```
+
+Of course, if you did not define a mapping before launching the crawler,
+Elasticsearch will auto guess the mapping.
+
+## Add as Inner Object
+
+The default settings store the contents of JSON and XML documents
+directly onto the \_source element of Elasticsearch documents. Thereby,
+there is no metadata about file and path settings, which are necessary
+to determine if a document is deleted or updated. New files will however
+be added to the index, (determined by the file timestamp).
+
+If you need to keep JSON or XML documents synchronized to elasticsearch,
+you should set this option.
+
+```yaml
+name: "test"
+fs:
+  add_as_inner_object: true
+```
+
+## Index folders
+
+By default, FSCrawler will index folder names in the folder index. If
+you don’t want to index those folders, you can set `index_folders` to
+`false`.
+
+Note that in that case, FSCrawler won’t be able to detect removed
+folders so any document has been indexed in Elasticsearch, it won’t be
+removed when you remove or move the folder away.
+
+See `elasticsearch.index_folder` below for the name of the index to be used to store the folder data (if `es.index_folders` is set to `true`).
+
+```yaml
+name: "test"
+fs:
+  index_folders: false
+```
+
+## Dealing with multiple types and multiple dirs
+
+If you have more than one type, create as many crawlers as types and/or folders:
+
+`~/.fscrawler/test_type1/_settings.yaml`:
+
+```yaml
+name: "test_type1"
+fs:
+  url: "/tmp/type1"
+  json_support: true
+elasticsearch:
+  index: "mydocs1"
+  index_folder: "myfolders1"
+```
+
+`~/.fscrawler/test_type2/_settings.yaml`:
+
+```yaml
+name: "test_type2"
+fs:
+  url: "/tmp/type2"
+  json_support: true
+elasticsearch:
+  index: "mydocs2"
+  index_folder: "myfolders2"
+```
+
+`~/.fscrawler/test_type3/_settings.yaml`:
+
+```yaml
+name: "test_type3"
+fs:
+  url: "/tmp/type3"
+  xml_support: true
+elasticsearch:
+  index: "mydocs3"
+  index_folder: "myfolders3"
+```
+
+## Dealing with multiple types within the same dir
+
+You can also index many types from one single dir using two crawlers
+scanning the same dir and by setting `includes` parameter:
+
+`~/.fscrawler/test_type1.yaml`:
+
+```yaml
+name: "test_type1"
+fs:
+  url: "/tmp"
+  includes:
+  - "type1*.json"
+  json_support: true
+elasticsearch:
+  index: "mydocs1"
+  index_folder: "myfolders1"
+```
+
+`~/.fscrawler/test_type2.yaml`:
+
+```yaml
+name: "test_type2"
+fs:
+  url: "/tmp"
+  includes:
+  - "type2*.json"
+  json_support: true
+elasticsearch:
+  index: "mydocs2"
+  index_folder: "myfolders2"
+```
+
+`~/.fscrawler/test_type3.yaml`:
+
+```yaml
+name: "test_type3"
+fs:
+  url: "/tmp"
+  includes:
+  - "*.xml"
+  xml_support: true
+elasticsearch:
+  index: "mydocs3"
+  index_folder: "myfolders3"
+```
+
+(filename-as-id)=
+## Using filename as elasticsearch `_id`
+
+Please note that the document `_id` is generated as a hash value
+from the filename to avoid issues with special characters in filename.
+You can force to use the `_id` to be the filename using
+`filename_as_id` attribute:
+
+```yaml
+name: "test"
+fs:
+  filename_as_id: true
+```
+
+## Adding file attributes
+
+If you want to add file attributes such as `attributes.owner`, `attributes.group`
+and `attributes.permissions`, you can set `attributes_support` to `true`.
+
+```yaml
+name: "test"
+fs:
+  attributes_support: true
+```
+
+```{note}
+
+ On Windows systems, `attributes.group` and `attributes.permissions` are
+ not generated.
+```
+
+## Collecting ACL metadata
+
+To extract NTFS access control entries (principal, type, permissions and flags),
+enable both `attributes_support` and `acl_support`:
+
+```yaml
+name: "test"
+fs:
+  attributes_support: true
+  acl_support: true
+```
+
+When `acl_support` is disabled, FSCrawler skips resolving ACLs even if
+`attributes_support` is active.
+
+## Enabling raw metadata
+
+FSCrawler can extract all found metadata within a `meta.raw` object in addition
+to the standard metadata fields.
+If you want to enable this feature, you can set `raw_metadata` to `true`.
+
+```yaml
+name: "test"
+fs:
+  raw_metadata: true
+```
+
+Generated raw metadata depends on the file format itself.
+
+For example, a PDF document could generate:
+
+```json
+{
+   "date" : "2016-07-07T08:37:42Z",
+   "pdf:PDFVersion" : "1.5",
+   "xmp:CreatorTool" : "Microsoft Word",
+   "Keywords" : "keyword1, keyword2",
+   "access_permission:modify_annotations" : "true",
+   "access_permission:can_print_degraded" : "true",
+   "subject" : "Test Tika Object",
+   "dc:creator" : "David Pilato",
+   "dcterms:created" : "2016-07-07T08:37:42Z",
+   "Last-Modified" : "2016-07-07T08:37:42Z",
+   "dcterms:modified" : "2016-07-07T08:37:42Z",
+   "dc:format" : "application/pdf; version=1.5",
+   "title" : "Test Tika title",
+   "Last-Save-Date" : "2016-07-07T08:37:42Z",
+   "access_permission:fill_in_form" : "true",
+   "meta:save-date" : "2016-07-07T08:37:42Z",
+   "pdf:encrypted" : "false",
+   "dc:title" : "Test Tika title",
+   "modified" : "2016-07-07T08:37:42Z",
+   "cp:subject" : "Test Tika Object",
+   "Content-Type" : "application/pdf",
+   "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
+   "creator" : "David Pilato",
+   "meta:author" : "David Pilato",
+   "dc:subject" : "keyword1, keyword2",
+   "meta:creation-date" : "2016-07-07T08:37:42Z",
+   "created" : "Thu Jul 07 10:37:42 CEST 2016",
+   "access_permission:extract_for_accessibility" : "true",
+   "access_permission:assemble_document" : "true",
+   "xmpTPg:NPages" : "2",
+   "Creation-Date" : "2016-07-07T08:37:42Z",
+   "access_permission:extract_content" : "true",
+   "access_permission:can_print" : "true",
+   "meta:keyword" : "keyword1, keyword2",
+   "Author" : "David Pilato",
+   "access_permission:can_modify" : "true"
+}
+```
+
+Where a MP3 file would generate:
+
+```json
+{
+   "xmpDM:genre" : "Vocal",
+   "X-Parsed-By" : "org.apache.tika.parser.DefaultParser",
+   "creator" : "David Pilato",
+   "xmpDM:album" : "FS Crawler",
+   "xmpDM:trackNumber" : "1",
+   "xmpDM:releaseDate" : "2016",
+   "meta:author" : "David Pilato",
+   "xmpDM:artist" : "David Pilato",
+   "dc:creator" : "David Pilato",
+   "xmpDM:audioCompressor" : "MP3",
+   "title" : "Test Tika",
+   "xmpDM:audioChannelType" : "Stereo",
+   "version" : "MPEG 3 Layer III Version 1",
+   "xmpDM:logComment" : "Hello but reverted",
+   "xmpDM:audioSampleRate" : "44100",
+   "channels" : "2",
+   "dc:title" : "Test Tika",
+   "Author" : "David Pilato",
+   "xmpDM:duration" : "1018.775146484375",
+   "Content-Type" : "audio/mpeg",
+   "samplerate" : "44100"
+}
+```
+
+````{note}
+All fields are generated as text even though they can be valid booleans or numbers.
+
+The `meta.raw.*` fields have a default mapping applied:
+
+```json
+{
+  "type": "text",
+  "fields": {
+    "keyword": {
+      "type": "keyword",
+      "ignore_above": 256
+    }
+  }
+}
+```
+
+If you want specifically tell elasticsearch to use a date type or a
+numeric type for some fields, you need to modify the default template
+provided by FSCrawler.
+````
+
+```{note}
+Note that dots in metadata names will be replaced by a `:`. For example `PTEX.Fullbanner` will be indexed as
+`PTEX:Fullbanner`.
+```
+
+```{note}
+Note that if you have a lot of different type of files, that can generate a lot of raw metadata which can make you hit 
+the total number of field limit in elasticsearch mappings. In which case you will need to change the index settings 
+`foo`.
+
+See [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html#mapping-limit-settings)
+```
+
+## Disabling file size field
+
+By default, FSCrawler will create a field to store the original file
+size in octets. You can disable it using \`add_filesize’ option:
+
+```yaml
+name: "test"
+fs:
+  add_filesize: false
+```
+
+## Ignore deleted files
+
+If you don’t want to remove indexed documents when you remove a file or a directory, you can set `remove_deleted` to 
+`false` (default to `true`):
+
+```yaml
+name: "test"
+fs:
+  remove_deleted: false
+```
+
+```{note}
+Setting `remove_deleted` is forced to `false` when using the Workplace Search output.
+```
+
+## Ignore content
+
+If you don’t want to extract file content but only index filesystem
+metadata such as filename, date, size and path, you can set
+`index_content` to `false` (default to `true`):
+
+```yaml
+name: "test"
+fs:
+  index_content: false
+```
+
+(continue_on_error)=
+## Continue on Error
+
+By default, FSCrawler will immediately stop indexing if he hits a
+Permission denied exception. If you want to just skip this File and
+continue with the rest of the directory tree you can set
+`continue_on_error` to `true` (default to `false`):
+
+```yaml
+name: "test"
+fs:
+  continue_on_error: true
+```
+
+## Language detection
+
+You can ask for language detection using `lang_detect` option:
+
+```yaml
+name: "test"
+fs:
+  lang_detect: true
+```
+
+In that case, a new field named `meta.language` is added to the
+generated JSON document.
+
+If you are using elasticsearch 5.0 or superior, you can use this value
+to send your document to a specific index using a {ref}`Node Ingest pipeline <ingest_node>`.
+
+For example, you can define a pipeline named `langdetect` with:
+
+```sh
+PUT _ingest/pipeline/langdetect
+{
+  "description" : "langdetect pipeline",
+  "processors" : [
+    {
+      "set": {
+        "field": "_index",
+        "value": "myindex-{{meta.language}}"
+      }
+    }
+  ]
+}
+```
+
+In FSCrawler settings, set both `fs.lang_detect` and
+`elasticsearch.pipeline` options:
+
+```yaml
+name: "test"
+fs:
+  lang_detect: true
+elasticsearch:
+  pipeline: "langdetect"
+```
+
+And then, a document containing french text will be sent to
+`myindex-fr`. A document containing english text will be sent to
+`myindex-en`.
+
+You can also imagine changing the field name from `content` to
+`content-fr` or `content-en`. That will help you to define the
+correct analyzer to use.
+
+Language detection might detect more than one language in a given text
+but only the most accurate will be set. Which means that if you have a
+document containing 80% of french and 20% of english, the document will
+be marked as `fr`.
+
+Note that language detection is CPU and time consuming.
+
+(store_binary)=
+## Storing binary source document
+
+You can store in elasticsearch itself the binary document (BASE64 encoded)
+using `store_source` option:
+
+```yaml
+name: "test"
+fs:
+  store_source: true
+```
+
+In that case, a new field named `attachment` is added to the generated
+JSON document. This field is not indexed. Default mapping for
+`attachment` field is:
+
+```json
+{
+  "_doc" : {
+    "properties" : {
+      "attachment" : {
+        "type" : "binary",
+        "doc_values" : false
+      }
+      // ... Other properties here
+    }
+  }
+}
+```
+
+## Extracted characters
+
+By default, FSCrawler will extract only the first 100 000 characters.
+But, you can set `indexed_chars` to `5000` in FSCrawler settings in
+order to overwrite this default settings.
+
+```yaml
+name: "test"
+fs:
+  indexed_chars: "5000"
+```
+
+This number can be either a fixed size, number of characters that is, or
+a percent using `%` sign. The percentage value will be applied to the
+filesize to determine the number of character the crawler needs to
+extract.
+
+If you want to index only `80%` of filesize, define `indexed_chars`
+to `"80%"`. Of course, if you want to index the full document, you can
+set this property to `"100%"`. Double values are also supported so
+`"0.01%"` is also a correct value.
+
+**Compressed files**: If your file is compressed, you might need to
+increase `indexed_chars` to more than `"100%"`. For example,
+`"150%"`.
+
+If you want to extract the full content, define `indexed_chars` to
+`"-1"`.
+
+```{note}
+
+ Tika requires to allocate in memory a data structure to
+ extract text. Setting `indexed_chars` to a high number will require
+ more memory!
+```
+
+## Ignore Above
+
+By default, and if `index_content` set to `true`, FSCrawler will send every single file to Tika, whatever its size.
+But some files on your file system might be a way too big to be parsed.
+
+Set `ignore_above` to the desired value of the limit.
+
+```yaml
+name: "test"
+fs:
+  ignore_above: "512mb"
+```
+
+## File checksum
+
+If you want FSCrawler to generate a checksum for each file, set
+`checksum` to the algorithm you wish to use to compute the checksum,
+such as `MD5` or `SHA-1`.
+
+```{note}
+
+ You MUST set `index_content` to true to allow this feature to work. Nevertheless you MAY set `indexed_chars` to 0 if you do not need any content in the index.
+
+ You MUST NOT set `json_support` or `xml_support` to allow this feature to work also.
+```
+
+```yaml
+name: "test"
+fs:
+   # required
+  index_content: true
+  #indexed_chars: 0
+  checksum: "MD5"
+```
+
+## Temporary Directory
+
+```{versionadded} 3.0
+```
+
+When `checksum` or `store_source` is enabled, FSCrawler may need to create
+temporary files to process large documents without loading them entirely into memory.
+By default, temporary files are created in `~/.fscrawler/<job_name>/tmp/`.
+
+You can override this location using the `temp_dir` option:
+
+```yaml
+name: "test"
+fs:
+  checksum: "MD5"
+  temp_dir: "/path/to/custom/temp"
+```
+
+```{note}
+
+ For small files (64KB or less), FSCrawler uses an in-memory buffer instead of
+ temporary files for better performance. Temporary files are only created for
+ larger files to avoid `OutOfMemoryError`.
+```
+
+```{note}
+
+ Temporary files are automatically deleted after processing each document.
+```
+
+## Follow Symlinks
+
+If you want FSCrawler to follow the symbolic links, you need to be explicit about it and set
+`follow_symlinks` to `true`. Starting from version 2.7, symbolic links are not followed anymore.
+
+```yaml
+name: "test"
+fs:
+  follow_symlinks: true
+```
+
+## Tika Config Path
+
+```{versionadded} 3.0
+```
+
+If you want to override the default tika parser configuration, you can set the path to a custom tika
+configuration file, which will be used instead.
+
+```yaml
+name: "test"
+fs:
+  tika_config_path: '/path/to/tikaConfig.xml'
+```
+
+An example tika config file is shown below. See {{ Tika_configuring }} for more information.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+<service-loader dynamic="true"/>
+<service-loader loadErrorHandler="IGNORE"/>
+<parsers>
+  <!-- Use Default Parser for files, but Default Parser will never use HTML parser -->
+  <parser class="org.apache.tika.parser.DefaultParser">
+    <parser-exclude class="org.apache.tika.parser.html.JsoupParser"/>
+  </parser>
+  <!-- Use a different parser for XHTML -->
+  <parser class="org.apache.tika.parser.xml.XMLParser">
+    <mime>application/xhtml+xml</mime>
+  </parser>
+</parsers>
+</properties>
+```

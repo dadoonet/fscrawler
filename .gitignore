@@ -1,5 +1,6 @@
 .DS_Store
 target
+docs/build
 /.settings
 /.classpath
 /.project
@@ -22,4 +23,3 @@ CLAUDE.local.md
 .claude/settings.local.json
 .release
 .env
-/docs/build/

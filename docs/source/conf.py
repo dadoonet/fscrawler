@@ -92,6 +92,14 @@ source_suffix = {
     '.md': 'markdown',
 }
 
+myst_enable_extensions = [
+    'colon_fence',
+    'deflist',
+    'substitution',
+]
+
+myst_heading_anchors = 3
+
 # The master toctree document.
 master_doc = 'index'
 
@@ -105,7 +113,7 @@ master_doc = 'index'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = []
+exclude_patterns = ['_includes/*']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -124,10 +132,8 @@ html_theme = "sphinx_rtd_theme"
 #
 # html_theme_options = {}
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# No custom static assets; doc images are co-located with their Markdown pages.
+html_static_path = []
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -263,4 +269,31 @@ fmt_es_stack_version=es_stack_version,
 fmt_fscrawler_version=release,
 fmt_java_version=java_version
 )
+
+_tika_version = config.get('3rdParty', 'TikaVersion')
+_es_version7 = config.get('3rdParty', 'ElasticsearchVersion7')
+_es_version8 = config.get('3rdParty', 'ElasticsearchVersion8')
+_es_version9 = config.get('3rdParty', 'ElasticsearchVersion9')
+_jpeg_version = config.get('3rdParty', 'JpegVersion')
+
+myst_substitutions = {
+    'year': str(year),
+    'release': release,
+    'version': version,
+    'Tika': 'Tika',
+    'ES': '[Elasticsearch](https://www.elastic.co/elasticsearch)',
+    'Tika_format': f'[Tika](https://tika.apache.org/{_tika_version}/formats.html#Supported_Document_Formats)',
+    'Tika_version': f'[Tika {_tika_version}](https://tika.apache.org/{_tika_version}/)',
+    'Tika_configuring': f'[Configuring Tika](https://tika.apache.org/{_tika_version}/configuring.html)',
+    'ES_version7': f'[Elasticsearch {_es_version7}](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/index.html)',
+    'ES_version8': f'[Elasticsearch {_es_version8}](https://www.elastic.co/guide/en/elasticsearch/reference/8.18/index.html)',
+    'ES_version9': f'[Elasticsearch {_es_version9}](https://www.elastic.co/docs/solutions/search)',
+    'ES_stack_version': es_stack_version,
+    'FSCrawler_version': release,
+    'JPEG2000_version': f'[jai-imageio-jpeg2000:{_jpeg_version}](https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{_jpeg_version}/)',
+    'Download_URL': f'[Sonatype]({downloadUrl})',
+    'Maven_Central': '[Maven Central](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)',
+    'Sonatype': '[Sonatype](https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)',
+    'java_version': java_version,
+}
 # End of conf.py

@@ -5,8 +5,6 @@ name: Build Pull Requests
 
 on:
   pull_request:
-    paths-ignore:
-      - 'docs/**'
 
 env:
   ELASTIC_SERVERLESS_APIKEY: ${{ secrets.ELASTIC_SERVERLESS_APIKEY }}
@@ -15,6 +13,26 @@ env:
   ELASTIC_CLOUD_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
 
 jobs:
+  # Detect non-documentation changes to skip expensive integration tests on docs-only PRs
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!docs/**'
+              - '!.readthedocs.yaml'
+              - '!.gitignore'
+              - '!.github/**'
+
   # We initialize the PR number so that we can use it in the other jobs
   get-pr-number:
     runs-on: ubuntu-latest
@@ -54,7 +72,10 @@ jobs:
   # We run integration tests with elastic stack 9 (default)
   it:
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - changes
+    if: needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
@@ -76,7 +97,10 @@ jobs:
   # We run integration tests with elastic stack 8
   it-es8:
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - changes
+    if: needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
@@ -98,8 +122,10 @@ jobs:
   # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
   it-cloud:
     runs-on: ubuntu-latest
+    if: needs.changes.outputs.code == 'true'
     needs:
       - build
+      - changes
       - get-pr-number
     steps:
       - uses: actions/checkout@v7
@@ -135,8 +161,10 @@ jobs:
   # We run integration tests with Elastic Cloud Serverless (if secrets are set)
   it-serverless:
     runs-on: ubuntu-latest
+    if: needs.changes.outputs.code == 'true'
     needs:
       - build
+      - changes
       - get-pr-number
     steps:
       - uses: actions/checkout@v7
@@ -172,8 +200,10 @@ jobs:
   # We run integration tests from a Windows machine to Elastic Cloud
   it-windows:
     runs-on: windows-latest
+    if: needs.changes.outputs.code == 'true'
     needs:
       - build
+      - changes
       - get-pr-number
     steps:
       - uses: actions/checkout@v7
@@ -202,7 +232,10 @@ jobs:
   # We run this job in parallel after the build
   build-docker:
     runs-on: ubuntu-latest
-    needs: build
+    if: needs.changes.outputs.code == 'true'
+    needs:
+      - build
+      - changes
     steps:
       - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
