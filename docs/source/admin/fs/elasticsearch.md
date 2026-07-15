@@ -114,7 +114,93 @@ elasticsearch:
 If you want to know what are the component templates and index templates
 that will be created, you can get them from [the source](https://github.com/dadoonet/fscrawler/blob/master/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/9).
 
-##### Replace existing mapping
+#### Creating your own mapping (analyzers)
+
+If you want to define your own index settings and mapping to set
+analyzers for example, you can create the needed component template
+**before starting FSCrawler**.
+
+FSCrawler will detect that the component template already exists and will not override it.
+It will only create the missing component templates and the index template.
+
+For example, you can define in advance your own component template `fscrawler_fscrawler_mapping_content`:
+
+```none
+PUT _component_template/fscrawler_fscrawler_mapping_content
+{
+ "template": {
+   "mappings": {
+     "properties": {
+       "content": {
+         "type": "text",
+         "analyzer": "french"
+       }
+     }
+   }
+ }
+}
+```
+
+Then start FSCrawler. It will create all the component templates but `fscrawler_fscrawler_mapping_content`
+(which you already defined) and create the index template.
+
+```{note}
+
+ If someone wants to force pushing all the templates again (for example after an upgrade),
+ they can use `force_push_templates: true`. In the above example, the custom
+ `fscrawler_fscrawler_mapping_content` component template would be overridden.
+```
+
+The following example uses a `french` analyzer to index the
+`content` field and still allow using semantic search.
+
+```none
+PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
+{
+ "template": {
+   "mappings": {
+     "properties": {
+       "content": {
+         "type": "text",
+         "analyzer": "french",
+         "copy_to": "content_semantic"
+       },
+       "content_semantic": {
+         "type": "semantic_text"
+       }
+     }
+   }
+ }
+}
+```
+
+The following example uses a `french` analyzer to index the
+`content` field.
+
+```none
+PUT _component_template/fscrawler_fscrawler_mapping_content
+{
+ "template": {
+   "mappings": {
+     "properties": {
+       "content": {
+         "type": "text",
+         "analyzer": "french"
+       }
+     }
+   }
+ }
+}
+```
+
+```{tip}
+
+ You can launch FSCrawler with `--loop 0` to see what component templates and index templates
+ would be created without indexing any document. Then you can create your own custom component
+ templates and restart FSCrawler. Your custom templates will be preserved.
+```
+
+#### Replace existing mapping
 
 Unfortunately you can not change the mapping on existing data.
 Therefore, you’ll need first to remove existing index, which means
@@ -156,7 +242,7 @@ inference API (defaults to [Elser model](https://www.elastic.co/guide/en/machine
 You can change the model to use by changing the component template. For example, a recommended model when you have only
 english content is the Elastic [multilingual-e5-small](https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-multilingual-e5-small.html):
 
-```console
+```none
  PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
  {
    "template": {
@@ -330,7 +416,7 @@ to it:
 
 Let's create an API Key named `fscrawler`:
 
-```console
+```none
  POST /_security/api_key
  {
    "name": "fscrawler"
