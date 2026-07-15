@@ -1,0 +1,299 @@
+# Building the project
+
+This project is built with [Maven ](https://maven.apache.org/). It needs Java >= {{ java_version }}.
+Source code is available on [GitHub ](https://github.com/dadoonet/fscrawler/).
+Thanks to [JetBrains ](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
+
+![](/_static/jetbrains.png)
+
+    :scale: 10
+    :alt: Jet Brains
+    :target: https://www.jetbrains.com/?from=FSCrawler
+
+```{contents}
+.. contents:: :backlinks: entry
+```
+
+### Clone the project
+
+Use git to clone the project locally
+```
+git clone git@github.com:dadoonet/fscrawler.git
+cd fscrawler
+```
+
+### Build the artifact
+
+To build the project, run
+```
+mvn clean package
+```
+
+The final artifacts are available in `distribution/target`.
+
+```{tip}
+
+ To build it faster (without tests), run::
+
+     mvn clean package -DskipTests
+```
+
+### Integration tests
+
+When running from the command line with `mvn` integration tests are ran against a real
+Elasticsearch instance launched using Docker (via [Testcontainers ](https://java.testcontainers.org/modules/elasticsearch/)).
+
+#### Run tests from your IDE
+
+To run integration tests from your IDE, you need to start tests in `fscrawler-it` module.
+But you can specify the Maven profile to use and rebuild the project.
+
+* `es-8x` for Elasticsearch 8.x
+* `es-7x` for Elasticsearch 7.x
+
+#### Faster integration tests
+
+As we are using [Testcontainers ](https://java.testcontainers.org/modules/elasticsearch/),
+we can [reuse ](https://java.testcontainers.org/features/reuse/) the Elasticsearch container instead of having to restart
+one everytime.
+
+```{note} You need to explicitly `enable this feature <https://java.testcontainers.org/features/reuse/>`_.
+```
+
+If you run from the IDE, reusing containers is the default behavior. But if you run the CLI, you need
+to set `tests.leaveTemporary` to `true`
+```
+mvn verify -Dtests.leaveTemporary=true
+```
+
+#### Parallel test execution
+
+By default, parallel test execution is disabled to avoid static field issues (shared ElasticsearchClient for example).
+To enable parallel execution of test classes and methods, use the `parallel_tests` Maven profile
+```
+mvn verify -P parallel_tests
+```
+
+This profile enables JUnit 6's parallel execution engine, running both test classes concurrently
+and test methods within each class in parallel.
+
+#### Run a specific test from your Terminal
+
+To run a specific unit test, just run
+```
+mvn verify -DskipIntegTests -Dtest=CLASS_NAME#METHOD_NAME
+```
+
+To run a specific integration test, just run
+```
+mvn verify -DskipUnitTests -Dit.test=CLASS_NAME#METHOD_NAME
+```
+
+```{note}
+
+ Integration tests (`*IT.java`) are run by `maven-failsafe-plugin` and use `-Dit.test=`.
+ Unit tests (`*Test.java`) are run by `maven-surefire-plugin` and use `-Dtest=`.
+```
+
+#### Run tests with an external cluster
+
+Launching the docker containers might take some time so if to want to run the test suite against an already running
+cluster, you need to provide a `tests.cluster.url` value. This will skip launching the docker instances.
+
+To run the test suite against an elasticsearch instance running locally, just run
+```
+mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=https://localhost:9200
+```
+
+```{hint}
+
+ If you are using an external cluster, you must set the `tests.cluster.apiKey` if your cluster does not use
+ `elastic` and `changeme` as their credentials, and it's anyway the recommended approach::
+
+     mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+         -Dtests.cluster.apiKey=APIKEYHERE \
+         -Dtests.cluster.url=https://localhost:9200 \
+
+ If the cluster is using a self generated SSL certificate, you can bypass checking the certificate by using
+ `tests.cluster.check_ssl`::
+
+     mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+         -Dtests.cluster.apiKey=APIKEYHERE \
+         -Dtests.cluster.url=https://localhost:9200 \
+         -Dtests.cluster.check_ssl=false
+```
+
+```{hint}
+
+ To run tests against another instance (ie. running on
+ [Elasticsearch service by Elastic ](https://www.elastic.co/cloud/elasticsearch-service),
+ you can also use `tests.cluster.url` to set where elasticsearch is running::
+
+     mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+         -Dtests.cluster.apiKey=APIKEYHERE \
+         -Dtests.cluster.url=https://ALIAS.es.REGION.CLOUD_PROVIDER.elastic.cloud
+
+ You can use both Elasticsearch service and Serverless projects.
+```
+
+#### Changing the REST port
+
+By default, FS crawler will run the integration tests using a randomly chosen port for the REST service.
+You can change this by using `tests.rest.port` option
+```
+mvn verify -Dtests.rest.port=8280
+```
+
+When set to `0` (default value), the port is assigned randomly.
+
+#### Randomized testing
+
+FS Crawler uses the [randomized testing framework ](https://github.com/randomizedtesting/randomizedtesting-jupiter).
+In case of failure, it will print a line like
+```
+```
+
+For a unit test
+```
+REPRODUCE WITH:
+mvn test -pl tika -Dtest=TikaDocParserTest#testExtractFromRtf -Dtests.seed=AC6992149EB4B547 -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
+```
+
+For an integration test
+```
+REPRODUCE WITH:
+mvn verify -pl integration-tests -am -Dit.test=FsCrawlerTestOcrIT#ocr_disabled -Dtests.seed=AC6992149EB4B547 -Dtests.locale=tr-TR
+```
+
+You can just run the test again using the same seed to make sure you always run the test in the same context as before.
+
+#### Tests options
+
+Some options are available from the command line when running the tests:
+
+* `tests.leaveTemporary` leaves temporary files after tests (and also the TestContainers instance). `false` by default.
+* `tests.parallelism` set to `true` if you want to allow multiple suites to be ran in parallel. Default to `false`.
+* `tests.output` set to `true` if you want to redirect the tests output redirected to a file.
+Defaults to `false`.
+* `tests.seed` if you need to reproduce a specific failure using the exact same random seed.
+* `tests.timeoutSuite` how long a full suite of tests can run. It's set by default to `120` which means 2 minutes.
+* `tests.timeout` how long a single test can run. It's set by default to `60` which means 1 minute.
+* `tests.locale` by default it's set to `random` but you can force the locale to use.
+* `tests.timezone` by default it's set to `random` but you can force the timezone to use, like `CEST` or `-0200`.
+
+For example
+```
+```
+
+  mvn install -rf :fscrawler-it \
+    -Dtests.output=always \
+    -Dtests.locale=fr-FR \
+    -Dtests.timezone=CEST \
+    -Dtests.verbose \
+    -Dtests.leaveTemporary \
+    -Dtests.seed=E776CE45185A6E7A
+
+#### Nightly tests
+
+To run the tests in a more exhaustive way, you can use the `nightly` profile which will run only the longest tests
+```
+mvn verify -P nightly
+```
+
+### Code formatting (Spotless)
+
+The project uses [Spotless ](https://github.com/diffplug/spotless) to enforce consistent code formatting
+(Java via Palantir Java Format, POM sorting, JSON and YAML formatting).
+
+To check that the code you changed since `origin/master` is correctly formatted, run
+```
+mvn spotless:check
+```
+
+To check the **entire** codebase (not just files changed since `origin/master`)
+```
+mvn spotless:check -DratchetFrom=NONE
+```
+
+To **automatically fix** formatting issues
+```
+mvn spotless:apply
+```
+
+To install a **git pre-push hook** that runs the formatting check automatically before each push
+```
+mvn spotless:install-git-pre-push-hook
+```
+
+```{tip}
+
+ Run `mvn spotless:apply` before committing to avoid CI failures due to formatting.
+```
+
+### Check for vulnerabilities (CVE)
+
+The project is using [OSS Sonatype service ](https://ossindex.sonatype.org/) to check for known
+vulnerabilities. This is ran during the `verify` phase.
+
+Sonatype provides this service but with a anonymous account, you might be limited
+by the number of tests you can run during a given period.
+
+You can bypass this limit by creating a [Personal Access Token (PAT) ](https://guide.sonatype.com/settings/tokens)
+and then set the `sonatype.username` and `sonatype.password` properties
+```
+    mvn verify -DskipTests \
+        -Dsonatype.username=youremail@domain.com \
+        -Dsonatype.password=YOUR_PAT
+```
+
+If you want to just warn but not fail, you can run with `-Dossindex.fail=false`
+```
+    mvn verify -Dossindex.fail=false
+```
+
+If you want to skip the check, you can run with `-Dossindex.skip`
+```
+    mvn verify -Dossindex.skip
+```
+
+If a CVE needs a temporary exclusion, you can add it to the `excludeVulnerabilityIds` list
+of the `ossindex` maven plugin in the `pom.xml` file
+```
+<configuration>
+    <excludeVulnerabilityIds>
+        <!-- LINK TO CVE and COMMENT -->
+        <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
+    </excludeVulnerabilityIds>
+</configuration>
+```
+
+### Docker build
+
+The docker images build is ran when calling the maven `package` phase. If you want to skip the build of the images,
+you can manually use the `docker.skip` option
+```
+    mvn package -Ddocker.skip
+```
+
+### DockerHub publication
+
+To publish the latest build to [DockerHub ](https://hub.docker.com/r/dadoonet/fscrawler/) you can manually
+call `docker:push` maven task and provide credentials `docker.push.username` and `docker.push.password`
+```
+    mvn -f distribution/pom.xml docker:push \
+        -Ddocker.push.username=yourdockerhubaccount \
+        -Ddocker.push.password=yourverysecuredpassword
+```
+
+Otherwise, if you call the maven `deploy` phase, it will be done automatically.
+Note that it will still require that you provide the credentials `docker.push.username` and `docker.push.password`
+```
+    mvn deploy \
+        -Ddocker.push.username=yourdockerhubaccount \
+        -Ddocker.push.password=yourverysecuredpassword
+```
+
+You can also provide the settings as environment variables:
+
+*  `env.DOCKER_USERNAME` or `DOCKER_USERNAME`
+*  `env.DOCKER_PASSWORD` or `DOCKER_PASSWORD`

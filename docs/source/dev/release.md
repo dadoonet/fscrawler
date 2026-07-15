@@ -1,9 +1,9 @@
-Release the project
--------------------
+# Release the project
 
-To release the project, run::
-
-    $ release.sh
+To release the project, run
+```
+$ release.sh
+```
 
 The release script will:
 
@@ -24,13 +24,14 @@ The release script will:
 
 You will be guided through all the steps.
 
-You can add some maven options while executing the release script such as ``-DskipTests`` if you want to skip
+You can add some maven options while executing the release script such as `-DskipTests` if you want to skip
 the tests while building the release.
 
-.. note::
+```{note}
 
-    Only developers with write rights to the sonatype repository under ``fr.pilato`` space
-    can perform the release.
+ Only developers with write rights to the sonatype repository under `fr.pilato` space
+ can perform the release.
 
-    Only developers with write rights to the `DockerHub repository <https://hub.docker.com/r/dadoonet/fscrawler/>`_
-    can push the Docker images.
+ Only developers with write rights to the [DockerHub repository ](https://hub.docker.com/r/dadoonet/fscrawler/)
+ can push the Docker images.
+```
