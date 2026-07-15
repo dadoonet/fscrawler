@@ -57,8 +57,8 @@ def convert_inline(text: str) -> str:
         text = text.replace(old, new)
     text = re.sub(r":ref:`([^`<]+)\s*<([^>]+)>`", r"{ref}`\1 <\2>`", text)
     text = re.sub(r":ref:`([^`]+)`", r"{ref}`\1`", text)
-    text = re.sub(r"`([^<`]+)\s*<([^>]+)>`__", r"[\1](\2)", text)
-    text = re.sub(r"`([^<`]+)\s*<([^>]+)>`_", r"[\1](\2)", text)
+    text = re.sub(r"`([^<`]+)\s*<([^>]+)>`__", r"[\1](\2)", text, flags=re.S)
+    text = re.sub(r"`([^<`]+)\s*<([^>]+)>`_", r"[\1](\2)", text, flags=re.S)
     text = re.sub(
         r"`([^`]+)`_",
         lambda m: f"[{m.group(1)}](#{slugify(m.group(1))})",

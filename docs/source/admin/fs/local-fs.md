@@ -632,8 +632,7 @@ In that case, a new field named `meta.language` is added to the
 generated JSON document.
 
 If you are using elasticsearch 5.0 or superior, you can use this value
-to send your document to a specific index using a Node Ingest
-pipeline <#using-ingest-node-pipeline>`__.
+to send your document to a specific index using a {ref}`Node Ingest pipeline <ingest_node>`.
 
 For example, you can define a pipeline named `langdetect` with:
 

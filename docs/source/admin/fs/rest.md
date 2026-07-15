@@ -513,7 +513,9 @@ You can use this technique to add for example the filesize of the file you are u
    "http://127.0.0.1:8080/_document"
 ```
 
-.. attention:: Only standard {ref}`FSCrawler fields  <generated_fields>` can be set outside `external` field name.
+```{attention}
+Only standard {ref}`FSCrawler fields <generated_fields>` can be set outside `external` field name.
+```
 
 ### Remove a document
 
