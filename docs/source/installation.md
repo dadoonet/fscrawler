@@ -263,7 +263,7 @@ file. Check the `<snapshotVersion>` tag to find the latest SNAPSHOT version of t
 
 Note the `value` tag which contains the version you need to download. And use that value in the following URL:
 
-https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/fscrawler-distribution-3.0-YYYYMMDD.HHMMSS-NN.zip
+<https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/fscrawler-distribution-3.0-YYYYMMDD.HHMMSS-NN.zip>
 ```
 ````
 
