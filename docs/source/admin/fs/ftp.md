@@ -5,21 +5,14 @@ You can index files remotely using FTP.
 
 Here is a list of FTP settings:
 
-```{eval-rst}
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| Name                | Environment Variable          | Default value | Documentation                        |
-+=====================+===============================+===============+======================================+
-| ``fs.provider``     | ``FSCRAWLER_FS_PROVIDER``     | ``"local"``   | Set it to ``"ftp"`` for FTP crawling |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.hostname`` | ``FSCRAWLER_SERVER_HOSTNAME`` | ``null``      | Hostname                             |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.port``     | ``FSCRAWLER_SERVER_PORT``     | ``21``        | Port                                 |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.username`` | ``FSCRAWLER_SERVER_USERNAME`` | ``anonymous`` | :ref:`ftp_login`                     |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.password`` | ``FSCRAWLER_SERVER_PASSWORD`` | ``null``      | :ref:`ftp_login`                     |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-```
+| Name              | Environment Variable        | Default value   | Documentation                      |
+|-------------------|-----------------------------|-----------------|------------------------------------|
+| `fs.provider`     | `FSCRAWLER_FS_PROVIDER`     | `"local"`       | Set it to `"ftp"` for FTP crawling |
+| `server.hostname` | `FSCRAWLER_SERVER_HOSTNAME` | `null`          | Hostname                           |
+| `server.port`     | `FSCRAWLER_SERVER_PORT`     | `21`            | Port                               |
+| `server.username` | `FSCRAWLER_SERVER_USERNAME` | `anonymous`     | {ref}`ftp_login`                   |
+| `server.password` | `FSCRAWLER_SERVER_PASSWORD` | `null`          | {ref}`ftp_login`                   |
+
 
 ```{deprecated} 2.10
 

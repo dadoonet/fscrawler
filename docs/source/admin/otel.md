@@ -22,33 +22,14 @@ FSCrawler uses a hybrid instrumentation approach:
 * **Manual instrumentation**: Key FSCrawler pipeline stages are instrumented
   with named spans so you can identify bottlenecks:
 
-```{eval-rst}
-.. list-table:: FSCrawler custom spans
-   :header-rows: 1
-   :widths: 30 30 40
-
-   * - Span name
-     - Attributes
-     - Description
-   * - ``fscrawler.crawl``
-     - ``job.name``, ``fs.provider``
-     - One span per crawler run
-   * - ``fscrawler.directory.traverse``
-     - ``scan.id``
-     - Entire directory traversal for a run
-   * - ``fscrawler.directory.process``
-     - ``fs.path``
-     - Processing of a single directory
-   * - ``fscrawler.file.index``
-     - ``fs.path``, ``file.size``
-     - Indexing of a single file
-   * - ``fscrawler.tika.extract``
-     - ``file.size``, ``tika.content_type``, ``tika.indexed_chars``
-     - Apache Tika text extraction
-   * - ``fscrawler.es.bulk``
-     - ``es.bulk.actions``
-     - Elasticsearch bulk indexing request (number of operations in the batch)
-```
+| Span name                      | Attributes                                             | Description                                                             |
+|--------------------------------|--------------------------------------------------------|-------------------------------------------------------------------------|
+| `fscrawler.crawl`              | `job.name`, `fs.provider`                              | One span per crawler run                                                |
+| `fscrawler.directory.traverse` | `scan.id`                                              | Entire directory traversal for a run                                    |
+| `fscrawler.directory.process`  | `fs.path`                                              | Processing of a single directory                                        |
+| `fscrawler.file.index`         | `fs.path`, `file.size`                                 | Indexing of a single file                                               |
+| `fscrawler.tika.extract`       | `file.size`, `tika.content_type`, `tika.indexed_chars` | Apache Tika text extraction                                             |
+| `fscrawler.es.bulk`            | `es.bulk.actions`                                      | Elasticsearch bulk indexing request (number of operations in the batch) |
 
 ## Enabling OTel tracing
 
@@ -78,31 +59,16 @@ export OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.versio
 
 Common variables:
 
-```{eval-rst}
-.. list-table::
-   :header-rows: 1
-   :widths: 40 60
-
-   * - Variable
-     - Description
-   * - ``OTEL_EXPORTER_OTLP_ENDPOINT``
-     - OTLP endpoint. gRPC default: ``http://localhost:4317``; HTTP default: ``http://localhost:4318``
-   * - ``OTEL_SERVICE_NAME``
-     - Service name shown in Kibana APM (default: ``fscrawler``)
-   * - ``OTEL_RESOURCE_ATTRIBUTES``
-     - Comma-separated ``key=value`` resource attributes
-   * - ``OTEL_EXPORTER_OTLP_HEADERS``
-     - Auth headers, e.g. ``Authorization=Bearer <token>``
-   * - ``OTEL_EXPORTER_OTLP_TIMEOUT``
-     - Export timeout in ms (e.g. ``1000``); reduce if the collector is unavailable
-   * - ``OTEL_METRIC_EXPORT_INTERVAL``
-     - Metric flush interval in ms (default: ``60000``); set to ``5000`` for short-lived runs
-   * - ``OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED``
-     - Set to ``true`` to enable Java 17+ JVM metrics (``jvm.cpu.recent_utilization``, etc.)
-   * - ``ELASTIC_OTEL_INFERRED_SPANS_ENABLED``
-     - Set to ``true`` to enable inferred spans via async-profiler (Elastic OTel agent only).
-       **Disabled by default** — may crash on some platforms (e.g. Java 25 / aarch64).
-```
+| Variable                                                | Description                                                                                                                                                          |
+|---------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT`                           | OTLP endpoint. gRPC default: `http://localhost:4317`; HTTP default: `http://localhost:4318`                                                                          |
+| `OTEL_SERVICE_NAME`                                     | Service name shown in Kibana APM (default: `fscrawler`)                                                                                                              |
+| `OTEL_RESOURCE_ATTRIBUTES`                              | Comma-separated `key=value` resource attributes                                                                                                                      |
+| `OTEL_EXPORTER_OTLP_HEADERS`                            | Auth headers, e.g. `Authorization=Bearer <token>`                                                                                                                    |
+| `OTEL_EXPORTER_OTLP_TIMEOUT`                            | Export timeout in ms (e.g. `1000`); reduce if the collector is unavailable                                                                                           |
+| `OTEL_METRIC_EXPORT_INTERVAL`                           | Metric flush interval in ms (default: `60000`); set to `5000` for short-lived runs                                                                                   |
+| `OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_JAVA17_ENABLED` | Set to `true` to enable Java 17+ JVM metrics (`jvm.cpu.recent_utilization`, etc.)                                                                                    |
+| `ELASTIC_OTEL_INFERRED_SPANS_ENABLED`                   | Set to `true` to enable inferred spans via async-profiler (Elastic OTel agent only). **Disabled by default** — may crash on some platforms (e.g. Java 25 / aarch64). |
 
 ## Using with Elastic Cloud (managed EDOT)
 

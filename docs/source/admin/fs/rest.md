@@ -40,7 +40,7 @@ curl http://127.0.0.1:8080/
 
 It will give you a response similar to:
 
-```yaml
+```json
 :substitutions:
 
 {
@@ -451,7 +451,7 @@ file will result in 2 different documents indexed.
 Add custom tags to the document. In case you want to do filtering on those
 tags (examples are `projectId` or `tenantId`).
 These tags can be assigned to an `external` object field. As you can see
-in the json, you are able to overwrite the `content` field.
+in the JSON, you are able to overwrite the `content` field.
 `meta`, `file` and `path` fields can be overwritten as well.
 To upload a binary with additional tags, you can call `POST /_document` endpoint:
 
@@ -504,9 +504,7 @@ The field `external` doesn't necessarily be a flat structure. This is a more adv
  }
 ```
 
-You can use this technique to add for example the filesize of the file your are uploading
-```
-```
+You can use this technique to add for example the filesize of the file you are uploading
 
 ```sh
  echo "This is my text" > test.txt
@@ -561,8 +559,8 @@ If the document does not exist, you will get the following response:
 
 ### Specifying an elasticsearch index
 
-By default, fscrawler creates document in the index defined in the `_settings.yaml` file.
-However, using the REST service, it is possible to require fscrawler to use different indexes, by setting the `index`
+By default, FSCrawler creates document in the index defined in the `_settings.yaml` file.
+However, using the REST service, it is possible to require FSCrawler to use different indexes, by setting the `index`
 parameter:
 
 ```sh
@@ -591,28 +589,23 @@ curl -I http://127.0.0.1:8080/
 ```
 
 The response header should contain `Access-Control-Allow-*` parameters like:
-```
-```
 
-   Access-Control-Allow-Origin: *
-   Access-Control-Allow-Headers: origin, content-type, accept, authorization
-   Access-Control-Allow-Credentials: true
-   Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+```txt
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: origin, content-type, accept, authorization
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+```
 
 ### REST settings
 
 Here is a list of REST service settings (under `rest.` prefix):
 
-```{eval-rst}
-+----------------------+--------------------------------+---------------------------+-------------------------------------------------------+
-| Name                 | Environment Variable           | Default value             | Documentation                                         |
-+======================+================================+===========================+=======================================================+
-| ``rest.url``         | ``FSCRAWLER_REST_URL``         | ``http://127.0.0.1:8080`` | Rest Service URL                                      |
-+----------------------+--------------------------------+---------------------------+-------------------------------------------------------+
-| ``rest.enable_cors`` | ``FSCRAWLER_REST_ENABLE_CORS`` | ``false``                 | Enables or disables Cross-Origin Resource Sharing     |
-|                      |                                |                           | globally for all resources                            |
-+----------------------+--------------------------------+---------------------------+-------------------------------------------------------+
-```
+| Name               | Environment Variable         | Default value           | Documentation                                                                |
+|--------------------|------------------------------|-------------------------|------------------------------------------------------------------------------|
+| `rest.url`         | `FSCRAWLER_REST_URL`         | `http://127.0.0.1:8080` | Rest Service URL                                                             |
+| `rest.enable_cors` | `FSCRAWLER_REST_ENABLE_CORS` | `false`                 | Enables or disables Cross-Origin Resource Sharing globally for all resources |
+
 
 ```{tip}
 
@@ -642,7 +635,7 @@ it will conflict.
 
 FSCrawler provides REST endpoints to control the crawler, allowing you to pause, resume,
 and monitor the crawling process. This is particularly useful for large file systems
-where crawling may take a long time and you want to be able to stop and resume later.
+where crawling may take a long time, and you want to be able to stop and resume later.
 
 ## Getting crawler status
 

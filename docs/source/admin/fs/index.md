@@ -196,23 +196,15 @@ rest:
 
 Here is a list of existing top level settings:
 
-```{eval-rst}
-+-----------------------------------+-------------------------------+
-| Name                              | Documentation                 |
-+===================================+===============================+
-| ``name`` (mandatory field)        | :ref:`simple_crawler`         |
-+-----------------------------------+-------------------------------+
-| ``fs``                            | :ref:`local-fs-settings`      |
-+-----------------------------------+-------------------------------+
-| ``tags``                          | :ref:`tags`                   |
-+-----------------------------------+-------------------------------+
-| ``elasticsearch``                 | :ref:`elasticsearch-settings` |
-+-----------------------------------+-------------------------------+
-| ``server``                        | :ref:`ssh-settings`           |
-+-----------------------------------+-------------------------------+
-| ``rest``                          | :ref:`rest-service`           |
-+-----------------------------------+-------------------------------+
-```
+| Name                     | Documentation                 |
+|--------------------------|-------------------------------|
+| `name` (mandatory field) | {ref}`simple_crawler`         |
+| `fs`                     | {ref}`local-fs-settings`      |
+| `tags`                   | {ref}`tags`                   |
+| `elasticsearch`          | {ref}`elasticsearch-settings` |
+| `server`                 | {ref}`ssh-settings`           |
+| `rest`                   | {ref}`rest-service`           |
+
 
 You can define your job settings either in `_settings.yaml` (using `.yaml` extension) or
 in `_settings.json` (using `.json` extension).

@@ -9,23 +9,15 @@ You can index files remotely using SSH/SFTP.
 
 Here is a list of SSH settings:
 
-```{eval-rst}
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| Name                | Environment Variable          | Default value | Documentation                        |
-+=====================+===============================+===============+======================================+
-| ``fs.provider``     | ``FSCRAWLER_FS_PROVIDER``     | ``"local"``   | Set it to ``"ssh"`` for SSH crawling |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.hostname`` | ``FSCRAWLER_SERVER_HOSTNAME`` | ``null``      | Hostname                             |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.port``     | ``FSCRAWLER_SERVER_PORT``     | ``22``        | Port                                 |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.username`` | ``FSCRAWLER_SERVER_USERNAME`` | ``null``      | :ref:`ssh_login`                     |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.password`` | ``FSCRAWLER_SERVER_PASSWORD`` | ``null``      | :ref:`ssh_login`                     |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-| ``server.pem_path`` | ``FSCRAWLER_SERVER_PEM_PATH`` | ``null``      | :ref:`ssh_pem`                       |
-+---------------------+-------------------------------+---------------+--------------------------------------+
-```
+| Name              | Environment Variable        | Default value   | Documentation                      |
+|-------------------|-----------------------------|-----------------|------------------------------------|
+| `fs.provider`     | `FSCRAWLER_FS_PROVIDER`     | `"local"`       | Set it to `"ssh"` for SSH crawling |
+| `server.hostname` | `FSCRAWLER_SERVER_HOSTNAME` | `null`          | Hostname                           |
+| `server.port`     | `FSCRAWLER_SERVER_PORT`     | `22`            | Port                               |
+| `server.username` | `FSCRAWLER_SERVER_USERNAME` | `null`          | {ref}`ssh_login`                   |
+| `server.password` | `FSCRAWLER_SERVER_PASSWORD` | `null`          | {ref}`ssh_login`                   |
+| `server.pem_path` | `FSCRAWLER_SERVER_PEM_PATH` | `null`          | {ref}`ssh_pem`                     |
+
 
 ```{deprecated} 2.10
 

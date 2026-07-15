@@ -7,65 +7,36 @@
 
 Here is a list of Local FS settings (under `fs.` prefix):
 
-```{eval-rst}
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| Name                       | Environment Variable                 | Default value | Documentation                |
-+============================+======================================+===============+==============================+
-| ``fs.provider``            | ``FSCRAWLER_FS_PROVIDER``            | ``"local"``   | `Crawler Provider`_          |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.url``                 | ``FSCRAWLER_FS_URL``                 | ``"/tmp/es"`` | `Root directory`_            |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.update_rate``         | ``FSCRAWLER_FS_UPDATE_RATE``         | ``"15m"``     | `Update Rate`_               |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.includes``            | ``FSCRAWLER_FS_INCLUDES``            | ``null``      | `Includes and excludes`_     |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.excludes``            | ``FSCRAWLER_FS_EXCLUDES``            | ``["*/~*"]``  | `Includes and excludes`_     |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.filters``             | ``FSCRAWLER_FS_FILTERS``             | ``null``      | `Filter content`_            |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.json_support``        | ``FSCRAWLER_FS_JSON_SUPPORT``        | ``false``     | `Indexing JSon docs`_        |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.xml_support``         | ``FSCRAWLER_FS_XML_SUPPORT``         | ``false``     | `Indexing XML docs`_         |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.add_as_inner_object`` | ``FSCRAWLER_FS_ADD_AS_INNER_OBJECT`` | ``false``     | `Add as Inner Object`_       |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.index_folders``       | ``FSCRAWLER_FS_INDEX_FOLDERS``       | ``true``      | `Index folders`_             |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.attributes_support``  | ``FSCRAWLER_FS_ATTRIBUTES_SUPPORT``  | ``false``     | `Adding file attributes`_    |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.acl_support``         | ``FSCRAWLER_FS_ACL_SUPPORT``         | ``false``     | `Collecting ACL metadata`_   |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.raw_metadata``        | ``FSCRAWLER_FS_RAW_METADATA``        | ``false``     | `Enabling raw metadata`_     |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.filename_as_id``      | ``FSCRAWLER_FS_FILENAME_AS_ID``      | ``false``     | :ref:`filename-as-id`        |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.add_filesize``        | ``FSCRAWLER_FS_ADD_FILESIZE``        | ``true``      | `Disabling file size field`_ |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.remove_deleted``      | ``FSCRAWLER_FS_REMOVE_DELETED``      | ``true``      | `Ignore deleted files`_      |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.store_source``        | ``FSCRAWLER_FS_STORE_SOURCE``        | ``false``     | :ref:`store_binary`          |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.index_content``       | ``FSCRAWLER_FS_INDEX_CONTENT``       | ``true``      | `Ignore content`_            |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.lang_detect``         | ``FSCRAWLER_FS_LANG_DETECT``         | ``false``     | `Language detection`_        |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.continue_on_error``   | ``FSCRAWLER_FS_CONTINUE_ON_ERROR``   | ``false``     | :ref:`continue_on_error`     |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.indexed_chars``       | ``FSCRAWLER_FS_INDEXED_CHARS``       | ``100000.0``  | `Extracted characters`_      |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.ignore_above``        | ``FSCRAWLER_FS_IGNORE_ABOVE``        | ``null``      | `Ignore above`_              |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.checksum``            | ``FSCRAWLER_FS_CHECKSUM``            | ``null``      | `File Checksum`_             |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.temp_dir``            | ``FSCRAWLER_FS_TEMP_DIR``            | ``null``      | `Temporary Directory`_       |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.follow_symlinks``     | ``FSCRAWLER_FS_FOLLOW_SYMLINKS``     | ``false``     | `Follow Symlinks`_           |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.tika_config_path``    | ``FSCRAWLER_FS_TIKA_CONFIG_PATH``    | ``null``      | `Tika Config Path`_          |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-| ``fs.ocr.enabled``         | ``FSCRAWLER_FS_OCR_ENABLED``         | ``true``      | :ref:`ocr_integration`       |
-+----------------------------+--------------------------------------+---------------+------------------------------+
-```
+| Name                     | Environment Variable               | Default value   | Documentation                                           |
+|--------------------------|------------------------------------|-----------------|---------------------------------------------------------|
+| `fs.provider`            | `FSCRAWLER_FS_PROVIDER`            | `"local"`       | [Crawler Provider](#crawler-provider)                   |
+| `fs.url`                 | `FSCRAWLER_FS_URL`                 | `"/tmp/es"`     | [Root directory](#root-directory)                       |
+| `fs.update_rate`         | `FSCRAWLER_FS_UPDATE_RATE`         | `"15m"`         | [Update Rate](#update-rate)                             |
+| `fs.includes`            | `FSCRAWLER_FS_INCLUDES`            | `null`          | [Includes and excludes](#includes-and-excludes)         |
+| `fs.excludes`            | `FSCRAWLER_FS_EXCLUDES`            | `["*/~*"]`      | [Includes and excludes](#includes-and-excludes)         |
+| `fs.filters`             | `FSCRAWLER_FS_FILTERS`             | `null`          | [Filter content](#filter-content)                       |
+| `fs.json_support`        | `FSCRAWLER_FS_JSON_SUPPORT`        | `false`         | [Indexing JSON docs](#indexing-json-docs)               |
+| `fs.xml_support`         | `FSCRAWLER_FS_XML_SUPPORT`         | `false`         | [Indexing XML docs](#indexing-xml-docs)                 |
+| `fs.add_as_inner_object` | `FSCRAWLER_FS_ADD_AS_INNER_OBJECT` | `false`         | [Add as Inner Object](#add-as-inner-object)             |
+| `fs.index_folders`       | `FSCRAWLER_FS_INDEX_FOLDERS`       | `true`          | [Index folders](#index-folders)                         |
+| `fs.attributes_support`  | `FSCRAWLER_FS_ATTRIBUTES_SUPPORT`  | `false`         | [Adding file attributes](#adding-file-attributes)       |
+| `fs.acl_support`         | `FSCRAWLER_FS_ACL_SUPPORT`         | `false`         | [Collecting ACL metadata](#collecting-acl-metadata)     |
+| `fs.raw_metadata`        | `FSCRAWLER_FS_RAW_METADATA`        | `false`         | [Enabling raw metadata](#enabling-raw-metadata)         |
+| `fs.filename_as_id`      | `FSCRAWLER_FS_FILENAME_AS_ID`      | `false`         | {ref}`filename-as-id`                                   |
+| `fs.add_filesize`        | `FSCRAWLER_FS_ADD_FILESIZE`        | `true`          | [Disabling file size field](#disabling-file-size-field) |
+| `fs.remove_deleted`      | `FSCRAWLER_FS_REMOVE_DELETED`      | `true`          | [Ignore deleted files](#ignore-deleted-files)           |
+| `fs.store_source`        | `FSCRAWLER_FS_STORE_SOURCE`        | `false`         | {ref}`store_binary`                                     |
+| `fs.index_content`       | `FSCRAWLER_FS_INDEX_CONTENT`       | `true`          | [Ignore content](#ignore-content)                       |
+| `fs.lang_detect`         | `FSCRAWLER_FS_LANG_DETECT`         | `false`         | [Language detection](#language-detection)               |
+| `fs.continue_on_error`   | `FSCRAWLER_FS_CONTINUE_ON_ERROR`   | `false`         | {ref}`continue_on_error`                                |
+| `fs.indexed_chars`       | `FSCRAWLER_FS_INDEXED_CHARS`       | `100000.0`      | [Extracted characters](#extracted-characters)           |
+| `fs.ignore_above`        | `FSCRAWLER_FS_IGNORE_ABOVE`        | `null`          | [Ignore above](#ignore-above)                           |
+| `fs.checksum`            | `FSCRAWLER_FS_CHECKSUM`            | `null`          | [File Checksum](#file-checksum)                         |
+| `fs.temp_dir`            | `FSCRAWLER_FS_TEMP_DIR`            | `null`          | [Temporary Directory](#temporary-directory)             |
+| `fs.follow_symlinks`     | `FSCRAWLER_FS_FOLLOW_SYMLINKS`     | `false`         | [Follow Symlinks](#follow-symlinks)                     |
+| `fs.tika_config_path`    | `FSCRAWLER_FS_TIKA_CONFIG_PATH`    | `null`          | [Tika Config Path](#tika-config-path)                   |
+| `fs.ocr.enabled`         | `FSCRAWLER_FS_OCR_ENABLED`         | `true`          | {ref}`ocr_integration`                                  |
+
 
 (crawler-provider)=
 ## Crawler Provider
@@ -240,17 +211,12 @@ fs:
 
 Since the includes and excludes work on the entire *path of the file* you must consider that when using wildcards. Below are some includes and excludes pattern to help convey the idea better.
 
-```{eval-rst}
-+--------------------+------------------------------------------------+------------------------------------------------+
-| Pattern            | Includes                                       | Excludes                                       |
-+====================+================================================+================================================+
-| ``*.jpg``          | Include all jpg files                          | exclude all jpg files                          |
-+--------------------+------------------------------------------------+------------------------------------------------+
-| ``/images/*.jpg``  | Include all jpg files in the images directory  | Exclude all jpg files in the images directory  |
-+--------------------+------------------------------------------------+------------------------------------------------+
-| ``*/old-*.jpg``    | Include all jpg files that start with ``old-`` | Exclude all jpg files that start with ``old-`` |
-+--------------------+------------------------------------------------+------------------------------------------------+
-```
+| Pattern         | Includes                                      | Excludes                                      |
+|-----------------|-----------------------------------------------|-----------------------------------------------|
+| `*.jpg`         | Include all jpg files                         | exclude all jpg files                         |
+| `/images/*.jpg` | Include all jpg files in the images directory | Exclude all jpg files in the images directory |
+| `*/old-*.jpg`   | Include all jpg files that start with `old-`  | Exclude all jpg files that start with `old-`  |
+
 
 If a folder contains a file named `.fscrawlerignore`, this folder and its subfolders will be entirely skipped.
 
@@ -275,13 +241,13 @@ With this example, only documents which contains the word `foo` and a VISA credi
 with the form like `4012888888881881`, `4012 8888 8888 1881` or `4012-8888-8888-1881`
 will be indexed.
 
-### Indexing JSon docs
+### Indexing JSON docs
 
-If you want to index JSon files directly without parsing with Tika, you
-can set `json_support` to `true`. JSon contents will be stored
-directly under \_source. If you need to keep JSon documents synchronized
+If you want to index JSON files directly without parsing with Tika, you
+can set `json_support` to `true`. JSON contents will be stored
+directly under \_source. If you need to keep JSON documents synchronized
 to the index, set option `Add as Inner Object`_
-which stores additional metadata and the JSon contents under field
+which stores additional metadata and the JSON contents under field
 `object`.
 
 ```yaml
@@ -313,13 +279,13 @@ Elasticsearch will auto guess the mapping.
 
 ### Add as Inner Object
 
-The default settings store the contents of json and xml documents
-directly onto the \_source element of elasticsearch documents. Thereby,
+The default settings store the contents of JSON and XML documents
+directly onto the \_source element of Elasticsearch documents. Thereby,
 there is no metadata about file and path settings, which are necessary
 to determine if a document is deleted or updated. New files will however
 be added to the index, (determined by the file timestamp).
 
-If you need to keep json or xml documents synchronized to elasticsearch,
+If you need to keep JSON or XML documents synchronized to elasticsearch,
 you should set this option.
 
 ```yaml
@@ -330,12 +296,12 @@ fs:
 
 ### Index folders
 
-By default FSCrawler will index folder names in the folder index. If
+By default, FSCrawler will index folder names in the folder index. If
 you don’t want to index those folders, you can set `index_folders` to
 `false`.
 
 Note that in that case, FSCrawler won’t be able to detect removed
-folders so any document has been indexed in elasticsearch, it won’t be
+folders so any document has been indexed in Elasticsearch, it won’t be
 removed when you remove or move the folder away.
 
 See `elasticsearch.index_folder` below for the name of the index to be used to store the folder data (if `es.index_folders` is set to `true`).
@@ -664,7 +630,7 @@ fs:
 ```
 
 In that case, a new field named `meta.language` is added to the
-generated JSon document.
+generated JSON document.
 
 If you are using elasticsearch 5.0 or superior, you can use this value
 to send your document to a specific index using a `Node Ingest
@@ -726,7 +692,7 @@ fs:
 ```
 
 In that case, a new field named `attachment` is added to the generated
-JSon document. This field is not indexed. Default mapping for
+JSON document. This field is not indexed. Default mapping for
 `attachment` field is:
 
 ```json
@@ -872,20 +838,19 @@ fs:
 An example tika config file is shown below. See {{ Tika_configuring }} for more information.
 
 ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+<service-loader dynamic="true"/>
+<service-loader loadErrorHandler="IGNORE"/>
+<parsers>
+  <!-- Use Default Parser for files, but Default Parser will never use HTML parser -->
+  <parser class="org.apache.tika.parser.DefaultParser">
+    <parser-exclude class="org.apache.tika.parser.html.JsoupParser"/>
+  </parser>
+  <!-- Use a different parser for XHTML -->
+  <parser class="org.apache.tika.parser.xml.XMLParser">
+    <mime>application/xhtml+xml</mime>
+  </parser>
+</parsers>
+</properties>
 ```
-
-  <?xml version="1.0" encoding="UTF-8"?>
-  <properties>
-    <service-loader dynamic="true"/>
-    <service-loader loadErrorHandler="IGNORE"/>
-    <parsers>
-      <!-- Use Default Parser for files, but Default Parser will never use HTML parser -->
-      <parser class="org.apache.tika.parser.DefaultParser">
-        <parser-exclude class="org.apache.tika.parser.html.JsoupParser"/>
-      </parser>
-      <!-- Use a different parser for XHTML -->
-      <parser class="org.apache.tika.parser.xml.XMLParser">
-        <mime>application/xhtml+xml</mime>
-      </parser>
-    </parsers>
-  </properties>

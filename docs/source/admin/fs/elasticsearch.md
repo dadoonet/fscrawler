@@ -7,43 +7,25 @@
 
 Here is a list of Elasticsearch settings (under `elasticsearch.` prefix):
 
-```{eval-rst}
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| Name                                   | Environment Variable                             | Default value              | Documentation                   |
-+========================================+==================================================+============================+=================================+
-| ``elasticsearch.index``                | ``FSCRAWLER_ELASTICSEARCH_INDEX``                | job name + ``_docs``       | `Index settings for documents`_ |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.index_folder``         | ``FSCRAWLER_ELASTICSEARCH_INDEX_FOLDER``         | job name + ``_folder``     | `Index settings for folders`_   |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.push_templates``       | ``FSCRAWLER_ELASTICSEARCH_PUSH_TEMPLATES``       | ``true``                   | :ref:`mappings`                 |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.force_push_templates`` | ``FSCRAWLER_ELASTICSEARCH_FORCE_PUSH_TEMPLATES`` | ``false``                  | :ref:`mappings`                 |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.bulk_size``            | ``FSCRAWLER_ELASTICSEARCH_BULK_SIZE``            | ``100``                    | `Bulk settings`_                |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.flush_interval``       | ``FSCRAWLER_ELASTICSEARCH_FLUSH_INTERVAL``       | ``"5s"``                   | `Bulk settings`_                |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.byte_size``            | ``FSCRAWLER_ELASTICSEARCH_BYTE_SIZE``            | ``"10mb"``                 | `Bulk settings`_                |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.pipeline``             | ``FSCRAWLER_ELASTICSEARCH_PIPELINE``             | ``null``                   | :ref:`ingest_node`              |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.semantic_search``      | ``FSCRAWLER_ELASTICSEARCH_SEMANTIC_SEARCH``      | ``true``                   | :ref:`semantic_search`          |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.urls``                 | ``FSCRAWLER_ELASTICSEARCH_URLS``                 | ``https://127.0.0.1:9200`` | `Node settings`_                |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.path_prefix``          | ``FSCRAWLER_ELASTICSEARCH_PATH_PREFIX``          | ``null``                   | `Path prefix`_                  |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.api_key``              | ``FSCRAWLER_ELASTICSEARCH_API_KEY``              | ``null``                   | `API Key`_                      |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.username``             | ``FSCRAWLER_ELASTICSEARCH_USERNAME``             | ``null``                   | :ref:`credentials`              |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.password``             | ``FSCRAWLER_ELASTICSEARCH_PASSWORD``             | ``null``                   | :ref:`credentials`              |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.ssl_verification``     | ``FSCRAWLER_ELASTICSEARCH_SSL_VERIFICATION``     | ``true``                   | :ref:`ssl`                      |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-| ``elasticsearch.ca_certificate``       | ``FSCRAWLER_ELASTICSEARCH_CA_CERTIFICATE``       | ``null``                   | :ref:`ssl`                      |
-+----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
-```
+| Name                                 | Environment Variable                           | Default value            | Documentation                                                 |
+|--------------------------------------|------------------------------------------------|--------------------------|---------------------------------------------------------------|
+| `elasticsearch.index`                | `FSCRAWLER_ELASTICSEARCH_INDEX`                | job name + `_docs`       | [Index settings for documents](#index-settings-for-documents) |
+| `elasticsearch.index_folder`         | `FSCRAWLER_ELASTICSEARCH_INDEX_FOLDER`         | job name + `_folder`     | [Index settings for folders](#index-settings-for-folders)     |
+| `elasticsearch.push_templates`       | `FSCRAWLER_ELASTICSEARCH_PUSH_TEMPLATES`       | `true`                   | {ref}`mappings`                                               |
+| `elasticsearch.force_push_templates` | `FSCRAWLER_ELASTICSEARCH_FORCE_PUSH_TEMPLATES` | `false`                  | {ref}`mappings`                                               |
+| `elasticsearch.bulk_size`            | `FSCRAWLER_ELASTICSEARCH_BULK_SIZE`            | `100`                    | [Bulk settings](#bulk-settings)                               |
+| `elasticsearch.flush_interval`       | `FSCRAWLER_ELASTICSEARCH_FLUSH_INTERVAL`       | `"5s"`                   | [Bulk settings](#bulk-settings)                               |
+| `elasticsearch.byte_size`            | `FSCRAWLER_ELASTICSEARCH_BYTE_SIZE`            | `"10mb"`                 | [Bulk settings](#bulk-settings)                               |
+| `elasticsearch.pipeline`             | `FSCRAWLER_ELASTICSEARCH_PIPELINE`             | `null`                   | {ref}`ingest_node`                                            |
+| `elasticsearch.semantic_search`      | `FSCRAWLER_ELASTICSEARCH_SEMANTIC_SEARCH`      | `true`                   | {ref}`semantic_search`                                        |
+| `elasticsearch.urls`                 | `FSCRAWLER_ELASTICSEARCH_URLS`                 | `https://127.0.0.1:9200` | [Node settings](#node-settings)                               |
+| `elasticsearch.path_prefix`          | `FSCRAWLER_ELASTICSEARCH_PATH_PREFIX`          | `null`                   | [Path prefix](#path-prefix)                                   |
+| `elasticsearch.api_key`              | `FSCRAWLER_ELASTICSEARCH_API_KEY`              | `null`                   | [API Key](#api-key)                                           |
+| `elasticsearch.username`             | `FSCRAWLER_ELASTICSEARCH_USERNAME`             | `null`                   | {ref}`credentials`                                            |
+| `elasticsearch.password`             | `FSCRAWLER_ELASTICSEARCH_PASSWORD`             | `null`                   | {ref}`credentials`                                            |
+| `elasticsearch.ssl_verification`     | `FSCRAWLER_ELASTICSEARCH_SSL_VERIFICATION`     | `true`                   | {ref}`ssl`                                                    |
+| `elasticsearch.ca_certificate`       | `FSCRAWLER_ELASTICSEARCH_CA_CERTIFICATE`       | `null`                   | {ref}`ssl`                                                    |
+
 
 ## Index settings
 
@@ -591,16 +573,16 @@ elasticsearch:
 FSCrawler may create the following fields depending on configuration and available data.
 The table below lists the main fields; see the JSON example in the next section for a concrete document shape.
 
-| Field | Description |
-|-------|-------------|
-| `content` | Extracted text content |
-| `content_semantic` | Semantic-text copy of the content (when semantic search is enabled) |
-| `attachment` | BASE64-encoded binary file (when `fs.base64` is enabled) |
-| `meta.*` | Document metadata extracted by Tika (author, title, date, language, etc.) |
-| `file.*` | File attributes (filename, extension, size, dates, checksum, etc.) |
-| `path.*` | Virtual, real, and root path information |
-| `attributes.*` | Filesystem attributes (owner, group, permissions) |
-| `external` | Additional tags provided via external metadata |
+| Field              | Description                                                               |
+|--------------------|---------------------------------------------------------------------------|
+| `content`          | Extracted text content                                                    |
+| `content_semantic` | Semantic-text copy of the content (when semantic search is enabled)       |
+| `attachment`       | BASE64-encoded binary file (when `fs.base64` is enabled)                  |
+| `meta.*`           | Document metadata extracted by Tika (author, title, date, language, etc.) |
+| `file.*`           | File attributes (filename, extension, size, dates, checksum, etc.)        |
+| `path.*`           | Virtual, real, and root path information                                  |
+| `attributes.*`     | Filesystem attributes (owner, group, permissions)                         |
+| `external`         | Additional tags provided via external metadata                            |
 
 For more information about meta data, please read the [TikaCoreProperties ](https://tika.apache.org/2.9.1/api/org/apache/tika/metadata/TikaCoreProperties.html).
 

@@ -47,24 +47,13 @@ FSCrawler runs until you press **Ctrl+C**. While it is running:
 
 ## Options
 
-```{eval-rst}
-.. list-table::
-   :header-rows: 1
-   :widths: 30 70
-
-   * - Flag
-     - Effect
-   * - ``--skip-build``
-     - Reuse the existing distribution ZIP (skip Maven build)
-   * - ``--skip-docker``
-     - Assume the docker-compose stack is already running
-   * - ``--no-otel``
-     - Disable OTel tracing (``OTEL_SDK_DISABLED=true``); crawl without EDOT Collector
-   * - ``--log-level=<level>``
-     - Set the FSCrawler log level (default: ``info``; try ``debug`` or ``trace``)
-   * - ``--help``
-     - Print usage
-```
+| Flag                  | Effect                                                                        |
+|-----------------------|-------------------------------------------------------------------------------|
+| `--skip-build`        | Reuse the existing distribution ZIP (skip Maven build)                        |
+| `--skip-docker`       | Assume the docker-compose stack is already running                            |
+| `--no-otel`           | Disable OTel tracing (`OTEL_SDK_DISABLED=true`); crawl without EDOT Collector |
+| `--log-level=<level>` | Set the FSCrawler log level (default: `info`; try `debug` or `trace`)         |
+| `--help`              | Print usage                                                                   |
 
 Examples
 ```

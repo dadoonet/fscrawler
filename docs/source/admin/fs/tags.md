@@ -19,15 +19,11 @@ a global tag file which you can set by using the `tags.staticMetaFilename` setti
 
 Here is a list of Tags settings (under `tags.` prefix):
 
-```{eval-rst}
-+-----------------------------+---------------------------------------+-----------------+--------------------+
-| Name                        | Environment Variable                  | Default value   | Documentation      |
-+=============================+=======================================+=================+====================+
-| ``tags.metaFilename``       | ``FSCRAWLER_TAGS_METAFILENAME``       | ``".meta.yml"`` | `Meta Filename`_   |
-+-----------------------------+---------------------------------------+-----------------+--------------------+
-| ``tags.staticMetaFilename`` | ``FSCRAWLER_TAGS_STATICMETAFILENAME`` | ``null``        | `Static Metadata`_ |
-+-----------------------------+---------------------------------------+-----------------+--------------------+
-```
+| Name                      | Environment Variable                | Default value   | Documentation                       |
+|---------------------------|-------------------------------------|-----------------|-------------------------------------|
+| `tags.metaFilename`       | `FSCRAWLER_TAGS_METAFILENAME`       | `".meta.yml"`   | [Meta Filename](#meta-filename)     |
+| `tags.staticMetaFilename` | `FSCRAWLER_TAGS_STATICMETAFILENAME` | `null`          | [Static Metadata](#static-metadata) |
+
 
 ```{tip}
 
