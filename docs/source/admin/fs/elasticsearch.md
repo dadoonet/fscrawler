@@ -590,7 +590,8 @@ elasticsearch:
 
 FSCrawler may create the following fields depending on configuration and available data:
 
-```{include} generated-fields-table.rst
+```{eval-rst}
+.. include:: ../../_includes/generated-fields-table.rst
 ```
 
 For more information about meta data, please read the [TikaCoreProperties ](https://tika.apache.org/2.9.1/api/org/apache/tika/metadata/TikaCoreProperties.html).
