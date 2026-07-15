@@ -36,11 +36,10 @@ $ bin/fscrawler
 
 If you did not create the directory, FSCrawler will complain until you fix it:
 
+```none
+17:41:45,396 INFO  [f.p.e.c.f.FsParser] Run #1: job [fscrawler]: starting...
+17:41:45,397 WARN  [f.p.e.c.f.FsParser] Error while crawling /tmp/es: /tmp/es doesn't exists.
 ```
-```
-
-   17:41:45,396 INFO  [f.p.e.c.f.FsParser] Run #1: job [fscrawler]: starting...
-   17:41:45,397 WARN  [f.p.e.c.f.FsParser] Error while crawling /tmp/es: /tmp/es doesn't exists.
 
 ### Searching for docs
 

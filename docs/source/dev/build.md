@@ -149,18 +149,9 @@ When set to `0` (default value), the port is assigned randomly.
 #### Randomized testing
 
 FS Crawler uses the [randomized testing framework ](https://github.com/randomizedtesting/randomizedtesting-jupiter).
-In case of failure, it will print a line like
-```
-```
+In case of failure, it will print a line like:
 
-For a unit test
-```
-REPRODUCE WITH:
-mvn test -pl tika -Dtest=TikaDocParserTest#testExtractFromRtf -Dtests.seed=AC6992149EB4B547 -Dtests.locale=ga-IE -Dtests.timezone=Canada/Saskatchewan
-```
-
-For an integration test
-```
+```none
 REPRODUCE WITH:
 mvn verify -pl integration-tests -am -Dit.test=FsCrawlerTestOcrIT#ocr_disabled -Dtests.seed=AC6992149EB4B547 -Dtests.locale=tr-TR
 ```
@@ -181,17 +172,17 @@ Defaults to `false`.
 * `tests.locale` by default it's set to `random` but you can force the locale to use.
 * `tests.timezone` by default it's set to `random` but you can force the timezone to use, like `CEST` or `-0200`.
 
-For example
-```
-```
+For example:
 
-  mvn install -rf :fscrawler-it \
+```shell
+mvn install -rf :fscrawler-it \
     -Dtests.output=always \
     -Dtests.locale=fr-FR \
     -Dtests.timezone=CEST \
     -Dtests.verbose \
     -Dtests.leaveTemporary \
     -Dtests.seed=E776CE45185A6E7A
+```
 
 #### Nightly tests
 
