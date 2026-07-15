@@ -31,6 +31,7 @@ jobs:
               - '!docs/**'
               - '!.readthedocs.yaml'
               - '!.gitignore'
+              - '!.github/**'
 
   # We initialize the PR number so that we can use it in the other jobs
   get-pr-number:
