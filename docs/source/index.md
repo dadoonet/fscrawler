@@ -87,7 +87,7 @@ dev/test-fscrawler-cli
 :maxdepth: 2
 
 release/index
-release/3.0
+release/2.10
 release/2.9
 release/2.8
 release/2.7
