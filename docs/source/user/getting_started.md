@@ -43,15 +43,14 @@ If you did not create the directory, FSCrawler will complain until you fix it:
 
 ### Searching for docs
 
-This is a common use case in elasticsearch, we want to search for
-something! ;-)
+This is a common use case in elasticsearch, we want to search for something! 😉
 
 ```json
 // GET docs/doc/_search
 {
   "query" : {
     "query_string": {
-      "query": "I am searching for something !"
+      "query": "I am searching for something!"
     }
   }
 }

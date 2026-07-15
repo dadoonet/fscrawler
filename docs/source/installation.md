@@ -8,19 +8,19 @@ Pull the Docker image from [Docker Hub ](https://hub.docker.com/r/dadoonet/fscra
 docker pull dadoonet/fscrawler
 ```
 
-```{note}
+````{note}
 
  This image is very big (500+mb) as it contains [Tesseract ](https://tesseract-ocr.github.io/tessdoc/) and
  all the [trained language data ](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
  If you don't want to use OCR at all, you can use a smaller image (around 230mb) by pulling instead
- `dadoonet/fscrawler:noocr`
+ `dadoonet/fscrawler:noocr`:
 
- .. code:: sh
+ ```shell
+ docker pull dadoonet/fscrawler:noocr
+ ```
+````
 
-    docker pull dadoonet/fscrawler:noocr
-```
-
-Let say your documents are located in `~/tmp` dir and you want to store your FSCrawler jobs in `~/.fscrawler`.
+Let say your documents are located in `~/tmp` dir, and you want to store your FSCrawler jobs in `~/.fscrawler`.
 You can run FSCrawler with:
 
 ```sh
