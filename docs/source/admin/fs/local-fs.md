@@ -103,9 +103,8 @@ For Windows users, use a form like `c:/tmp` or `c:\\tmp`.
 (local-fs-update_rate)=
 ### Update rate
 
-By default, `update_rate` is set to `15m`. You can modify this value
-using any compatible `time
-unit <https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#time-units>`__.
+By default, `update_rate` is set to `15m`. You can modify this value using any compatible 
+[time unit](https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#time-units).
 
 For example, here is a 15 minutes update rate:
 
@@ -633,7 +632,7 @@ In that case, a new field named `meta.language` is added to the
 generated JSON document.
 
 If you are using elasticsearch 5.0 or superior, you can use this value
-to send your document to a specific index using a `Node Ingest
+to send your document to a specific index using a Node Ingest
 pipeline <#using-ingest-node-pipeline>`__.
 
 For example, you can define a pipeline named `langdetect` with:

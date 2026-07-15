@@ -66,12 +66,11 @@ to define the index settings and mappings (replace `INDEX` with the index name):
 - `fscrawler_INDEX_settings_total_fields`: defines the maximum number of fields for the index.
 - `fscrawler_INDEX_mapping_attributes`: defines the mapping for the `attributes` field.
 - `fscrawler_INDEX_mapping_file`: defines the mapping for the `file` field.
-- `fscrawler_INDEX_mapping_path`: defines an define an analyzer named `fscrawler_path` which uses a
-  [path hierarchy tokenizer](https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html)
-  and the mapping for the `path` field.
-
+- `fscrawler_INDEX_mapping_path`: defines an analyzer named `fscrawler_path` which uses a
+  [path hierarchy tokenizer](https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html) and the mapping for the `path` field.
 - `fscrawler_INDEX_mapping_attachment`: defines the mapping for the `attachment` field.
 - `fscrawler_INDEX_mapping_content_semantic`: defines the mapping for the `content` field when using semantic search.
+
 It also creates a `semantic_text` field named `content_semantic`. Please read the {ref}`semantic_search` section.
 
 - `fscrawler_INDEX_mapping_content`: defines the mapping for the `content` field when semantic search is not available.
@@ -206,8 +205,7 @@ Therefore, you’ll need first to remove existing index, which means
 remove all existing data, and then restart FSCrawler with the new
 mapping.
 
-You might to try `elasticsearch Reindex
-API <https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html>`__
+You might to try [Elasticsearch Reindex API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html)
 though.
 
 (semantic_search)=

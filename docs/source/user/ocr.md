@@ -4,27 +4,26 @@
 ```{versionadded} 2.3
 ```
 
-To deal with images containing text, just `install
-Tesseract <https://tesseract-ocr.github.io/tessdoc/>`__.
+To deal with images containing text, just [install Tesseract](https://tesseract-ocr.github.io/tessdoc/).
 Tesseract will be auto-detected by Tika or you can explicitly `set the
-path to tesseract binary <#ocr-path>`_. Then add an image (png, jpg, …)
-into your FSCrawler {ref}`root-directory`. After the next
-index update, the text will be indexed and placed in "_source.content".
+path to tesseract binary <#ocr-path>`_.
+Then add an image (png, jpg, …) into your FSCrawler {ref}`root-directory`. After the next index update, the text will be
+indexed and placed in `_source.content`.
 
 ## OCR settings
 
 Here is a list of OCR settings (under `fs.ocr` prefix):
 
-| Name | Environment Variable | Default value | Documentation |
-|------|----------------------|---------------|---------------|
-| `fs.ocr.enabled` | `FSCRAWLER_FS_OCR_ENABLED` | `true` | [Disable/Enable OCR](#disableenable-ocr) |
-| `fs.ocr.language` | `FSCRAWLER_FS_OCR_LANGUAGE` | `"eng"` | [OCR Language](#ocr-language) |
-| `fs.ocr.path` | `FSCRAWLER_FS_OCR_PATH` | `null` | [OCR Path](#ocr-path) |
-| `fs.ocr.data_path` | `FSCRAWLER_FS_OCR_DATA_PATH` | `null` | [OCR Data Path](#ocr-data-path) |
-| `fs.ocr.output_type` | `FSCRAWLER_FS_OCR_OUTPUT_TYPE` | `txt` | [OCR Output Type](#ocr-output-type) |
-| `fs.ocr.pdf_strategy` | `FSCRAWLER_FS_OCR_PDF_STRATEGY` | `ocr_and_text` | [OCR PDF Strategy](#ocr-pdf-strategy) |
-| `fs.ocr.page_seg_mode` | `FSCRAWLER_FS_OCR_PAGE_SEG_MODE` | `01` | [OCR Page Seg Mode](#ocr-page-seg-mode) |
-| `fs.ocr.preserve_interword_spacing` | `FSCRAWLER_FS_OCR_PRESERVE_INTERWORD_SPACING` | `false` | [OCR Preserve Interword Spacing](#ocr-preserve-interword-spacing) |
+| Name                                | Environment Variable                          | Default value   | Documentation                                                     |
+|-------------------------------------|-----------------------------------------------|-----------------|-------------------------------------------------------------------|
+| `fs.ocr.enabled`                    | `FSCRAWLER_FS_OCR_ENABLED`                    | `true`          | [Disable/Enable OCR](#disableenable-ocr)                          |
+| `fs.ocr.language`                   | `FSCRAWLER_FS_OCR_LANGUAGE`                   | `"eng"`         | [OCR Language](#ocr-language)                                     |
+| `fs.ocr.path`                       | `FSCRAWLER_FS_OCR_PATH`                       | `null`          | [OCR Path](#ocr-path)                                             |
+| `fs.ocr.data_path`                  | `FSCRAWLER_FS_OCR_DATA_PATH`                  | `null`          | [OCR Data Path](#ocr-data-path)                                   |
+| `fs.ocr.output_type`                | `FSCRAWLER_FS_OCR_OUTPUT_TYPE`                | `txt`           | [OCR Output Type](#ocr-output-type)                               |
+| `fs.ocr.pdf_strategy`               | `FSCRAWLER_FS_OCR_PDF_STRATEGY`               | `ocr_and_text`  | [OCR PDF Strategy](#ocr-pdf-strategy)                             |
+| `fs.ocr.page_seg_mode`              | `FSCRAWLER_FS_OCR_PAGE_SEG_MODE`              | `01`            | [OCR Page Seg Mode](#ocr-page-seg-mode)                           |
+| `fs.ocr.preserve_interword_spacing` | `FSCRAWLER_FS_OCR_PRESERVE_INTERWORD_SPACING` | `false`         | [OCR Preserve Interword Spacing](#ocr-preserve-interword-spacing) |
 
 ## Disable/Enable OCR
 
