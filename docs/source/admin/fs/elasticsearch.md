@@ -48,11 +48,10 @@ the crawler name (`name` property) plus `_folder` suffix, like
 `test_folder`. You can change it by setting `index_folder` field:
 
 ```yaml
+name: "test"
+elasticsearch:
+  index_folder: "folders"
 ```
-
-  name: "test"
-  elasticsearch:
-    index_folder: "folders"
 
 (mappings)=
 ### Mappings
@@ -269,13 +268,12 @@ bulk is executed every 100 operations or every 5 seconds or every 10 megabytes. 
 default settings using `bulk_size`, `byte_size` and `flush_interval`:
 
 ```yaml
+name: "test"
+elasticsearch:
+  bulk_size: 1000
+  byte_size: "500kb"
+  flush_interval: "2s"
 ```
-
-  name: "test"
-  elasticsearch:
-    bulk_size: 1000
-    byte_size: "500kb"
-    flush_interval: "2s"
 
 ```{tip}
 
@@ -303,7 +301,7 @@ by FSCrawler before they are actually indexed.
 
 For example, if you have the following pipeline:
 
-```sh
+```none
 PUT _ingest/pipeline/fscrawler
 {
   "description" : "fscrawler pipeline",
@@ -327,8 +325,7 @@ elasticsearch:
 ```
 
 ```{note}
- Folder objects are not sent through the pipeline as they are more
- internal objects.
+Folder objects are not sent through the pipeline as they are more internal objects.
 ```
 
 ## Node settings
@@ -341,7 +338,7 @@ For more information, read  {ref}`ssl`.
 
 FSCrawler supports all kind of Elasticsearch deployments:
 
-- [Self managed deployments](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html)
+- [Self-managed deployments](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html)
 - [Hosted deployments](https://ela.st/dedicated-deployment-usage-info)
 - [Serverless projects](https://ela.st/serverless-learn-more)
 
@@ -367,19 +364,17 @@ elasticsearch:
 ```
 
 ```{note}
-
- If you are using [Elastic Cloud](https://www.elastic.co/cloud), you can just use the `Elasticsearch Endpoint`.
+If you are using [Elastic Cloud](https://www.elastic.co/cloud), you can just use the `Elasticsearch Endpoint`.
 ```
 
 ````{note}
+If you are using [Start Local](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html):
 
- If you are using [Start Local](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html):
+```bash
+curl -fsSL https://elastic.co/start-local | sh
+```
 
- ```bash
- curl -fsSL https://elastic.co/start-local | sh
- ```
-
- The url to use is `http://localhost:9200` and the API key to use is available in the `.env` generated file.
+The url to use is `http://localhost:9200` and the API key to use is available in the `.env` generated file.
 ````
 
 ## Path prefix
