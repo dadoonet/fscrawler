@@ -16,7 +16,7 @@ using Kibana. For example location worked or the previous company, etc.
 * Download [Kibana ](https://www.elastic.co/downloads/kibana)
 * Start Elasticsearch server
 * Start Kibana server
-* Check that Kibana is running by opening http://localhost:5601
+* Check that Kibana is running by opening <https://localhost:5601>
 
 ## Start FSCrawler
 
@@ -34,10 +34,10 @@ bin/fscrawler --setup resumes
 * It will create a sample configuration file.
 * Go to the FSCrawler configuration folder to edit the job configuration. The FSCrawler configuration folder named
   `.fscrawler` is by default in the user home directory, like `C:\Users\myuser` on Windows platform or
-  `~` on Linux/MacOS. In this folder, you will find another folder named `resumes`. Enter this folder:
+  `~` on Linux/macOS. In this folder, you will find another folder named `resumes`. Enter this folder:
 
 ```sh
-# On Linux/Mac
+# On Linux/macOS
 cd ~/.fscrawler/resumes
 # On Windows
 cd C:\Users\myuser\.fscrawler\resumes
@@ -50,7 +50,7 @@ cd C:\Users\myuser\.fscrawler\resumes
 ---
 name: "resumes"
 fs:
-  # On Linux
+  # On Linux/macOS
   url: "/path/to/resumes"
   # On Windows
   url: "c:\\path\\to\\resumes"
@@ -59,7 +59,7 @@ fs:
 * Start again FSCrawler:
 
 ```sh
-# On Linux/Mac
+# On Linux/macOS
 bin/fscrawler resumes
 # On Windows
 .\bin\fscrawler resumes
@@ -82,13 +82,10 @@ FSCrawler should index all the documents inside your directory.
 
 ## Create Index pattern
 
-* Open [Kibana ](http://localhost:5601)
-* Go to the [Management ](http://0.0.0.0:5601/app/kibana#/management/) page
-* Open the [Index Patterns ](http://0.0.0.0:5601/app/kibana#/management/kibana/index_patterns?_g=()) page
-  under Kibana settings.
-* Click on `Create index pattern`
-* Type `resumes` in the input box. Don't forget to remove the star `*` that is automatically added by default
-  by Kibana.
+* Open [Kibana](http://localhost:5601)
+* Create a [Data View](http://localhost:5601/app/management/kibana/dataViews) named `resumes` 
+for the `resumes` index. Don't forget to remove the star `*` that is automatically added by default
+by Kibana.
 
 ![](images/kibana-step1.jpg)
 
@@ -104,6 +101,12 @@ FSCrawler should index all the documents inside your directory.
 ![](images/kibana-step3.jpg)
 
 ## Search for the CVs
+
+```{note}
+
+ The UI in Kibana changes from time to time. The screenshots below might not be up to date with the current 
+ version of Kibana.
+```
 
 * Open [Kibana ](https://localhost:5601)
 * Go to the [Discover ](https://localhost:5601/app/discover#/) page
