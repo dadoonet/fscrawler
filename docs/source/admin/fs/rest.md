@@ -590,7 +590,7 @@ curl -I http://127.0.0.1:8080/
 
 The response header should contain `Access-Control-Allow-*` parameters like:
 
-```txt
+```text
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Headers: origin, content-type, accept, authorization
 Access-Control-Allow-Credentials: true
