@@ -87,7 +87,7 @@ server:
 ````
 
 (root-directory)=
-### Root directory
+## Root directory
 
 Define `fs.url` property in your `~/.fscrawler/test/_settings.yaml`
 file:
@@ -101,7 +101,7 @@ fs:
 For Windows users, use a form like `c:/tmp` or `c:\\tmp`.
 
 (local-fs-update_rate)=
-### Update rate
+## Update rate
 
 By default, `update_rate` is set to `15m`. You can modify this value using any compatible 
 [time unit](https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#time-units).
@@ -144,7 +144,7 @@ The supported units for duration are:
 ```
 
 (includes_excludes)=
-### Includes and excludes
+## Includes and excludes
 
 Let’s say you want to index only docs like `*.doc` and `*.pdf` but
 `resume*`. So `resume_david.pdf` won’t be indexed.
@@ -219,7 +219,7 @@ Since the includes and excludes work on the entire *path of the file* you must c
 
 If a folder contains a file named `.fscrawlerignore`, this folder and its subfolders will be entirely skipped.
 
-### Filter content
+## Filter content
 
 You can filter out documents you would like to index by adding one or more
 regular expression that match the extracted content.
@@ -240,7 +240,7 @@ With this example, only documents which contains the word `foo` and a VISA credi
 with the form like `4012888888881881`, `4012 8888 8888 1881` or `4012-8888-8888-1881`
 will be indexed.
 
-### Indexing JSON docs
+## Indexing JSON docs
 
 If you want to index JSON files directly without parsing with Tika, you
 can set `json_support` to `true`. JSON contents will be stored
@@ -258,7 +258,7 @@ fs:
 Of course, if you did not define a mapping before launching the crawler,
 Elasticsearch will auto guess the mapping.
 
-### Indexing XML docs
+## Indexing XML docs
 
 If you want to index XML files and convert them to JSON, you can set
 `xml_support` to `true`. The content of XML files will be added
@@ -276,7 +276,7 @@ fs:
 Of course, if you did not define a mapping before launching the crawler,
 Elasticsearch will auto guess the mapping.
 
-### Add as Inner Object
+## Add as Inner Object
 
 The default settings store the contents of JSON and XML documents
 directly onto the \_source element of Elasticsearch documents. Thereby,
@@ -293,7 +293,7 @@ fs:
   add_as_inner_object: true
 ```
 
-### Index folders
+## Index folders
 
 By default, FSCrawler will index folder names in the folder index. If
 you don’t want to index those folders, you can set `index_folders` to
@@ -311,7 +311,7 @@ fs:
   index_folders: false
 ```
 
-### Dealing with multiple types and multiple dirs
+## Dealing with multiple types and multiple dirs
 
 If you have more than one type, create as many crawlers as types and/or folders:
 
@@ -351,7 +351,7 @@ elasticsearch:
   index_folder: "myfolders3"
 ```
 
-### Dealing with multiple types within the same dir
+## Dealing with multiple types within the same dir
 
 You can also index many types from one single dir using two crawlers
 scanning the same dir and by setting `includes` parameter:
@@ -399,7 +399,7 @@ elasticsearch:
 ```
 
 (filename-as-id)=
-### Using filename as elasticsearch `_id`
+## Using filename as elasticsearch `_id`
 
 Please note that the document `_id` is generated as a hash value
 from the filename to avoid issues with special characters in filename.
@@ -412,7 +412,7 @@ fs:
   filename_as_id: true
 ```
 
-### Adding file attributes
+## Adding file attributes
 
 If you want to add file attributes such as `attributes.owner`, `attributes.group`
 and `attributes.permissions`, you can set `attributes_support` to `true`.
@@ -429,7 +429,7 @@ fs:
  not generated.
 ```
 
-### Collecting ACL metadata
+## Collecting ACL metadata
 
 To extract NTFS access control entries (principal, type, permissions and flags),
 enable both `attributes_support` and `acl_support`:
@@ -444,7 +444,7 @@ fs:
 When `acl_support` is disabled, FSCrawler skips resolving ACLs even if
 `attributes_support` is active.
 
-### Enabling raw metadata
+## Enabling raw metadata
 
 FSCrawler can extract all found metadata within a `meta.raw` object in addition
 to the standard metadata fields.
@@ -564,7 +564,7 @@ the total number of field limit in elasticsearch mappings. In which case you wil
 See [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html#mapping-limit-settings)
 ```
 
-### Disabling file size field
+## Disabling file size field
 
 By default, FSCrawler will create a field to store the original file
 size in octets. You can disable it using \`add_filesize’ option:
@@ -575,7 +575,7 @@ fs:
   add_filesize: false
 ```
 
-### Ignore deleted files
+## Ignore deleted files
 
 If you don’t want to remove indexed documents when you remove a file or a directory, you can set `remove_deleted` to 
 `false` (default to `true`):
@@ -590,7 +590,7 @@ fs:
 Setting `remove_deleted` is forced to `false` when using the Workplace Search output.
 ```
 
-### Ignore content
+## Ignore content
 
 If you don’t want to extract file content but only index filesystem
 metadata such as filename, date, size and path, you can set
@@ -603,7 +603,7 @@ fs:
 ```
 
 (continue_on_error)=
-### Continue on Error
+## Continue on Error
 
 By default, FSCrawler will immediately stop indexing if he hits a
 Permission denied exception. If you want to just skip this File and
@@ -616,7 +616,7 @@ fs:
   continue_on_error: true
 ```
 
-### Language detection
+## Language detection
 
 You can ask for language detection using `lang_detect` option:
 
@@ -676,7 +676,7 @@ be marked as `fr`.
 Note that language detection is CPU and time consuming.
 
 (store_binary)=
-### Storing binary source document
+## Storing binary source document
 
 You can store in elasticsearch itself the binary document (BASE64 encoded)
 using `store_source` option:
@@ -705,7 +705,7 @@ JSON document. This field is not indexed. Default mapping for
 }
 ```
 
-### Extracted characters
+## Extracted characters
 
 By default, FSCrawler will extract only the first 100 000 characters.
 But, you can set `indexed_chars` to `5000` in FSCrawler settings in
@@ -741,7 +741,7 @@ If you want to extract the full content, define `indexed_chars` to
  more memory!
 ```
 
-### Ignore Above
+## Ignore Above
 
 By default, and if `index_content` set to `true`, FSCrawler will send every single file to Tika, whatever its size.
 But some files on your file system might be a way too big to be parsed.
@@ -754,7 +754,7 @@ fs:
   ignore_above: "512mb"
 ```
 
-### File checksum
+## File checksum
 
 If you want FSCrawler to generate a checksum for each file, set
 `checksum` to the algorithm you wish to use to compute the checksum,
@@ -776,7 +776,7 @@ fs:
   checksum: "MD5"
 ```
 
-### Temporary Directory
+## Temporary Directory
 
 ```{versionadded} 2.10
 ```
@@ -806,7 +806,7 @@ fs:
  Temporary files are automatically deleted after processing each document.
 ```
 
-### Follow Symlinks
+## Follow Symlinks
 
 If you want FSCrawler to follow the symbolic links, you need to be explicit about it and set
 `follow_symlinks` to `true`. Starting from version 2.7, symbolic links are not followed anymore.
@@ -817,7 +817,7 @@ fs:
   follow_symlinks: true
 ```
 
-### Tika Config Path
+## Tika Config Path
 
 ```{versionadded} 2.10
 ```
