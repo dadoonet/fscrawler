@@ -5,7 +5,7 @@ This tutorial use case is:
 Search for the resumes (PDF or Word file which resides in One drive or local) and search for anything in the content
 using Kibana. For example location worked or the previous company, etc.
 
-### Prerequisites
+## Prerequisites
 
 * Java {{ java_version }}\ + must be installed
 * `JAVA_HOME` must be defined
@@ -80,7 +80,7 @@ FSCrawler should index all the documents inside your directory.
     .\bin\fscrawler resumes --restart
 ```
 
-### Create Index pattern
+## Create Index pattern
 
 * Open [Kibana ](http://localhost:5601)
 * Go to the [Management ](http://0.0.0.0:5601/app/kibana#/management/) page

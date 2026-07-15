@@ -2,7 +2,7 @@
 # Local FS settings
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
 ```
 
 Here is a list of Local FS settings (under `fs.` prefix):
@@ -68,7 +68,7 @@ Here is a list of Local FS settings (under `fs.` prefix):
 ```
 
 (crawler-provider)=
-### Crawler Provider
+## Crawler Provider
 
 ```{versionadded} 2.10
 ```
@@ -624,7 +624,7 @@ fs:
 
 ```{note}
 
- Setting `remove_deleted` is forced to `false` when using the Workplace Search output ({ref}`wpsearch-settings`).
+ Setting `remove_deleted` is forced to `false` when using the Workplace Search output.
 ```
 
 ### Ignore content

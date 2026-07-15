@@ -5,10 +5,10 @@ FSCrawler can expose a REST service running at http://127.0.0.1:8080/.
 To activate it, launch FSCrawler with `--rest` option.
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
 ```
 
-### General settings
+## General settings
 
 ```{versionadded} 2.10
 ```
@@ -40,7 +40,7 @@ curl http://127.0.0.1:8080/
 
 It will give you a response similar to:
 
-```json
+```yaml
 :substitutions:
 
 {

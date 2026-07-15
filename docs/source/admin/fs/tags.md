@@ -2,9 +2,10 @@
 # External Tags
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
+```
 
-.. versionadded:: 2.10
+```{versionadded} 2.10
 ```
 
 The goal of this feature is to allow users to provide additional metadata when
@@ -35,7 +36,7 @@ Here is a list of Tags settings (under `tags.` prefix):
  or files.
 ```
 
-### Meta Filename
+## Meta Filename
 
 Whenever a directory is crawled, FSCrawler checks if a file named
 `.meta.yml` is present in the directory. If it is, the content of this file is

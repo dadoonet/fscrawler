@@ -11,10 +11,10 @@ Thanks to [JetBrains ](https://www.jetbrains.com/?from=FSCrawler) for the Intell
     :target: https://www.jetbrains.com/?from=FSCrawler
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
 ```
 
-### Clone the project
+## Clone the project
 
 Use git to clone the project locally
 ```

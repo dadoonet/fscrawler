@@ -17,7 +17,7 @@ Here is a list of OCR settings (under `fs.ocr` prefix):
 
 | Name | Environment Variable | Default value | Documentation |
 |------|----------------------|---------------|---------------|
-| `fs.ocr.enabled` | `FSCRAWLER_FS_OCR_ENABLED` | `true` | [Disable/Enable OCR](#disable-enable-ocr) |
+| `fs.ocr.enabled` | `FSCRAWLER_FS_OCR_ENABLED` | `true` | [Disable/Enable OCR](#disableenable-ocr) |
 | `fs.ocr.language` | `FSCRAWLER_FS_OCR_LANGUAGE` | `"eng"` | [OCR Language](#ocr-language) |
 | `fs.ocr.path` | `FSCRAWLER_FS_OCR_PATH` | `null` | [OCR Path](#ocr-path) |
 | `fs.ocr.data_path` | `FSCRAWLER_FS_OCR_DATA_PATH` | `null` | [OCR Data Path](#ocr-data-path) |
@@ -123,7 +123,8 @@ fs:
     output_type: "hocr"
 ```
 
-```{note} When omitted, ``txt`` value is used.
+```{note}
+When omitted, `txt` value is used.
 ```
 
 ## OCR PDF Strategy
@@ -150,8 +151,9 @@ Supported strategies are:
 
 * `ocr_and_text`: OCR and text extraction is performed.
 
-```{note} When omitted, ``ocr_and_text`` value is used. If you have performance issues, it's worth using the ``auto`` option
- instead as only documents with barely no text will go through the OCR process.
+```{note}
+When omitted, `ocr_and_text` value is used. If you have performance issues, it's worth using the `auto` option
+instead as only documents with barely no text will go through the OCR process.
 ```
 
 ## OCR Page Seg Mode

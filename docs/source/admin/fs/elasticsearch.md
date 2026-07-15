@@ -2,7 +2,7 @@
 # Elasticsearch settings
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
 ```
 
 Here is a list of Elasticsearch settings (under `elasticsearch.` prefix):
@@ -45,7 +45,7 @@ Here is a list of Elasticsearch settings (under `elasticsearch.` prefix):
 +----------------------------------------+--------------------------------------------------+----------------------------+---------------------------------+
 ```
 
-### Index settings
+## Index settings
 
 ## Index settings for documents
 
@@ -133,7 +133,7 @@ elasticsearch:
 If you want to know what are the component templates and index templates
 that will be created, you can get them from [the source ](https://github.com/dadoonet/fscrawler/blob/master/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/9).
 
-#### Creating your own mapping (analyzers)
+### Creating your own mapping (analyzers)
 
 If you want to define your own index settings and mapping to set
 analyzers for example, you can create the needed component template
@@ -144,7 +144,7 @@ It will only create the missing component templates and the index template.
 
 For example, you can define in advance your own component template `fscrawler_fscrawler_mapping_content`:
 
-```json
+```console
  PUT _component_template/fscrawler_fscrawler_mapping_content
  {
    "template": {
@@ -173,7 +173,7 @@ Then start FSCrawler. It will create all the component templates but `fscrawler_
 The following example uses a `french` analyzer to index the
 `content` field and still allow using semantic search.
 
-```json
+```console
  PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
  {
    "template": {
@@ -196,7 +196,7 @@ The following example uses a `french` analyzer to index the
 The following example uses a `french` analyzer to index the
 `content` field.
 
-```json
+```console
  PUT _component_template/fscrawler_fscrawler_mapping_content
  {
    "template": {
@@ -261,7 +261,7 @@ inference API (defaults to [Elser model ](https://www.elastic.co/guide/en/machin
 You can change the model to use by changing the component template. For example, a recommended model when you have only
 english content is the Elastic [multilingual-e5-small ](https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-multilingual-e5-small.html):
 
-```json
+```console
  PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
  {
    "template": {
@@ -435,7 +435,7 @@ to it:
 
 Let's create an API Key named `fscrawler`:
 
-```json
+```console
  POST /_security/api_key
  {
    "name": "fscrawler"
@@ -588,11 +588,19 @@ elasticsearch:
 (generated_fields)=
 ### Generated fields
 
-FSCrawler may create the following fields depending on configuration and available data:
+FSCrawler may create the following fields depending on configuration and available data.
+The table below lists the main fields; see the JSON example in the next section for a concrete document shape.
 
-```{eval-rst}
-.. include:: ../../_includes/generated-fields-table.rst
-```
+| Field | Description |
+|-------|-------------|
+| `content` | Extracted text content |
+| `content_semantic` | Semantic-text copy of the content (when semantic search is enabled) |
+| `attachment` | BASE64-encoded binary file (when `fs.base64` is enabled) |
+| `meta.*` | Document metadata extracted by Tika (author, title, date, language, etc.) |
+| `file.*` | File attributes (filename, extension, size, dates, checksum, etc.) |
+| `path.*` | Virtual, real, and root path information |
+| `attributes.*` | Filesystem attributes (owner, group, permissions) |
+| `external` | Additional tags provided via external metadata |
 
 For more information about meta data, please read the [TikaCoreProperties ](https://tika.apache.org/2.9.1/api/org/apache/tika/metadata/TikaCoreProperties.html).
 

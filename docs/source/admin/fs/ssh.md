@@ -4,7 +4,7 @@
 You can index files remotely using SSH/SFTP.
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
 ```
 
 Here is a list of SSH settings:

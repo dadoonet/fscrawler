@@ -1,3 +1,4 @@
+(installation)=
 (docker)=
 # Using docker
 
@@ -36,7 +37,7 @@ docker run -it --rm \
  running under the default `127.0.0.1`. You will need to use the actual IP address of the host.
 
  Or use the `FSCRAWLER_ELASTICSEARCH_URLS` environment variable to set the elasticsearch URL.
- See {ref}`docker-options` for more information.
+ See {ref}`cli-options` for more information.
 ```
 
 If you need to add a 3rd party library (jar) or your Tika custom jar, you can put it in a `external` directory and
@@ -233,7 +234,7 @@ If you prefer to run FSCrawler from a ZIP distribution on your machine instead o
 ```{eval-rst}
 .. ifconfig:: release.endswith('-SNAPSHOT')
 
-    You can download FSCrawler |version| from `Sonatype <https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/>`_.
+    You can download FSCrawler |version| from `Sonatype snapshots <https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/>`_.
 
     The filename ends with ``.zip``.
 
@@ -270,7 +271,7 @@ If you prefer to run FSCrawler from a ZIP distribution on your machine instead o
 
 .. ifconfig:: release == version
 
-    You can download FSCrawler |version| from `Sonatype <https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/>`_.
+    You can download FSCrawler |version| from `Sonatype Maven Central <https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/>`_.
 
     .. tip::
 

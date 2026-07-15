@@ -8,7 +8,7 @@ on MacOS if you are using sdkman you can define in your `~/.bash_profile` file:
 export JAVA_HOME="~/.sdkman/candidates/java/current"
 ```
 
-### Start FSCrawler
+## Start FSCrawler
 
 Start FSCrawler with:
 

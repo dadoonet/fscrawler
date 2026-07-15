@@ -4,7 +4,7 @@ A convenience shell script is provided to spin up the full EDOT observability
 stack and run FSCrawler against the built-in test documents in a single command.
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
 ```
 
 ## Prerequisites

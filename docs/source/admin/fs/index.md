@@ -1,7 +1,7 @@
 # Job file specifications
 
 ```{contents}
-.. contents:: :backlinks: entry
+:backlinks: entry
 ```
 
 ## Expected files
