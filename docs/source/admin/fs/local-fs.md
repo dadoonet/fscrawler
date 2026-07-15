@@ -529,13 +529,12 @@ Where a MP3 file would generate:
 }
 ```
 
-```{note}
+````{note}
 All fields are generated as text even though they can be valid booleans or numbers.
 
 The `meta.raw.*` fields have a default mapping applied:
 
-.. code:: json
-
+```json
 {
   "type": "text",
   "fields": {
@@ -545,11 +544,12 @@ The `meta.raw.*` fields have a default mapping applied:
     }
   }
 }
+```
 
 If you want specifically tell elasticsearch to use a date type or a
 numeric type for some fields, you need to modify the default template
 provided by FSCrawler.
-```
+````
 
 ```{note}
 Note that dots in metadata names will be replaced by a `:`. For example `PTEX.Fullbanner` will be indexed as
