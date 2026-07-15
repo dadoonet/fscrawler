@@ -58,33 +58,33 @@ fs:
   url: "/path/to/data/dir"
 ```
 
-```{note}
+````{note}
 
- The `fs.provider` setting replaces the deprecated `server.protocol` setting.
- If you are currently using `server.protocol`, you should migrate to `fs.provider`.
+The `fs.provider` setting replaces the deprecated `server.protocol` setting.
+If you are currently using `server.protocol`, you should migrate to `fs.provider`.
 
- Old configuration (deprecated):
+Old configuration (deprecated):
 
- .. code:: yaml
-
-    name: "test"
-    fs:
-      url: "/path/to/data/dir"
-    server:
-      hostname: "mynode.mydomain.com"
-      protocol: "ftp"
-
- New configuration (recommended):
-
- .. code:: yaml
-
-    name: "test"
-    fs:
-      provider: "ftp"
-      url: "/path/to/data/dir"
-    server:
-      hostname: "mynode.mydomain.com"
+```yaml
+name: "test"
+fs:
+  url: "/path/to/data/dir"
+server:
+  hostname: "mynode.mydomain.com"
+  protocol: "ftp"
 ```
+
+New configuration (recommended):
+
+```yaml
+name: "test"
+fs:
+  provider: "ftp"
+  url: "/path/to/data/dir"
+server:
+  hostname: "mynode.mydomain.com"
+```
+````
 
 (root-directory)=
 ### Root directory
@@ -530,38 +530,38 @@ Where a MP3 file would generate:
 ```
 
 ```{note}
- All fields are generated as text even though they can be valid booleans or numbers.
+All fields are generated as text even though they can be valid booleans or numbers.
 
- The `meta.raw.*` fields have a default mapping applied:
+The `meta.raw.*` fields have a default mapping applied:
 
- .. code:: json
+.. code:: json
 
-    {
-      "type": "text",
-      "fields": {
-        "keyword": {
-          "type": "keyword",
-          "ignore_above": 256
-        }
-      }
+{
+  "type": "text",
+  "fields": {
+    "keyword": {
+      "type": "keyword",
+      "ignore_above": 256
     }
+  }
+}
 
- If you want specifically tell elasticsearch to use a date type or a
- numeric type for some fields, you need to modify the default template
- provided by FSCrawler.
+If you want specifically tell elasticsearch to use a date type or a
+numeric type for some fields, you need to modify the default template
+provided by FSCrawler.
 ```
 
 ```{note}
- Note that dots in metadata names will be replaced by a `:`. For
- example `PTEX.Fullbanner` will be indexed as `PTEX:Fullbanner`.
+Note that dots in metadata names will be replaced by a `:`. For example `PTEX.Fullbanner` will be indexed as
+`PTEX:Fullbanner`.
 ```
 
 ```{note}
- Note that if you have a lot of different type of files, that can generate a lot of
- raw metadata which can make you hit the total number of field limit in elasticsearch
- mappings. In which case you will need to change the index settings `foo`.
+Note that if you have a lot of different type of files, that can generate a lot of raw metadata which can make you hit 
+the total number of field limit in elasticsearch mappings. In which case you will need to change the index settings 
+`foo`.
 
- See [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html#mapping-limit-settings)
+See [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html#mapping-limit-settings)
 ```
 
 ### Disabling file size field
@@ -577,9 +577,8 @@ fs:
 
 ### Ignore deleted files
 
-If you don’t want to remove indexed documents when you remove a file or
-a directory, you can set `remove_deleted` to `false` (default to
-`true`):
+If you don’t want to remove indexed documents when you remove a file or a directory, you can set `remove_deleted` to 
+`false` (default to `true`):
 
 ```yaml
 name: "test"
@@ -588,8 +587,7 @@ fs:
 ```
 
 ```{note}
-
- Setting `remove_deleted` is forced to `false` when using the Workplace Search output.
+Setting `remove_deleted` is forced to `false` when using the Workplace Search output.
 ```
 
 ### Ignore content
@@ -607,7 +605,7 @@ fs:
 (continue_on_error)=
 ### Continue on Error
 
-By default FSCrawler will immediately stop indexing if he hits a
+By default, FSCrawler will immediately stop indexing if he hits a
 Permission denied exception. If you want to just skip this File and
 continue with the rest of the directory tree you can set
 `continue_on_error` to `true` (default to `false`):
@@ -709,7 +707,7 @@ JSON document. This field is not indexed. Default mapping for
 
 ### Extracted characters
 
-By default FSCrawler will extract only the first 100 000 characters.
+By default, FSCrawler will extract only the first 100 000 characters.
 But, you can set `indexed_chars` to `5000` in FSCrawler settings in
 order to overwrite this default settings.
 
@@ -745,7 +743,7 @@ If you want to extract the full content, define `indexed_chars` to
 
 ### Ignore Above
 
-By default (if `index_content` set to `true`) FSCrawler will send every single file to Tika, whatever its size.
+By default, and if `index_content` set to `true`, FSCrawler will send every single file to Tika, whatever its size.
 But some files on your file system might be a way too big to be parsed.
 
 Set `ignore_above` to the desired value of the limit.

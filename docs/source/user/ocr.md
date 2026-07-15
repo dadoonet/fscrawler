@@ -57,18 +57,17 @@ fs:
     language: "eng"
 ```
 
-```{note}
+````{note}
+You can define multiple languages by using `+` sign as a separator:
 
- You can define multiple languages by using `+` sign as a separator:
-
- .. code:: yaml
-
-    name: "test"
-    fs:
-      url: "/path/to/data/dir"
-      ocr:
-        language: "eng+fas+fra"
+```yaml
+name: "test"
+fs:
+  url: "/path/to/data/dir"
+  ocr:
+    language: "eng+fas+fra"
 ```
+````
 
 ## OCR Path
 

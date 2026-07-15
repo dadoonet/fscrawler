@@ -127,31 +127,32 @@ tags:
 All documents indexed will have the fields `external.hostname` and `external.environment`
 with the values `server001` and `production` respectively.
 
-```{note}
+````{note}
+Static metadata is merged first and then the content within a `.meta.yml` is applied.
+If you are overwriting the tags within the `.meta.yml` file, then that takes precedence.
 
- Static metadata is merged first and then the content within a `.meta.yml` is applied.
- If you are overwriting the tags within the `.meta.yml` file, then that
- takes precedence.
+Example: If the static metadata file contains:
 
- Example: If the static metadata file contains:
-
- .. code:: yaml
-      external:
-         category: "general"
-         owner: "team-a"
-
- And the `.meta.yml` file contains:
-
- .. code:: yaml
-      external:
-         owner: "team-b"
-         priority: "high"
-
- The resulting document will have:
-
- .. code:: yaml
-      external:
-         category: "general"
-         owner: "team-b"
-         priority: "high"
+```yaml
+external:
+ category: "general"
+ owner: "team-a"
 ```
+
+And the `.meta.yml` file contains:
+
+```yaml
+external:
+ owner: "team-b"
+ priority: "high"
+```
+
+The resulting document will have:
+
+```yaml
+external:
+ category: "general"
+ owner: "team-b"
+ priority: "high"
+```
+````

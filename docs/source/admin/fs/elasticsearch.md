@@ -449,16 +449,15 @@ elasticsearch:
 ```
 
 ````{warning}
- Be aware that the elasticsearch password is stored in plain text in your job setting file.
+Be aware that the elasticsearch password is stored in plain text in your job setting file.
 
- A better practice is to only set the username or pass it with
- `--username elastic` option when starting FSCrawler.
+A better practice is to only set the username or pass it with `--username elastic` option when starting FSCrawler.
 
- If the password is not defined, you will be prompted when starting the job:
+If the password is not defined, you will be prompted when starting the job:
 
- ```none
- 22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
- ```
+```none
+22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
+```
 ````
 
 ### User permissions

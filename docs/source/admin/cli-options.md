@@ -17,17 +17,17 @@ want to set the `url` of a job named `myjob` to `/tmp/test`, you can run:
 FS_JAVA_OPTS="-Dfs.url=/tmp/test" bin/fscrawler
 ```
 
-A more complete example as follow, runs out of the box the indexation of a the directory
-`/tmp/test` in Elasticsearch running at `https://elastic.mycompany.com` with `API_KEY` as the API key and it
+A more complete example as follows, runs out of the box the indexation of the directory
+`/tmp/test` in Elasticsearch running at `https://elastic.mycompany.com` with `API_KEY` as the API key, and it
 exits after the first run:
 
 ```sh
 FS_JAVA_OPTS="-Dfs.url=/tmp/test -Delasticsearch.urls=https://elastic.mycompany.com -Delasticsearch.api-key=API_KEY" bin/fscrawler --loop 1
 ```
 
-..note::
-
-    You can optionally specify the job name you want to use / run. If not set, the default job name is `fscrawler`.
+```{note}
+You can optionally specify the job name you want to use / run. If not set, the default job name is `fscrawler`.
+```
 
 ## Loop
 
