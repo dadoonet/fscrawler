@@ -95,17 +95,16 @@ See {ref}`cli-options` for more information.
 In this section, the following directory layout is assumed:
 
 ```none
+.
+├── .env
+├── docs
+│   └── <your PDF, DOC, ... files>
+└── docker-compose.yml
 ```
-
-  .
-  ├── .env
-  ├── docs
-  │   └── <your PDF, DOC, ... files>
-  └── docker-compose.yml
 
 The `.env` file looks like this:
 
-```sh
+```{code-block} sh
 :substitutions:
 
 # Password for the 'elastic' user (at least 6 characters)

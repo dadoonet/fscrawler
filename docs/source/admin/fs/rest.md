@@ -40,7 +40,7 @@ curl http://127.0.0.1:8080/
 
 It will give you a response similar to:
 
-```yaml
+```{code-block} json
 :substitutions:
 
 {
