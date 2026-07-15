@@ -20,7 +20,7 @@ docker pull dadoonet/fscrawler
     docker pull dadoonet/fscrawler:noocr
 ```
 
-Let say your documents are located in `~/tmp` dir and you want to store your fscrawler jobs in `~/.fscrawler`.
+Let say your documents are located in `~/tmp` dir and you want to store your FSCrawler jobs in `~/.fscrawler`.
 You can run FSCrawler with:
 
 ```sh
