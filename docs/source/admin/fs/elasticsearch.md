@@ -375,7 +375,7 @@ elasticsearch:
 
  If you are using [Start Local](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html):
 
- ````bash
+ ```bash
  curl -fsSL https://elastic.co/start-local | sh
  ```
 
