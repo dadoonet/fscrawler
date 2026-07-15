@@ -13,7 +13,10 @@ Welcome to the FS Crawler for {{ ES }}.
 
 This crawler helps to index binary documents such as PDF, Open Office, MS Office.
 
-<img src="/_static/fscrawler-explained.png" alt="FSCrawler Explained - Generated with Gemini" width="100%" />
+```{figure} fscrawler-explained.png
+:alt: FSCrawler Explained - Generated with Gemini
+:width: 100%
+```
 
 **Main features**:
 
@@ -133,4 +136,4 @@ for more details about the license details.
 
 Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
 
-[![Jet Brains](/_static/jetbrains.png)](https://www.jetbrains.com/?from=FSCrawler)
+[![Jet Brains](jetbrains.png)](https://www.jetbrains.com/?from=FSCrawler)

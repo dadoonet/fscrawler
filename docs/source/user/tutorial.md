@@ -90,18 +90,18 @@ FSCrawler should index all the documents inside your directory.
 * Type `resumes` in the input box. Don't forget to remove the star `*` that is automatically added by default
   by Kibana.
 
-![](/_static/tutorial/kibana-step1.jpg)
+![](images/kibana-step1.jpg)
 
 * Choose the date field you'd like to use if you want to be able to filter documents by date. Use
   `file.created` field if you want to filter by file creation date, `file.last_modified` to filter
   by last modification date or `file.indexing_date` if you want to filter by the date when the document
   has been indexed into elasticsearch. You can also choose not to use the time filter (the last option).
 
-![](/_static/tutorial/kibana-step2.jpg)
+![](images/kibana-step2.jpg)
 
 * Click on "Create index pattern". You should see something like:
 
-![](/_static/tutorial/kibana-step3.jpg)
+![](images/kibana-step3.jpg)
 
 ### Search for the CVs
 
@@ -111,16 +111,16 @@ FSCrawler should index all the documents inside your directory.
   following image. If you don't see it, you probably have to adjust the time picker to make sure you are looking
   at the right period of time.
 
-![](/_static/tutorial/kibana-step4.jpg)
+![](images/kibana-step4.jpg)
 
 * You can select the fields you'd like to display in the result page, such as `content`,
   `file.filename`, `file.extension`, `file.url`, `file.filesize`, etc.
 
-![](/_static/tutorial/kibana-step5.jpg)
+![](images/kibana-step5.jpg)
 
 * Of course, you can search for content, like `collaborateurs` here and see the highlighted content.
 
-![](/_static/tutorial/kibana-step6.jpg)
+![](images/kibana-step6.jpg)
 
 ### Adding new files
 
@@ -142,4 +142,4 @@ value. See {ref}`local-fs-update_rate`.
 
 Just hit the Kibana refresh button and see the changes.
 
-![](/_static/tutorial/kibana-step7.jpg)
+![](images/kibana-step7.jpg)

@@ -495,7 +495,7 @@ This can be done by defining the following role:
 
 This also can be done using the Kibana Stack Management Interface.
 
-![](/_static/elasticsearch/fscrawler-roles.png)
+![](images/fscrawler-roles.png)
 
 Then, you can assign this role to the user who will be defined within the `username` setting.
 

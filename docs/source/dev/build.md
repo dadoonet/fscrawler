@@ -4,7 +4,7 @@ This project is built with [Maven ](https://maven.apache.org/). It needs Java >=
 Source code is available on [GitHub ](https://github.com/dadoonet/fscrawler/).
 Thanks to [JetBrains ](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
 
-![](/_static/jetbrains.png)
+![](../jetbrains.png)
 
     :scale: 10
     :alt: Jet Brains
