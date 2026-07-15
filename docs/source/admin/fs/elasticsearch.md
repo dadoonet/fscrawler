@@ -293,8 +293,7 @@ elasticsearch:
 (ingest_node)=
 ## Using Ingest Node Pipeline
 
-If you are using an elasticsearch cluster running a 5.0 or superior
-version, you can use an Ingest Node pipeline to transform documents sent
+You can use an Ingest Node pipeline to transform documents sent
 by FSCrawler before they are actually indexed.
 
 For example, if you have the following pipeline:
