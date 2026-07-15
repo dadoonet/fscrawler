@@ -2,3 +2,4 @@
 Sphinx>=7,<9
 sphinx_rtd_theme>=2
 sphinx-substitution-extensions
+myst-parser>=3,<5
