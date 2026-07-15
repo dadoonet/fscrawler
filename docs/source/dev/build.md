@@ -4,11 +4,7 @@ This project is built with [Maven ](https://maven.apache.org/). It needs Java >=
 Source code is available on [GitHub ](https://github.com/dadoonet/fscrawler/).
 Thanks to [JetBrains ](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
 
-![](../jetbrains.png)
-
-    :scale: 10
-    :alt: Jet Brains
-    :target: https://www.jetbrains.com/?from=FSCrawler
+[![Jet Brains](../jetbrains.png)](https://www.jetbrains.com/?from=FSCrawler)
 
 ```{contents}
 :backlinks: entry
@@ -16,27 +12,31 @@ Thanks to [JetBrains ](https://www.jetbrains.com/?from=FSCrawler) for the Intell
 
 ## Clone the project
 
-Use git to clone the project locally
-```
+Use git to clone the project locally:
+
+```shell
 git clone git@github.com:dadoonet/fscrawler.git
 cd fscrawler
 ```
 
 ## Build the artifact
 
-To build the project, run
-```
+To build the project, run:
+
+```shell
 mvn clean package
 ```
 
 The final artifacts are available in `distribution/target`.
 
-```{tip}
+````{tip}
 
- To build it faster (without tests), run::
+ To build it faster (without tests), run:
 
-     mvn clean package -DskipTests
-```
+ ```shell
+ mvn clean package -DskipTests
+ ```
+````
 
 ## Integration tests
 
@@ -57,7 +57,9 @@ As we are using [Testcontainers ](https://java.testcontainers.org/modules/elasti
 we can [reuse ](https://java.testcontainers.org/features/reuse/) the Elasticsearch container instead of having to restart
 one everytime.
 
-```{note} You need to explicitly `enable this feature <https://java.testcontainers.org/features/reuse/>`_.
+```{note} 
+
+ You need to explicitly [enable this feature](https://java.testcontainers.org/features/reuse/).
 ```
 
 If you run from the IDE, reusing containers is the default behavior. But if you run the CLI, you need
