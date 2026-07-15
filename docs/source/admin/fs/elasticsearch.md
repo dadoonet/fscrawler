@@ -525,37 +525,35 @@ elasticsearch:
   ca_certificate: /path/to/certificate/http_ca.crt
 ```
 
-```{eval-rst}
-.. note::
+````{note}
+You can also import your certificate into `<JAVA_HOME>\lib\security\cacerts`.
 
-    You can also import your certificate into ``<JAVA_HOME>\\lib\\security\\cacerts``.
+For example, if you have a root CA chain certificate or Elasticsearch server certificate
+in DER format (it's a binary format using a `.cer` extension), you need to:
 
-    For example, if you have a root CA chain certificate or Elasticsearch server certificate
-    in DER format (it's a binary format using a ``.cer`` extension), you need to:
+1. Logon to server (or client machine) where FSCrawler is running
+2. Run:
 
-    1. Logon to server (or client machine) where FSCrawler is running
-    2. Run:
-
-    .. code:: sh
-
-        keytool -import -alias <alias name> -keystore "<JAVA_HOME>\\lib\\security\\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
-
-    It will prompt you for the password. Enter the certificate password like ``changeit``.
-
-    3. Make changes to FSCrawler ``_settings.json`` file to connect to your Elasticsearch server over HTTPS:
-
-    .. code:: yaml
-
-        name: "test"
-        elasticsearch:
-         api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
-         urls:
-         - "https://localhost:9243"
-
-    .. tip::
-
-        If you can not find ``keytool``, it probably means that you did not add your ``JAVA_HOME/bin`` directory to your path.
+```sh
+keytool -import -alias <alias name> -keystore "<JAVA_HOME>\lib\security\cacerts" -file <Path of Elasticsearch Server certificate or Root certificate>
 ```
+
+It will prompt you for the password. Enter the certificate password like `changeit`.
+
+3. Make changes to FSCrawler `_settings.json` file to connect to your Elasticsearch server over HTTPS:
+
+```yaml
+name: "test"
+elasticsearch:
+ api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
+ urls:
+ - "https://localhost:9243"
+```
+
+```{tip}
+If you can not find `keytool`, it probably means that you did not add your `JAVA_HOME/bin` directory to your path.
+```
+````
 
 (generated_fields)=
 ## Generated fields
