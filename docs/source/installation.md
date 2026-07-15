@@ -2,7 +2,7 @@
 (docker)=
 # Using docker
 
-Pull the Docker image from [Docker Hub ](https://hub.docker.com/r/dadoonet/fscrawler):
+Pull the Docker image from [Docker Hub](https://hub.docker.com/r/dadoonet/fscrawler):
 
 ```sh
 docker pull dadoonet/fscrawler
@@ -10,8 +10,8 @@ docker pull dadoonet/fscrawler
 
 ````{note}
 
- This image is very big (500+mb) as it contains [Tesseract ](https://tesseract-ocr.github.io/tessdoc/) and
- all the [trained language data ](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
+ This image is very big (500+mb) as it contains [Tesseract](https://tesseract-ocr.github.io/tessdoc/) and
+ all the [trained language data](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
  If you don't want to use OCR at all, you can use a smaller image (around 230mb) by pulling instead
  `dadoonet/fscrawler:noocr`:
 
@@ -287,5 +287,5 @@ dependencies), `external/` (optional JARs), and `logs/`. See {ref}`layout` for t
 
 You may need to add JARs to the `external` directory for some formats. For example, to support JPEG2000 (JPX/JP2)
 images in PDFs, add the `jai-imageio-jpeg2000` library: download it from
-[Maven Central ](https://central.sonatype.com/search?q=g:com.github.jai-imageio) and put
+[Maven Central](https://central.sonatype.com/search?q=g:com.github.jai-imageio) and put
 `jai-imageio-jpeg2000-1.4.0.jar` in the `external` directory.

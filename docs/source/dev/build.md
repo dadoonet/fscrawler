@@ -1,8 +1,8 @@
 # Building the project
 
-This project is built with [Maven ](https://maven.apache.org/). It needs Java >= {{ java_version }}.
-Source code is available on [GitHub ](https://github.com/dadoonet/fscrawler/).
-Thanks to [JetBrains ](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
+This project is built with [Maven](https://maven.apache.org/). It needs Java >= {{ java_version }}.
+Source code is available on [GitHub](https://github.com/dadoonet/fscrawler/).
+Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
 
 [![Jet Brains](../jetbrains.png)](https://www.jetbrains.com/?from=FSCrawler)
 
@@ -41,7 +41,7 @@ The final artifacts are available in `distribution/target`.
 ## Integration tests
 
 When running from the command line with `mvn` integration tests are ran against a real
-Elasticsearch instance launched using Docker (via [Testcontainers ](https://java.testcontainers.org/modules/elasticsearch/)).
+Elasticsearch instance launched using Docker (via [Testcontainers](https://java.testcontainers.org/modules/elasticsearch/)).
 
 ### Run tests from your IDE
 
@@ -53,8 +53,8 @@ But you can specify the Maven profile to use and rebuild the project.
 
 ### Faster integration tests
 
-As we are using [Testcontainers ](https://java.testcontainers.org/modules/elasticsearch/),
-we can [reuse ](https://java.testcontainers.org/features/reuse/) the Elasticsearch container instead of having to restart
+As we are using [Testcontainers](https://java.testcontainers.org/modules/elasticsearch/),
+we can [reuse](https://java.testcontainers.org/features/reuse/) the Elasticsearch container instead of having to restart
 one everytime.
 
 ```{note} 
@@ -137,7 +137,7 @@ mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=
 ````{hint}
 
  To run tests against another instance (ie. running on
- [Elasticsearch service by Elastic ](https://www.elastic.co/cloud/elasticsearch-service),
+ [Elasticsearch service by Elastic](https://www.elastic.co/cloud/elasticsearch-service),
  you can also use `tests.cluster.url` to set where elasticsearch is running::
 
  ```shell
@@ -162,7 +162,7 @@ When set to `0` (default value), the port is assigned randomly.
 
 ### Randomized testing
 
-FS Crawler uses the [randomized testing framework ](https://github.com/randomizedtesting/randomizedtesting-jupiter).
+FS Crawler uses the [randomized testing framework](https://github.com/randomizedtesting/randomizedtesting-jupiter).
 In case of failure, it will print a line like:
 
 ```none
@@ -208,7 +208,7 @@ mvn verify -Pnightly
 
 ## Code formatting (Spotless)
 
-The project uses [Spotless ](https://github.com/diffplug/spotless) to enforce consistent code formatting
+The project uses [Spotless](https://github.com/diffplug/spotless) to enforce consistent code formatting
 (Java via Palantir Java Format, POM sorting, JSON and YAML formatting).
 
 To check that the code you changed since `origin/master` is correctly formatted, run:
@@ -242,13 +242,13 @@ mvn spotless:install-git-pre-push-hook
 
 ## Check for vulnerabilities (CVE)
 
-The project is using [OSS Sonatype service ](https://ossindex.sonatype.org/) to check for known
+The project is using [OSS Sonatype service](https://ossindex.sonatype.org/) to check for known
 vulnerabilities. This is run during the `verify` phase.
 
 Sonatype provides this service but with a anonymous account, you might be limited
 by the number of tests you can run during a given period.
 
-You can bypass this limit by creating a [Personal Access Token (PAT) ](https://guide.sonatype.com/settings/tokens)
+You can bypass this limit by creating a [Personal Access Token (PAT)](https://guide.sonatype.com/settings/tokens)
 and then set the `sonatype.username` and `sonatype.password` properties:
 
 ```shell
@@ -292,7 +292,7 @@ mvn package -Ddocker.skip
 
 ## DockerHub publication
 
-To publish the latest build to [DockerHub ](https://hub.docker.com/r/dadoonet/fscrawler/) you can manually
+To publish the latest build to [DockerHub](https://hub.docker.com/r/dadoonet/fscrawler/) you can manually
 call `docker:push` maven task and provide credentials `docker.push.username` and `docker.push.password`:
 
 ```shell

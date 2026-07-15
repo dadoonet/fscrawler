@@ -2,7 +2,7 @@
 # OTel Tracing / EDOT Collector
 
 FSCrawler ships with built-in distributed tracing support via the
-[Elastic OpenTelemetry Java agent ](https://github.com/elastic/elastic-otel-java).
+[Elastic OpenTelemetry Java agent](https://github.com/elastic/elastic-otel-java).
 When the agent is present in the `external/` directory, FSCrawler automatically
 loads it on startup and exports traces to any OpenTelemetry-compatible backend
 (EDOT Collector, Jaeger, Zipkin, …).

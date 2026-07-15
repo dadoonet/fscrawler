@@ -47,7 +47,7 @@ By default, OCR is activated if tesseract can be found on your system.
 ## OCR Language
 
 If you are using the default Docker image (see {ref}`docker`) or if you have installed any of the
-[Tesseract Languages ](https://tesseract-ocr.github.io/tessdoc/Data-Files.html),
+[Tesseract Languages](https://tesseract-ocr.github.io/tessdoc/Data-Files.html),
 you can use them when parsing your documents by setting `fs.ocr.language` property in your
 `~/.fscrawler/test/_settings.yaml` file:
 
@@ -143,7 +143,7 @@ fs:
 
 Supported strategies are:
 
-* `auto`: No OCR is performed on PDF documents if there is more than 10 characters extracted. See [PDFParser OCR Options ](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=109454066).
+* `auto`: No OCR is performed on PDF documents if there is more than 10 characters extracted. See [PDFParser OCR Options](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=109454066).
 
 * `no_ocr`: No OCR is performed on PDF documents. OCR might be performed on images though if OCR is not disabled. See [Disable/Enable OCR](#disableenable-ocr).
 

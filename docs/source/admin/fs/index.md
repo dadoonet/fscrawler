@@ -44,7 +44,7 @@ In the previous example, both `${HOME}` and `${ES_API_KEY}` are mandatory but `$
 be set to `https://127.0.0.1:9200` if not set.
 
 FSCrawler is using the gestalt-config project to handle placeholders. You can read more about String substitution in the
-[gestalt-config documentation ](https://github.com/gestalt-config/gestalt#string-substitution).
+[gestalt-config documentation](https://github.com/gestalt-config/gestalt#string-substitution).
 
 ## Default placeholders
 

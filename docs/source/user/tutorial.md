@@ -12,8 +12,8 @@ using Kibana. For example location worked or the previous company, etc.
 
 ## Install Elastic stack
 
-* Download [Elasticsearch ](https://www.elastic.co/downloads/elasticsearch)
-* Download [Kibana ](https://www.elastic.co/downloads/kibana)
+* Download [Elasticsearch](https://www.elastic.co/downloads/elasticsearch)
+* Download [Kibana](https://www.elastic.co/downloads/kibana)
 * Start Elasticsearch server
 * Start Kibana server
 * Check that Kibana is running by opening <https://localhost:5601>
@@ -116,8 +116,8 @@ by Kibana.
  version of Kibana.
 ```
 
-* Open [Kibana ](https://localhost:5601)
-* Go to the [Discover ](https://localhost:5601/app/discover#/) page
+* Open [Kibana](https://localhost:5601)
+* Go to the [Discover](https://localhost:5601/app/discover#/) page
 * Depending on the date you selected in the [Create Index pattern](#create-index-pattern) step, you should see something similar to the
   following image. If you don't see it, you probably have to adjust the time picker to make sure you are looking
   at the right period of time.

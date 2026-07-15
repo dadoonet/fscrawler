@@ -29,7 +29,7 @@ Here is a list of Elasticsearch settings (under `elasticsearch.` prefix):
 
 ## Index settings
 
-## Index settings for documents
+### Index settings for documents
 
 By default, FSCrawler will index your data in an index which name is
 the same as the crawler name (`name` property) plus `_docs` suffix, like
@@ -41,7 +41,7 @@ elasticsearch:
   index: "docs"
 ```
 
-## Index settings for folders
+### Index settings for folders
 
 FSCrawler will also index folders in an index which name is the same as
 the crawler name (`name` property) plus `_folder` suffix, like
@@ -55,12 +55,12 @@ the crawler name (`name` property) plus `_folder` suffix, like
     index_folder: "folders"
 
 (mappings)=
-## Mappings
+### Mappings
 
 ```{versionadded} 2.10
 ```
 
-FSCrawler defines the following [Component Templates ](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html)
+FSCrawler defines the following [Component Templates](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html)
 to define the index settings and mappings (replace `INDEX` with the index name):
 
 - `fscrawler_INDEX_alias`: defines the alias which name is the same as the crawler name (`name` property) so you can search using this alias.
@@ -68,7 +68,7 @@ to define the index settings and mappings (replace `INDEX` with the index name):
 - `fscrawler_INDEX_mapping_attributes`: defines the mapping for the `attributes` field.
 - `fscrawler_INDEX_mapping_file`: defines the mapping for the `file` field.
 - `fscrawler_INDEX_mapping_path`: defines an define an analyzer named `fscrawler_path` which uses a
-  [path hierarchy tokenizer ](https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html)
+  [path hierarchy tokenizer](https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pathhierarchy-tokenizer.html)
   and the mapping for the `path` field.
 
 - `fscrawler_INDEX_mapping_attachment`: defines the mapping for the `attachment` field.
@@ -112,95 +112,9 @@ elasticsearch:
 ```
 
 If you want to know what are the component templates and index templates
-that will be created, you can get them from [the source ](https://github.com/dadoonet/fscrawler/blob/master/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/9).
+that will be created, you can get them from [the source](https://github.com/dadoonet/fscrawler/blob/master/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/9).
 
-### Creating your own mapping (analyzers)
-
-If you want to define your own index settings and mapping to set
-analyzers for example, you can create the needed component template
-**before starting FSCrawler**.
-
-FSCrawler will detect that the component template already exists and will not override it.
-It will only create the missing component templates and the index template.
-
-For example, you can define in advance your own component template `fscrawler_fscrawler_mapping_content`:
-
-```console
- PUT _component_template/fscrawler_fscrawler_mapping_content
- {
-   "template": {
-     "mappings": {
-       "properties": {
-         "content": {
-           "type": "text",
-           "analyzer": "french"
-         }
-       }
-     }
-   }
- }
-```
-
-Then start FSCrawler. It will create all the component templates but `fscrawler_fscrawler_mapping_content`
-(which you already defined) and create the index template.
-
-```{note}
-
- If someone wants to force pushing all the templates again (for example after an upgrade),
- they can use `force_push_templates: true`. In the above example, the custom
- `fscrawler_fscrawler_mapping_content` component template would be overridden.
-```
-
-The following example uses a `french` analyzer to index the
-`content` field and still allow using semantic search.
-
-```console
- PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
- {
-   "template": {
-     "mappings": {
-       "properties": {
-         "content": {
-           "type": "text",
-           "analyzer": "french",
-           "copy_to": "content_semantic"
-         },
-         "content_semantic": {
-           "type": "semantic_text"
-         }
-       }
-     }
-   }
- }
-```
-
-The following example uses a `french` analyzer to index the
-`content` field.
-
-```console
- PUT _component_template/fscrawler_fscrawler_mapping_content
- {
-   "template": {
-     "mappings": {
-       "properties": {
-         "content": {
-           "type": "text",
-           "analyzer": "french"
-         }
-       }
-     }
-   }
- }
-```
-
-```{tip}
-
- You can launch FSCrawler with `--loop 0` to see what component templates and index templates
- would be created without indexing any document. Then you can create your own custom component
- templates and restart FSCrawler. Your custom templates will be preserved.
-```
-
-#### Replace existing mapping
+##### Replace existing mapping
 
 Unfortunately you can not change the mapping on existing data.
 Therefore, you’ll need first to remove existing index, which means
@@ -217,7 +131,7 @@ though.
 ```{versionadded} 2.10
 ```
 
-FSCrawler can use [semantic search ](https://www.elastic.co/guide/en/elasticsearch/reference/current/semantic-search.html)
+FSCrawler can use [semantic search](https://www.elastic.co/guide/en/elasticsearch/reference/current/semantic-search.html)
 to improve the search results.
 
 ```{note}
@@ -235,12 +149,12 @@ elasticsearch:
 ```
 
 When activated, the `content` field is indexed as usual but a new field named `content_semantic`
-is created and uses the [semantic_text ](https://www.elastic.co/guide/en/elasticsearch/reference/current/semantic-text.html)
+is created and uses the [semantic_text](https://www.elastic.co/guide/en/elasticsearch/reference/current/semantic-text.html)
 field type. This field type is used to store the semantic information extracted from the content by using the defined
-inference API (defaults to [Elser model ](https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-elser.html)).
+inference API (defaults to [Elser model](https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-elser.html)).
 
 You can change the model to use by changing the component template. For example, a recommended model when you have only
-english content is the Elastic [multilingual-e5-small ](https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-multilingual-e5-small.html):
+english content is the Elastic [multilingual-e5-small](https://www.elastic.co/guide/en/machine-learning/current/ml-nlp-multilingual-e5-small.html):
 
 ```console
  PUT _component_template/fscrawler_fscrawler_mapping_content_semantic
@@ -262,7 +176,7 @@ english content is the Elastic [multilingual-e5-small ](https://www.elastic.co/g
  }
 ```
 
-### Bulk settings
+## Bulk settings
 
 FSCrawler is using bulks to send data to elasticsearch. By default the
 bulk is executed every 100 operations or every 5 seconds or every 10 megabytes. You can change
@@ -280,7 +194,7 @@ default settings using `bulk_size`, `byte_size` and `flush_interval`:
 ```{tip}
 
  Elasticsearch has a default limit of `100mb` per HTTP request as per
- [elasticsearch HTTP Module ](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-http.html)
+ [elasticsearch HTTP Module](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-http.html)
  documentation.
 
  Which means that if you are indexing a massive bulk of documents, you
@@ -295,7 +209,7 @@ default settings using `bulk_size`, `byte_size` and `flush_interval`:
 ```
 
 (ingest_node)=
-### Using Ingest Node Pipeline
+## Using Ingest Node Pipeline
 
 If you are using an elasticsearch cluster running a 5.0 or superior
 version, you can use an Ingest Node pipeline to transform documents sent
@@ -314,7 +228,7 @@ PUT _ingest/pipeline/fscrawler
         "value": "bar"
       }
     }
-  ]
+ ]
 }
 ```
 
@@ -331,7 +245,7 @@ elasticsearch:
  internal objects.
 ```
 
-### Node settings
+## Node settings
 
 FSCrawler is using elasticsearch REST layer to send data to your
 running cluster. By default, it connects to `https://127.0.0.1:9200`
@@ -341,9 +255,9 @@ For more information, read  {ref}`ssl`.
 
 FSCrawler supports all kind of Elasticsearch deployments:
 
-- [Self managed deployments ](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html)
-- [Hosted deployments ](https://ela.st/dedicated-deployment-usage-info)
-- [Serverless projects ](https://ela.st/serverless-learn-more)
+- [Self managed deployments](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html)
+- [Hosted deployments](https://ela.st/dedicated-deployment-usage-info)
+- [Serverless projects](https://ela.st/serverless-learn-more)
 
 Of course, in production, you would probably change this and connect to
 a production cluster:
@@ -368,19 +282,19 @@ elasticsearch:
 
 ```{note}
 
- If you are using [Elastic Cloud ](https://www.elastic.co/cloud), you can just use the `Elasticsearch Endpoint`.
+ If you are using [Elastic Cloud](https://www.elastic.co/cloud), you can just use the `Elasticsearch Endpoint`.
 ```
 
-```{note}
+````{note}
 
- If you are using [Start Local ](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html):
+ If you are using [Start Local](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html):
 
- .. code:: sh
-
-    curl -fsSL https://elastic.co/start-local | sh
+ ````bash
+ curl -fsSL https://elastic.co/start-local | sh
+ ```
 
  The url to use is `http://localhost:9200` and the API key to use is available in the `.env` generated file.
-```
+````
 
 ### Path prefix
 
@@ -406,8 +320,8 @@ elasticsearch:
 If you have a secured cluster, you can use several methods to connect
 to it:
 
-- [API Key ](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html)
-- [Basic Authentication ](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-authenticate.html) (not recommended / deprecated)
+- [API Key](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html)
+- [Basic Authentication](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-authenticate.html) (not recommended / deprecated)
 
 ## API Key
 
@@ -456,7 +370,7 @@ elasticsearch:
   password: "changeme"
 ```
 
-```{warning}
+````{warning}
  Be aware that the elasticsearch password is stored in plain text in your job setting file.
 
  A better practice is to only set the username or pass it with
@@ -464,10 +378,10 @@ elasticsearch:
 
  If the password is not defined, you will be prompted when starting the job:
 
- ::
-
-    22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
-```
+ ```none
+ 22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
+ ```
+````
 
 ## User permissions
 

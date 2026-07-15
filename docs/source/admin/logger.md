@@ -33,7 +33,7 @@ Two log files are generated:
   rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 days.
 
 You can change this strategy by modifying the `config/log4j2.xml` file.
-Please read [Log4J2 documentation ](https://logging.apache.org/log4j/2.x/manual/index.html) on how to configure Log4J.
+Please read [Log4J2 documentation](https://logging.apache.org/log4j/2.x/manual/index.html) on how to configure Log4J.
 
 ```{note}
 

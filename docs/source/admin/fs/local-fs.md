@@ -562,7 +562,7 @@ Where a MP3 file would generate:
  raw metadata which can make you hit the total number of field limit in elasticsearch
  mappings. In which case you will need to change the index settings `foo`.
 
- See [elasticsearch documentation ](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html#mapping-limit-settings)
+ See [elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html#mapping-limit-settings)
 ```
 
 ### Disabling file size field
