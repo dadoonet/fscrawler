@@ -875,18 +875,22 @@ verify_publications() {
 		return
 	fi
 
+	info "Artifacts may already be published (Maven Central autoPublish / Docker Hub)."
+	info "These prompts only decide whether to continue with the git merge and push."
+	info "Answering no does not retract anything already published."
+
 	info "Check Maven Central deployment status"
 	open_url "${CENTRAL_DEPLOYMENTS_URL}"
-	confirm "Is the Maven Central deployment OK?" y || RELEASE_APPROVED=false
+	confirm "Maven Central looks OK — continue with git finalize?" y || RELEASE_APPROVED=false
 
 	if [[ "${RELEASE_APPROVED}" != true ]]; then
-		warn "Maven Central deployment rejected."
+		warn "Git finalize cancelled after Maven Central check."
 		return
 	fi
 
 	info "Check Docker Hub tags"
 	open_url "${DOCKERHUB_TAGS_URL}"
-	confirm "Are the Docker images OK?" y || RELEASE_APPROVED=false
+	confirm "Docker Hub looks OK — continue with git finalize?" y || RELEASE_APPROVED=false
 }
 
 finalize_local_release() {
@@ -935,19 +939,21 @@ finalize_skipped_deploy() {
 }
 
 finalize_failed_verification() {
-	warn "Publication verification was not confirmed — artifacts may already be on Maven Central or Docker Hub."
-	warn "Not rolling back: deleting the local branch/tag would not undo a remote publish."
+	warn "Git finalize cancelled — published artifacts are NOT retracted."
+	warn "Maven Central release versions are immutable: the same version cannot be overwritten."
+	warn "If the Central artifacts are wrong, cut a new version (for example a patch release)."
+	info "Docker Hub tags can usually be overwritten by deploying again with the same tag."
 	save_release_state "verification_failed"
 	disable_release_tracking
 
 	info "Release branch: ${RELEASE_BRANCH}"
 	info "Release tag:    ${RELEASE_TAG}"
 	info "Next SNAPSHOT commit is on ${RELEASE_BRANCH}."
-	info "Inspect the publications, then continue manually when ready:"
+	info "If the publications are actually fine, continue manually:"
 	info "  git checkout ${ORIGINAL_BRANCH}"
 	info "  git merge ${RELEASE_BRANCH}"
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
-	info "To discard local branch/tag only (remote artifacts are unaffected):"
+	info "To discard local branch/tag only (remote artifacts stay published):"
 	info "  ${SCRIPT_NAME} --rollback"
 }
 

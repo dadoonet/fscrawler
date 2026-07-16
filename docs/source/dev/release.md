@@ -148,6 +148,11 @@ After deployment, check the publishing status on
 The `central-publishing-maven-plugin` is configured with `autoPublish` enabled, so artifacts
 are published automatically once validation succeeds.
 
+Maven Central **release** coordinates are immutable: answering “no” during the post-deploy
+checks only skips the git merge/push; it does not remove or replace what was published.
+If a release build on Central is wrong, publish a **new** version (for example a patch).
+Docker Hub tags can usually be overwritten by deploying the same tag again.
+
 ## Release Drafter
 
 The repository uses [Release Drafter](https://github.com/release-drafter/release-drafter) to
