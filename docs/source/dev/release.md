@@ -74,6 +74,12 @@ The final notes combine:
   heading levels demoted by one so they nest under the header)
 * GitHub-generated changelist (`## What's Changed`) from `gh api .../releases/generate-notes`
 
+The early preview during `release.sh` may show an incomplete GitHub section, because
+`generate-notes` runs before the tag is pushed and then resolves against the remote default
+branch. After a successful `git push` of the release tag, `release.sh` regenerates
+`release/{version}/release-notes.md` so the GitHub release and announcement email use the
+correct commit range.
+
 `release.sh` always runs the full workflow. Working files for a given version are written under
 `release/{version}/` (for example `release/3.0/release-notes.md` and `release/3.0/release.log`)
 so you can open and edit them in the IDE before sending the announcement.

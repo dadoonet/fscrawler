@@ -809,6 +809,8 @@ review_announcement() {
 		info "Release notes preview:"
 		cat "${RELEASE_NOTES_FILE}"
 		echo
+		info "Note: the GitHub \"What's Changed\" section is based on the remote default branch"
+		info "until the tag is pushed; it is regenerated after a successful push."
 	fi
 	confirm "Are the release notes OK?" y || die "Release aborted — fix docs/source/release/${RELEASE_VERSION}.md and retry."
 }
@@ -921,6 +923,7 @@ finalize_awaiting_push() {
 	info "Release tag: ${RELEASE_TAG}"
 	info "When ready to publish:"
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
+	info "  python3 scripts/prepare-release-notes.py --version ${RELEASE_VERSION} --since-tag ${PREVIOUS_TAG}"
 	info "Then create the GitHub release and send the announcement manually."
 	info "To undo the local merge and clear release state:"
 	info "  ${SCRIPT_NAME} --rollback"
@@ -976,6 +979,9 @@ finalize_release() {
 	fi
 
 	git_run push origin "${ORIGINAL_BRANCH}" "${RELEASE_TAG}"
+	# Tag now exists on GitHub — regenerate notes so generate-notes uses the pushed tag range.
+	log "Regenerating release notes against the pushed tag"
+	generate_announcement
 	create_github_release
 	maybe_send_announcement
 	disable_release_tracking
