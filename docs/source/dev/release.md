@@ -33,7 +33,7 @@ $ cp .env.example .env
 $ ./release.sh --local --skip-tests
 ```
 
-If the release fails or you want to discard the local rehearsal:
+If the release fails, or you want to discard the local rehearsal:
 
 ```
 $ ./release.sh --rollback
@@ -97,16 +97,16 @@ Prerequisites:
 
 See `.env.example` at the repository root:
 
-| Variable | Purpose |
-| --- | --- |
-| GITHUB_REPO | GitHub repository (`dadoonet/fscrawler`) |
-| SMTP_HOST | SMTP server hostname |
-| SMTP_PORT | SMTP port (465 for SSL) |
-| SMTP_USER | SMTP username |
-| SMTP_PASS | Mailbox password (quote special chars: `SMTP_PASS='...'`) |
-| SMTP_SECURITY | Optional: `ssl` (port 465) or `starttls` (port 587) |
-| ANNOUNCE_FROM | Sender address (must match `SMTP_USER` for Ionos) |
-| ANNOUNCE_TO | Recipient (personal address for local, Elastic list for production) |
+| Variable      | Purpose                                                             |
+|---------------|---------------------------------------------------------------------|
+| GITHUB_REPO   | GitHub repository (`dadoonet/fscrawler`)                            |
+| SMTP_HOST     | SMTP server hostname                                                |
+| SMTP_PORT     | SMTP port (465 for SSL)                                             |
+| SMTP_USER     | SMTP username                                                       |
+| SMTP_PASS     | Mailbox password (quote special chars: `SMTP_PASS='...'`)           |
+| SMTP_SECURITY | Optional: `ssl` (port 465) or `starttls` (port 587)                 |
+| ANNOUNCE_FROM | Sender address (must match `SMTP_USER` for Ionos)                   |
+| ANNOUNCE_TO   | Recipient (personal address for local, Elastic list for production) |
 
 After deployment, check the publishing status on
 [Central Portal](https://central.sonatype.com/publishing/deployments).
