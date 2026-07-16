@@ -88,10 +88,6 @@ public class TikaDocParser {
      */
     private static final long IN_MEMORY_THRESHOLD = 64L * 1024; // 64KB
 
-    private static MessageDigest findMessageDigest(FsSettings fsSettings) {
-        return Digests.getOrNull(fsSettings.getFs().getChecksum());
-    }
-
     /**
      * Parses one document and fills the given {@link Doc} (content, metadata, checksum, attachment) according to this
      * job's settings.
@@ -138,7 +134,7 @@ public class TikaDocParser {
             // We also use a temp file when storeSource is enabled, so we can read the file twice
             // (once for Tika, once for storing as attachment).
             // For small files (below IN_MEMORY_THRESHOLD), we keep everything in memory to avoid disk I/O.
-            MessageDigest messageDigest = findMessageDigest(fsSettings);
+            MessageDigest messageDigest = Digests.getOrNull(fsSettings.getFs().getChecksum());
             boolean needsBuffering = messageDigest != null || fsSettings.getFs().isStoreSource();
             // Use in-memory only when we KNOW the file is small (filesize > 0 and <= threshold)
             // When filesize is unknown (-1 or 0), use temp file to be safe and avoid OOM
