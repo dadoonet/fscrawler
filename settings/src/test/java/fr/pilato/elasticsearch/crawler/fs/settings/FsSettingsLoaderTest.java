@@ -151,6 +151,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         expected.getFs().setIndexedChars(new Percentage(10000.0));
         expected.getFs().setRawMetadata(true);
         expected.getFs().setChecksum("MD5");
+        expected.getFs().setHashAlgorithm("MD5");
         expected.getFs().setIndexFolders(false);
         expected.getFs().setTikaConfigPath("/path/to/tika-config.xml");
         Ocr ocr = new Ocr();
@@ -225,6 +226,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         fs.setIndexContent(true);
         fs.setAddFilesize(true);
         fs.setIndexFolders(true);
+        fs.setHashAlgorithm("MD5");
 
         Ocr ocr = new Ocr();
         ocr.setEnabled(true);
