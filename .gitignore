@@ -23,3 +23,5 @@ CLAUDE.local.md
 .claude/settings.local.json
 .env
 /release/
+__pycache__/
+*.py[cod]
