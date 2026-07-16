@@ -29,6 +29,7 @@ RELEASE_TRACKING=false
 FAILURE_HANDLED=false
 
 ORIGINAL_BRANCH=""
+ORIGINAL_HEAD=""
 RELEASE_VERSION=""
 NEXT_VERSION=""
 RELEASE_BRANCH=""
@@ -345,6 +346,7 @@ save_release_state() {
 
 	cat >"${RELEASE_STATE_FILE}" <<EOF
 ORIGINAL_BRANCH=${ORIGINAL_BRANCH}
+ORIGINAL_HEAD=${ORIGINAL_HEAD:-}
 RELEASE_BRANCH=${RELEASE_BRANCH}
 RELEASE_TAG=${RELEASE_TAG}
 RELEASE_VERSION=${RELEASE_VERSION}
@@ -385,6 +387,11 @@ rollback_from_state_file() {
 	if [[ "${current_branch}" != "${ORIGINAL_BRANCH}" ]]; then
 		log "Checking out ${ORIGINAL_BRANCH}"
 		git -C "${ROOT_DIR}" checkout -q "${ORIGINAL_BRANCH}"
+	fi
+
+	if [[ "${STATUS:-}" == "awaiting_push" && -n "${ORIGINAL_HEAD:-}" ]]; then
+		log "Resetting ${ORIGINAL_BRANCH} to pre-merge commit ${ORIGINAL_HEAD}"
+		git -C "${ROOT_DIR}" reset --hard "${ORIGINAL_HEAD}"
 	fi
 
 	if git_branch_exists "${RELEASE_BRANCH}"; then
@@ -912,7 +919,7 @@ finalize_awaiting_push() {
 	info "When ready to publish:"
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
 	info "Then create the GitHub release and send the announcement manually."
-	info "To clear release state after pushing (or to abandon):"
+	info "To undo the local merge and clear release state:"
 	info "  ${SCRIPT_NAME} --rollback"
 }
 
@@ -944,6 +951,9 @@ finalize_release() {
 	fi
 
 	log "Merging ${RELEASE_BRANCH} into ${ORIGINAL_BRANCH}"
+	if ! is_dry_run; then
+		ORIGINAL_HEAD="$(git -C "${ROOT_DIR}" rev-parse HEAD)"
+	fi
 	git_run merge -q "${RELEASE_BRANCH}"
 	git_run branch -q -d "${RELEASE_BRANCH}"
 
