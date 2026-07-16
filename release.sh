@@ -579,7 +579,7 @@ build_release() {
 
 deploy_release() {
 	log "Deploying artifacts to Maven Central"
-	mvn_run deploy -DskipTests -Prelease
+	mvn_run deploy -DskipTests -Prelease "${MAVEN_EXTRA_ARGS[@]}"
 }
 
 generate_announcement() {
