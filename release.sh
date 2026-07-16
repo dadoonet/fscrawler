@@ -898,6 +898,20 @@ finalize_failed_verification() {
 	info "  ${SCRIPT_NAME} --rollback"
 }
 
+finalize_awaiting_push() {
+	info "Release merged locally — push was skipped."
+	save_release_state "awaiting_push"
+	disable_release_tracking
+
+	info "Branch: ${ORIGINAL_BRANCH}"
+	info "Release tag: ${RELEASE_TAG}"
+	info "When ready to publish:"
+	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
+	info "Then create the GitHub release and send the announcement manually."
+	info "To clear release state after pushing (or to abandon):"
+	info "  ${SCRIPT_NAME} --rollback"
+}
+
 finalize_release() {
 	git_run checkout -q "${ORIGINAL_BRANCH}"
 
@@ -935,8 +949,7 @@ finalize_release() {
 	fi
 
 	if ! confirm "Push ${ORIGINAL_BRANCH} and tag ${RELEASE_TAG} to origin?" n; then
-		info "Not pushed. When ready:"
-		info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
+		finalize_awaiting_push
 		return
 	fi
 
