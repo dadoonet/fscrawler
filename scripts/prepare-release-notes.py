@@ -132,7 +132,7 @@ def assemble(
 
     gh_notes = gh_generate_notes(github_repo, tag_name, since_tag)
     if gh_notes:
-        parts.extend(["", "## Merged pull requests", "", gh_notes])
+        parts.extend(["", gh_notes])
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(parts).strip() + "\n", encoding="utf-8")
