@@ -74,8 +74,32 @@ The final notes combine:
   heading levels demoted by one so they nest under the header)
 * GitHub-generated changelist (`## What's Changed`) from `gh api .../releases/generate-notes`
 
-To update notes after a GitHub release was already published, edit the Markdown file and run
-`gh release edit fscrawler-{version} --notes-file /tmp/fscrawler-{version}-release-notes.md`.
+`release.sh` always runs the full workflow. To regenerate notes or resend the announcement
+without starting another release, call the helper scripts directly.
+
+Regenerate the assembled notes (requires `gh` authenticated and `GITHUB_REPO` in `.env`):
+
+```
+$ python3 scripts/prepare-release-notes.py \
+    --version 3.0 \
+    --since-tag fscrawler-2.9 \
+    --output /tmp/fscrawler-3.0-release-notes.md
+```
+
+Send (or resend) the announcement email from an existing notes file:
+
+```
+$ python3 scripts/send-announcement.py \
+    /tmp/fscrawler-3.0-release-notes.md \
+    --subject "FSCrawler 3.0 released"
+```
+
+To update notes after a GitHub release was already published, edit the Markdown file, regenerate
+with `prepare-release-notes.py`, then run:
+
+```
+$ gh release edit fscrawler-{version} --notes-file /tmp/fscrawler-{version}-release-notes.md
+```
 
 ## Before releasing
 
