@@ -954,6 +954,11 @@ finalize_release() {
 	git_run merge -q "${RELEASE_BRANCH}"
 	git_run branch -q -d "${RELEASE_BRANCH}"
 
+	# Persist pre-merge HEAD before push so --rollback can undo the merge if push fails.
+	if ! is_dry_run; then
+		save_release_state "awaiting_push"
+	fi
+
 	if is_dry_run; then
 		info "[dry-run] Skipping push and announcement."
 		return
