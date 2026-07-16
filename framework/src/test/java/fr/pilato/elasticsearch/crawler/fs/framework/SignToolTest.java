@@ -28,8 +28,15 @@ import org.junit.jupiter.api.Test;
 class SignToolTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    void sign() throws NoSuchAlgorithmException {
-        String signature = SignTool.sign("ABCD");
-        Assertions.assertThat(signature).isEqualTo("cb8ca4a7bb5f9683c19133a84872ca7");
+    void signMd5LegacyCompat() throws NoSuchAlgorithmException {
+        Assertions.assertThat(SignTool.sign(SignTool.LEGACY_MD5_ALGORITHM, "ABCD"))
+                .isEqualTo("cb8ca4a7bb5f9683c19133a84872ca7");
+    }
+
+    @Test
+    void signSha256Utf8StandardHex() throws NoSuchAlgorithmException {
+        Assertions.assertThat(SignTool.sign("SHA-256", "ABCD"))
+                .isEqualTo("e12e115acf4552b2568b55e93cbd39394c4ef81c82447fafc997882a02d23677")
+                .hasSize(64);
     }
 }

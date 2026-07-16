@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
+import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
 import java.util.List;
@@ -98,6 +99,9 @@ public class Fs {
     @Config
     @Nullable
     private String checksum;
+
+    @Config(defaultVal = SignTool.LEGACY_MD5_ALGORITHM)
+    private String hashAlgorithm;
 
     @Config(defaultVal = "true")
     private boolean indexFolders;
@@ -257,6 +261,14 @@ public class Fs {
         this.checksum = checksum;
     }
 
+    public String getHashAlgorithm() {
+        return hashAlgorithm;
+    }
+
+    public void setHashAlgorithm(String hashAlgorithm) {
+        this.hashAlgorithm = hashAlgorithm;
+    }
+
     public boolean isXmlSupport() {
         return xmlSupport;
     }
@@ -387,6 +399,7 @@ public class Fs {
                 && Objects.equals(filters, fs.filters)
                 && Objects.equals(indexedChars, fs.indexedChars)
                 && Objects.equals(checksum, fs.checksum)
+                && Objects.equals(hashAlgorithm, fs.hashAlgorithm)
                 && Objects.equals(ocr, fs.ocr)
                 && Objects.equals(ignoreAbove, fs.ignoreAbove)
                 && Objects.equals(tikaConfigPath, fs.tikaConfigPath)
@@ -415,6 +428,7 @@ public class Fs {
                 rawMetadata,
                 xmlSupport,
                 checksum,
+                hashAlgorithm,
                 indexFolders,
                 langDetect,
                 continueOnError,
@@ -445,7 +459,8 @@ public class Fs {
                 + aclSupport + ", rawMetadata="
                 + rawMetadata + ", xmlSupport="
                 + xmlSupport + ", checksum='"
-                + checksum + '\'' + ", indexFolders="
+                + checksum + '\'' + ", hashAlgorithm='"
+                + hashAlgorithm + '\'' + ", indexFolders="
                 + indexFolders + ", langDetect="
                 + langDetect + ", continueOnError="
                 + continueOnError + ", ocr="

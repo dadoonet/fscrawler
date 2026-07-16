@@ -20,10 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.Digests;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerValidator {
@@ -71,16 +70,21 @@ public class FsCrawlerValidator {
         }
 
         // Checking Checksum Algorithm
-        if (settings.getFs().getChecksum() != null) {
-            try {
-                MessageDigest.getInstance(settings.getFs().getChecksum());
-            } catch (NoSuchAlgorithmException e) {
-                // Non supported protocol
-                logger.error(
-                        "Algorithm [{}] not found. Disabling crawler",
-                        settings.getFs().getChecksum());
-                return true;
-            }
+        if (settings.getFs().getChecksum() != null
+                && !Digests.isSupported(settings.getFs().getChecksum())) {
+            logger.error(
+                    "Algorithm [{}] not found. Disabling crawler",
+                    settings.getFs().getChecksum());
+            return true;
+        }
+
+        // Checking document _id hash algorithm
+        if (settings.getFs().getHashAlgorithm() != null
+                && !Digests.isSupported(settings.getFs().getHashAlgorithm())) {
+            logger.error(
+                    "Hash algorithm [{}] not found. Disabling crawler",
+                    settings.getFs().getHashAlgorithm());
+            return true;
         }
 
         // Checking That we don't try to do both xml and json

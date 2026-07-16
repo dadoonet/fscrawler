@@ -189,6 +189,12 @@ class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
         Path jobDir = metadataDir.resolve(jobName);
         Assertions.assertThat(jobDir).exists();
         Assertions.assertThat(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML)).exists();
+
+        FsSettings settings = new FsSettingsLoader(metadataDir).read(jobName);
+        Assertions.assertThat(settings.getFs().getHashAlgorithm()).isEqualTo("SHA-256");
+        Assertions.assertThat(Files.readString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML)))
+                .contains("hash_algorithm: \"SHA-256\"")
+                .containsPattern("(?m)^fs:\\s*$");
     }
 
     @Test

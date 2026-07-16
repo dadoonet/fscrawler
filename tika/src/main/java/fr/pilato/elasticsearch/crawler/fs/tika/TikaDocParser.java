@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.Digests;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -87,18 +88,6 @@ public class TikaDocParser {
      */
     private static final long IN_MEMORY_THRESHOLD = 64L * 1024; // 64KB
 
-    private static MessageDigest findMessageDigest(FsSettings fsSettings) {
-        if (fsSettings.getFs().getChecksum() != null) {
-            try {
-                return MessageDigest.getInstance(fsSettings.getFs().getChecksum());
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("This should never happen as we checked that previously");
-            }
-        } else {
-            return null;
-        }
-    }
-
     /**
      * Parses one document and fills the given {@link Doc} (content, metadata, checksum, attachment) according to this
      * job's settings.
@@ -145,7 +134,7 @@ public class TikaDocParser {
             // We also use a temp file when storeSource is enabled, so we can read the file twice
             // (once for Tika, once for storing as attachment).
             // For small files (below IN_MEMORY_THRESHOLD), we keep everything in memory to avoid disk I/O.
-            MessageDigest messageDigest = findMessageDigest(fsSettings);
+            MessageDigest messageDigest = Digests.getOrNull(fsSettings.getFs().getChecksum());
             boolean needsBuffering = messageDigest != null || fsSettings.getFs().isStoreSource();
             // Use in-memory only when we KNOW the file is small (filesize > 0 and <= threshold)
             // When filesize is unknown (-1 or 0), use temp file to be safe and avoid OOM
@@ -225,7 +214,9 @@ public class TikaDocParser {
                             FSCrawlerLogger.documentError(
                                     fsSettings.getFs().isFilenameAsId()
                                             ? doc.getFile().getFilename()
-                                            : SignTool.sign(doc.getPath().getReal()),
+                                            : SignTool.sign(
+                                                    fsSettings.getFs().getHashAlgorithm(),
+                                                    doc.getPath().getReal()),
                                     FsCrawlerUtil.computeVirtualPathName(
                                             fsSettings.getFs().getUrl(),
                                             doc.getPath().getReal()),
@@ -260,14 +251,7 @@ public class TikaDocParser {
                     }
 
                     if (messageDigest != null) {
-                        byte[] digest = messageDigest.digest();
-                        StringBuilder result = new StringBuilder();
-                        // Convert to Hexa
-                        for (byte aDigest : digest) {
-                            result.append(Integer.toString((aDigest & 0xff) + 0x100, 16)
-                                    .substring(1));
-                        }
-                        doc.getFile().setChecksum(result.toString());
+                        doc.getFile().setChecksum(Digests.toHex(messageDigest.digest()));
                     }
                     // File
 

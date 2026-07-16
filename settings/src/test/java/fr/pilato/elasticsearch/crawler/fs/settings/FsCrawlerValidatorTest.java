@@ -53,6 +53,16 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isTrue();
 
+        // Checking document _id hash algorithm
+        settings = FsSettingsLoader.load();
+        Assertions.assertThat(settings.getFs().getHashAlgorithm()).isEqualTo("MD5");
+        settings.getFs().setHashAlgorithm("FSCRAWLER");
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+        settings.getFs().setHashAlgorithm("SHA-256");
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+
         // Checking protocol
         settings = FsSettingsLoader.load();
         settings.getServer().setProtocol("FSCRAWLER");

@@ -20,48 +20,62 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Utility class to sign *things*
+ * Utility class to sign *things* (typically file paths used as Elasticsearch document {@code _id}s).
  *
  * @author David Pilato (aka dadoonet)
  */
 public class SignTool {
+
+    /** Default legacy algorithm for document ids when {@code fs.hash_algorithm} is unset (backward compatible). */
+    public static final String LEGACY_MD5_ALGORITHM = "MD5";
 
     private SignTool() {
         // Utility class, do not instantiate
     }
 
     /**
-     * Signs the given input by computing an MD5 digest of its bytes.
+     * Signs {@code toSign} with the given {@link MessageDigest} algorithm.
      *
-     * <p>The resulting hash is used as the Elasticsearch document {@code _id}. MD5 is kept here only as a
-     * non-cryptographic checksum: it is <strong>not</strong> used in a security-sensitive context. Changing the
-     * algorithm would change every generated {@code _id} and force a full reindex, so MD5 remains the default for
-     * backward compatibility.
+     * <p>For {@code MD5}, bytes are taken with the platform default charset and encoded with the historical non-padded
+     * hex format so existing document {@code _id}s stay stable. For any other algorithm, bytes are UTF-8 and the hex
+     * form is standard zero-padded lowercase.
      *
+     * @param algorithm digest algorithm name (e.g. {@code MD5}, {@code SHA-256})
      * @param toSign the value to hash (e.g. a file path)
-     * @return the hexadecimal MD5 digest of {@code toSign}
-     * @throws NoSuchAlgorithmException if the MD5 algorithm is not available
-     * @deprecated the hash algorithm should become configurable; this hard-coded MD5 variant is kept for backward
-     *     compatibility. See <a href="https://github.com/dadoonet/fscrawler/issues/2425">#2425</a>.
+     * @return hexadecimal digest used as document {@code _id}
+     * @throws NoSuchAlgorithmException if {@code algorithm} is not available
      */
-    @Deprecated(since = "3.0")
     @SuppressWarnings("java:S4790") // MD5 is a non-cryptographic checksum used to derive document ids, not for security
-    public static String sign(String toSign) throws NoSuchAlgorithmException {
+    public static String sign(String algorithm, String toSign) throws NoSuchAlgorithmException {
+        boolean legacyMd5 = LEGACY_MD5_ALGORITHM.equalsIgnoreCase(algorithm);
+        Charset charset = legacyMd5 ? Charset.defaultCharset() : StandardCharsets.UTF_8;
 
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(toSign.getBytes());
+        MessageDigest md = Digests.get(algorithm);
+        md.update(toSign.getBytes(charset));
+        byte[] digest = md.digest();
 
+        if (legacyMd5) {
+            return toLegacyHex(digest);
+        }
+        return Digests.toHex(digest);
+    }
+
+    /**
+     * Historical FSCrawler hex encoding: no zero-padding ({@code 0x0A} → {@code "a"}), unsigned via {@code 256 + b} for
+     * negative bytes.
+     */
+    private static String toLegacyHex(byte[] digest) {
         StringBuilder key = new StringBuilder();
-        byte[] b = md.digest();
-        for (byte aB : b) {
+        for (byte aB : digest) {
             long t = aB < 0 ? 256 + aB : aB;
             key.append(Long.toHexString(t));
         }
-
         return key.toString();
     }
 }

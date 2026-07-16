@@ -23,6 +23,7 @@ Here is a list of Local FS settings (under `fs.` prefix):
 | `fs.acl_support`         | `FSCRAWLER_FS_ACL_SUPPORT`         | `false`         | [Collecting ACL metadata](#collecting-acl-metadata)     |
 | `fs.raw_metadata`        | `FSCRAWLER_FS_RAW_METADATA`        | `false`         | [Enabling raw metadata](#enabling-raw-metadata)         |
 | `fs.filename_as_id`      | `FSCRAWLER_FS_FILENAME_AS_ID`      | `false`         | {ref}`filename-as-id`                                   |
+| `fs.hash_algorithm`      | `FSCRAWLER_FS_HASH_ALGORITHM`      | `"MD5"`         | {ref}`document-ids`                                     |
 | `fs.add_filesize`        | `FSCRAWLER_FS_ADD_FILESIZE`        | `true`          | [Disabling file size field](#disabling-file-size-field) |
 | `fs.remove_deleted`      | `FSCRAWLER_FS_REMOVE_DELETED`      | `true`          | [Ignore deleted files](#ignore-deleted-files)           |
 | `fs.store_source`        | `FSCRAWLER_FS_STORE_SOURCE`        | `false`         | {ref}`store_binary`                                     |
@@ -401,9 +402,8 @@ elasticsearch:
 (filename-as-id)=
 ## Using filename as elasticsearch `_id`
 
-Please note that the document `_id` is generated as a hash value
-from the filename to avoid issues with special characters in filename.
-You can force to use the `_id` to be the filename using
+Please note that by default the document `_id` is generated as a hash of the file path
+(see {ref}`document-ids`). You can force the `_id` to be the filename using the
 `filename_as_id` attribute:
 
 ```yaml
@@ -411,6 +411,8 @@ name: "test"
 fs:
   filename_as_id: true
 ```
+
+When `filename_as_id` is `true`, `fs.hash_algorithm` is ignored.
 
 ## Adding file attributes
 
