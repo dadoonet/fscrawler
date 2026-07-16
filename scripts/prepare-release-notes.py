@@ -6,15 +6,71 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 from dotenv_util import load_dotenv
 
+LABEL_ANCHOR_RE = re.compile(r"^\(([-\w]+)\)=$", re.MULTILINE)
+REF_TITLED_RE = re.compile(r"\{ref\}`([^`<]+)\s*<([^>]+)>`")
+REF_SIMPLE_RE = re.compile(r"\{ref\}`([^`<]+)`")
+
 
 def repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
+
+
+def readthedocs_url(version: str, html_path: str, anchor: str) -> str:
+    return (
+        f"https://fscrawler.readthedocs.io/en/fscrawler-{version}/"
+        f"{html_path}#{anchor}"
+    )
+
+
+def build_ref_index(docs_source: Path) -> dict[str, str]:
+    """Map MyST label to its HTML page path under docs/source."""
+    index: dict[str, str] = {}
+    for md_file in sorted(docs_source.rglob("*.md")):
+        html_path = md_file.relative_to(docs_source).with_suffix(".html").as_posix()
+        content = md_file.read_text(encoding="utf-8")
+        for match in LABEL_ANCHOR_RE.finditer(content):
+            index[match.group(1)] = html_path
+    return index
+
+
+def ref_link_text(label: str, title: str | None = None) -> str:
+    if title:
+        return title.strip()
+    return label.replace("-", " ")
+
+
+def resolve_myst_refs(
+    markdown: str,
+    version: str,
+    ref_index: dict[str, str],
+) -> str:
+    """Convert MyST {ref}`...` directives to ReadTheDocs links."""
+
+    def titled_replace(match: re.Match[str]) -> str:
+        title, label = match.group(1), match.group(2).strip()
+        html_path = ref_index.get(label)
+        if html_path is None:
+            return match.group(0)
+        url = readthedocs_url(version, html_path, label)
+        return f"[{ref_link_text(label, title)}]({url})"
+
+    def simple_replace(match: re.Match[str]) -> str:
+        label = match.group(1).strip()
+        html_path = ref_index.get(label)
+        if html_path is None:
+            return match.group(0)
+        url = readthedocs_url(version, html_path, label)
+        return f"[{ref_link_text(label)}]({url})"
+
+    markdown = REF_TITLED_RE.sub(titled_replace, markdown)
+    return REF_SIMPLE_RE.sub(simple_replace, markdown)
 
 
 def download_url(version: str) -> str:
@@ -29,10 +85,11 @@ def render_header(template_path: Path, version: str) -> str:
     return template.format(VERSION=version, DOWNLOAD_URL=download_url(version))
 
 
-def read_release_notes(notes_path: Path) -> str:
+def read_release_notes(notes_path: Path, version: str, ref_index: dict[str, str]) -> str:
     if not notes_path.is_file():
         sys.exit(f"Release notes not found: {notes_path}")
-    return notes_path.read_text(encoding="utf-8").strip()
+    content = notes_path.read_text(encoding="utf-8").strip()
+    return resolve_myst_refs(content, version, ref_index)
 
 
 def gh_generate_notes(repo: str, tag_name: str, previous_tag_name: str) -> str:
@@ -64,12 +121,13 @@ def assemble(
     root = repo_root()
     header_path = root / "scripts" / "templates" / "release-header.md"
     notes_path = root / "docs" / "source" / "release" / f"{version}.md"
+    ref_index = build_ref_index(root / "docs" / "source")
     tag_name = f"{tag_prefix}-{version}"
 
     parts = [
         render_header(header_path, version),
         "",
-        read_release_notes(notes_path),
+        read_release_notes(notes_path, version, ref_index),
     ]
 
     gh_notes = gh_generate_notes(github_repo, tag_name, since_tag)
