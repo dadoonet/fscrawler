@@ -27,6 +27,7 @@ RELEASE_APPROVED=false
 RELEASE_DEPLOYED=false
 RELEASE_TRACKING=false
 FAILURE_HANDLED=false
+RELEASE_STATUS=""
 
 ORIGINAL_BRANCH=""
 ORIGINAL_HEAD=""
@@ -184,8 +185,7 @@ report_failure() {
 	fail_msg "${message}"
 
 	if release_state_exists; then
-		printf 'ℹ️  Rollback local release changes with:\n' >&2
-		printf '    %s --rollback\n' "${SCRIPT_NAME}" >&2
+		print_failure_recovery_hint
 	fi
 
 	if [[ -n "${LOG_FILE}" && -f "${LOG_FILE}" ]]; then
@@ -196,6 +196,30 @@ report_failure() {
 		tail -"${LOG_TAIL_LINES}" "${LOG_FILE}" >&2 || true
 		printf '%s\n' '--- end of log tail ---' >&2
 	fi
+}
+
+print_failure_recovery_hint() {
+	local status="${RELEASE_STATUS:-}"
+	if [[ -z "${status}" && -f "${RELEASE_STATE_FILE}" ]]; then
+		status="$(grep '^STATUS=' "${RELEASE_STATE_FILE}" 2>/dev/null | cut -d= -f2- || true)"
+	fi
+
+	if [[ "${status}" == "pushed" ]]; then
+		printf 'ℹ️  Branch and tag are already on origin — do not expect --rollback to undo them.\n' >&2
+		printf '    Continue manually, for example:\n' >&2
+		printf '      python3 scripts/prepare-release-notes.py --version %s --since-tag %s\n' \
+			"${RELEASE_VERSION:-<version>}" "${PREVIOUS_TAG:-<previous-tag>}" >&2
+		printf '      gh release create %s --notes-file %s\n' \
+			"${RELEASE_TAG:-<tag>}" "${RELEASE_NOTES_FILE:-release/<version>/release-notes.md}" >&2
+		printf '      python3 scripts/send-announcement.py %s --subject "FSCrawler %s released"\n' \
+			"${RELEASE_NOTES_FILE:-release/<version>/release-notes.md}" "${RELEASE_VERSION:-<version>}" >&2
+		printf '    Or clear local state only with:\n' >&2
+		printf '      %s --rollback\n' "${SCRIPT_NAME}" >&2
+		return
+	fi
+
+	printf 'ℹ️  Rollback local release changes with:\n' >&2
+	printf '    %s --rollback\n' "${SCRIPT_NAME}" >&2
 }
 
 die() {
@@ -338,6 +362,7 @@ save_release_state() {
 	local mode="production"
 	is_local && mode="local"
 
+	RELEASE_STATUS="${status}"
 	mkdir -p "$(dirname "${RELEASE_STATE_FILE}")"
 	cat >"${RELEASE_STATE_FILE}" <<EOF
 ORIGINAL_BRANCH=${ORIGINAL_BRANCH}
