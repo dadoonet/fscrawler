@@ -63,9 +63,19 @@ thus every `_id`) is guaranteed unique across machines.
 
 ### Recommended pattern: one index per machine + a search alias
 
-Give each machine its own document and folder indices, then use the shared alias for search:
+Give each machine its own document and folder indices, then use the shared alias for search.
+Optionally tag every document with the machine hostname via {ref}`tags` static metadata, so you can
+filter or aggregate by host when searching on the shared alias.
 
-**On machine1** (`~/.fscrawler/fscrawler/_settings.yaml`):
+**On machine1**, create a static metadata file (for example
+`~/.fscrawler/fscrawler/static_metadata.yml`):
+
+```yaml
+external:
+  hostname: "machine1"
+```
+
+And the job settings (`~/.fscrawler/fscrawler/_settings.yaml`):
 
 ```yaml
 name: "fscrawler"
@@ -74,9 +84,19 @@ fs:
 elasticsearch:
   index: "fscrawler_machine1_docs"
   index_folder: "fscrawler_machine1_folder"
+tags:
+  staticMetaFilename: "/home/user/.fscrawler/fscrawler/static_metadata.yml"
 ```
 
-**On machine2** (`~/.fscrawler/fscrawler/_settings.yaml`):
+**On machine2**, create a static metadata file (for example
+`~/.fscrawler/fscrawler/static_metadata.yml`):
+
+```yaml
+external:
+  hostname: "machine2"
+```
+
+And the job settings (`~/.fscrawler/fscrawler/_settings.yaml`):
 
 ```yaml
 name: "fscrawler"
@@ -85,19 +105,19 @@ fs:
 elasticsearch:
   index: "fscrawler_machine2_docs"
   index_folder: "fscrawler_machine2_folder"
+tags:
+  staticMetaFilename: "/home/user/.fscrawler/fscrawler/static_metadata.yml"
 ```
 
-By default, FSCrawler creates an index alias named after the job `name` (here `fscrawler`) that points to 
-the documents index. That means that both `fscrawler_machine1_docs` and `fscrawler_machine2_docs` are aliased to 
+By default, FSCrawler creates an index alias named after the job `name` (here `fscrawler`) that points to
+the documents index. That means that both `fscrawler_machine1_docs` and `fscrawler_machine2_docs` are aliased to
 `fscrawler`. You can then use the alias for search on `fscrawler`. Each crawler writes only to its own index, so:
 
 * `_id` collisions between machines no longer overwrite each other
 * `fs.remove_deleted` only removes documents that belong to that machine's index
 * folder housekeeping stays isolated as the folder index is also per machine
-
-```{note}
-See {ref}`mappings` for how the job-name alias is created via index templates.
-```
+* when static metadata is set, documents carry `external.hostname` (and any other fields you defined)
+  so you can tell which machine indexed them even when searching through the shared alias
 
 ### Alternatives
 
@@ -108,6 +128,8 @@ See {ref}`mappings` for how the job-name alias is created via index templates.
 
 ### See also
 
+* {ref}`mappings` — how the job-name alias is created via index templates
 * {ref}`document-ids` — how `_id`s are generated and what happens when you change the algorithm
 * {ref}`elasticsearch-settings` — `elasticsearch.index` / `elasticsearch.index_folder`
+* {ref}`tags` — static metadata such as `external.hostname`
 * Discussion: [Running FSCrawler on several servers](https://github.com/dadoonet/fscrawler/discussions/2256)
