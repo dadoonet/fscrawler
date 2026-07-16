@@ -32,27 +32,11 @@ import java.security.NoSuchAlgorithmException;
  */
 public class SignTool {
 
-    /** Default algorithm for document ids when {@code fs.hash_algorithm} is unset (backward compatible). */
-    public static final String DEFAULT_ALGORITHM = "MD5";
+    /** Default legacy algorithm for document ids when {@code fs.hash_algorithm} is unset (backward compatible). */
+    public static final String LEGACY_MD5_ALGORITHM = "MD5";
 
     private SignTool() {
         // Utility class, do not instantiate
-    }
-
-    /**
-     * Signs the given input by computing an MD5 digest of its bytes using the legacy encoding.
-     *
-     * <p>Prefer {@link #sign(String, String)} with {@code fs.hash_algorithm}.
-     *
-     * @param toSign the value to hash (e.g. a file path)
-     * @return the hexadecimal MD5 digest of {@code toSign}
-     * @throws NoSuchAlgorithmException if the MD5 algorithm is not available
-     * @deprecated use {@link #sign(String, String)} with a configurable algorithm; this hard-coded MD5 variant is kept
-     *     for backward compatibility. See <a href="https://github.com/dadoonet/fscrawler/issues/2425">#2425</a>.
-     */
-    @Deprecated(since = "3.0")
-    public static String sign(String toSign) throws NoSuchAlgorithmException {
-        return sign(DEFAULT_ALGORITHM, toSign);
     }
 
     /**
@@ -69,7 +53,7 @@ public class SignTool {
      */
     @SuppressWarnings("java:S4790") // MD5 is a non-cryptographic checksum used to derive document ids, not for security
     public static String sign(String algorithm, String toSign) throws NoSuchAlgorithmException {
-        boolean legacyMd5 = DEFAULT_ALGORITHM.equalsIgnoreCase(algorithm);
+        boolean legacyMd5 = LEGACY_MD5_ALGORITHM.equalsIgnoreCase(algorithm);
         Charset charset = legacyMd5 ? Charset.defaultCharset() : StandardCharsets.UTF_8;
 
         MessageDigest md = Digests.get(algorithm);

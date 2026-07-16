@@ -257,7 +257,8 @@ public class FsCrawlerCli {
                     "Created job [{}] with [fs.hash_algorithm={}] in the example settings. "
                             + "Existing jobs without this setting keep MD5. "
                             + "Changing the algorithm later changes every document _id and requires a full reindex.",
-                    jobName, settings.getFs().getHashAlgorithm());
+                    jobName,
+                    settings.getFs().getHashAlgorithm());
             if (logger.isDebugEnabled()) {
                 logger.debug("Created job [{}] with settings: [{}]", jobName, FsSettingsParser.toYaml(settings));
             }

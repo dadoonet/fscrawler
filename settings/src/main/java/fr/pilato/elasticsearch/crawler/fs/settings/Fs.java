@@ -100,7 +100,7 @@ public class Fs {
     @Nullable
     private String checksum;
 
-    @Config(defaultVal = SignTool.DEFAULT_ALGORITHM)
+    @Config(defaultVal = SignTool.LEGACY_MD5_ALGORITHM)
     private String hashAlgorithm;
 
     @Config(defaultVal = "true")
