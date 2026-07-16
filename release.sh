@@ -689,7 +689,11 @@ remove_tag_if_requested() {
 create_release_branch() {
 	log "Creating branch ${RELEASE_BRANCH}"
 	if git_branch_exists "${RELEASE_BRANCH}"; then
-		git_cmd branch -D "${RELEASE_BRANCH}"
+		if is_dry_run; then
+			log "[dry-run] Would delete existing branch ${RELEASE_BRANCH} before recreating it."
+		else
+			git_cmd branch -D "${RELEASE_BRANCH}"
+		fi
 	fi
 	git_run checkout -q -b "${RELEASE_BRANCH}"
 }
