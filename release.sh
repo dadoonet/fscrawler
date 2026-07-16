@@ -775,6 +775,12 @@ gather_inputs() {
 		warn "You are already on ${RELEASE_BRANCH}. Consider switching to your integration branch first."
 	fi
 
+	if is_dry_run; then
+		LOG_FILE="/dev/null"
+		info "[dry-run] Skipping release work directory creation (${RELEASE_WORK_DIR})."
+		return
+	fi
+
 	mkdir -p "${RELEASE_WORK_DIR}"
 	: >"${LOG_FILE}"
 	log "Logging to ${LOG_FILE}"
