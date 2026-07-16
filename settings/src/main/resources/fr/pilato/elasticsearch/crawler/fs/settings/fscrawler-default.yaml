@@ -2,7 +2,7 @@
 #name: "test"
 
 # optional: set file system crawler parameters
-#fs:
+fs:
   # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container
   #url: "/tmp/es"
   # optional: scan every 15 minutes for changes in url defined above
