@@ -868,6 +868,7 @@ finalize_local_release() {
 	git_run checkout -q "${ORIGINAL_BRANCH}"
 	save_release_state "completed"
 	maybe_send_local_test_announcement
+	disable_release_tracking
 
 	success "Local release rehearsal complete."
 	info "Release branch: ${RELEASE_BRANCH}"
@@ -879,16 +880,17 @@ finalize_local_release() {
 }
 
 maybe_send_local_test_announcement() {
-	if ! confirm "Send test announcement email to ${ANNOUNCE_TO:-ANNOUNCE_TO from .env}?" y; then
-		info "Skipped test email. Preview remains in ${RELEASE_NOTES_FILE}"
-		return
+	if confirm "Send test announcement email to ${ANNOUNCE_TO:-ANNOUNCE_TO from .env}?" y; then
+		if send_announcement; then
+			success "Test announcement sent to ${ANNOUNCE_TO}."
+		else
+			warn "Failed to send test announcement — see ${LOG_FILE}"
+		fi
+		return 0
 	fi
 
-	if send_announcement; then
-		success "Test announcement sent to ${ANNOUNCE_TO}."
-	else
-		warn "Failed to send test announcement — see ${LOG_FILE}"
-	fi
+	info "Skipped test email. Preview remains in ${RELEASE_NOTES_FILE}"
+	return 0
 }
 
 finalize_skipped_deploy() {
@@ -1001,17 +1003,18 @@ finalize_release() {
 }
 
 maybe_send_announcement() {
-	if ! confirm "Send the release announcement email?" n; then
-		info "Send manually when ready:"
-		info "  python3 scripts/send-announcement.py ${RELEASE_NOTES_FILE} --subject \"FSCrawler ${RELEASE_VERSION} released\""
-		return
+	if confirm "Send the release announcement email?" n; then
+		if send_announcement; then
+			success "Announcement sent."
+		else
+			warn "Failed to send announcement — see ${LOG_FILE}"
+		fi
+		return 0
 	fi
 
-	if send_announcement; then
-		success "Announcement sent."
-	else
-		warn "Failed to send announcement — see ${LOG_FILE}"
-	fi
+	info "Send manually when ready:"
+	info "  python3 scripts/send-announcement.py ${RELEASE_NOTES_FILE} --subject \"FSCrawler ${RELEASE_VERSION} released\""
+	return 0
 }
 
 rollback_release() {
