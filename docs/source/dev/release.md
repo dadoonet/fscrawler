@@ -64,8 +64,8 @@ You will be guided through all the steps.
 
 Release notes live in Markdown under `docs/source/release/` (for example `3.0.md`).
 They are included in the ReadTheDocs documentation via MyST Parser and reused by the release
-script to build `/tmp/fscrawler-{version}-release-notes.md` (outside `target/` so `mvn clean`
-does not remove them).
+script to build `release/{version}/release-notes.md` (gitignored work directory at the repo
+root, outside `target/` so `mvn clean` does not remove them).
 
 The final notes combine:
 
@@ -74,23 +74,26 @@ The final notes combine:
   heading levels demoted by one so they nest under the header)
 * GitHub-generated changelist (`## What's Changed`) from `gh api .../releases/generate-notes`
 
-`release.sh` always runs the full workflow. To regenerate notes or resend the announcement
-without starting another release, call the helper scripts directly.
+`release.sh` always runs the full workflow. Working files for a given version are written under
+`release/{version}/` (for example `release/3.0/release-notes.md` and `release/3.0/release.log`)
+so you can open and edit them in the IDE before sending the announcement.
+
+To regenerate notes or resend the announcement without starting another release, call the
+helper scripts directly.
 
 Regenerate the assembled notes (requires `gh` authenticated and `GITHUB_REPO` in `.env`):
 
 ```
 $ python3 scripts/prepare-release-notes.py \
     --version 3.0 \
-    --since-tag fscrawler-2.9 \
-    --output /tmp/fscrawler-3.0-release-notes.md
+    --since-tag fscrawler-2.9
 ```
 
 Send (or resend) the announcement email from an existing notes file:
 
 ```
 $ python3 scripts/send-announcement.py \
-    /tmp/fscrawler-3.0-release-notes.md \
+    release/3.0/release-notes.md \
     --subject "FSCrawler 3.0 released"
 ```
 
@@ -98,7 +101,7 @@ To update notes after a GitHub release was already published, edit the Markdown 
 with `prepare-release-notes.py`, then run:
 
 ```
-$ gh release edit fscrawler-{version} --notes-file /tmp/fscrawler-{version}-release-notes.md
+$ gh release edit fscrawler-{version} --notes-file release/{version}/release-notes.md
 ```
 
 ## Before releasing
@@ -144,7 +147,7 @@ The repository uses [Release Drafter](https://github.com/release-drafter/release
 maintain a **draft** GitHub release on each push to `master`. Tags follow the `fscrawler-{version}`
 convention. The final published release uses the hybrid notes assembled by `release.sh`.
 
-Logs are written to `/tmp/fscrawler-<release-version>.log`. On failure, the script prints the
+Logs are written to `release/<release-version>/release.log`. On failure, the script prints the
 last lines of the log and suggests `./release.sh --rollback`.
 
 ```{note}

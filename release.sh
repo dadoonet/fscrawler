@@ -83,9 +83,7 @@ Prerequisites (default and --local):
   - GPG signing configured for the Maven release profile
   - ~/.m2/settings.xml server id "central" for production deploy only
 
-See docs/source/dev/release.rst for the full release workflow.
-
-Logs are written to /tmp/fscrawler-<release-version>.log
+Logs are written to release/<release-version>/release.log
 EOF
 }
 
@@ -769,15 +767,18 @@ gather_inputs() {
 
 	RELEASE_BRANCH="release-${RELEASE_VERSION}"
 	RELEASE_TAG="${TAG_PREFIX}-${RELEASE_VERSION}"
-	LOG_FILE="/tmp/fscrawler-${RELEASE_VERSION}.log"
-	RELEASE_NOTES_FILE="/tmp/fscrawler-${RELEASE_VERSION}-release-notes.md"
+	RELEASE_WORK_DIR="${ROOT_DIR}/release/${RELEASE_VERSION}"
+	LOG_FILE="${RELEASE_WORK_DIR}/release.log"
+	RELEASE_NOTES_FILE="${RELEASE_WORK_DIR}/release-notes.md"
 
 	if [[ "${ORIGINAL_BRANCH}" == "${RELEASE_BRANCH}" ]]; then
 		warn "You are already on ${RELEASE_BRANCH}. Consider switching to your integration branch first."
 	fi
 
+	mkdir -p "${RELEASE_WORK_DIR}"
 	: >"${LOG_FILE}"
 	log "Logging to ${LOG_FILE}"
+	info "Release work directory: ${RELEASE_WORK_DIR}"
 }
 
 prepare_release_branch() {

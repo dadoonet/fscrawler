@@ -176,8 +176,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("target/release-notes.md"),
-        help="Output Markdown file",
+        default=None,
+        help="Output Markdown file (default: release/<version>/release-notes.md)",
     )
     parser.add_argument(
         "--github-repo",
@@ -190,10 +190,13 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     load_dotenv(repo_root() / ".env")
     args = parse_args()
+    output = args.output
+    if output is None:
+        output = Path("release") / args.version / "release-notes.md"
     assemble(
         version=args.version,
         since_tag=args.since_tag,
-        output=args.output if args.output.is_absolute() else repo_root() / args.output,
+        output=output if output.is_absolute() else repo_root() / output,
         github_repo=args.github_repo,
     )
 
