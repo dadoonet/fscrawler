@@ -26,14 +26,14 @@ mvn clean package -DskipTests -pl distribution
 
 ## Distribution Artifact
 
-`distribution/target/fscrawler-distribution-2.10-SNAPSHOT.zip`
+`distribution/target/fscrawler-distribution-3.0-SNAPSHOT.zip`
 
 ## Running FSCrawler Locally
 
 ```bash
 # Extract distribution
-cd /tmp && unzip distribution/target/fscrawler-distribution-2.10-SNAPSHOT.zip
-cd fscrawler-distribution-2.10-SNAPSHOT
+cd /tmp && unzip distribution/target/fscrawler-distribution-3.0-SNAPSHOT.zip
+cd fscrawler-distribution-3.0-SNAPSHOT
 
 # Setup a job
 ./bin/fscrawler --config_dir /tmp/config --setup my-job
@@ -85,4 +85,4 @@ See also: `docs/source/admin/fs/index.rst`
 
 - **GitHub Actions**: `.github/workflows/maven.yml`
 - **PR Validation**: `.github/workflows/pr.yml`
-- Tests run against ES 7.x, 8.x, and 9.x
+- Tests run against 8.x, and 9.x

@@ -38,7 +38,7 @@ import org.pf4j.PluginManager;
 import org.pf4j.PluginWrapper;
 
 /**
- * Extension finder that only reads the FsCrawler FsProvider SPI file ({@value #SERVICE_RESOURCE}), instead of scanning
+ * Extension finder that only reads the FsCrawler FsProvider SPI file ({@link #SERVICE_RESOURCE}), instead of scanning
  * all META-INF/services. This avoids loading unrelated service provider classes (e.g. NetCDF GRIB) that may be on the
  * classpath and cause ClassNotFoundException.
  */

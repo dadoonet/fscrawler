@@ -32,7 +32,7 @@ PROJECT_ROOT=$(cd "$SCRIPT_DIR/../.."; pwd)
 
 # Version is set by Maven resource filtering at build time (see distribution/pom.xml).
 # To regenerate this file after a version bump: mvn generate-test-resources -pl distribution
-FSCRAWLER_VERSION="2.10-SNAPSHOT"
+FSCRAWLER_VERSION="3.0-SNAPSHOT"
 
 DIST_ZIP="$PROJECT_ROOT/distribution/target/fscrawler-distribution-${FSCRAWLER_VERSION}.zip"
 INSTALL_DIR="/tmp/fscrawler-edot-test/fscrawler-distribution-${FSCRAWLER_VERSION}"

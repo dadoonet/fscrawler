@@ -1,5 +1,6 @@
-name-template: v$NEXT_PATCH_VERSION 🌈
-tag-template: v$NEXT_PATCH_VERSION
+name-template: 'fscrawler-$RESOLVED_VERSION'
+tag-template: 'fscrawler-$RESOLVED_VERSION'
+version-resolver: 'semver'
 categories:
   - title: 🚀 New features
     label: new
@@ -15,11 +16,9 @@ categories:
     label: test
 change-template: '- #$NUMBER: $TITLE (thanks to @$AUTHOR)'
 template: |
-  ## What's Changed
 
   $CHANGES
 
   ## Thanks to
 
   $CONTRIBUTORS
-

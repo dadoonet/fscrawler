@@ -28,9 +28,9 @@ import java.nio.file.Path;
 /**
  * Provides utility methods to read and write job status files (_status.json)
  *
- * @deprecated since 2.10, use {@link FsCrawlerCheckpointFileHandler} instead
+ * @deprecated since 3.0, use {@link FsCrawlerCheckpointFileHandler} instead
  */
-@Deprecated(since = "2.10", forRemoval = true)
+@Deprecated(since = "3.0", forRemoval = true)
 public class FsJobFileHandler extends MetaFileHandler {
 
     public static final String FILENAME = "_status.json";

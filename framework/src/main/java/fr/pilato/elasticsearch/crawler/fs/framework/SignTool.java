@@ -48,7 +48,7 @@ public class SignTool {
      * @deprecated the hash algorithm should become configurable; this hard-coded MD5 variant is kept for backward
      *     compatibility. See <a href="https://github.com/dadoonet/fscrawler/issues/2425">#2425</a>.
      */
-    @Deprecated(since = "2.10")
+    @Deprecated(since = "3.0")
     @SuppressWarnings("java:S4790") // MD5 is a non-cryptographic checksum used to derive document ids, not for security
     public static String sign(String toSign) throws NoSuchAlgorithmException {
 

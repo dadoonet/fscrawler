@@ -250,20 +250,20 @@ still be able to publish and consume SNAPSHOT releases as usual, but you cannot
 browse them via the UI.
 ```
 
-So you must now download the [maven-metadata.xml](https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/maven-metadata.xml)
+So you must now download the [maven-metadata.xml](https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/maven-metadata.xml)
 file. Check the `<snapshotVersion>` tag to find the latest SNAPSHOT version of the `zip` file.
 
 ```xml
 <snapshotVersion>
   <extension>zip</extension>
-  <value>2.10-20250801.161301-75</value>
+  <value>3.0-YYYYMMDD.HHMMSS-NN</value>
   <updated>20250801161301</updated>
 </snapshotVersion>
 ```
 
 Note the `value` tag which contains the version you need to download. And use that value in the following URL:
 
-https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/2.10-SNAPSHOT/fscrawler-distribution-2.10-20250801.161301-75.zip
+<https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/fscrawler-distribution-3.0-YYYYMMDD.HHMMSS-NN.zip>
 ```
 ````
 

@@ -293,9 +293,9 @@ public class Fs {
      * Enables or disables OCR on PDF documents.
      *
      * @param pdfOcr {@code true} to enable OCR on PDF files
-     * @deprecated since 2.10, replaced by the {@code ocr.pdf_strategy} setting
+     * @deprecated since 3.0, replaced by the {@code ocr.pdf_strategy} setting
      */
-    @Deprecated(since = "2.10", forRemoval = true)
+    @Deprecated(since = "3.0", forRemoval = true)
     public void setPdfOcr(boolean pdfOcr) {
         String strategy;
         if (pdfOcr) {

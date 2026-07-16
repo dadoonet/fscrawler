@@ -4,7 +4,7 @@
     <parent>
         <groupId>fr.pilato.elasticsearch.crawler</groupId>
         <artifactId>fscrawler-plugins</artifactId>
-        <version>2.10-SNAPSHOT</version>
+        <version>3.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>fscrawler-fs-ssh-plugin</artifactId>

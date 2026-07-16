@@ -5,7 +5,7 @@
 :backlinks: entry
 ```
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 The goal of this feature is to allow users to provide additional metadata when
@@ -99,7 +99,7 @@ tags:
 
 ## Static Metadata
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 You can define static metadata that will be applied to all documents indexed by FSCrawler.

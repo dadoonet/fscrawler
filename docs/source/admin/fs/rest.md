@@ -10,7 +10,7 @@ To activate it, launch FSCrawler with `--rest` option.
 
 ## General settings
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 For all the APIs on this page, you can pass parameters in different ways.
@@ -203,7 +203,7 @@ will give
 
 ## Uploading a binary document from a 3rd party service
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 You can also ask FSCrawler to fetch a document from a 3rd party service and index
@@ -519,7 +519,7 @@ Only standard {ref}`FSCrawler fields <generated_fields>` can be set outside `ext
 
 ## Remove a document
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 To remove a document, you can call `DELETE /_document` endpoint.
@@ -632,7 +632,7 @@ it will conflict.
 
 ## Crawler control
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 FSCrawler provides REST endpoints to control the crawler, allowing you to pause, resume,

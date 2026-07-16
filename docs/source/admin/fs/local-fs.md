@@ -41,7 +41,7 @@ Here is a list of Local FS settings (under `fs.` prefix):
 (crawler-provider)=
 ## Crawler Provider
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 The `fs.provider` setting specifies which crawler plugin to use for scanning files.
@@ -778,7 +778,7 @@ fs:
 
 ## Temporary Directory
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 When `checksum` or `store_source` is enabled, FSCrawler may need to create
@@ -819,7 +819,7 @@ fs:
 
 ## Tika Config Path
 
-```{versionadded} 2.10
+```{versionadded} 3.0
 ```
 
 If you want to override the default tika parser configuration, you can set the path to a custom tika
