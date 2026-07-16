@@ -349,7 +349,7 @@ public class FsParser implements Runnable, AutoCloseable {
                         throw new RuntimeException(url + " doesn't exists.");
                     }
 
-                    String rootPathId = SignTool.sign(url);
+                    String rootPathId = sign(url);
                     stats.setRootPathId(rootPathId);
 
                     // We need to round that latest date to the lower second and remove 2 seconds.
@@ -1304,7 +1304,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
                 // Path
                 // Encoded version of the dir this file belongs to
-                doc.getPath().setRoot(SignTool.sign(dirname));
+                doc.getPath().setRoot(sign(dirname));
                 // The virtual URL (not including the initial root dir)
                 doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename));
                 // The real and complete filename
@@ -1458,7 +1458,11 @@ public class FsParser implements Runnable, AutoCloseable {
         String idSource = filepathForId.endsWith("/")
                 ? filepathForId.concat(filenameForId)
                 : filepathForId.concat("/").concat(filenameForId);
-        return fsSettings.getFs().isFilenameAsId() ? filename : SignTool.sign(idSource);
+        return fsSettings.getFs().isFilenameAsId() ? filename : sign(idSource);
+    }
+
+    private String sign(String toSign) throws NoSuchAlgorithmException {
+        return SignTool.sign(fsSettings.getFs().getHashAlgorithm(), toSign);
     }
 
     /**
@@ -1500,7 +1504,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
         Folder folder = new Folder(
                 name,
-                SignTool.sign(rootdir),
+                sign(rootdir),
                 path,
                 FsCrawlerUtil.computeVirtualPathName(rootPath, path),
                 FsCrawlerUtil.getCreationTime(folderInfo),
@@ -1532,7 +1536,7 @@ public class FsParser implements Runnable, AutoCloseable {
             }
         }
 
-        indexDirectory(SignTool.sign(path), folder);
+        indexDirectory(sign(path), folder);
     }
 
     /** Remove a full directory and sub dirs recursively */
@@ -1551,7 +1555,7 @@ public class FsParser implements Runnable, AutoCloseable {
             removeEsDirectoryRecursively(esfolder, stats);
         }
 
-        esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), SignTool.sign(path));
+        esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), sign(path));
     }
 
     /** Remove a document with the document service */

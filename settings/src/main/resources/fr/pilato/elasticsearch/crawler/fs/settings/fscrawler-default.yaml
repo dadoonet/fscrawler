@@ -35,8 +35,14 @@
   # optional: do not send big files to TIKA
   #ignore_above: "512mb"
 
-  # optional: use MD5 from filename (instead of filename) if set to false
+  # optional: use filename as document _id instead of hashing the path
   #filename_as_id: true
+
+  # Algorithm used to derive Elasticsearch document _ids from file paths (any MessageDigest name).
+  # Changing this value changes every _id and requires a full reindex.
+  # When unset, FSCrawler defaults to MD5 for backward compatibility with existing jobs.
+  # New jobs created with --setup use SHA-256.
+  hash_algorithm: "SHA-256"
 
   # you may want to store (partial) content of the file (see indexed_chars)
   #index_content: true

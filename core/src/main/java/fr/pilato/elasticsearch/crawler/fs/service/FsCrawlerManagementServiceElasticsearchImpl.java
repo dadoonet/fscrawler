@@ -80,7 +80,9 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     public Collection<String> getFileDirectory(String path) throws Exception {
 
         if (logger.isTraceEnabled()) {
-            logger.trace("Querying elasticsearch for files in dir [path.root:{}]", SignTool.sign(path));
+            logger.trace(
+                    "Querying elasticsearch for files in dir [path.root:{}]",
+                    SignTool.sign(settings.getFs().getHashAlgorithm(), path));
         }
 
         Collection<String> files = new ArrayList<>();
@@ -91,7 +93,8 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                     .withIndex(settings.getElasticsearch().getIndex())
                     .withSize(REQUEST_SIZE)
                     .addStoredField(FILE_FILENAME_FIELD)
-                    .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
+                    .withESQuery(new ESTermQuery(
+                            "path.root", SignTool.sign(settings.getFs().getHashAlgorithm(), path))));
 
             if (response.getHits() != null) {
                 for (ESSearchHit hit : response.getHits()) {
@@ -130,7 +133,8 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
             ESSearchResponse response = client.search(new ESSearchRequest()
                     .withIndex(settings.getElasticsearch().getIndexFolder())
                     .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
-                    .withESQuery(new ESTermQuery("path.root", SignTool.sign(path))));
+                    .withESQuery(new ESTermQuery(
+                            "path.root", SignTool.sign(settings.getFs().getHashAlgorithm(), path))));
 
             if (response.getHits() != null) {
                 for (ESSearchHit hit : response.getHits()) {

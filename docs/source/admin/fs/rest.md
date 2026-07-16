@@ -421,11 +421,12 @@ echo "This is my text" > test.txt
 curl -F "file=@test.txt" "http://127.0.0.1:8080/_document?debug=true&simulate=true"
 ```
 
+(rest-document-id)=
 ## Document ID
 
-By default, FSCrawler encodes the filename to generate an id. Which
-means that if you send 2 files with the same filename `test.txt`, the
-second one will overwrite the first one because they will both share the
+By default, FSCrawler hashes the filename to generate an id, using `fs.hash_algorithm`
+(see {ref}`document-ids`). Which means that if you send 2 files with the same filename
+`test.txt`, the second one will overwrite the first one because they will both share the
 same ID.
 
 You can force any id you wish by adding `id=YOUR_ID` as a parameter:

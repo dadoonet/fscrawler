@@ -178,7 +178,8 @@ public class DocumentApi extends RestApi {
                             + "Either call DELETE /_document/ID or DELETE /_document?filename=foo.txt");
         }
 
-        return removeDocumentInDocumentService(SignTool.sign(filename), filename, index);
+        return removeDocumentInDocumentService(
+                SignTool.sign(settings.getFs().getHashAlgorithm(), filename), filename, index);
     }
 
     @Path("/{id}")
@@ -242,7 +243,8 @@ public class DocumentApi extends RestApi {
             if (settings.getFs().isFilenameAsId()) {
                 id = doc.getFile().getFilename();
             } else {
-                id = SignTool.sign(doc.getFile().getFilename());
+                id = SignTool.sign(
+                        settings.getFs().getHashAlgorithm(), doc.getFile().getFilename());
             }
         } else if (id.equals("_auto_")) {
             // We are using a specific id which tells us to generate a unique _id like elasticsearch does

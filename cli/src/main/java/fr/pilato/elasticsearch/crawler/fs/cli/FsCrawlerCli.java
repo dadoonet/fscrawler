@@ -252,6 +252,11 @@ public class FsCrawlerCli {
             logger.debug(
                     "Creating [{}] from the classloader [{}] file.", configFile, FsSettingsLoader.EXAMPLE_SETTINGS);
             FsCrawlerUtil.copyResourceFile(FsSettingsLoader.EXAMPLE_SETTINGS, configFile);
+            logger.info(
+                    "Created job [{}] with fs.hash_algorithm=SHA-256 in the example settings. "
+                            + "Existing jobs without this setting keep MD5. "
+                            + "Changing the algorithm later changes every document _id and requires a full reindex.",
+                    jobName);
         }
     }
 

@@ -21,6 +21,8 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,8 +30,19 @@ import org.junit.jupiter.api.Test;
 class SignToolTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    void sign() throws NoSuchAlgorithmException {
+    void signMd5LegacyCompat() throws NoSuchAlgorithmException {
         String signature = SignTool.sign("ABCD");
         Assertions.assertThat(signature).isEqualTo("cb8ca4a7bb5f9683c19133a84872ca7");
+        Assertions.assertThat(SignTool.sign("MD5", "ABCD")).isEqualTo(signature);
+    }
+
+    @Test
+    void signSha256Utf8StandardHex() throws NoSuchAlgorithmException {
+        MessageDigest expected = MessageDigest.getInstance("SHA-256");
+        expected.update("ABCD".getBytes(StandardCharsets.UTF_8));
+        String expectedHex = Digests.toHex(expected.digest());
+
+        Assertions.assertThat(SignTool.sign("SHA-256", "ABCD")).isEqualTo(expectedHex);
+        Assertions.assertThat(expectedHex).hasSize(64);
     }
 }

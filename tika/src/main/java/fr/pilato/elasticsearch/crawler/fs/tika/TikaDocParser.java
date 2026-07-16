@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.Digests;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -88,15 +89,7 @@ public class TikaDocParser {
     private static final long IN_MEMORY_THRESHOLD = 64L * 1024; // 64KB
 
     private static MessageDigest findMessageDigest(FsSettings fsSettings) {
-        if (fsSettings.getFs().getChecksum() != null) {
-            try {
-                return MessageDigest.getInstance(fsSettings.getFs().getChecksum());
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("This should never happen as we checked that previously");
-            }
-        } else {
-            return null;
-        }
+        return Digests.getOrNull(fsSettings.getFs().getChecksum());
     }
 
     /**
@@ -225,7 +218,9 @@ public class TikaDocParser {
                             FSCrawlerLogger.documentError(
                                     fsSettings.getFs().isFilenameAsId()
                                             ? doc.getFile().getFilename()
-                                            : SignTool.sign(doc.getPath().getReal()),
+                                            : SignTool.sign(
+                                                    fsSettings.getFs().getHashAlgorithm(),
+                                                    doc.getPath().getReal()),
                                     FsCrawlerUtil.computeVirtualPathName(
                                             fsSettings.getFs().getUrl(),
                                             doc.getPath().getReal()),
@@ -260,14 +255,7 @@ public class TikaDocParser {
                     }
 
                     if (messageDigest != null) {
-                        byte[] digest = messageDigest.digest();
-                        StringBuilder result = new StringBuilder();
-                        // Convert to Hexa
-                        for (byte aDigest : digest) {
-                            result.append(Integer.toString((aDigest & 0xff) + 0x100, 16)
-                                    .substring(1));
-                        }
-                        doc.getFile().setChecksum(result.toString());
+                        doc.getFile().setChecksum(Digests.toHex(messageDigest.digest()));
                     }
                     // File
 
