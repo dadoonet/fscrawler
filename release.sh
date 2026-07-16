@@ -307,10 +307,6 @@ check_prerequisites() {
 
 	require_command python3
 	check_gh_auth
-
-	if ! command -v pandoc >/dev/null 2>&1; then
-		info "pandoc not found (optional — only needed for one-time RST migration)."
-	fi
 }
 
 check_release_notes_file() {
