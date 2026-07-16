@@ -23,8 +23,9 @@ Run `./release.sh --help` for the full list of options.
 : Simulates the workflow without running git or Maven commands.
 
 `--rollback`
-: Undoes a local or failed release using the `.release` state file (gitignored). Deletes
-  the local release branch and tag, checks out the original branch, and removes `.release`.
+: Undoes a local or failed release using the `release/.release` state file (under the
+  gitignored `release/` directory). Deletes the local release branch and tag, checks out
+  the original branch, and removes `release/.release`.
 
 Typical local rehearsal:
 
@@ -39,7 +40,7 @@ If the release fails, or you want to discard the local rehearsal:
 $ ./release.sh --rollback
 ```
 
-The `.release` file is written as soon as the release branch is created, so `--rollback`
+The `release/.release` file is written as soon as the release branch is created, so `--rollback`
 works even when the build fails midway.
 
 ## What the script does (production release)

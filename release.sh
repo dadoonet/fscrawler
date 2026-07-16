@@ -16,7 +16,7 @@ readonly RELEASE_STATE_FILE_NAME=".release"
 readonly LOG_TAIL_LINES=50
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RELEASE_STATE_FILE="${ROOT_DIR}/${RELEASE_STATE_FILE_NAME}"
+RELEASE_STATE_FILE="${ROOT_DIR}/release/${RELEASE_STATE_FILE_NAME}"
 START_DIR="$(pwd)"
 
 DRY_RUN=false
@@ -54,20 +54,20 @@ Options:
   -n, --dry-run    Simulate the release without mutating git, Maven, or remotes
   -l, --local      Full local rehearsal: branch, build, sign, release notes
                    (no Maven Central, Docker Hub, git push, or GitHub release)
-      --rollback   Undo a local or failed release using ${RELEASE_STATE_FILE_NAME}
+      --rollback   Undo a local or failed release using release/${RELEASE_STATE_FILE_NAME}
       --skip-tests Add -DskipTests to Maven build commands
 
 Modes:
   default          Interactive production release (deploy/push when confirmed)
   --dry-run        Log commands only; repository stays unchanged
-  --local          Execute locally; ${RELEASE_STATE_FILE_NAME} written as soon as changes start
+  --local          Execute locally; release/${RELEASE_STATE_FILE_NAME} written as soon as changes start
   --rollback       Delete local release branch/tag and return to the original branch
 
 Local mode:
   - Creates the release branch, commits, builds with -Prelease, tags, generates notes
   - Skips deploy, git push, Docker Hub, GitHub release, and production email
   - Optionally sends a test announcement email to ANNOUNCE_TO from .env
-  - ${RELEASE_STATE_FILE_NAME} is saved early so --rollback works after a failure
+  - release/${RELEASE_STATE_FILE_NAME} is saved early so --rollback works after a failure
 
 Examples:
   ${SCRIPT_NAME} --help
@@ -321,7 +321,7 @@ suggest_previous_tag() {
 }
 
 # ---------------------------------------------------------------------------
-# Release state (${RELEASE_STATE_FILE_NAME})
+# Release state (release/${RELEASE_STATE_FILE_NAME})
 # ---------------------------------------------------------------------------
 
 release_state_exists() {
@@ -330,7 +330,7 @@ release_state_exists() {
 
 ensure_no_release_state() {
 	release_state_exists || return 0
-	die "Existing release state found (${RELEASE_STATE_FILE_NAME}). Run: ${SCRIPT_NAME} --rollback"
+	die "Existing release state found (release/${RELEASE_STATE_FILE_NAME}). Run: ${SCRIPT_NAME} --rollback"
 }
 
 save_release_state() {
@@ -338,6 +338,7 @@ save_release_state() {
 	local mode="production"
 	is_local && mode="local"
 
+	mkdir -p "$(dirname "${RELEASE_STATE_FILE}")"
 	cat >"${RELEASE_STATE_FILE}" <<EOF
 ORIGINAL_BRANCH=${ORIGINAL_BRANCH}
 ORIGINAL_HEAD=${ORIGINAL_HEAD:-}
@@ -349,7 +350,7 @@ LOG_FILE=${LOG_FILE}
 MODE=${mode}
 STATUS=${status}
 EOF
-	log "Saved release state to ${RELEASE_STATE_FILE_NAME} (${status})"
+	log "Saved release state to release/${RELEASE_STATE_FILE_NAME} (${status})"
 }
 
 load_release_state() {
@@ -365,7 +366,7 @@ rollback_from_state_file() {
 	cd "${ROOT_DIR}"
 
 	if ! release_state_exists; then
-		die "No release state file (${RELEASE_STATE_FILE_NAME}). Nothing to rollback."
+		die "No release state file (release/${RELEASE_STATE_FILE_NAME}). Nothing to rollback."
 	fi
 
 	load_release_state

@@ -21,6 +21,5 @@ docs/build
 /.run/IT (serverless).run.xml
 CLAUDE.local.md
 .claude/settings.local.json
-.release
 .env
 /release/
