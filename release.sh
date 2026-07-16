@@ -386,6 +386,15 @@ rollback_from_state_file() {
 	if [[ "${STATUS:-}" == "awaiting_push" && -n "${ORIGINAL_HEAD:-}" ]]; then
 		log "Resetting ${ORIGINAL_BRANCH} to pre-merge commit ${ORIGINAL_HEAD}"
 		git -C "${ROOT_DIR}" reset --hard "${ORIGINAL_HEAD}"
+	elif [[ "${STATUS:-}" == "pushed" ]]; then
+		warn "${ORIGINAL_BRANCH} and tag ${RELEASE_TAG} were already pushed to origin."
+		warn "Not resetting ${ORIGINAL_BRANCH} or deleting the local tag — that would diverge from the remote."
+		info "If you must remove the remote tag:"
+		info "  git push origin :refs/tags/${RELEASE_TAG}"
+		disable_release_tracking
+		clear_release_state
+		success "Release state cleared — local branch left aligned with origin."
+		return
 	fi
 
 	if git_branch_exists "${RELEASE_BRANCH}"; then
@@ -979,6 +988,8 @@ finalize_release() {
 	fi
 
 	git_run push origin "${ORIGINAL_BRANCH}" "${RELEASE_TAG}"
+	# Push succeeded — do not allow --rollback to hard-reset the merged branch anymore.
+	save_release_state "pushed"
 	# Tag now exists on GitHub — regenerate notes so generate-notes uses the pushed tag range.
 	log "Regenerating release notes against the pushed tag"
 	generate_announcement
