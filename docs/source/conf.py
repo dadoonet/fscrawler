@@ -221,7 +221,7 @@ epub_copyright = copyright
 # epub_uid = ''
 
 # A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
+epub_exclude_files = ['search.html', '.nojekyll']
 
 
 # -- Options for todo extension ----------------------------------------------
