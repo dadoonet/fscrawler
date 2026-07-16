@@ -881,6 +881,23 @@ finalize_skipped_deploy() {
 	info "  ${SCRIPT_NAME} --rollback"
 }
 
+finalize_failed_verification() {
+	warn "Publication verification was not confirmed — artifacts may already be on Maven Central or Docker Hub."
+	warn "Not rolling back: deleting the local branch/tag would not undo a remote publish."
+	save_release_state "verification_failed"
+	disable_release_tracking
+
+	info "Release branch: ${RELEASE_BRANCH}"
+	info "Release tag:    ${RELEASE_TAG}"
+	info "Next SNAPSHOT commit is on ${RELEASE_BRANCH}."
+	info "Inspect the publications, then continue manually when ready:"
+	info "  git checkout ${ORIGINAL_BRANCH}"
+	info "  git merge ${RELEASE_BRANCH}"
+	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
+	info "To discard local branch/tag only (remote artifacts are unaffected):"
+	info "  ${SCRIPT_NAME} --rollback"
+}
+
 finalize_release() {
 	git_run checkout -q "${ORIGINAL_BRANCH}"
 
@@ -900,7 +917,11 @@ finalize_release() {
 	fi
 
 	if [[ "${RELEASE_APPROVED}" != true ]]; then
-		rollback_release
+		if is_dry_run; then
+			info "[dry-run] Publication verification failed — would leave release branch/tag in place."
+			return
+		fi
+		finalize_failed_verification
 		return
 	fi
 
