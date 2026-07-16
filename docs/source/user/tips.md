@@ -43,3 +43,71 @@ and run FS crawler on this mount point. You can also read details about [HDFS NF
 ## Using docker
 
 See {ref}`docker`.
+
+(multi-machine)=
+## Running FSCrawler on multiple machines
+
+```{versionadded} 3.0
+```
+
+If you run FSCrawler on several hosts against the **same Elasticsearch cluster**, and those
+hosts crawl paths that look identical (for example both watch `/data/docs`), document `_id`s
+can collide.
+
+By default, the `_id` is derived from the file path (see {ref}`document-ids`). The same path on
+`machine1` and `machine2` therefore produces the **same** `_id`. The last writer wins and
+silently overwrites the other machine's document.
+
+Do **not** point several crawlers at the same physical document index unless every path (and
+thus every `_id`) is guaranteed unique across machines.
+
+### Recommended pattern: one index per machine + a search alias
+
+Give each machine its own document and folder indices, then use the shared alias for search:
+
+**On machine1** (`~/.fscrawler/fscrawler/_settings.yaml`):
+
+```yaml
+name: "fscrawler"
+fs:
+  url: "/data/docs"
+elasticsearch:
+  index: "fscrawler_machine1_docs"
+  index_folder: "fscrawler_machine1_folder"
+```
+
+**On machine2** (`~/.fscrawler/fscrawler/_settings.yaml`):
+
+```yaml
+name: "fscrawler"
+fs:
+  url: "/data/docs"
+elasticsearch:
+  index: "fscrawler_machine2_docs"
+  index_folder: "fscrawler_machine2_folder"
+```
+
+By default, FSCrawler creates an index alias named after the job `name` (here `fscrawler`) that points to 
+the documents index. That means that both `fscrawler_machine1_docs` and `fscrawler_machine2_docs` are aliased to 
+`fscrawler`. You can then use the alias for search on `fscrawler`. Each crawler writes only to its own index, so:
+
+* `_id` collisions between machines no longer overwrite each other
+* `fs.remove_deleted` only removes documents that belong to that machine's index
+* folder housekeeping stays isolated as the folder index is also per machine
+
+```{note}
+See {ref}`mappings` for how the job-name alias is created via index templates.
+```
+
+### Alternatives
+
+* **Different `fs.url` layouts** that never collide in the hashed path (for example mount points
+  that include the hostname) can share one index, but that is brittle and hard to reason about.
+* **`fs.filename_as_id: true`** does **not** fix multi-machine collisions: identical filenames
+  still share the same `_id`.
+
+### See also
+
+* {ref}`document-ids` — how `_id`s are generated and what happens when you change the algorithm
+* {ref}`elasticsearch-settings` — `elasticsearch.index` / `elasticsearch.index_folder`
+* Discussion: [Running FSCrawler on several servers](https://github.com/dadoonet/fscrawler/discussions/2256)
