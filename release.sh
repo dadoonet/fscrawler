@@ -24,6 +24,7 @@ LOCAL_MODE=false
 ROLLBACK_ONLY=false
 SKIP_TESTS=false
 RELEASE_APPROVED=false
+RELEASE_DEPLOYED=false
 RELEASE_TRACKING=false
 FAILURE_HANDLED=false
 
@@ -806,6 +807,7 @@ maybe_deploy() {
 
 	if confirm "Deploy artifacts now?" y; then
 		RELEASE_APPROVED=true
+		RELEASE_DEPLOYED=true
 		deploy_release
 	else
 		info "Skipping deployment."
@@ -863,11 +865,37 @@ maybe_send_local_test_announcement() {
 	fi
 }
 
+finalize_skipped_deploy() {
+	warn "Deployment was skipped — leaving release branch and tag in place."
+	save_release_state "awaiting_deploy"
+	disable_release_tracking
+
+	info "Release branch: ${RELEASE_BRANCH}"
+	info "Release tag:    ${RELEASE_TAG}"
+	info "Next SNAPSHOT commit is on ${RELEASE_BRANCH}."
+	info "When ready to continue:"
+	info "  git checkout ${ORIGINAL_BRANCH}"
+	info "  git merge ${RELEASE_BRANCH}"
+	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
+	info "Or discard with:"
+	info "  ${SCRIPT_NAME} --rollback"
+}
+
 finalize_release() {
 	git_run checkout -q "${ORIGINAL_BRANCH}"
 
 	if is_local; then
 		finalize_local_release
+		return
+	fi
+
+	# Skipped deploy is not a failure: keep branch/tag for a later deploy or merge.
+	if [[ "${RELEASE_DEPLOYED}" != true ]]; then
+		if is_dry_run; then
+			info "[dry-run] Deployment was skipped — would leave release branch/tag in place."
+			return
+		fi
+		finalize_skipped_deploy
 		return
 	fi
 
