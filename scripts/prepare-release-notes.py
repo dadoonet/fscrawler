@@ -73,6 +73,31 @@ def resolve_myst_refs(
     return REF_SIMPLE_RE.sub(simple_replace, markdown)
 
 
+def demote_headings(markdown: str, levels: int = 1) -> str:
+    """Increase ATX heading depth so version notes nest under the announcement header.
+
+    Leaves headings inside fenced code blocks unchanged. Caps at Markdown H6.
+    """
+    if levels < 1:
+        return markdown
+
+    in_fence = False
+    lines: list[str] = []
+    for line in markdown.splitlines():
+        if line.startswith("```"):
+            in_fence = not in_fence
+            lines.append(line)
+            continue
+        if not in_fence:
+            match = re.match(r"^(#{1,5})(\s+.+)$", line)
+            if match:
+                hashes, rest = match.groups()
+                new_level = min(len(hashes) + levels, 6)
+                line = f"{'#' * new_level}{rest}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def download_url(version: str) -> str:
     return (
         "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/"
@@ -89,7 +114,8 @@ def read_release_notes(notes_path: Path, version: str, ref_index: dict[str, str]
     if not notes_path.is_file():
         sys.exit(f"Release notes not found: {notes_path}")
     content = notes_path.read_text(encoding="utf-8").strip()
-    return resolve_myst_refs(content, version, ref_index)
+    content = resolve_myst_refs(content, version, ref_index)
+    return demote_headings(content)
 
 
 def gh_generate_notes(repo: str, tag_name: str, previous_tag_name: str) -> str:

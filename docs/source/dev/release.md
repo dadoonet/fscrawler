@@ -70,7 +70,8 @@ does not remove them).
 The final notes combine:
 
 * A usage header (`scripts/templates/release-header.md`)
-* The version-specific Markdown file
+* The version-specific Markdown file (MyST `{ref}` resolved to ReadTheDocs links;
+  heading levels demoted by one so they nest under the header)
 * GitHub-generated changelist (`## What's Changed`) from `gh api .../releases/generate-notes`
 
 To update notes after a GitHub release was already published, edit the Markdown file and run
