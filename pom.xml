@@ -87,7 +87,7 @@
         <minio.version>9.0.3</minio.version>
 
         <!-- Tests -->
-        <junit.version>6.1.1</junit.version>
+        <junit.version>6.1.2</junit.version>
         <randomizedtesting.version>0.3.0</randomizedtesting.version>
         <mockito.version>5.19.0</mockito.version>
 
