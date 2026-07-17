@@ -103,7 +103,7 @@ public class FsCrawlerCheckpointFileHandler extends MetaFileHandler {
                 // Create a completed checkpoint from the legacy job.
                 // scanEndTime is required: loadOrCreateCheckpoint uses it (not scanDate) as the
                 // reference for the next scan when state is COMPLETED. Without it, we would fall
-                // back to LocalDateTime.MIN and trigger a full re-index.
+                // back to Instant.EPOCH and trigger a full re-index.
                 FsCrawlerCheckpoint migratedCheckpoint = new FsCrawlerCheckpoint();
                 migratedCheckpoint.setScanDate(legacyJob.getLastrun());
                 migratedCheckpoint.setScanEndTime(legacyJob.getLastrun());

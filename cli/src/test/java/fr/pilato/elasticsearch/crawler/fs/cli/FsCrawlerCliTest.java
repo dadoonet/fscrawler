@@ -33,7 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterEach;
@@ -224,8 +224,8 @@ class FsCrawlerCliTest extends AbstractFSCrawlerTestCase {
 
         // Write legacy status file
         FsJob legacyJob = new FsJob();
-        legacyJob.setLastrun(LocalDateTime.now().minusHours(1));
-        legacyJob.setNextCheck(LocalDateTime.now().plusHours(1));
+        legacyJob.setLastrun(Instant.now().minus(1, java.time.temporal.ChronoUnit.HOURS));
+        legacyJob.setNextCheck(Instant.now().plus(1, java.time.temporal.ChronoUnit.HOURS));
         legacyJob.setIndexed(50);
         legacyJob.setDeleted(2);
         legacyHandler.write(jobName, legacyJob);

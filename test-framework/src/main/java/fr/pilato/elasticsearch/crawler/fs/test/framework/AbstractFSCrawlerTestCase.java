@@ -95,7 +95,7 @@ public abstract class AbstractFSCrawlerTestCase {
      * parallel class execution enabled, randomizing them per class (with {@code @AfterAll} resets) races with other
      * classes running concurrently in the same JVM: a class finishing while others are still running would flip the
      * default {@code TimeZone} under their feet, breaking production code such as {@code FsParser} incremental-scan
-     * checkpoints that rely on {@link java.time.LocalDateTime#now()}.
+     * checkpoints that rely on {@link java.time.Instant#now()}.
      *
      * <p>The values are derived from the <b>root</b> seed rather than a per-class {@link Random}, so they remain fully
      * reproducible with {@code -Dtests.seed} regardless of which class is scheduled first, and can still be pinned

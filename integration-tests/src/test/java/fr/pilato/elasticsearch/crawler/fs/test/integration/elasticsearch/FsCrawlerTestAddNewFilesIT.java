@@ -33,7 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCa
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,7 +66,7 @@ class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
 
         // Forcing a rescan by modifying the next scan date
         logger.info("  ---> changing next check date to now manually");
-        waitForFsJobAndSetDate(fsSettings.getName(), LocalDateTime.now());
+        waitForFsJobAndSetDate(fsSettings.getName(), Instant.now());
 
         // We expect to have two files
         countTestHelper(
@@ -168,7 +168,7 @@ class FsCrawlerTestAddNewFilesIT extends AbstractFsCrawlerITCase {
         });
     }
 
-    private void waitForFsJobAndSetDate(String jobName, LocalDateTime dateTime) {
+    private void waitForFsJobAndSetDate(String jobName, Instant dateTime) {
         Awaitility.await()
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .atMost(10, TimeUnit.SECONDS)

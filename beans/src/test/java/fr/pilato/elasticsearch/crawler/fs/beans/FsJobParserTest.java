@@ -23,7 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -47,7 +47,7 @@ class FsJobParserTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void parseJob() throws IOException {
-        jobTester(new FsJob(jobName, LocalDateTime.now(), LocalDateTime.now(), 1000, 5));
+        jobTester(new FsJob(jobName, Instant.now(), Instant.now(), 1000, 5));
     }
 
     /**
@@ -57,7 +57,7 @@ class FsJobParserTest extends AbstractFSCrawlerTestCase {
      */
     @Test
     void dateTimeSerialization() throws IOException {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         FsJob job = new FsJob(jobName, now, now, 1000, 5);
         String json = JsonUtil.prettyMapper.writeValueAsString(job);
         FsJob generated = JsonUtil.prettyMapper.readValue(json, FsJob.class);

@@ -41,18 +41,20 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -247,31 +249,31 @@ public class FsCrawlerUtil {
         return result;
     }
 
-    private static LocalDateTime getFileTime(File file, Function<BasicFileAttributes, FileTime> timeFunction) {
+    private static Instant getFileTime(File file, Function<BasicFileAttributes, FileTime> timeFunction) {
         try {
             Path path = Paths.get(file.getAbsolutePath());
             BasicFileAttributes fileattr = Files.getFileAttributeView(path, BasicFileAttributeView.class)
                     .readAttributes();
-            return LocalDateTime.ofInstant(timeFunction.apply(fileattr).toInstant(), ZoneId.systemDefault());
+            return timeFunction.apply(fileattr).toInstant();
         } catch (Exception e) {
             return null;
         }
     }
 
-    public static LocalDateTime getCreationTime(File file) {
+    public static Instant getCreationTime(File file) {
         return getFileTime(file, BasicFileAttributes::creationTime);
     }
 
-    public static LocalDateTime getModificationTime(File file) {
+    public static Instant getModificationTime(File file) {
         return getFileTime(file, BasicFileAttributes::lastModifiedTime);
     }
 
-    public static LocalDateTime getLastAccessTime(File file) {
+    public static Instant getLastAccessTime(File file) {
         return getFileTime(file, BasicFileAttributes::lastAccessTime);
     }
 
-    public static LocalDateTime getModificationOrCreationTime(File file) {
-        LocalDateTime lastAccessTime = getFileTime(file, BasicFileAttributes::lastAccessTime);
+    public static Instant getModificationOrCreationTime(File file) {
+        Instant lastAccessTime = getFileTime(file, BasicFileAttributes::lastAccessTime);
         if (lastAccessTime != null) {
             return lastAccessTime;
         } else {
@@ -279,18 +281,33 @@ public class FsCrawlerUtil {
         }
     }
 
-    public static Date localDateTimeToDate(LocalDateTime ldt) {
-        if (ldt == null) {
+    /**
+     * Parse an ISO-8601 date/time into an {@link Instant}. Accepts:
+     *
+     * <ul>
+     *   <li>Instant / OffsetDateTime forms ({@code 2016-07-07T08:37:00Z}, {@code ...+02:00})
+     *   <li>Legacy zone-less {@code LocalDateTime} strings, interpreted in the JVM default zone (same assumption as
+     *       pre-3.0 checkpoint files)
+     * </ul>
+     */
+    public static Instant parseInstant(String sDate) {
+        if (sDate == null || sDate.isBlank()) {
             return null;
         }
-        return Date.from(ldt.atZone(TimeZone.getDefault().toZoneId()).toInstant());
-    }
-
-    public static Date localDateTimeToDate(String sDate) {
-        if (sDate == null) {
-            return null;
+        try {
+            return Instant.parse(sDate);
+        } catch (DateTimeParseException ignored) {
+            // Fall through to more flexible parsing
         }
-        return localDateTimeToDate(LocalDateTime.parse(sDate, DateTimeFormatter.ISO_DATE_TIME));
+        TemporalAccessor ta =
+                DateTimeFormatter.ISO_DATE_TIME.parseBest(sDate, OffsetDateTime::from, LocalDateTime::from);
+        if (ta instanceof OffsetDateTime offsetDateTime) {
+            return offsetDateTime.toInstant();
+        }
+        if (ta instanceof LocalDateTime localDateTime) {
+            return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
+        }
+        throw new DateTimeParseException("Cannot parse instant from [" + sDate + "]", sDate, 0);
     }
 
     public static String getFileExtension(File file) {

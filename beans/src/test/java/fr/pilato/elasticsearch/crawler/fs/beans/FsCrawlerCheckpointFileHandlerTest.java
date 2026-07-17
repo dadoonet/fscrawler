@@ -22,7 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -101,7 +101,7 @@ class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
     void testCompleteCheckpointRoundTrip() throws IOException {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId("test-scan-id");
-        checkpoint.setScanStartTime(LocalDateTime.now());
+        checkpoint.setScanStartTime(Instant.now());
         checkpoint.setCurrentPath("/current");
         checkpoint.addPath("/pending1");
         checkpoint.addPath("/pending2");
@@ -112,7 +112,7 @@ class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
         checkpoint.setState(CrawlerState.RUNNING);
         checkpoint.setRetryCount(3);
         checkpoint.setLastError("Some error");
-        checkpoint.setScanDate(LocalDateTime.now().minusDays(1));
+        checkpoint.setScanDate(Instant.now().minus(1, java.time.temporal.ChronoUnit.DAYS));
 
         handler.write(jobName, checkpoint);
 
@@ -134,8 +134,8 @@ class FsCrawlerCheckpointFileHandlerTest extends AbstractFSCrawlerTestCase {
         // Create a legacy _status.json file
         FsJobFileHandler legacyHandler = new FsJobFileHandler(testTmpDir);
         FsJob legacyJob = new FsJob();
-        legacyJob.setLastrun(LocalDateTime.now().minusHours(1));
-        legacyJob.setNextCheck(LocalDateTime.now().plusHours(1));
+        legacyJob.setLastrun(Instant.now().minus(1, java.time.temporal.ChronoUnit.HOURS));
+        legacyJob.setNextCheck(Instant.now().plus(1, java.time.temporal.ChronoUnit.HOURS));
         legacyJob.setIndexed(50);
         legacyJob.setDeleted(2);
         legacyHandler.write(jobName, legacyJob);

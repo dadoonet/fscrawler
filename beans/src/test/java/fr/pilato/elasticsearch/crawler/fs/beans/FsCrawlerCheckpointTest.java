@@ -24,7 +24,9 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -56,7 +58,7 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     void parseCheckpointWithData() throws IOException {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId("test-scan-123");
-        checkpoint.setScanStartTime(LocalDateTime.now());
+        checkpoint.setScanStartTime(Instant.now());
         checkpoint.setCurrentPath("/current/path");
         checkpoint.addPath("/pending/path1");
         checkpoint.addPath("/pending/path2");
@@ -66,9 +68,9 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         checkpoint.setState(CrawlerState.RUNNING);
         checkpoint.setRetryCount(2);
         checkpoint.setLastError("Test error");
-        checkpoint.setScanDate(LocalDateTime.now().minusDays(1));
-        checkpoint.setScanEndTime(LocalDateTime.now());
-        checkpoint.setNextCheck(LocalDateTime.now().plusHours(1));
+        checkpoint.setScanDate(Instant.now().minus(1, java.time.temporal.ChronoUnit.DAYS));
+        checkpoint.setScanEndTime(Instant.now());
+        checkpoint.setNextCheck(Instant.now().plus(1, java.time.temporal.ChronoUnit.HOURS));
 
         checkpointTester(checkpoint);
     }
@@ -184,12 +186,12 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     /** Test that date serialization is stable */
     @Test
     void dateTimeSerialization() throws IOException {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanStartTime(now);
         checkpoint.setScanDate(now);
         checkpoint.setScanEndTime(now);
-        checkpoint.setNextCheck(now.plusHours(1));
+        checkpoint.setNextCheck(now.plus(1, java.time.temporal.ChronoUnit.HOURS));
 
         String json = JsonUtil.prettyMapper.writeValueAsString(checkpoint);
         FsCrawlerCheckpoint generated = JsonUtil.prettyMapper.readValue(json, FsCrawlerCheckpoint.class);
@@ -197,7 +199,7 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(generated.getScanStartTime()).isEqualTo(now);
         Assertions.assertThat(generated.getScanDate()).isEqualTo(now);
         Assertions.assertThat(generated.getScanEndTime()).isEqualTo(now);
-        Assertions.assertThat(generated.getNextCheck()).isEqualTo(now.plusHours(1));
+        Assertions.assertThat(generated.getNextCheck()).isEqualTo(now.plus(1, java.time.temporal.ChronoUnit.HOURS));
     }
 
     /** Test completed checkpoint scenario (replaces FsJob) */
@@ -206,8 +208,8 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId("completed-scan-123");
         checkpoint.setState(CrawlerState.COMPLETED);
-        checkpoint.setScanEndTime(LocalDateTime.now());
-        checkpoint.setNextCheck(LocalDateTime.now().plusMinutes(15));
+        checkpoint.setScanEndTime(Instant.now());
+        checkpoint.setNextCheck(Instant.now().plus(15, java.time.temporal.ChronoUnit.MINUTES));
         checkpoint.setFilesProcessed(500);
         checkpoint.setFilesDeleted(10);
 
@@ -248,5 +250,39 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(checkpoint.getPendingPaths()).isNotNull();
         Assertions.assertThat(checkpoint.getCompletedPaths()).isNotNull();
         Assertions.assertThat(checkpoint.toString()).contains("pendingPaths=0").contains("completedPaths=0");
+    }
+
+    @Test
+    void legacy_local_date_time_checkpoint_deserializes_to_instant() throws IOException {
+        // Pre-3.0 checkpoints stored zone-less LocalDateTime strings.
+        String legacyJson = """
+                {
+                  "scan_id" : "legacy",
+                  "scan_start_time" : "2026-07-02T12:10:57",
+                  "scan_date" : "2026-07-02T12:10:55",
+                  "scan_end_time" : "2026-07-02T12:11:00",
+                  "next_check" : "2026-07-02T12:26:00",
+                  "state" : "COMPLETED",
+                  "files_processed" : 3,
+                  "files_deleted" : 0,
+                  "retry_count" : 0,
+                  "pending_paths" : [ ],
+                  "completed_paths" : [ ]
+                }
+                """;
+        FsCrawlerCheckpoint checkpoint = JsonUtil.prettyMapper.readValue(legacyJson, FsCrawlerCheckpoint.class);
+        ZoneId zone = ZoneId.systemDefault();
+        Assertions.assertThat(checkpoint.getScanStartTime())
+                .isEqualTo(
+                        LocalDateTime.parse("2026-07-02T12:10:57").atZone(zone).toInstant());
+        Assertions.assertThat(checkpoint.getScanDate())
+                .isEqualTo(
+                        LocalDateTime.parse("2026-07-02T12:10:55").atZone(zone).toInstant());
+        Assertions.assertThat(checkpoint.getScanEndTime())
+                .isEqualTo(
+                        LocalDateTime.parse("2026-07-02T12:11:00").atZone(zone).toInstant());
+        Assertions.assertThat(checkpoint.getNextCheck())
+                .isEqualTo(
+                        LocalDateTime.parse("2026-07-02T12:26:00").atZone(zone).toInstant());
     }
 }
