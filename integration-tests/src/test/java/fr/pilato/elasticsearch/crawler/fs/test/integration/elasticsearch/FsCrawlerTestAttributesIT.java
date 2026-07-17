@@ -45,9 +45,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
@@ -152,27 +150,22 @@ class FsCrawlerTestAttributesIT extends AbstractFsCrawlerITCase {
 
         DocumentContext initialDocument = fetchSingleDocument(fsSettings);
         int initialAclSize = readAclSize(initialDocument);
-        String initialIndexingDate = initialDocument.read("$.file.indexing_date");
 
         addCustomAclEntry(file);
 
-        AtomicReference<DocumentContext> updatedDocument = new AtomicReference<>();
+        // Wait on ACL size, not indexing_date: with updateRate=1s the crawler can reindex
+        // every run on Windows (scanDate = start-2s) before the ACL change is visible.
         Awaitility.await()
                 .atMost(60, TimeUnit.SECONDS)
-                .alias("Document should be reindexed when ACL metadata changes")
+                .alias("Document ACL size should increase when ACL metadata changes")
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
                 .until(() -> {
                     try {
-                        DocumentContext current = fetchSingleDocument(fsSettings);
-                        updatedDocument.set(current);
-                        String currentIndexingDate = current.read("$.file.indexing_date");
-                        return !Objects.equals(initialIndexingDate, currentIndexingDate);
+                        return readAclSize(fetchSingleDocument(fsSettings)) > initialAclSize;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 });
-
-        Assertions.assertThat(readAclSize(updatedDocument.get())).isGreaterThan(initialAclSize);
     }
 
     private DocumentContext fetchSingleDocument(FsSettings fsSettings) throws Exception {
