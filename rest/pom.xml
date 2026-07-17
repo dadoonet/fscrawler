@@ -90,10 +90,10 @@
                 <executions>
                     <execution>
                         <id>mockito-agent-path</id>
-                        <phase>process-test-classes</phase>
                         <goals>
                             <goal>properties</goal>
                         </goals>
+                        <phase>process-test-classes</phase>
                     </execution>
                 </executions>
             </plugin>
