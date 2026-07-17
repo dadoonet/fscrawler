@@ -52,11 +52,16 @@ git -C "${repo}" push -q -u origin master
 
 printf 'released\n' >"${repo}/version.txt"
 git -C "${repo}" commit -q -am "release and next development version"
-release_head="$(git -C "${repo}" rev-parse HEAD)"
 git -C "${repo}" tag fscrawler-1.0.0
 
 # Simulate a non-atomic push where the branch succeeded but the tag failed.
 git -C "${repo}" push -q origin master
+
+# Local work after the failed push must not hide the published release commit.
+printf 'local follow-up\n' >"${repo}/local.txt"
+git -C "${repo}" add local.txt
+git -C "${repo}" commit -q -m "local follow-up"
+local_head="$(git -C "${repo}" rev-parse HEAD)"
 
 mkdir -p "${repo}/release"
 cat >"${repo}/release/.release" <<EOF
@@ -75,7 +80,7 @@ if output="$(cd "${repo}" && ./release.sh --rollback 2>&1)"; then
 	fail "rollback succeeded after the release branch was pushed without its tag"
 fi
 
-[[ "$(git -C "${repo}" rev-parse HEAD)" == "${release_head}" ]] ||
+[[ "$(git -C "${repo}" rev-parse HEAD)" == "${local_head}" ]] ||
 	fail "rollback reset the local branch behind its published remote"
 git -C "${repo}" rev-parse --verify -q refs/tags/fscrawler-1.0.0 >/dev/null ||
 	fail "rollback deleted the local release tag after a partial push"
