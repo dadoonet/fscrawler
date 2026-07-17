@@ -24,6 +24,7 @@ import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
@@ -33,9 +34,12 @@ import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /** Test different dates of files */
@@ -54,16 +58,22 @@ class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
 
         Files.write(currentTestResourceDir.resolve("second.txt"), "This is a second file".getBytes());
 
+        ESSearchRequest searchRequest = new ESSearchRequest()
+                .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
+                .withSort("file.filename");
+
         // We expect to have two files
-        ESSearchResponse responseNotModified = countTestHelper(
-                new ESSearchRequest()
-                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
-                        .withSort("file.filename"),
-                2L,
-                currentTestResourceDir);
+        ESSearchResponse responseNotModified = countTestHelper(searchRequest, 2L, currentTestResourceDir);
 
         // We look at the dates.
         showHitDates(responseNotModified.getHits());
+
+        // Snapshot second.txt dates before we mutate them. Hits are sorted by filename:
+        // roottxtfile.txt (0), second.txt (1).
+        DocumentContext secondBefore = JsonUtil.parseJsonAsDocumentContext(
+                responseNotModified.getHits().get(1).getSource());
+        String secondLastModifiedBefore = secondBefore.read("$.file.last_modified");
+        String secondLastAccessedBefore = secondBefore.read("$.file.last_accessed");
 
         // We record what the current date is
         Instant mockAccessDate = Instant.now(); // can be LocalDateTime
@@ -75,13 +85,37 @@ class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         logger.info(" ---> Creating a new file third.txt");
         Files.write(currentTestResourceDir.resolve("third.txt"), "This is a third file".getBytes());
 
-        // We expect to have 3 files
-        ESSearchResponse responseModified = countTestHelper(
-                new ESSearchRequest()
-                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
-                        .withSort("file.filename"),
-                3L,
-                currentTestResourceDir);
+        // Wait until third.txt is indexed AND second.txt has been reindexed with new dates.
+        // Waiting on hit count alone is flaky: third.txt (a new doc) can become searchable before
+        // the async bulk update for second.txt is visible (especially on serverless under parallel load).
+        AtomicReference<ESSearchResponse> responseModifiedRef = new AtomicReference<>();
+        Awaitility.await()
+                .atMost(MAX_WAIT_FOR_SEARCH)
+                .alias("second.txt dates should be updated and third.txt indexed")
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    try {
+                        refresh(searchRequest.getIndex());
+                        ESSearchResponse response = client.search(searchRequest);
+                        if (response.getTotalHits() != 3L || response.getHits().size() < 2) {
+                            return false;
+                        }
+                        DocumentContext secondAfter = JsonUtil.parseJsonAsDocumentContext(
+                                response.getHits().get(1).getSource());
+                        String lastModified = secondAfter.read("$.file.last_modified");
+                        String lastAccessed = secondAfter.read("$.file.last_accessed");
+                        if (Objects.equals(secondLastModifiedBefore, lastModified)
+                                || Objects.equals(secondLastAccessedBefore, lastAccessed)) {
+                            return false;
+                        }
+                        responseModifiedRef.set(response);
+                        return true;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        ESSearchResponse responseModified = responseModifiedRef.get();
 
         // We look at the dates.
         showHitDates(responseModified.getHits());
