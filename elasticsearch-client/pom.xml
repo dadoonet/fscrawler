@@ -103,12 +103,16 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
             </plugin>
-            <!-- Resolve ${org.mockito:mockito-core:jar} for the Surefire javaagent below (JDK 21+). -->
+            <!-- Resolve ${org.mockito:mockito-core:jar} for the Surefire javaagent below (JDK 21+).
+                 Bound to process-test-classes (not initialize) so mvn generate-resources stays clean
+                 on CI without pre-installed reactor SNAPSHOT jars. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>mockito-agent-path</id>
+                        <phase>process-test-classes</phase>
                         <goals>
                             <goal>properties</goal>
                         </goals>
