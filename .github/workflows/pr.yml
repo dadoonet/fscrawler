@@ -66,6 +66,8 @@ jobs:
         cache: 'maven'
     - name: Display Maven information
       run: mvn --version
+    - name: Test release rollback safeguards
+      run: scripts/test-release-rollback.sh
     - name: Build but the docker images
       run: mvn --batch-mode package -Ddocker.skip -DskipIntegTests
 
