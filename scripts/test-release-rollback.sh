@@ -33,6 +33,24 @@ fail() {
 	exit 1
 }
 
+write_awaiting_push_state() {
+	local target_repo=$1
+	local pre_merge_head=$2
+
+	mkdir -p "${target_repo}/release"
+	cat >"${target_repo}/release/.release" <<EOF
+ORIGINAL_BRANCH=master
+ORIGINAL_HEAD=${pre_merge_head}
+RELEASE_BRANCH=release/1.0.0
+RELEASE_TAG=fscrawler-1.0.0
+RELEASE_VERSION=1.0.0
+NEXT_VERSION=1.0.1-SNAPSHOT
+LOG_FILE=
+MODE=production
+STATUS=awaiting_push
+EOF
+}
+
 repo="${TMP_DIR}/repo"
 remote="${TMP_DIR}/origin.git"
 
@@ -63,18 +81,7 @@ git -C "${repo}" add local.txt
 git -C "${repo}" commit -q -m "local follow-up"
 local_head="$(git -C "${repo}" rev-parse HEAD)"
 
-mkdir -p "${repo}/release"
-cat >"${repo}/release/.release" <<EOF
-ORIGINAL_BRANCH=master
-ORIGINAL_HEAD=${original_head}
-RELEASE_BRANCH=release/1.0.0
-RELEASE_TAG=fscrawler-1.0.0
-RELEASE_VERSION=1.0.0
-NEXT_VERSION=1.0.1-SNAPSHOT
-LOG_FILE=
-MODE=production
-STATUS=awaiting_push
-EOF
+write_awaiting_push_state "${repo}" "${original_head}"
 
 if output="$(cd "${repo}" && ./release.sh --rollback 2>&1)"; then
 	fail "rollback succeeded after the release branch was pushed without its tag"
@@ -90,4 +97,36 @@ git -C "${repo}" rev-parse --verify -q refs/tags/fscrawler-1.0.0 >/dev/null ||
 printf '%s\n' "${output}" | grep -q "partially published" ||
 	fail "rollback did not explain why destructive cleanup was refused"
 
-printf 'PASS: awaiting_push rollback preserves partially published releases\n'
+unpublished_repo="${TMP_DIR}/unpublished-repo"
+unpublished_remote="${TMP_DIR}/unpublished-origin.git"
+
+git init --bare -q "${unpublished_remote}"
+git init -q -b master "${unpublished_repo}"
+git -C "${unpublished_repo}" config user.name "Release Test"
+git -C "${unpublished_repo}" config user.email "release-test@example.com"
+cp "${PROJECT_ROOT}/release.sh" "${unpublished_repo}/release.sh"
+chmod +x "${unpublished_repo}/release.sh"
+
+printf 'base\n' >"${unpublished_repo}/version.txt"
+git -C "${unpublished_repo}" add release.sh version.txt
+git -C "${unpublished_repo}" commit -q -m "base"
+unpublished_original_head="$(git -C "${unpublished_repo}" rev-parse HEAD)"
+git -C "${unpublished_repo}" remote add origin "${unpublished_remote}"
+git -C "${unpublished_repo}" push -q -u origin master
+
+printf 'released\n' >"${unpublished_repo}/version.txt"
+git -C "${unpublished_repo}" commit -q -am "release and next development version"
+git -C "${unpublished_repo}" tag fscrawler-1.0.0
+write_awaiting_push_state "${unpublished_repo}" "${unpublished_original_head}"
+
+(cd "${unpublished_repo}" && ./release.sh --rollback >/dev/null 2>&1) ||
+	fail "rollback failed even though no release refs were published"
+[[ "$(git -C "${unpublished_repo}" rev-parse HEAD)" == "${unpublished_original_head}" ]] ||
+	fail "rollback did not restore the unpublished pre-merge commit"
+if git -C "${unpublished_repo}" rev-parse --verify -q refs/tags/fscrawler-1.0.0 >/dev/null; then
+	fail "rollback retained an unpublished local release tag"
+fi
+[[ ! -f "${unpublished_repo}/release/.release" ]] ||
+	fail "rollback retained state after cleaning up an unpublished release"
+
+printf 'PASS: awaiting_push rollback handles published and unpublished releases\n'
