@@ -76,7 +76,7 @@
             release (2.22.0 is outside the vulnerable range of CVE-2026-54512 / CVE-2026-54513, fixed in
             2.21.4) via the jackson-bom import below. Also used by the Spotless plugin (its own classpath).
         -->
-        <jackson2.version>2.22.0</jackson2.version>
+        <jackson2.version>2.22.1</jackson2.version>
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.1</log4j.version>
         <jersey.version>4.0.2</jersey.version>
