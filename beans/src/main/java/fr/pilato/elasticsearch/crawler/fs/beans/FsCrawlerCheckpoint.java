@@ -21,8 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
@@ -45,7 +44,7 @@ public class FsCrawlerCheckpoint {
     private String scanId;
 
     /** When this scan started */
-    private LocalDateTime scanStartTime;
+    private Instant scanStartTime;
 
     /** The directory currently being processed */
     private String currentPath;
@@ -91,13 +90,13 @@ public class FsCrawlerCheckpoint {
     private String lastError;
 
     /** The scan date used for comparison (to detect modified files) */
-    private LocalDateTime scanDate;
+    private Instant scanDate;
 
     /** When this scan was completed (replaces FsJob.lastrun) */
-    private LocalDateTime scanEndTime;
+    private Instant scanEndTime;
 
     /** When the next scan should run (replaces FsJob.nextCheck) */
-    private LocalDateTime nextCheck;
+    private Instant nextCheck;
 
     /**
      * When the crawler was interrupted (pause/close) while processing {@link #currentPath}, this is the number of files
@@ -161,7 +160,7 @@ public class FsCrawlerCheckpoint {
     public static FsCrawlerCheckpoint newCheckpoint(String rootPath) {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
         checkpoint.setScanId(UUID.randomUUID().toString());
-        checkpoint.setScanStartTime(LocalDateTime.now(ZoneId.systemDefault()));
+        checkpoint.setScanStartTime(Instant.now());
         checkpoint.addPath(rootPath);
         checkpoint.setState(CrawlerState.RUNNING);
         return checkpoint;
@@ -177,11 +176,11 @@ public class FsCrawlerCheckpoint {
         this.scanId = scanId;
     }
 
-    public LocalDateTime getScanStartTime() {
+    public Instant getScanStartTime() {
         return scanStartTime;
     }
 
-    public void setScanStartTime(LocalDateTime scanStartTime) {
+    public void setScanStartTime(Instant scanStartTime) {
         this.scanStartTime = scanStartTime;
     }
 
@@ -280,27 +279,27 @@ public class FsCrawlerCheckpoint {
         this.lastError = lastError;
     }
 
-    public LocalDateTime getScanDate() {
+    public Instant getScanDate() {
         return scanDate;
     }
 
-    public void setScanDate(LocalDateTime scanDate) {
+    public void setScanDate(Instant scanDate) {
         this.scanDate = scanDate;
     }
 
-    public LocalDateTime getScanEndTime() {
+    public Instant getScanEndTime() {
         return scanEndTime;
     }
 
-    public void setScanEndTime(LocalDateTime scanEndTime) {
+    public void setScanEndTime(Instant scanEndTime) {
         this.scanEndTime = scanEndTime;
     }
 
-    public LocalDateTime getNextCheck() {
+    public Instant getNextCheck() {
         return nextCheck;
     }
 
-    public void setNextCheck(LocalDateTime nextCheck) {
+    public void setNextCheck(Instant nextCheck) {
         this.nextCheck = nextCheck;
     }
 

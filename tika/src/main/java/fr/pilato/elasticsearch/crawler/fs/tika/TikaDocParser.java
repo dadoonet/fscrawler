@@ -273,7 +273,7 @@ public class TikaDocParser {
                             metadata,
                             TikaCoreProperties.MODIFIED,
                             doc.getMeta()::setDate,
-                            FsCrawlerUtil::localDateTimeToDate);
+                            FsCrawlerUtil::parseInstant);
 
                     setMeta(
                             doc.getPath().getReal(),
@@ -389,19 +389,19 @@ public class TikaDocParser {
                             metadata,
                             TikaCoreProperties.CREATED,
                             doc.getMeta()::setCreated,
-                            FsCrawlerUtil::localDateTimeToDate);
+                            FsCrawlerUtil::parseInstant);
                     setMeta(
                             doc.getPath().getReal(),
                             metadata,
                             TikaCoreProperties.PRINT_DATE,
                             doc.getMeta()::setPrintDate,
-                            FsCrawlerUtil::localDateTimeToDate);
+                            FsCrawlerUtil::parseInstant);
                     setMeta(
                             doc.getPath().getReal(),
                             metadata,
                             TikaCoreProperties.METADATA_DATE,
                             doc.getMeta()::setMetadataDate,
-                            FsCrawlerUtil::localDateTimeToDate);
+                            FsCrawlerUtil::parseInstant);
                     setMeta(
                             doc.getPath().getReal(),
                             metadata,

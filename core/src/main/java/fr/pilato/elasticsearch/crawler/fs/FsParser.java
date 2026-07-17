@@ -58,8 +58,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -331,16 +330,15 @@ public class FsParser implements Runnable, AutoCloseable {
                     // REST-only (no provider) or no folder to monitor: no-op run, checkpoint completed with 0 files
                     logger.info(
                             "Run #{}: job [{}]: skipping crawl (REST-only or no fs.url).", run, fsSettings.getName());
-                    LocalDateTime scanDatenew =
-                            LocalDateTime.now(ZoneId.systemDefault()).minusSeconds(2);
-                    LocalDateTime nextCheck =
+                    Instant scanDatenew = Instant.now().minusSeconds(2);
+                    Instant nextCheck =
                             scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
                     setCurrentCheckpoint(FsCrawlerCheckpoint.newCheckpoint(""));
                     checkpoint.get().ensureConcurrentCollections();
                     updateCheckpointAsCompleted(scanDatenew, nextCheck);
                 } else {
                     ScanStatistic stats = new ScanStatistic(url);
-                    LocalDateTime startDate = LocalDateTime.now(ZoneId.systemDefault());
+                    Instant startDate = Instant.now();
                     stats.setStartTime(startDate);
 
                     crawlerPlugin.openConnection();
@@ -354,7 +352,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
                     // We need to round that latest date to the lower second and remove 2 seconds.
                     // See #82: https://github.com/dadoonet/fscrawler/issues/82
-                    LocalDateTime scanDatenew = startDate.minusSeconds(2);
+                    Instant scanDatenew = startDate.minusSeconds(2);
 
                     // Load or create checkpoint (handles migration from legacy _status.json)
                     setCurrentCheckpoint(loadOrCreateCheckpoint(url));
@@ -372,18 +370,18 @@ public class FsParser implements Runnable, AutoCloseable {
 
                     // We only index the root directory once (first run)
                     // That means that we don't have a scanDate yet (checkpoint.scanDate is MIN)
-                    LocalDateTime scanDate = checkpoint.get().getScanDate();
-                    if ((scanDate == null || scanDate.equals(LocalDateTime.MIN))
+                    Instant scanDate = checkpoint.get().getScanDate();
+                    if ((scanDate == null || scanDate.equals(Instant.EPOCH))
                             && fsSettings.getFs().isIndexFolders()) {
                         indexDirectory(url, url);
                     }
 
-                    LocalDateTime effectiveScanDate = scanDate != null ? scanDate : LocalDateTime.MIN;
+                    Instant effectiveScanDate = scanDate != null ? scanDate : Instant.EPOCH;
 
                     // Process directories using work queue instead of recursion
                     processDirectoriesWithCheckpoint(effectiveScanDate, stats);
 
-                    stats.setEndTime(LocalDateTime.now(ZoneId.systemDefault()));
+                    stats.setEndTime(Instant.now());
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
                     stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());
 
@@ -403,7 +401,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             scanDuration != null ? scanDuration.toMillis() : 0L);
 
                     // Compute the next check time by adding fsSettings.getFs().getUpdateRate().millis()
-                    LocalDateTime nextCheck =
+                    Instant nextCheck =
                             scanDatenew.plus(fsSettings.getFs().getUpdateRate().millis(), ChronoUnit.MILLIS);
                     logger.info(
                             "Run #{}: job [{}]: indexed [{}], deleted [{}], documents up to [{}]. "
@@ -513,8 +511,7 @@ public class FsParser implements Runnable, AutoCloseable {
                                     FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
                                     if (savedCheckpoint == null
                                             || savedCheckpoint.getNextCheck() == null
-                                            || LocalDateTime.now(ZoneId.systemDefault())
-                                                    .isAfter(savedCheckpoint.getNextCheck())) {
+                                            || Instant.now().isAfter(savedCheckpoint.getNextCheck())) {
                                         logger.debug(
                                                 "Fs crawler is waking up because next check time [{}] is in the past.",
                                                 savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
@@ -595,7 +592,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 logger.debug("Found checkpoint for job [{}] but no pending work, starting fresh", fsSettings.getName());
                 FsCrawlerCheckpoint newCheckpoint = FsCrawlerCheckpoint.newCheckpoint(rootPath);
                 newCheckpoint.setScanDate(
-                        existing.getScanEndTime() != null ? existing.getScanEndTime() : LocalDateTime.MIN);
+                        existing.getScanEndTime() != null ? existing.getScanEndTime() : Instant.EPOCH);
                 return newCheckpoint;
             }
         }
@@ -636,7 +633,7 @@ public class FsParser implements Runnable, AutoCloseable {
      * Update the checkpoint as completed with scan end time and next check time. The checkpoint is kept (not deleted)
      * to serve as the source of truth for lastrun.
      */
-    private void updateCheckpointAsCompleted(LocalDateTime scanEndTime, LocalDateTime nextCheck) {
+    private void updateCheckpointAsCompleted(Instant scanEndTime, Instant nextCheck) {
         FsCrawlerCheckpoint localCheckpoint = checkpoint.get();
         if (localCheckpoint == null) {
             return;
@@ -673,7 +670,7 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /** Process directories using a work queue with checkpoint support */
-    private void processDirectoriesWithCheckpoint(LocalDateTime lastScanDate, ScanStatistic stats) throws Exception {
+    private void processDirectoriesWithCheckpoint(Instant lastScanDate, ScanStatistic stats) throws Exception {
         Span traverseSpan = FsCrawlerTracing.startSpan("fscrawler.directory.traverse");
         try (Scope ignored = traverseSpan.makeCurrent()) {
             traverseSpan.setAttribute("scan.id", String.valueOf(runNumber.get()));
@@ -831,8 +828,7 @@ public class FsParser implements Runnable, AutoCloseable {
      *
      * @return true if the directory was fully processed, false if interrupted by pause/close
      */
-    private boolean processDirectory(String filepath, LocalDateTime lastScanDate, ScanStatistic stats)
-            throws Exception {
+    private boolean processDirectory(String filepath, Instant lastScanDate, ScanStatistic stats) throws Exception {
         Span dirSpan = FsCrawlerTracing.startSpan("fscrawler.directory.process");
         dirSpan.setAttribute("fs.path", filepath);
         try (Scope ignored = dirSpan.makeCurrent()) {
@@ -1212,7 +1208,7 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     private boolean shouldIndexBecauseOfChanges(
-            FileAbstractModel child, LocalDateTime lastScanDate, String filename, String filepath)
+            FileAbstractModel child, Instant lastScanDate, String filename, String filepath)
             throws NoSuchAlgorithmException {
         if (child.getLastModifiedDate().isAfter(lastScanDate)) {
             return true;
@@ -1261,9 +1257,9 @@ public class FsParser implements Runnable, AutoCloseable {
         fileSpan.setAttribute("file.size", filesize);
         try (Scope ignored = fileSpan.makeCurrent()) {
             final String filename = fileAbstractModel.getName();
-            final LocalDateTime created = fileAbstractModel.getCreationDate();
-            final LocalDateTime lastModified = fileAbstractModel.getLastModifiedDate();
-            final LocalDateTime lastAccessed = fileAbstractModel.getAccessDate();
+            final Instant created = fileAbstractModel.getCreationDate();
+            final Instant lastModified = fileAbstractModel.getLastModifiedDate();
+            final Instant lastAccessed = fileAbstractModel.getAccessDate();
             final String extension = fileAbstractModel.getExtension();
             final long size = fileAbstractModel.getSize();
 
@@ -1280,11 +1276,10 @@ public class FsParser implements Runnable, AutoCloseable {
 
                 // File
                 doc.getFile().setFilename(filename);
-                doc.getFile().setCreated(FsCrawlerUtil.localDateTimeToDate(created));
-                doc.getFile().setLastModified(FsCrawlerUtil.localDateTimeToDate(lastModified));
-                doc.getFile().setLastAccessed(FsCrawlerUtil.localDateTimeToDate(lastAccessed));
-                doc.getFile()
-                        .setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now(ZoneId.systemDefault())));
+                doc.getFile().setCreated(created);
+                doc.getFile().setLastModified(lastModified);
+                doc.getFile().setLastAccessed(lastAccessed);
+                doc.getFile().setIndexingDate(Instant.now());
                 if (fsSettings.getServer() == null
                         || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
                     doc.getFile().setUrl("file://" + fullFilename);

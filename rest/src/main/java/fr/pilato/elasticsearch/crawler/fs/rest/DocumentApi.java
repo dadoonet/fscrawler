@@ -23,7 +23,6 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -47,8 +46,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -226,7 +224,7 @@ public class DocumentApi extends RestApi {
         doc.getFile()
                 .setExtension(
                         FilenameUtils.getExtension(doc.getFile().getFilename()).toLowerCase());
-        doc.getFile().setIndexingDate(FsCrawlerUtil.localDateTimeToDate(LocalDateTime.now(ZoneId.systemDefault())));
+        doc.getFile().setIndexingDate(Instant.now());
         // File
 
         // Read the file content

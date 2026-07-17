@@ -24,8 +24,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 /** Response object for the crawler status endpoint */
 public final class CrawlerStatusResponse extends RestResponse {
@@ -36,9 +34,9 @@ public final class CrawlerStatusResponse extends RestResponse {
     private int completedDirectories;
     private long filesProcessed;
     private long filesDeleted;
-    private LocalDateTime scanStartTime;
-    private LocalDateTime scanEndTime;
-    private LocalDateTime nextCheck;
+    private Instant scanStartTime;
+    private Instant scanEndTime;
+    private Instant nextCheck;
     private String elapsedTime;
     private int retryCount;
     private String lastError;
@@ -72,11 +70,10 @@ public final class CrawlerStatusResponse extends RestResponse {
         this.lastError = checkpoint.getLastError();
 
         if (checkpoint.getScanStartTime() != null) {
-            Instant start =
-                    checkpoint.getScanStartTime().atZone(ZoneId.systemDefault()).toInstant();
+            Instant start = checkpoint.getScanStartTime();
             Instant end;
             if (checkpoint.getState() == CrawlerState.COMPLETED && checkpoint.getScanEndTime() != null) {
-                end = checkpoint.getScanEndTime().atZone(ZoneId.systemDefault()).toInstant();
+                end = checkpoint.getScanEndTime();
             } else {
                 end = Instant.now();
             }
@@ -137,27 +134,27 @@ public final class CrawlerStatusResponse extends RestResponse {
         this.filesDeleted = filesDeleted;
     }
 
-    public LocalDateTime getScanStartTime() {
+    public Instant getScanStartTime() {
         return scanStartTime;
     }
 
-    public void setScanStartTime(LocalDateTime scanStartTime) {
+    public void setScanStartTime(Instant scanStartTime) {
         this.scanStartTime = scanStartTime;
     }
 
-    public LocalDateTime getScanEndTime() {
+    public Instant getScanEndTime() {
         return scanEndTime;
     }
 
-    public void setScanEndTime(LocalDateTime scanEndTime) {
+    public void setScanEndTime(Instant scanEndTime) {
         this.scanEndTime = scanEndTime;
     }
 
-    public LocalDateTime getNextCheck() {
+    public Instant getNextCheck() {
         return nextCheck;
     }
 
-    public void setNextCheck(LocalDateTime nextCheck) {
+    public void setNextCheck(Instant nextCheck) {
         this.nextCheck = nextCheck;
     }
 

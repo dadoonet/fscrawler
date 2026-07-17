@@ -20,21 +20,21 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Objects;
 
 /** Define a FS Job meta data */
 public class FsJob {
 
     private String name;
-    private LocalDateTime lastrun;
-    private LocalDateTime nextCheck;
+    private Instant lastrun;
+    private Instant nextCheck;
     private long indexed;
     private long deleted;
 
     public FsJob() {}
 
-    public FsJob(String name, LocalDateTime lastrun, LocalDateTime nextCheck, long indexed, long deleted) {
+    public FsJob(String name, Instant lastrun, Instant nextCheck, long indexed, long deleted) {
         this.name = name;
         this.lastrun = lastrun;
         this.nextCheck = nextCheck;
@@ -50,19 +50,19 @@ public class FsJob {
         this.name = name;
     }
 
-    public LocalDateTime getLastrun() {
+    public Instant getLastrun() {
         return lastrun;
     }
 
-    public void setLastrun(LocalDateTime lastrun) {
+    public void setLastrun(Instant lastrun) {
         this.lastrun = lastrun;
     }
 
-    public LocalDateTime getNextCheck() {
+    public Instant getNextCheck() {
         return nextCheck;
     }
 
-    public void setNextCheck(LocalDateTime nextCheck) {
+    public void setNextCheck(Instant nextCheck) {
         this.nextCheck = nextCheck;
     }
 

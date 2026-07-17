@@ -20,17 +20,17 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import java.util.Date;
+import java.time.Instant;
 
 /** Represents File attributes */
 public class File {
 
     private String extension;
     private String contentType;
-    private Date created;
-    private Date lastModified;
-    private Date lastAccessed;
-    private Date indexingDate;
+    private Instant created;
+    private Instant lastModified;
+    private Instant lastAccessed;
+    private Instant indexingDate;
     private Long filesize;
     private String filename;
     private String url;
@@ -53,35 +53,35 @@ public class File {
         this.contentType = contentType;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public Date getLastModified() {
+    public Instant getLastModified() {
         return lastModified;
     }
 
-    public void setLastModified(Date lastModified) {
+    public void setLastModified(Instant lastModified) {
         this.lastModified = lastModified;
     }
 
-    public Date getLastAccessed() {
+    public Instant getLastAccessed() {
         return lastAccessed;
     }
 
-    public void setLastAccessed(Date lastAccessed) {
+    public void setLastAccessed(Instant lastAccessed) {
         this.lastAccessed = lastAccessed;
     }
 
-    public Date getIndexingDate() {
+    public Instant getIndexingDate() {
         return indexingDate;
     }
 
-    public void setIndexingDate(Date indexingDate) {
+    public void setIndexingDate(Instant indexingDate) {
         this.indexingDate = indexingDate;
     }
 

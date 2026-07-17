@@ -32,10 +32,9 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
-import java.util.TimeZone;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -294,15 +293,18 @@ class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void localDateToDate() {
-        LocalDateTime now = LocalDateTime.now();
-        Date date = FsCrawlerUtil.localDateTimeToDate(now);
-        logger.info(
-                "Current Time [{}] in [{}] is actually [{}]",
-                now,
-                TimeZone.getDefault().getDisplayName(),
-                date);
-        Assertions.assertThat(date).isNotNull();
+    void parseInstantWithOffsetPreservesUtc() {
+        Instant instant = FsCrawlerUtil.parseInstant("2016-07-07T08:37:00Z");
+        Assertions.assertThat(instant).isEqualTo(Instant.parse("2016-07-07T08:37:00Z"));
+    }
+
+    @Test
+    void parseInstantZoneLessUsesSystemDefault() {
+        Instant instant = FsCrawlerUtil.parseInstant("2016-07-07T08:37:00");
+        Assertions.assertThat(instant)
+                .isEqualTo(LocalDateTime.parse("2016-07-07T08:37:00")
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant());
     }
 
     /**

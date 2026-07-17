@@ -64,6 +64,8 @@ public class JsonUtil {
         fscrawler.addDeserializer(Percentage.class, new PercentageDeserializer());
         fscrawler.addSerializer(new ByteSizeValueSerializer());
         fscrawler.addDeserializer(ByteSizeValue.class, new ByteSizeValueDeserializer());
+        // Accept Instant ISO-8601 and legacy zone-less LocalDateTime strings (checkpoints / _status.json).
+        fscrawler.addDeserializer(java.time.Instant.class, new InstantDeserializer());
 
         // Jackson 3 mappers are immutable: they are configured through their builder.
         // The java.time support is now built into jackson-databind, so no JavaTimeModule registration is needed.

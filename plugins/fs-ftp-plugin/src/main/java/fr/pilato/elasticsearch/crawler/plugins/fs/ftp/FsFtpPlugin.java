@@ -33,8 +33,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -68,10 +66,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
                 file -> {
                     var timestamp = file.getTimestamp();
-                    return timestamp != null
-                            ? LocalDateTime.ofInstant(
-                                    Instant.ofEpochMilli(timestamp.getTimeInMillis()), ZoneId.systemDefault())
-                            : null;
+                    return timestamp != null ? Instant.ofEpochMilli(timestamp.getTimeInMillis()) : null;
                 },
                 Comparator.nullsLast(Comparator.naturalOrder()));
 
@@ -378,9 +373,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             return new FileAbstractModel(
                     filename,
                     file.isFile(),
-                    // Using local TimeZone as reference
-                    LocalDateTime.ofInstant(
-                            Instant.ofEpochMilli(file.getTimestamp().getTimeInMillis()), ZoneId.systemDefault()),
+                    Instant.ofEpochMilli(file.getTimestamp().getTimeInMillis()),
                     // Creation date not available
                     null,
                     // Access date not available

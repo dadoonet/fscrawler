@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.security.KeyPair;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -68,9 +66,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
                 file -> {
                     var attributes = file.getAttributes();
                     var modifyTime = attributes != null ? attributes.getModifyTime() : null;
-                    return modifyTime != null
-                            ? LocalDateTime.ofInstant(modifyTime.toInstant(), ZoneId.systemDefault())
-                            : null;
+                    return modifyTime != null ? modifyTime.toInstant() : null;
                 },
                 Comparator.nullsLast(Comparator.naturalOrder()));
 
@@ -240,12 +236,10 @@ public class FsSshPlugin extends FsCrawlerPlugin {
             return new FileAbstractModel(
                     file.getFilename(),
                     !file.getAttributes().isDirectory(),
-                    // Using local TimeZone as reference
-                    LocalDateTime.ofInstant(file.getAttributes().getModifyTime().toInstant(), ZoneId.systemDefault()),
+                    file.getAttributes().getModifyTime().toInstant(),
                     // Creation date not available
                     null,
-                    // Using local TimeZone as reference
-                    LocalDateTime.ofInstant(file.getAttributes().getAccessTime().toInstant(), ZoneId.systemDefault()),
+                    file.getAttributes().getAccessTime().toInstant(),
                     FilenameUtils.getExtension(file.getFilename()),
                     path,
                     path.equals("/")

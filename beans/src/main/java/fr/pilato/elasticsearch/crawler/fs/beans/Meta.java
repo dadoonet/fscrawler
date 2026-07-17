@@ -20,7 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class Meta {
 
     private String author;
     private String title;
-    private Date date;
+    private Instant date;
     private List<String> keywords;
     private String language;
     private String format;
@@ -45,9 +45,9 @@ public class Meta {
     private String source;
     private String type;
     private String description;
-    private Date created;
-    private Date printDate;
-    private Date metadataDate;
+    private Instant created;
+    private Instant printDate;
+    private Instant metadataDate;
     private String latitude;
     private String longitude;
     private String altitude;
@@ -72,11 +72,11 @@ public class Meta {
         this.title = title;
     }
 
-    public Date getDate() {
+    public Instant getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(Instant date) {
         this.date = date;
     }
 
@@ -207,27 +207,27 @@ public class Meta {
         this.description = description;
     }
 
-    public Date getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public Date getPrintDate() {
+    public Instant getPrintDate() {
         return printDate;
     }
 
-    public void setPrintDate(Date printDate) {
+    public void setPrintDate(Instant printDate) {
         this.printDate = printDate;
     }
 
-    public Date getMetadataDate() {
+    public Instant getMetadataDate() {
         return metadataDate;
     }
 
-    public void setMetadataDate(Date metadataDate) {
+    public void setMetadataDate(Instant metadataDate) {
         this.metadataDate = metadataDate;
     }
 

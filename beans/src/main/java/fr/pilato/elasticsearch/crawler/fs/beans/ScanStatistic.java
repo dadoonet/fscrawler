@@ -21,8 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -35,8 +34,8 @@ public class ScanStatistic {
     private final AtomicInteger nbDocDeleted = new AtomicInteger();
     private String rootPath = "/";
     private String rootPathId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private Instant startTime;
+    private Instant endTime;
 
     public ScanStatistic() {}
 
@@ -95,29 +94,28 @@ public class ScanStatistic {
     }
 
     /** @return the start time of the scan */
-    public LocalDateTime getStartTime() {
+    public Instant getStartTime() {
         return startTime;
     }
 
     /** @param startTime the start time to set */
-    public void setStartTime(LocalDateTime startTime) {
+    public void setStartTime(Instant startTime) {
         this.startTime = startTime;
     }
 
     /** @return the end time of the scan */
-    public LocalDateTime getEndTime() {
+    public Instant getEndTime() {
         return endTime;
     }
 
     /** @param endTime the end time to set */
-    public void setEndTime(LocalDateTime endTime) {
+    public void setEndTime(Instant endTime) {
         this.endTime = endTime;
     }
 
     public Duration computeDuration() {
         if (startTime != null && endTime != null) {
-            ZoneId zone = ZoneId.systemDefault();
-            return Duration.between(startTime.atZone(zone), endTime.atZone(zone));
+            return Duration.between(startTime, endTime);
         }
         return Duration.ZERO;
     }

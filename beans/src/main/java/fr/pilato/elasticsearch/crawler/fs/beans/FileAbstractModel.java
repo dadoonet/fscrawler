@@ -21,7 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -32,9 +32,9 @@ public class FileAbstractModel {
     private final String name;
     private final boolean file;
     private final boolean directory;
-    private final LocalDateTime lastModifiedDate;
-    private final LocalDateTime creationDate;
-    private final LocalDateTime accessDate;
+    private final Instant lastModifiedDate;
+    private final Instant creationDate;
+    private final Instant accessDate;
     private final String path;
     private final String fullpath;
     private final long size;
@@ -48,9 +48,9 @@ public class FileAbstractModel {
     public FileAbstractModel(
             String name,
             boolean file,
-            LocalDateTime lastModifiedDate,
-            LocalDateTime creationDate,
-            LocalDateTime accessDate,
+            Instant lastModifiedDate,
+            Instant creationDate,
+            Instant accessDate,
             String extension,
             String path,
             String fullpath,
@@ -89,15 +89,15 @@ public class FileAbstractModel {
         return directory;
     }
 
-    public LocalDateTime getLastModifiedDate() {
+    public Instant getLastModifiedDate() {
         return lastModifiedDate;
     }
 
-    public LocalDateTime getCreationDate() {
+    public Instant getCreationDate() {
         return creationDate;
     }
 
-    public LocalDateTime getAccessDate() {
+    public Instant getAccessDate() {
         return accessDate;
     }
 
