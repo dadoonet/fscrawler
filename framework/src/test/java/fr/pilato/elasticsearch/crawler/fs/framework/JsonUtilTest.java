@@ -22,11 +22,17 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
@@ -98,6 +104,65 @@ class JsonUtilTest extends AbstractFSCrawlerTestCase {
         public void setCities(List<String> cities) {
             this.cities = cities;
         }
+    }
+
+    /** Minimal bean to exercise {@link InstantDeserializer} through JsonUtil mappers. */
+    public static class InstantHolder {
+        private Instant scanDate;
+
+        public Instant getScanDate() {
+            return scanDate;
+        }
+
+        public void setScanDate(Instant scanDate) {
+            this.scanDate = scanDate;
+        }
+    }
+
+    static Stream<ObjectMapper> instantMappers() {
+        return Stream.of(JsonUtil.mapper, JsonUtil.prettyMapper, JsonUtil.ymlMapper);
+    }
+
+    @ParameterizedTest
+    @MethodSource("instantMappers")
+    void deserializeInstantWithZ(ObjectMapper mapper) {
+        InstantHolder holder = mapper.readValue("{\"scan_date\":\"2016-07-07T08:37:00Z\"}", InstantHolder.class);
+        Assertions.assertThat(holder.getScanDate()).isEqualTo(Instant.parse("2016-07-07T08:37:00Z"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("instantMappers")
+    void deserializeInstantWithOffset(ObjectMapper mapper) {
+        InstantHolder holder =
+                mapper.readValue("{\"scan_date\":\"2022-02-08T21:57:51.000+00:00\"}", InstantHolder.class);
+        Assertions.assertThat(holder.getScanDate()).isEqualTo(Instant.parse("2022-02-08T21:57:51Z"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("instantMappers")
+    void deserializeLegacyLocalDateTimeAsInstant(ObjectMapper mapper) {
+        InstantHolder holder = mapper.readValue("{\"scan_date\":\"2026-07-02T12:10:57\"}", InstantHolder.class);
+        Assertions.assertThat(holder.getScanDate())
+                .isEqualTo(LocalDateTime.parse("2026-07-02T12:10:57")
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant());
+    }
+
+    @ParameterizedTest
+    @MethodSource("instantMappers")
+    void deserializeInstantFromEpochMillis(ObjectMapper mapper) {
+        long epochMilli = Instant.parse("2016-07-07T08:37:00Z").toEpochMilli();
+        InstantHolder holder = mapper.readValue("{\"scan_date\":" + epochMilli + "}", InstantHolder.class);
+        Assertions.assertThat(holder.getScanDate()).isEqualTo(Instant.ofEpochMilli(epochMilli));
+    }
+
+    @ParameterizedTest
+    @MethodSource("instantMappers")
+    void roundTripInstantSerialization(ObjectMapper mapper) {
+        InstantHolder source = new InstantHolder();
+        source.setScanDate(Instant.parse("2016-07-07T08:37:00Z"));
+        InstantHolder roundTrip = mapper.readValue(mapper.writeValueAsString(source), InstantHolder.class);
+        Assertions.assertThat(roundTrip.getScanDate()).isEqualTo(source.getScanDate());
     }
 
     @Test
