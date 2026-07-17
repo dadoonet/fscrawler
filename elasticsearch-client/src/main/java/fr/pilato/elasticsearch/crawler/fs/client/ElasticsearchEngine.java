@@ -20,7 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.Engine;
 import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
@@ -61,9 +60,11 @@ public class ElasticsearchEngine
             }
             bulkRequest.append("}}\n");
             if (r instanceof ElasticsearchIndexOperation indexOp) {
-                bulkRequest
-                        .append(JsonUtil.serialize(JsonUtil.deserialize(indexOp.getJson(), Object.class)))
-                        .append("\n");
+                // NDJSON needs one JSON object per line. Pretty-printed documents may contain
+                // structural CR/LF; strip them without a Jackson round-trip (which rejects large
+                // string values via StreamReadConstraints). Valid JSON never has raw CR/LF inside
+                // strings — those must be escaped as \n / \r.
+                bulkRequest.append(toSingleLineJson(indexOp.getJson())).append("\n");
             }
             logger.trace("Adding to bulk request: {}", bulkRequest);
             ndjson.append(bulkRequest);
@@ -79,5 +80,18 @@ public class ElasticsearchEngine
             return new ElasticsearchBulkResponse(e);
         }
         return new ElasticsearchBulkResponse(response);
+    }
+
+    /**
+     * Collapse a JSON document onto a single line for NDJSON bulk requests.
+     *
+     * @param json JSON document, possibly pretty-printed
+     * @return the same JSON without raw CR/LF characters
+     */
+    static String toSingleLineJson(String json) {
+        if (json.indexOf('\n') < 0 && json.indexOf('\r') < 0) {
+            return json;
+        }
+        return json.replace("\r", "").replace("\n", "");
     }
 }
