@@ -82,6 +82,10 @@
         <jersey.version>4.0.2</jersey.version>
         <!-- Override transitive httpcore5 to patch CVE-2026-54399 / CVE-2026-54428. Pulled by httpclient5:5.5 -->
         <httpcore5.version>5.4.3</httpcore5.version>
+        <!-- Because of CVE-2024-29857 - this comes from Tika 2.9.2.
+             Keep the whole BC jdk18on family aligned: mixing versions
+             (e.g. bcprov 1.85 + bcutil 1.84) breaks provider init. -->
+        <bouncycastle.version>1.85</bouncycastle.version>
 
         <!-- For FSCrawler S3 plugin -->
         <minio.version>9.0.3</minio.version>
@@ -428,7 +432,22 @@
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
-                <version>1.84</version>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcutil-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcjmail-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
             </dependency>
 
             <!-- Version conflict between
