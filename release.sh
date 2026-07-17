@@ -384,13 +384,33 @@ load_release_state() {
 }
 
 awaiting_push_remote_state() {
-	local remote_refs local_head object_id ref
+	local remote_refs remote_branch_head release_commit merge_base_status object_id ref
 	local branch_pushed=false
 	local tag_pushed=false
 
+	if ! release_commit="$(git -C "${ROOT_DIR}" rev-parse --verify "${RELEASE_TAG}^{commit}")"; then
+		printf 'unknown'
+		return
+	fi
+
+	if ! git -C "${ROOT_DIR}" fetch --quiet --no-tags origin "refs/heads/${ORIGINAL_BRANCH}"; then
+		printf 'unknown'
+		return
+	fi
+	remote_branch_head="$(git -C "${ROOT_DIR}" rev-parse FETCH_HEAD)"
+
+	if git -C "${ROOT_DIR}" merge-base --is-ancestor "${release_commit}" "${remote_branch_head}"; then
+		branch_pushed=true
+	else
+		merge_base_status=$?
+		if [[ "${merge_base_status}" -gt 1 ]]; then
+			printf 'unknown'
+			return
+		fi
+	fi
+
 	if ! remote_refs="$(
 		git -C "${ROOT_DIR}" ls-remote origin \
-			"refs/heads/${ORIGINAL_BRANCH}" \
 			"refs/tags/${RELEASE_TAG}" \
 			"refs/tags/${RELEASE_TAG}^{}"
 	)"; then
@@ -398,13 +418,9 @@ awaiting_push_remote_state() {
 		return
 	fi
 
-	local_head="$(git -C "${ROOT_DIR}" rev-parse "${ORIGINAL_BRANCH}")"
 	while read -r object_id ref; do
 		[[ -n "${object_id:-}" ]] || continue
 		case "${ref}" in
-		"refs/heads/${ORIGINAL_BRANCH}")
-			[[ "${object_id}" == "${local_head}" ]] && branch_pushed=true
-			;;
 		"refs/tags/${RELEASE_TAG}" | "refs/tags/${RELEASE_TAG}^{}")
 			tag_pushed=true
 			;;
