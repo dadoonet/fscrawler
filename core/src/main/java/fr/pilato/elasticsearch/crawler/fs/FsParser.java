@@ -1210,7 +1210,8 @@ public class FsParser implements Runnable, AutoCloseable {
     private boolean shouldIndexBecauseOfChanges(
             FileAbstractModel child, Instant lastScanDate, String filename, String filepath)
             throws NoSuchAlgorithmException {
-        if (child.getLastModifiedDate().isAfter(lastScanDate)) {
+        // EPOCH is the fresh-scan sentinel, so every file must be indexed regardless of its timestamp.
+        if (Instant.EPOCH.equals(lastScanDate) || child.getLastModifiedDate().isAfter(lastScanDate)) {
             return true;
         }
         if (child.getCreationDate() != null && child.getCreationDate().isAfter(lastScanDate)) {
