@@ -330,7 +330,10 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
             clientField.setAccessible(true);
             Client jerseyClient = (Client) clientField.get(client);
 
-            Assertions.assertThat(jerseyClient.getSslContext().getDefaultSSLParameters().getProtocols())
+            Assertions.assertThat(jerseyClient
+                            .getSslContext()
+                            .getDefaultSSLParameters()
+                            .getProtocols())
                     .contains("TLSv1.3");
         }
     }
