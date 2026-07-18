@@ -28,12 +28,14 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.lang.reflect.Method;
 import java.time.Instant;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class FsParserFileChangeTest extends AbstractFSCrawlerTestCase {
 
-    @Test
-    void fresh_scan_indexes_file_with_epoch_timestamp() throws Exception {
+    @ParameterizedTest
+    @ValueSource(longs = {0, -1})
+    void fresh_scan_indexes_file_with_epoch_or_earlier_timestamp(long epochSecond) throws Exception {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName(jobName);
         fsSettings.getFs().setJsonSupport(true);
@@ -41,7 +43,7 @@ class FsParserFileChangeTest extends AbstractFSCrawlerTestCase {
         FileAbstractModel file = new FileAbstractModel(
                 "archive.json",
                 true,
-                Instant.EPOCH,
+                Instant.ofEpochSecond(epochSecond),
                 null,
                 null,
                 "json",
