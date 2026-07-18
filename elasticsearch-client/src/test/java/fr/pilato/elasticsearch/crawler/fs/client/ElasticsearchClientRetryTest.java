@@ -37,7 +37,9 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilt
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
 import jakarta.ws.rs.ServiceUnavailableException;
+import jakarta.ws.rs.client.Client;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
@@ -311,6 +313,26 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         // Verify that only 1 request was made
         WireMock.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/")));
         logger.info("Test passed: immediate success without retry");
+    }
+
+    @Test
+    void testTrustAllContextSupportsTls13() throws Exception {
+        wireMockServer.resetAll();
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            Field clientField = ElasticsearchClient.class.getDeclaredField("client");
+            clientField.setAccessible(true);
+            Client jerseyClient = (Client) clientField.get(client);
+
+            Assertions.assertThat(jerseyClient.getSslContext().getDefaultSSLParameters().getProtocols())
+                    .contains("TLSv1.3");
+        }
     }
 
     /**
