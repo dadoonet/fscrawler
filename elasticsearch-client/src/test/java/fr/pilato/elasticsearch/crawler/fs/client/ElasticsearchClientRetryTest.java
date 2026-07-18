@@ -316,7 +316,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void testTrustAllContextSupportsTls13() throws Exception {
+    void testTrustAllContextSupportsModernTlsProtocols() throws Exception {
         wireMockServer.resetAll();
         WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
                 .willReturn(WireMock.aResponse()
@@ -334,7 +334,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                             .getSslContext()
                             .getDefaultSSLParameters()
                             .getProtocols())
-                    .contains("TLSv1.3");
+                    .contains("TLSv1.3", "TLSv1.2");
         }
     }
 
