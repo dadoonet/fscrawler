@@ -134,6 +134,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration RETRY_INITIAL_DELAY = Duration.ofMillis(500);
     private static final Duration RETRY_MAX_DELAY = Duration.ofSeconds(5);
 
+    // Serverless indices can need longer to become searchable after creation or a cold start.
+    private static final Duration SERVERLESS_SEARCH_RETRY_MAX_DURATION = Duration.ofMinutes(1);
+
     // Retry configuration for rate limiting (429) - longer delays to let the server recover
     private static final Duration RETRY_429_MAX_DURATION = Duration.ofMinutes(5);
     private static final Duration RETRY_429_INITIAL_DELAY = Duration.ofSeconds(1);
@@ -1155,19 +1158,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.trace("Elasticsearch query to run: {}", query);
 
         try {
-            String response = httpPostWithRetry(url, query, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
+            Duration retryMaxDuration = serverless ? SERVERLESS_SEARCH_RETRY_MAX_DURATION : RETRY_MAX_DURATION;
+            String response = httpPostWithRetry(
+                    url, query, retryMaxDuration, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
             return parseSearchResponse(response, size);
         } catch (NotFoundException e) {
             logger.debug("index {} does not exist.", request.getIndex());
             throw new ElasticsearchClientException("index " + request.getIndex() + " does not exist.");
         } catch (ServiceUnavailableException e) {
-            if (serverless) {
-                logger.warn(
-                        "search on serverless index [{}] still unavailable after retries. Shards may not be fully allocated yet.",
-                        request.getIndex());
-                throw new ElasticsearchClientException(
-                        "index " + request.getIndex() + " might not be fully allocated on serverless.");
-            }
             logger.warn(
                     "search on index [{}] still unavailable after retries ({}). Shards may not be allocated yet.",
                     request.getIndex(),
@@ -1406,9 +1404,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * policy as {@link #httpCallWithRetry}.
      */
     @SafeVarargs
-    final String httpPostWithRetry(String path, Object data, Map.Entry<String, Object>... params)
+    final String httpPostWithRetry(
+            String path, Object data, Duration serverErrorMaxDuration, Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
-        return httpCallWithRetry("POST", path, data, params);
+        return httpCallWithRetry("POST", path, data, serverErrorMaxDuration, params);
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -1443,11 +1442,22 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @SafeVarargs
     private String httpCallWithRetry(String method, String path, Object data, Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
+        return httpCallWithRetry(method, path, data, RETRY_MAX_DURATION, params);
+    }
+
+    @SafeVarargs
+    private String httpCallWithRetry(
+            String method,
+            String path,
+            Object data,
+            Duration serverErrorMaxDuration,
+            Map.Entry<String, Object>... params)
+            throws ElasticsearchClientException {
         // First try with standard retry config (handles 5xx errors)
         // If we get a 429, we switch to longer retry intervals
         try {
             return executeWithRetry(
-                    method, path, data, RETRY_MAX_DURATION, RETRY_INITIAL_DELAY, RETRY_MAX_DELAY, false, params);
+                    method, path, data, serverErrorMaxDuration, RETRY_INITIAL_DELAY, RETRY_MAX_DELAY, false, params);
         } catch (RateLimitedException e) {
             // Got 429 on first attempt, switch to longer retry config
             logger.info(
