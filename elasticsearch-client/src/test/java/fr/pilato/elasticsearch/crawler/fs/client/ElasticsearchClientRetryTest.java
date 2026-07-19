@@ -491,6 +491,38 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: search retries exhausted and exception propagated");
     }
 
+    /** Test that an unavailable serverless index is reported through the client exception contract after retries. */
+    @Test
+    @Slow
+    void testServerlessSearchRetriesExhaustedReturnsClientException() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\":{\"number\":\""
+                                + elasticsearchVersion
+                                + "\",\"build_flavor\":\"serverless\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_search"))
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"no_shard_available_action_exception","status":503}}
+                                """)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")))
+                    .withMessageContaining("might not be fully allocated on serverless");
+        }
+
+        WireMock.verify(
+                WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
+    }
+
     /**
      * Test that connection errors are propagated immediately without silent retry. This ensures the original error
      * message is preserved.
