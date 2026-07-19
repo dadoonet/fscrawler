@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -51,8 +52,12 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     private final FsSettings settings;
 
     public FsCrawlerManagementServiceElasticsearchImpl(FsSettings settings) {
+        this(settings, new ElasticsearchClient(settings));
+    }
+
+    FsCrawlerManagementServiceElasticsearchImpl(FsSettings settings, IElasticsearchClient client) {
         this.settings = settings;
-        this.client = new ElasticsearchClient(settings);
+        this.client = client;
     }
 
     public IElasticsearchClient getClient() {
@@ -114,7 +119,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                     files.add(name);
                 }
             }
-        } catch (ElasticsearchClientException e) {
+        } catch (ElasticsearchIndexNotFoundException e) {
             logger.debug(
                     "Index [{}] doesn't exist.", settings.getElasticsearch().getIndex());
         }
@@ -141,7 +146,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                     files.add(JsonPath.read(hit.getSource(), "$.path.real"));
                 }
             }
-        } catch (ElasticsearchClientException e) {
+        } catch (ElasticsearchIndexNotFoundException e) {
             logger.debug(
                     "Index [{}] doesn't exist yet. We just return an empty list.",
                     settings.getElasticsearch().getIndexFolder());
