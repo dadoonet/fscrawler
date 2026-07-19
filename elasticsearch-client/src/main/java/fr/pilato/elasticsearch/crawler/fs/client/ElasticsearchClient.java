@@ -1159,10 +1159,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
         try {
             String response = httpPostWithRetry(
-                    url,
-                    query,
-                    getSearchRetryMaxDuration(),
-                    new AbstractMap.SimpleImmutableEntry<>("version", "true"));
+                    url, query, getSearchRetryMaxDuration(), new AbstractMap.SimpleImmutableEntry<>("version", "true"));
             return parseSearchResponse(response, size);
         } catch (NotFoundException e) {
             logger.debug("index {} does not exist.", request.getIndex());
