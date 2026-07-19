@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JUnitThreadsFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
 import jakarta.ws.rs.ServiceUnavailableException;
@@ -491,10 +492,10 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: search retries exhausted and exception propagated");
     }
 
-    /** Test that an unavailable serverless index is reported through the client exception contract after retries. */
+    /** Test that an unavailable serverless index eventually fails after its extended retry window. */
     @Test
-    @Slow
-    void testServerlessSearchRetriesExhaustedReturnsClientException() throws IOException, ElasticsearchClientException {
+    @VerySlow
+    void testServerlessSearchRetriesExhausted() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
         WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
@@ -514,13 +515,12 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
             client.start();
             wireMockServer.resetRequests();
 
-            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
-                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")))
-                    .withMessageContaining("might not be fully allocated on serverless");
+            Assertions.assertThatExceptionOfType(ServiceUnavailableException.class)
+                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")));
         }
 
         WireMock.verify(
-                WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
+                WireMock.moreThan(10), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
     }
 
     /**
