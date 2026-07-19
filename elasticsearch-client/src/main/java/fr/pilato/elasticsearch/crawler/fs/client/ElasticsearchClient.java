@@ -1161,6 +1161,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
             logger.debug("index {} does not exist.", request.getIndex());
             throw new ElasticsearchClientException("index " + request.getIndex() + " does not exist.");
         } catch (ServiceUnavailableException e) {
+            if (serverless) {
+                logger.warn(
+                        "search on serverless index [{}] still unavailable after retries. Shards may not be fully allocated yet.",
+                        request.getIndex());
+                throw new ElasticsearchClientException(
+                        "index " + request.getIndex() + " might not be fully allocated on serverless.");
+            }
             logger.warn(
                     "search on index [{}] still unavailable after retries ({}). Shards may not be allocated yet.",
                     request.getIndex(),
