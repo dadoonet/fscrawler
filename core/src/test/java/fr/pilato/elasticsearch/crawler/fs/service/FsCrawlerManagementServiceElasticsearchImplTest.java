@@ -20,16 +20,13 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.service;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.lang.reflect.Proxy;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -38,8 +35,7 @@ class FsCrawlerManagementServiceElasticsearchImplTest extends AbstractFSCrawlerT
     @Test
     void directoryLookupsIgnoreOnlyMissingIndices() throws Exception {
         FsSettings settings = FsSettingsLoader.load();
-        IElasticsearchClient client = mock(IElasticsearchClient.class);
-        when(client.search(any())).thenThrow(new ElasticsearchIndexNotFoundException("missing"));
+        IElasticsearchClient client = clientThrowing(new ElasticsearchIndexNotFoundException("missing"));
         FsCrawlerManagementServiceElasticsearchImpl service =
                 new FsCrawlerManagementServiceElasticsearchImpl(settings, client);
 
@@ -50,13 +46,24 @@ class FsCrawlerManagementServiceElasticsearchImplTest extends AbstractFSCrawlerT
     @Test
     void directoryLookupsPropagateOtherClientFailures() throws Exception {
         FsSettings settings = FsSettingsLoader.load();
-        IElasticsearchClient client = mock(IElasticsearchClient.class);
         ElasticsearchClientException failure = new ElasticsearchClientException("connection failed");
-        when(client.search(any())).thenThrow(failure);
+        IElasticsearchClient client = clientThrowing(failure);
         FsCrawlerManagementServiceElasticsearchImpl service =
                 new FsCrawlerManagementServiceElasticsearchImpl(settings, client);
 
         Assertions.assertThatThrownBy(() -> service.getFileDirectory("/")).isSameAs(failure);
         Assertions.assertThatThrownBy(() -> service.getFolderDirectory("/")).isSameAs(failure);
+    }
+
+    private static IElasticsearchClient clientThrowing(ElasticsearchClientException failure) {
+        return (IElasticsearchClient) Proxy.newProxyInstance(
+                IElasticsearchClient.class.getClassLoader(),
+                new Class<?>[] {IElasticsearchClient.class},
+                (proxy, method, args) -> {
+                    if ("search".equals(method.getName())) {
+                        throw failure;
+                    }
+                    throw new UnsupportedOperationException(method.getName());
+                });
     }
 }
