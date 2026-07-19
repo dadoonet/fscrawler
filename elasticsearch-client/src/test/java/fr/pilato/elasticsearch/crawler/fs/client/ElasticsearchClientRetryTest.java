@@ -34,13 +34,13 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JUnitThreadsFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
 import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.client.Client;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
@@ -95,13 +95,25 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     private ElasticsearchClient createClient() {
+        return createClient(null);
+    }
+
+    private ElasticsearchClient createClient(Duration searchRetryMaxDuration) {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName("test-retry");
         fsSettings.getElasticsearch().setUrls(List.of("http://localhost:" + wireMockServer.port()));
         fsSettings.getElasticsearch().setSslVerification(false);
         // Disable semantic search to avoid calling getLicense() during start()
         fsSettings.getElasticsearch().setSemanticSearch(false);
-        return new ElasticsearchClient(fsSettings);
+        if (searchRetryMaxDuration == null) {
+            return new ElasticsearchClient(fsSettings);
+        }
+        return new ElasticsearchClient(fsSettings) {
+            @Override
+            Duration getSearchRetryMaxDuration() {
+                return searchRetryMaxDuration;
+            }
+        };
     }
 
     /**
@@ -517,9 +529,28 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: search retries exhausted and exception propagated");
     }
 
-    /** Test that an unavailable serverless index eventually fails after its extended retry window. */
+    /** Test that serverless searches use a longer retry window than hosted searches. */
     @Test
-    @VerySlow
+    void testServerlessSearchUsesExtendedRetryWindow() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\":{\"number\":\""
+                                + elasticsearchVersion
+                                + "\",\"build_flavor\":\"serverless\"}}")));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+
+            Assertions.assertThat(client.getSearchRetryMaxDuration()).isEqualTo(Duration.ofMinutes(1));
+        }
+    }
+
+    /** Test that an unavailable serverless index eventually fails instead of being treated as missing. */
+    @Test
     void testServerlessSearchRetriesExhausted() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
@@ -536,7 +567,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                                 {"error":{"type":"no_shard_available_action_exception","status":503}}
                                 """)));
 
-        try (ElasticsearchClient client = createClient()) {
+        try (ElasticsearchClient client = createClient(Duration.ofSeconds(1))) {
             client.start();
             wireMockServer.resetRequests();
 
@@ -545,7 +576,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         }
 
         WireMock.verify(
-                WireMock.moreThan(10), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
+                WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
     }
 
     /**
