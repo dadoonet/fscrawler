@@ -462,6 +462,31 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: search retry on server error works correctly");
     }
 
+    /** Test that a missing search index is distinguishable from other client failures. */
+    @Test
+    void testSearchNotFoundUsesDedicatedException() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/missing-index/_search"))
+                .willReturn(WireMock.aResponse().withStatus(404).withBody("""
+                                {"error":{"type":"index_not_found_exception","status":404}}
+                                """)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+
+            Assertions.assertThatExceptionOfType(ElasticsearchIndexNotFoundException.class)
+                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("missing-index")))
+                    .withMessage("index missing-index does not exist.");
+        }
+    }
+
     /** Test that search throws a clear error when retries are exhausted on 503. */
     @Test
     @Slow
