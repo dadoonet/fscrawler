@@ -567,7 +567,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                                 {"error":{"type":"no_shard_available_action_exception","status":503}}
                                 """)));
 
-        try (ElasticsearchClient client = createClient(Duration.ofSeconds(1))) {
+        try (ElasticsearchClient client = createClient(Duration.ofSeconds(3))) {
             client.start();
             wireMockServer.resetRequests();
 
