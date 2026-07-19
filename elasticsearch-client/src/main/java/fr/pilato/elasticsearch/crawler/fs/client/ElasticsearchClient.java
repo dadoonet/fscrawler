@@ -1158,9 +1158,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.trace("Elasticsearch query to run: {}", query);
 
         try {
-            Duration retryMaxDuration = serverless ? SERVERLESS_SEARCH_RETRY_MAX_DURATION : RETRY_MAX_DURATION;
             String response = httpPostWithRetry(
-                    url, query, retryMaxDuration, new AbstractMap.SimpleImmutableEntry<>("version", "true"));
+                    url,
+                    query,
+                    getSearchRetryMaxDuration(),
+                    new AbstractMap.SimpleImmutableEntry<>("version", "true"));
             return parseSearchResponse(response, size);
         } catch (NotFoundException e) {
             logger.debug("index {} does not exist.", request.getIndex());
@@ -1172,6 +1174,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
                     e.getResponse().getStatus());
             throw e;
         }
+    }
+
+    Duration getSearchRetryMaxDuration() {
+        return serverless ? SERVERLESS_SEARCH_RETRY_MAX_DURATION : RETRY_MAX_DURATION;
     }
 
     private ESSearchResponse parseSearchResponse(String response, int size) {
