@@ -73,10 +73,35 @@ Use the skills in `.claude/skills/`:
 
 ## Test-First Workflow (MANDATORY)
 
-When fixing a bug:
+Applies to **bug fixes, new features, and behaviour changes**. Same rule for every agent
+working in this repository:
+
 1. **Reproduce first** — write/adjust a test that **fails** with the current behaviour
-2. **Confirm red** — run the test, verify it fails
+2. **Confirm red** — run the test, verify it fails for the expected reason
 3. **Fix the code** — change production code to make the test pass
 4. **Confirm green** — run the test again, verify it passes
 
 **Never fix code first and then write a test that already passes.**
+
+## RandomizedTesting (MANDATORY)
+
+Prefer **randomizedtesting-jupiter** helpers over hardcoded fixture values whenever the
+exact value is not part of the behaviour under test.
+
+- Use `RandomizedTest.*(..., randomizedRandomForTests)` from `AbstractFSCrawlerTestCase`
+  (`randomAsciiLettersOfLengthBetween`, `randomIntInRange`, `randomBoolean`, …)
+- Randomize names, sizes, counts, content, and optional branches when they are incidental
+- Keep literals only when the test asserts that exact value (protocol constants, mapping
+  field names, documented defaults, …)
+- Failures are reproducible with `-Dtests.seed=<SEED>` (printed by the reproduce-info extension)
+
+```java
+// Good — incidental fixture data is randomized
+String filename = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+        .toLowerCase(Locale.ROOT) + ".txt";
+int count = RandomizedTest.randomIntInRange(randomizedRandomForTests, 3, 10);
+
+// Bad — arbitrary hardcoded values that are not part of the assertion
+String filename = "foo.txt";
+int count = 5;
+```

@@ -8,7 +8,10 @@
 
 Always create a dedicated branch before starting any implementation work.
 
-## Commit Message Format
+## Commit Message Format (MANDATORY)
+
+Every commit **must** follow this format (Conventional Commits + emoji). No exceptions for
+agents or humans:
 
 ```
 type(scope): emoji description
@@ -36,6 +39,8 @@ fix(core): 🐛 re-check checkpoint nextCheck in between-runs wait
 - Allow forced rescan when checkpoint file is updated externally
 - Read checkpoint from disk each wait chunk when !userStopped
 ```
+
+Subject line under ~72 chars. Use an accurate `scope` (`core`, `test`, `docs`, module name, …).
 
 ## Documentation Requirement
 
