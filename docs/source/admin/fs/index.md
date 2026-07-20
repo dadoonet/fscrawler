@@ -7,7 +7,7 @@
 ## Expected files
 
 FSCrawler expects to find a job directory in the `~/.fscrawler` directory or in the directory
-you defined with the `-config_dir` CLI option (see {ref}`cli-options`). The job file could be either:
+you defined with the `--config_dir` CLI option (see {ref}`cli-options`). The job file could be either:
 
 * a `yaml` file named `_settings.yaml`
 * a `json` file named `_settings.json`
@@ -31,8 +31,8 @@ For example, you can define the following job file:
 fs:
   url: "${HOME}/docs"
 elasticsearch:
-  nodes:
-  - url: "${ES_NODE1:=https://127.0.0.1:9200}"
+  urls:
+  - "${ES_NODE1:=https://127.0.0.1:9200}"
   api_key: "${ES_API_KEY}"
 ```
 
@@ -57,7 +57,7 @@ As an example, you can run:
 ```sh
 FSCRAWLER_NAME=foo \
 FSCRAWLER_FS_URL=/tmp/test \
-FSCRAWLER_ELASTICSEARCH_API-KEY=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw== \
+FSCRAWLER_ELASTICSEARCH_API_KEY=VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw== \
 bin/fscrawler test
 ```
 
@@ -191,7 +191,7 @@ elasticsearch:
   semantic_search: "true"
 # only used when started with --rest option
 rest:
-  url: "http://127.0.0.1:8080/fscrawler"
+  url: "http://127.0.0.1:8080"
 ```
 
 Here is a list of existing top level settings:

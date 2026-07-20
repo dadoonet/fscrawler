@@ -449,15 +449,24 @@ elasticsearch:
 ```
 
 ````{warning}
-Be aware that the elasticsearch password is stored in plain text in your job setting file.
+The Elasticsearch password is stored in plain text when you add it to the job settings file.
+To keep credentials out of that file, provide both values as environment variables:
 
-A better practice is to only set the username or pass it with `--username elastic` option when starting FSCrawler.
-
-If the password is not defined, you will be prompted when starting the job:
-
-```none
-22:46:42,528 INFO  [f.p.e.c.f.FsCrawler] Password for elastic:
+```sh
+FSCRAWLER_ELASTICSEARCH_USERNAME=elastic \
+FSCRAWLER_ELASTICSEARCH_PASSWORD=changeme \
+bin/fscrawler test
 ```
+
+You can also provide them as Java system properties:
+
+```sh
+FS_JAVA_OPTS="-Delasticsearch.username=elastic -Delasticsearch.password=changeme" \
+bin/fscrawler test
+```
+
+The `--username` option and interactive password prompt are no longer supported. Settings in the
+job file take precedence over environment variables and Java system properties.
 ````
 
 ### User permissions
@@ -540,7 +549,7 @@ keytool -import -alias <alias name> -keystore "<JAVA_HOME>\lib\security\cacerts"
 
 It will prompt you for the password. Enter the certificate password like `changeit`.
 
-3. Make changes to FSCrawler `_settings.json` file to connect to your Elasticsearch server over HTTPS:
+3. Make changes to the FSCrawler `_settings.yaml` file to connect to your Elasticsearch server over HTTPS:
 
 ```yaml
 name: "test"
