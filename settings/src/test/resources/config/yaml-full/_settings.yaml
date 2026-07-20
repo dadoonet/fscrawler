@@ -124,6 +124,8 @@ elasticsearch:
   index_folder: "test_folder"
   # optional: the bulk size in number of documents
   bulk_size: 1000
+  # optional: bulk write operation for documents: "index" (default) or "create"
+  bulk_op: "create"
   # optional: the bulk flush period
   flush_interval: "5s"
   # optional: the bulk size in bytes

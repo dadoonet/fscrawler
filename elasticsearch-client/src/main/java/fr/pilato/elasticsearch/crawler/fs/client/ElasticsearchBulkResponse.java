@@ -24,9 +24,14 @@ import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<ElasticsearchOperation> {
+
+    private static final Logger logger = LogManager.getLogger();
 
     private final ElasticsearchClientException exception;
 
@@ -36,24 +41,71 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
 
     public ElasticsearchBulkResponse(String response) {
         exception = null;
-        // We need to parse the response object
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
-        errors = document.read("$.errors");
-        List<String> ids = document.read("$.._id");
-        ids.forEach(id -> {
-            Map<String, Object> jsonItemResponse =
-                    ((List<Map<String, Object>>) document.read("$..[?(@._id == '" + id + "')]")).get(0);
+        boolean hasRealErrors = false;
+
+        List<Map<String, Object>> responseItems = document.read("$.items");
+        for (Map<String, Object> responseItem : responseItems) {
+            Map.Entry<String, Object> entry = responseItem.entrySet().iterator().next();
+            String operationName = entry.getKey();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> jsonItemResponse = (Map<String, Object>) entry.getValue();
+
             String index = (String) jsonItemResponse.get("_index");
+            String id = (String) jsonItemResponse.get("_id");
+            ElasticsearchOperation.Operation operation = parseOperation(operationName);
+
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
-            itemResponse.setOperation(new ElasticsearchIndexOperation(index, id, null, null));
+            if (operation == ElasticsearchOperation.Operation.DELETE) {
+                itemResponse.setOperation(new ElasticsearchDeleteOperation(index, id));
+            } else {
+                itemResponse.setOperation(new ElasticsearchIndexOperation(operation, index, id, null, null));
+            }
+
+            @SuppressWarnings("unchecked")
             Map<String, Object> error = (Map<String, Object>) jsonItemResponse.get("error");
             if (error != null) {
+                String errorType = (String) error.get("type");
                 String errorMessage = (String) error.get("reason");
-                itemResponse.setFailureMessage(errorMessage);
-                itemResponse.setFailed(true);
+                if (isExpectedCreateConflict(operation, errorType, errorMessage)) {
+                    // First writer wins: a later create for an existing _id is expected when deduplicating.
+                    logger.debug("Ignoring expected create conflict for [{}/{}]: {}", index, id, errorMessage);
+                    itemResponse.setFailed(false);
+                    itemResponse.setFailureMessage(errorMessage);
+                } else {
+                    itemResponse.setFailureMessage(errorMessage);
+                    itemResponse.setFailed(true);
+                    hasRealErrors = true;
+                }
             }
             items.add(itemResponse);
-        });
+        }
+
+        errors = hasRealErrors;
+    }
+
+    private static ElasticsearchOperation.Operation parseOperation(String operationName) {
+        try {
+            return ElasticsearchOperation.Operation.valueOf(operationName.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            // Fallback for unexpected action names; treat as INDEX for response modelling.
+            return ElasticsearchOperation.Operation.INDEX;
+        }
+    }
+
+    /**
+     * Elasticsearch returns a version conflict when bulk {@code create} targets an existing {@code _id}. That is the
+     * intended “keep the first copy” behaviour for content-based ids.
+     */
+    static boolean isExpectedCreateConflict(
+            ElasticsearchOperation.Operation operation, String errorType, String errorMessage) {
+        if (operation != ElasticsearchOperation.Operation.CREATE) {
+            return false;
+        }
+        if ("version_conflict_engine_exception".equals(errorType)) {
+            return true;
+        }
+        return errorMessage != null && errorMessage.toLowerCase(Locale.ROOT).contains("document already exists");
     }
 
     @Override

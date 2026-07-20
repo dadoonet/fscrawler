@@ -61,6 +61,7 @@
     "index": "test_docs",
     "index_folder": "test_folder",
     "bulk_size": 1000,
+    "bulk_op": "create",
     "flush_interval": "5s",
     "byte_size": "10mb",
     "api_key": "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==",

@@ -768,6 +768,43 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void bulk_create_skips_existing_document() throws Exception {
+        String index = getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+        esClient.deleteIndex(index);
+
+        String id = "shared-id";
+        ElasticsearchBulkRequest firstBulk = new ElasticsearchBulkRequest();
+        firstBulk.add(new ElasticsearchIndexOperation(
+                ElasticsearchOperation.Operation.CREATE, index, id, null, "{\"path\":\"first\",\"content\":\"same\"}"));
+
+        ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+        ElasticsearchBulkResponse firstResponse = engine.bulk(firstBulk);
+        Assertions.assertThat(firstResponse.hasFailures()).isFalse();
+
+        countTestHelper(new ESSearchRequest().withIndex(index), 1L);
+
+        ElasticsearchBulkRequest secondBulk = new ElasticsearchBulkRequest();
+        secondBulk.add(new ElasticsearchIndexOperation(
+                ElasticsearchOperation.Operation.CREATE,
+                index,
+                id,
+                null,
+                "{\"path\":\"second\",\"content\":\"same\"}"));
+
+        ElasticsearchBulkResponse secondResponse = engine.bulk(secondBulk);
+        Assertions.assertThat(secondResponse.hasFailures())
+                .as("create conflict for an existing _id must be treated as non-fatal")
+                .isFalse();
+        Assertions.assertThat(secondResponse.getItems()).hasSize(1);
+        Assertions.assertThat(secondResponse.getItems().get(0).isFailed()).isFalse();
+
+        countTestHelper(new ESSearchRequest().withIndex(index), 1L);
+        ESSearchHit hit = esClient.get(index, id);
+        Assertions.assertThat(hit.getVersion()).isEqualTo(1L);
+        Assertions.assertThat(hit.getSource()).contains("\"path\":\"first\"");
+    }
+
+    @Test
     void deleteSingle() throws Exception {
         esClient.indexSingle(
                 getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS, "1", "{ \"foo\": { \"bar\": \"bar\" } }", null);

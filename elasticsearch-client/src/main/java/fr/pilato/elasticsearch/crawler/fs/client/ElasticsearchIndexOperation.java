@@ -26,9 +26,21 @@ public class ElasticsearchIndexOperation extends ElasticsearchOperation {
     private final String json;
 
     public ElasticsearchIndexOperation(String index, String id, String pipeline, String json) {
-        super(Operation.INDEX, index, id);
+        this(Operation.INDEX, index, id, pipeline, json);
+    }
+
+    public ElasticsearchIndexOperation(Operation operation, String index, String id, String pipeline, String json) {
+        super(requireWriteOperation(operation), index, id);
         this.pipeline = pipeline;
         this.json = json;
+    }
+
+    private static Operation requireWriteOperation(Operation operation) {
+        if (operation != Operation.INDEX && operation != Operation.CREATE) {
+            throw new IllegalArgumentException(
+                    "ElasticsearchIndexOperation only supports INDEX or CREATE, got " + operation);
+        }
+        return operation;
     }
 
     public String getPipeline() {

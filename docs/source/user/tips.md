@@ -134,6 +134,7 @@ the documents index. That means that both `fscrawler_machine1_docs` and `fscrawl
 * {ref}`tags` — static metadata such as `external.hostname`
 * Discussion: [Running FSCrawler on several servers](https://github.com/dadoonet/fscrawler/discussions/2256)
 
+(tips-deduplicate-content-id)=
 ## Deduplicate documents with a content-based `_id`
 
 By default, FSCrawler derives the Elasticsearch document `_id` from the **file path**
@@ -175,9 +176,24 @@ PUT _ingest/pipeline/set-id-from-checksum
 }
 ```
 
-Identical binary files then share the same `_id`: the last indexed copy wins and overwrites
-the previous document. That behaviour is useful when you update a file and want the index
-to reflect the latest path or metadata for that content.
+Identical binary files then share the same `_id`. With the default `elasticsearch.bulk_op: index`,
+the last indexed copy wins and overwrites the previous document. That behaviour is useful when
+you update a file and want the index to reflect the latest path or metadata for that content.
+
+To **keep the first indexed copy** instead, set `elasticsearch.bulk_op: create`:
+
+```yaml
+name: "test"
+fs:
+  index_content: true
+  checksum: "SHA-256"
+elasticsearch:
+  pipeline: "set-id-from-checksum"
+  bulk_op: "create"
+```
+
+Later duplicates fail with a create conflict that FSCrawler treats as expected (non-fatal),
+so a single document remains and its version stays at `1`.
 
 ```{note}
 The checksum is computed from the **binary file**, not from the extracted text.
@@ -228,9 +244,9 @@ Conversely, different files that yield the same extracted text **are** treated a
 
 ### Caveats
 
-* **Last writer wins**: when several paths share the same fingerprint, only one document remains.
-  FSCrawler uses the Elasticsearch bulk `index` action, which replaces an existing document
-  with the same `_id`.
+* **`bulk_op`**: with the default `index`, when several paths share the same fingerprint only
+  one document remains and the **last writer wins**. With `create`, the **first writer wins**
+  and later duplicates are skipped (see {ref}`elasticsearch-settings`).
 * **`fs.remove_deleted`**: deleting one of the duplicate files on disk can remove the shared
   document from Elasticsearch even if another copy still exists.
 * **Folder documents** are not sent through the ingest pipeline (see {ref}`ingest_node`).
@@ -242,3 +258,4 @@ Conversely, different files that yield the same extracted text **are** treated a
 * {ref}`file-checksum` — `fs.checksum` / `file.checksum`
 * {ref}`ingest_node` — `elasticsearch.pipeline`
 * {ref}`document-ids` — default path-based `_id` generation
+* {ref}`elasticsearch-settings` — `elasticsearch.bulk_op`

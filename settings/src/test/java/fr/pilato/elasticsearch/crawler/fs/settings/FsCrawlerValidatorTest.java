@@ -47,6 +47,18 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(settings.getServer().getProtocol()).isEqualTo("local");
         Assertions.assertThat(settings.getRest().getUrl()).isEqualTo("http://127.0.0.1:8080");
 
+        // Checking bulk_op
+        settings = FsSettingsLoader.load();
+        settings.getElasticsearch().setBulkOp("upsert");
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+        settings.getElasticsearch().setBulkOp(Elasticsearch.BulkOp.CREATE);
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+        settings.getElasticsearch().setBulkOp(Elasticsearch.BulkOp.INDEX);
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+
         // Checking Checksum Algorithm
         settings = FsSettingsLoader.load();
         settings.getFs().setChecksum("FSCRAWLER");

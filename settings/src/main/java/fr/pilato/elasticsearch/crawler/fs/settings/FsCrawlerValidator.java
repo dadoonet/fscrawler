@@ -69,6 +69,19 @@ public class FsCrawlerValidator {
             }
         }
 
+        // Checking bulk operation
+        String bulkOp = settings.getElasticsearch().getBulkOp();
+        if (bulkOp != null
+                && !Elasticsearch.BulkOp.INDEX.equals(bulkOp)
+                && !Elasticsearch.BulkOp.CREATE.equals(bulkOp)) {
+            logger.error(
+                    "elasticsearch.bulk_op [{}] is not supported. Please use {} or {}. Disabling crawler",
+                    bulkOp,
+                    Elasticsearch.BulkOp.INDEX,
+                    Elasticsearch.BulkOp.CREATE);
+            return true;
+        }
+
         // Checking Checksum Algorithm
         if (settings.getFs().getChecksum() != null
                 && !Digests.isSupported(settings.getFs().getChecksum())) {

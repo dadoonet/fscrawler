@@ -56,6 +56,33 @@ class ElasticsearchEngineTest extends AbstractFSCrawlerTestCase {
     private static final int WRITE_CHUNK = 1024 * 1024;
 
     @Test
+    void bulkWithCreateOperation() throws Exception {
+        AtomicReference<String> capturedNdjson = new AtomicReference<>();
+        IElasticsearchClient client = mock(IElasticsearchClient.class);
+        doAnswer(invocation -> {
+                    capturedNdjson.set(invocation.getArgument(0));
+                    return "{\"errors\":false,\"items\":[{\"create\":{\"_index\":\"idx\",\"_id\":\"1\"}}]}";
+                })
+                .when(client)
+                .bulk(anyString());
+
+        ElasticsearchBulkRequest request = new ElasticsearchBulkRequest();
+        request.add(new ElasticsearchIndexOperation(
+                ElasticsearchOperation.Operation.CREATE, "idx", "1", "my-pipeline", "{\"foo\":\"bar\"}"));
+
+        ElasticsearchBulkResponse response = new ElasticsearchEngine(client).bulk(request);
+
+        Assertions.assertThat(response.isErrors()).isFalse();
+        String ndjson = capturedNdjson.get();
+        String[] lines = ndjson.split("\n", -1);
+        Assertions.assertThat(lines[0]).startsWith("{\"create\":");
+        Assertions.assertThat(lines[0]).contains("\"_index\":\"idx\"");
+        Assertions.assertThat(lines[0]).contains("\"_id\":\"1\"");
+        Assertions.assertThat(lines[0]).contains("\"pipeline\":\"my-pipeline\"");
+        Assertions.assertThat(lines[1]).isEqualTo("{\"foo\":\"bar\"}");
+    }
+
+    @Test
     void bulkWithPrettyPrintedJson() throws Exception {
         String prettyJson = """
                 {

@@ -29,6 +29,7 @@ public abstract class ElasticsearchOperation implements FsCrawlerOperation<Elast
 
     enum Operation {
         INDEX,
+        CREATE,
         DELETE
     }
 

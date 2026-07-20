@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
+import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -659,7 +660,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexRawJson(String index, String id, String json, String pipeline) {
         logger.trace("JSon indexed : {}", json);
-        bulkProcessor.add(new ElasticsearchIndexOperation(index, id, pipeline, json));
+        bulkProcessor.add(new ElasticsearchIndexOperation(resolveBulkOperation(), index, id, pipeline, json));
+    }
+
+    /**
+     * Maps {@code elasticsearch.bulk_op} to the bulk action used for document writes. Unknown or unset values fall back
+     * to {@link ElasticsearchOperation.Operation#INDEX}.
+     */
+    private ElasticsearchOperation.Operation resolveBulkOperation() {
+        String bulkOp = settings.getElasticsearch().getBulkOp();
+        if (Elasticsearch.BulkOp.CREATE.equals(bulkOp)) {
+            return ElasticsearchOperation.Operation.CREATE;
+        }
+        return ElasticsearchOperation.Operation.INDEX;
     }
 
     @Override

@@ -31,6 +31,18 @@ import org.github.gestalt.config.annotations.Config;
 
 public class Elasticsearch {
 
+    /** Supported values for {@link #bulkOp}. */
+    public static final class BulkOp {
+        /** Create or replace the document with the given {@code _id} (default). */
+        public static final String INDEX = "index";
+        /** Create the document only if the {@code _id} does not already exist. */
+        public static final String CREATE = "create";
+
+        private BulkOp() {
+            // constants only
+        }
+    }
+
     @Config(defaultVal = Defaults.ELASTICSEARCH_URL_DEFAULT)
     @Nullable
     private List<String> urls;
@@ -46,6 +58,10 @@ public class Elasticsearch {
     @Config(defaultVal = "100")
     @Nullable
     private Integer bulkSize;
+
+    @Config(defaultVal = BulkOp.INDEX)
+    @Nullable
+    private String bulkOp;
 
     @Config(defaultVal = "5s")
     @Nullable
@@ -144,6 +160,14 @@ public class Elasticsearch {
 
     public void setBulkSize(@Nullable Integer bulkSize) {
         this.bulkSize = bulkSize;
+    }
+
+    public String getBulkOp() {
+        return bulkOp;
+    }
+
+    public void setBulkOp(@Nullable String bulkOp) {
+        this.bulkOp = bulkOp;
     }
 
     public TimeValue getFlushInterval() {
@@ -266,6 +290,7 @@ public class Elasticsearch {
         Elasticsearch that = (Elasticsearch) o;
 
         if (!Objects.equals(bulkSize, that.bulkSize)) return false;
+        if (!Objects.equals(bulkOp, that.bulkOp)) return false;
         if (!Objects.equals(urls, that.urls)) return false;
         if (!Objects.equals(index, that.index)) return false;
         if (!Objects.equals(indexFolder, that.indexFolder)) return false;
@@ -291,6 +316,7 @@ public class Elasticsearch {
         result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
         result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
         result = 31 * result + bulkSize;
+        result = 31 * result + (bulkOp != null ? bulkOp.hashCode() : 0);
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         result = 31 * result + (caCertificate != null ? caCertificate.hashCode() : 0);
         result = 31 * result + (sslVerification ? 1 : 0);
@@ -305,7 +331,8 @@ public class Elasticsearch {
                 + urls + ", index='"
                 + index + '\'' + ", indexFolder='"
                 + indexFolder + '\'' + ", bulkSize="
-                + bulkSize + ", flushInterval="
+                + bulkSize + ", bulkOp='"
+                + bulkOp + '\'' + ", flushInterval="
                 + flushInterval + ", byteSize="
                 + byteSize + ", apiKey='"
                 + apiKey + '\'' + ", username='"
