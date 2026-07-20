@@ -40,7 +40,7 @@ elasticsearch URL for the created document, like:
 {
   "filename" : "test.txt",
   "ok" : true,
-  "url" : "http://127.0.0.1:9200/fscrawler_docs/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
+  "url" : "https://127.0.0.1:9200/fscrawler_docs/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
 }
 ```
 
