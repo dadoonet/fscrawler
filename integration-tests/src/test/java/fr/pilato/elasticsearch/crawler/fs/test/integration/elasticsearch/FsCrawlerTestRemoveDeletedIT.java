@@ -266,13 +266,6 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      */
     @Test
     void move_file_between_directories_without_touch() throws Exception {
-        // Drop the default _common sample so only our randomized fixture is crawled
-        try (var children = Files.list(currentTestResourceDir)) {
-            for (Path child : children.toList()) {
-                deleteRecursively(child);
-            }
-        }
-
         String sourceDirName = "src_"
                 + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 4, 8)
                         .toLowerCase(Locale.ROOT);
@@ -298,9 +291,10 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setRemoveDeleted(true);
         crawler = startCrawler(fsSettings);
 
+        // Default _common sample (roottxtfile.txt) + our randomized file
         countTestHelper(
                 new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
-                1L,
+                2L,
                 currentTestResourceDir);
 
         // Scan dates are rounded to startDate-2s (#82). Wait until the checkpoint scanDate is strictly
