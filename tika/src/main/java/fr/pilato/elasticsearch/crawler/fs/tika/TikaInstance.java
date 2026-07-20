@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +97,8 @@ class TikaInstance {
     private void initParser(Fs fs) {
         if (fs.getTikaConfigPath() != null) {
             if (!(new File(fs.getTikaConfigPath())).exists()) {
-                throw new RuntimeException("Tika configuration file " + fs.getTikaConfigPath() + " not found!");
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Tika configuration file " + fs.getTikaConfigPath() + " not found!");
             }
             logger.info("Using custom tika configuration from [{}].", fs.getTikaConfigPath());
             TikaConfig config = null;

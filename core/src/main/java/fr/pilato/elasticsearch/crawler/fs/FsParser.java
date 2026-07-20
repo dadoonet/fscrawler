@@ -35,6 +35,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerSourceNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -48,6 +49,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
@@ -255,7 +257,7 @@ public class FsParser implements Runnable, AutoCloseable {
             }
         } catch (Exception e) {
             logger.error("Error while closing crawler plugin", e);
-            throw new RuntimeException(e);
+            throw new FsCrawlerPluginException("Error while closing crawler plugin", e);
         }
     }
 
@@ -344,7 +346,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     crawlerPlugin.openConnection();
 
                     if (!crawlerPlugin.exists(url)) {
-                        throw new RuntimeException(url + " doesn't exists.");
+                        throw new FsCrawlerSourceNotFoundException(url + " doesn't exists.");
                     }
 
                     String rootPathId = sign(url);

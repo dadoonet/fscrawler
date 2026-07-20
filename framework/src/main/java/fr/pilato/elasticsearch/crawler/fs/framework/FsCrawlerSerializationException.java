@@ -18,18 +18,19 @@
  *
  * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-package fr.pilato.elasticsearch.crawler.plugins;
+package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerException;
-
-/** Exception thrown when a plugin operation fails or is not supported. */
-public class FsCrawlerPluginException extends FsCrawlerException {
-
-    public FsCrawlerPluginException(String message) {
+/** Thrown when JSON/XML serialization or deserialization fails. */
+public class FsCrawlerSerializationException extends FsCrawlerException {
+    public FsCrawlerSerializationException(String message) {
         super(message);
     }
 
-    public FsCrawlerPluginException(String message, Throwable cause) {
+    public FsCrawlerSerializationException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public FsCrawlerSerializationException(Throwable cause) {
+        super(cause);
     }
 }

@@ -21,7 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 /** In case we need to throw a Runtime Exception when we detect something wrong */
-public class FsCrawlerIllegalConfigurationException extends RuntimeException {
+public class FsCrawlerIllegalConfigurationException extends FsCrawlerException {
     public FsCrawlerIllegalConfigurationException(String s) {
         super(s);
     }

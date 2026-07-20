@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -32,7 +33,7 @@ class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
     void checksum_non_existing_algorithm() {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setChecksum("FSCRAWLER");
-        AssertionsForClassTypes.assertThatExceptionOfType(RuntimeException.class)
+        AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false));
     }
 
@@ -47,7 +48,7 @@ class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setXmlSupport(true);
         fsSettings.getFs().setJsonSupport(true);
-        AssertionsForClassTypes.assertThatExceptionOfType(RuntimeException.class)
+        AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false));
     }
 }

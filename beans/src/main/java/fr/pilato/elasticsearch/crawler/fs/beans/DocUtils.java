@@ -60,7 +60,7 @@ public class DocUtils {
             return getMergedDoc(doc, filename.getFileName().toString(), tags);
         } catch (IOException e) {
             logger.error("Error parsing tags", e);
-            throw new FsCrawlerIllegalConfigurationException("Error parsing tags: " + e.getMessage());
+            throw new FsCrawlerIllegalConfigurationException("Error parsing tags: " + e.getMessage(), e);
         }
     }
 
@@ -110,7 +110,7 @@ public class DocUtils {
             return mapper.treeToValue(mergedNode, Doc.class);
         } catch (Exception e) {
             logger.error("Error parsing tags", e);
-            throw new FsCrawlerIllegalConfigurationException("Error parsing tags: " + e.getMessage());
+            throw new FsCrawlerIllegalConfigurationException("Error parsing tags: " + e.getMessage(), e);
         }
     }
 

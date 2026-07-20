@@ -17,7 +17,11 @@ Apache 2.0 license header required on **all** source files. Add it to any new fi
 
 ## Error Handling
 
+- Prefer domain-specific unchecked exceptions under `FsCrawlerException` (framework base)
 - `FsCrawlerIllegalConfigurationException` for configuration errors
+- `FsCrawlerSerializationException` / `FsCrawlerIOException` / `FsCrawlerMappingException` / `FsCrawlerSourceNotFoundException` for their respective failures
+- `FsCrawlerPluginException` for plugin operation failures
+- `ElasticsearchClientException` remains the checked exception for Elasticsearch client I/O
 - `FsCrawlerValidator.validateSettings()` to validate job settings
 - Use try-with-resources for all `Closeable` objects
 

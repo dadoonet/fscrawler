@@ -217,7 +217,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 clientBuilder.sslContext(sslContext);
             } catch (KeyManagementException | NoSuchAlgorithmException e) {
                 logger.warn("Failed to get SSL Context", e);
-                throw new RuntimeException(e);
+                throw new ElasticsearchClientException("Failed to get SSL Context", e);
             }
         }
 
@@ -312,7 +312,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 .build();
     }
 
-    private static SSLContext sslContextFromHttpCaCrt(File file) {
+    private static SSLContext sslContextFromHttpCaCrt(File file) throws ElasticsearchClientException {
         try (InputStream in = new FileInputStream(file)) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             Certificate certificate = cf.generateCertificate(in);
@@ -332,7 +332,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 | KeyManagementException
                 | KeyStoreException
                 | IOException e) {
-            throw new RuntimeException(e);
+            throw new ElasticsearchClientException("Failed to create SSL Context from CA certificate", e);
         }
     }
 

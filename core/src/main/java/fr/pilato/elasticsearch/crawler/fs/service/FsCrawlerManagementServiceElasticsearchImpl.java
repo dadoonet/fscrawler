@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.client.IElasticsearchClient;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerMappingException;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -108,7 +109,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
                                 "Can't find stored field name to check existing filenames in path [{}]. "
                                         + "Please set store: true on field [file.filename]",
                                 path);
-                        throw new RuntimeException(
+                        throw new FsCrawlerMappingException(
                                 "Mapping is incorrect: please set stored: true on field [file.filename].");
                     }
                     files.add(name);

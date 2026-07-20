@@ -18,18 +18,19 @@
  *
  * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-package fr.pilato.elasticsearch.crawler.plugins;
+package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerException;
-
-/** Exception thrown when a plugin operation fails or is not supported. */
-public class FsCrawlerPluginException extends FsCrawlerException {
-
-    public FsCrawlerPluginException(String message) {
+/** Thrown when a framework filesystem or classpath resource I/O operation fails. */
+public class FsCrawlerIOException extends FsCrawlerException {
+    public FsCrawlerIOException(String message) {
         super(message);
     }
 
-    public FsCrawlerPluginException(String message, Throwable cause) {
+    public FsCrawlerIOException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public FsCrawlerIOException(Throwable cause) {
+        super(cause);
     }
 }

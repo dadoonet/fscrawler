@@ -55,7 +55,7 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
             parseSettings();
             validateSettings();
         } catch (PathNotFoundException | IOException e) {
-            throw new FsCrawlerIllegalConfigurationException(e.getMessage());
+            throw new FsCrawlerIllegalConfigurationException(e.getMessage(), e);
         }
     }
 

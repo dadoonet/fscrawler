@@ -115,7 +115,7 @@ public class JsonUtil {
         try {
             return mapper.writeValueAsString(object);
         } catch (JacksonException e) {
-            throw new RuntimeException(e);
+            throw new FsCrawlerSerializationException(e);
         }
     }
 
@@ -123,7 +123,7 @@ public class JsonUtil {
         try {
             return mapper.readValue(json, clazz);
         } catch (JacksonException e) {
-            throw new RuntimeException(e);
+            throw new FsCrawlerSerializationException(e);
         }
     }
 
@@ -131,7 +131,7 @@ public class JsonUtil {
         try {
             return mapper.readValue(stream, new TypeReference<>() {});
         } catch (JacksonException e) {
-            throw new RuntimeException(e);
+            throw new FsCrawlerSerializationException(e);
         }
     }
 

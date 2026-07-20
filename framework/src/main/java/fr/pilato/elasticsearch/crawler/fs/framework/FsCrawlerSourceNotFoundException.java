@@ -18,18 +18,15 @@
  *
  * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-package fr.pilato.elasticsearch.crawler.plugins;
+package fr.pilato.elasticsearch.crawler.fs.framework;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerException;
-
-/** Exception thrown when a plugin operation fails or is not supported. */
-public class FsCrawlerPluginException extends FsCrawlerException {
-
-    public FsCrawlerPluginException(String message) {
+/** Thrown when the crawl source (root path or URL) does not exist. */
+public class FsCrawlerSourceNotFoundException extends FsCrawlerException {
+    public FsCrawlerSourceNotFoundException(String message) {
         super(message);
     }
 
-    public FsCrawlerPluginException(String message, Throwable cause) {
+    public FsCrawlerSourceNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
 }
