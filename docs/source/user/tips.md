@@ -133,3 +133,112 @@ the documents index. That means that both `fscrawler_machine1_docs` and `fscrawl
 * {ref}`elasticsearch-settings` — `elasticsearch.index` / `elasticsearch.index_folder`
 * {ref}`tags` — static metadata such as `external.hostname`
 * Discussion: [Running FSCrawler on several servers](https://github.com/dadoonet/fscrawler/discussions/2256)
+
+## Deduplicate documents with a content-based `_id`
+
+By default, FSCrawler derives the Elasticsearch document `_id` from the **file path**
+(see {ref}`document-ids`). Two identical files under different paths therefore become
+two distinct documents.
+
+If you want to index only **one copy** of duplicate files, you can set the document `_id`
+from a content fingerprint via an Elasticsearch {ref}`ingest pipeline <ingest_node>`.
+
+### Option 1: binary checksum (`fs.checksum`)
+
+Enable {ref}`file checksum <file-checksum>` so FSCrawler stores a hash of the **binary file**
+in `file.checksum`:
+
+```yaml
+name: "test"
+fs:
+  index_content: true
+  # indexed_chars: 0   # optional: checksum only, no extracted text
+  checksum: "SHA-256"
+elasticsearch:
+  pipeline: "set-id-from-checksum"
+```
+
+Create the pipeline that copies `file.checksum` into `_id`:
+
+```none
+PUT _ingest/pipeline/set-id-from-checksum
+{
+  "description": "Set the _id from file.checksum",
+  "processors": [
+    {
+      "set": {
+        "field": "_id",
+        "value": "{{{file.checksum}}}"
+      }
+    }
+  ]
+}
+```
+
+Identical binary files then share the same `_id`: the last indexed copy wins and overwrites
+the previous document. That behaviour is useful when you update a file and want the index
+to reflect the latest path or metadata for that content.
+
+```{note}
+The checksum is computed from the **binary file**, not from the extracted text.
+`fs.checksum` is independent from `fs.hash_algorithm` (the latter only affects path-based ids).
+```
+
+### Option 2: fingerprint of the extracted text
+
+If you prefer to deduplicate on the **extracted text** (`content`) instead of the binary,
+use the Elasticsearch
+[fingerprint ingest processor](https://www.elastic.co/docs/reference/ingest-processor/fingerprint-processor):
+
+```none
+PUT _ingest/pipeline/content-fingerprint-id
+{
+  "description": "Compute a fingerprint from content and set it as the document _id",
+  "processors": [
+    {
+      "fingerprint": {
+        "fields": ["content"],
+        "target_field": "_tmp_fingerprint",
+        "method": "SHA-256"
+      }
+    },
+    {
+      "set": {
+        "field": "_id",
+        "value": "{{{_tmp_fingerprint}}}"
+      }
+    },
+    {
+      "remove": {
+        "field": "_tmp_fingerprint",
+        "ignore_missing": true
+      }
+    }
+  ]
+}
+```
+
+Then set `elasticsearch.pipeline: "content-fingerprint-id"` in your job settings.
+
+```{warning}
+This option overwrites documents that have **no extracted text** or the **exact same text**.
+Binary-identical files with different extracted text are **not** treated as duplicates.
+Conversely, different files that yield the same extracted text **are** treated as duplicates.
+```
+
+### Caveats
+
+* **Last writer wins**: when several paths share the same fingerprint, only one document remains.
+  FSCrawler uses the Elasticsearch bulk `index` action, which replaces an existing document
+  with the same `_id`.
+* **`fs.remove_deleted`**: deleting one of the duplicate files on disk can remove the shared
+  document from Elasticsearch even if another copy still exists.
+* **Folder documents** are not sent through the ingest pipeline (see {ref}`ingest_node`).
+* Changing to a content-based `_id` produces new ids; reindex from a clean index (or with
+  `--restart`) as described in {ref}`document-ids`.
+
+### See also
+
+* {ref}`file-checksum` — `fs.checksum` / `file.checksum`
+* {ref}`ingest_node` — `elasticsearch.pipeline`
+* {ref}`document-ids` — default path-based `_id` generation

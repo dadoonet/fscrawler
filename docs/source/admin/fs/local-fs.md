@@ -756,6 +756,7 @@ fs:
   ignore_above: "512mb"
 ```
 
+(file-checksum)=
 ## File checksum
 
 If you want FSCrawler to generate a checksum for each file, set
