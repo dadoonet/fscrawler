@@ -1,5 +1,18 @@
 # AGENTS.md
 
+## Standing rules (all agents)
+
+Follow these on every change — same weight as build/test commands:
+
+1. **TDD** — failing test first, confirm red, then implement, then confirm green
+   (`.claude/rules/testing.md`).
+2. **RandomizedTesting** — avoid incidental hardcoded fixture values; use
+   `RandomizedTest.*(…, randomizedRandomForTests)` (`.claude/rules/testing.md`).
+3. **Commit messages** — `type(scope): emoji description` with detail bullets
+   (`.claude/rules/git-workflow.md`).
+
+Cursor agents: also read `.agents/CURSOR.md`.
+
 ## Cursor Cloud specific instructions
 
 FSCrawler is a Java 17+ Maven multi-module project (a file system crawler that parses

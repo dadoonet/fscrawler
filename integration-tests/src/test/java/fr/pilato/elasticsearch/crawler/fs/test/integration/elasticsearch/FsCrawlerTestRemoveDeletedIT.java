@@ -20,20 +20,35 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
+import com.jayway.jsonpath.DocumentContext;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
+import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
+import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
+import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /** Test moving/removing/adding files */
@@ -238,5 +253,95 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
 
         // We expect to have 2 docs now
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 2L, null);
+    }
+
+    /**
+     * Test case for <a
+     * href="https://github.com/dadoonet/fscrawler/issues/1300">https://github.com/dadoonet/fscrawler/issues/1300</a>:
+     * moving a file between directories inside the watched tree must remove the old document and index the file at its
+     * new location.
+     *
+     * <p>Unlike {@link #move_file()} and {@link #rename_file()}, this test deliberately does <strong>not</strong>
+     * {@code touch} the file after the move, which matches real {@code mv} behaviour where mtime (and creation time)
+     * are preserved. That is the scenario reported in #1300.
+     *
+     * <p>Disabled until #1300 is fixed: CI confirmed the failure on Linux and Windows.
+     */
+    @Test
+    @Disabled("Known issue https://github.com/dadoonet/fscrawler/issues/1300 — move without touch is not detected")
+    void move_file_between_directories_without_touch() throws Exception {
+        String sourceDirName = "src_"
+                + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 4, 8)
+                        .toLowerCase(Locale.ROOT);
+        String destDirName = "dst_"
+                + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 4, 8)
+                        .toLowerCase(Locale.ROOT);
+        String filename = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                        .toLowerCase(Locale.ROOT)
+                + ".txt";
+        String content = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 20, 80);
+
+        Path sourceDir = Files.createDirectories(currentTestResourceDir.resolve(sourceDirName));
+        Path destDir = Files.createDirectories(currentTestResourceDir.resolve(destDirName));
+        Path sourceFile = sourceDir.resolve(filename);
+        Files.writeString(sourceFile, content, StandardCharsets.UTF_8);
+        // Ensure mtime is older than any later scan (creation time is handled below via checkpoint wait)
+        Files.setLastModifiedTime(sourceFile, FileTime.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+        Instant fileCreation = Files.readAttributes(sourceFile, BasicFileAttributes.class)
+                .creationTime()
+                .toInstant();
+
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setRemoveDeleted(true);
+        crawler = startCrawler(fsSettings);
+
+        // Default _common sample (roottxtfile.txt) + our randomized file
+        countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
+                2L,
+                currentTestResourceDir);
+
+        // Scan dates are rounded to startDate-2s (#82). Wait until the checkpoint scanDate is strictly
+        // after the file creation time, otherwise a move that preserves birthtime would still look "new".
+        FsCrawlerCheckpointFileHandler checkpointHandler = new FsCrawlerCheckpointFileHandler(metadataDir);
+        Awaitility.await()
+                .alias("checkpoint scanDate after file creation")
+                .atMost(Duration.ofMinutes(1))
+                .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(5)))
+                .until(() -> {
+                    FsCrawlerCheckpoint checkpoint = checkpointHandler.read(fsSettings.getName());
+                    Instant scanDate = checkpoint == null ? null : checkpoint.getScanDate();
+                    logger.debug("Waiting for scanDate {} to be after file creation {}", scanDate, fileCreation);
+                    return scanDate != null && scanDate.isAfter(fileCreation);
+                });
+
+        Path destFile = destDir.resolve(filename);
+        logger.info(" ---> Moving [{}] to [{}] without touching timestamps", sourceFile, destFile);
+        Files.move(sourceFile, destFile, StandardCopyOption.ATOMIC_MOVE);
+
+        // remove_deleted should drop the document for the old path
+        countTestHelper(
+                new ESSearchRequest()
+                        .withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS)
+                        .withESQuery(new ESTermQuery("path.virtual.fulltext", sourceDirName)),
+                0L,
+                currentTestResourceDir);
+
+        // The scan that removed the old path already ran in the same pass as the new-path check
+        // (see FsParser.processDirectory). If #1300 is fixed, the document is already at the new path;
+        // if not, waiting longer will not help. Assert immediately with a clear message for CI.
+        String docsIndex = getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+        refresh(docsIndex);
+        ESSearchResponse response = client.search(
+                new ESSearchRequest().withIndex(docsIndex).withESQuery(new ESTermQuery("file.filename", filename)));
+        Assertions.assertThat(response.getTotalHits())
+                .as("#1300: file moved between watched dirs without touch must stay indexed (OS=%s)", OsValidator.OS)
+                .isEqualTo(1L);
+
+        DocumentContext document =
+                JsonUtil.parseJsonAsDocumentContext(response.getHits().get(0).getSource());
+        String expectedVirtual =
+                OsValidator.WINDOWS ? "\\" + destDirName + "\\" + filename : "/" + destDirName + "/" + filename;
+        Assertions.assertThat((String) document.read("$.path.virtual")).isEqualTo(expectedVirtual);
     }
 }
