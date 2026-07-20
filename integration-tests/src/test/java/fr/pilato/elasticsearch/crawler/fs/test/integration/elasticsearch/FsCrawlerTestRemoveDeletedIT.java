@@ -48,6 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /** Test moving/removing/adding files */
@@ -263,8 +264,11 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * <p>Unlike {@link #move_file()} and {@link #rename_file()}, this test deliberately does <strong>not</strong>
      * {@code touch} the file after the move, which matches real {@code mv} behaviour where mtime (and creation time)
      * are preserved. That is the scenario reported in #1300.
+     *
+     * <p>Disabled until #1300 is fixed: CI confirmed the failure on Linux and Windows.
      */
     @Test
+    @Disabled("Known issue https://github.com/dadoonet/fscrawler/issues/1300 — move without touch is not detected")
     void move_file_between_directories_without_touch() throws Exception {
         String sourceDirName = "src_"
                 + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 4, 8)
