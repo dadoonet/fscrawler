@@ -32,7 +32,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -266,7 +265,6 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
      * are preserved. That is the scenario reported in #1300.
      */
     @Test
-    @VerySlow
     void move_file_between_directories_without_touch() throws Exception {
         // Drop the default _common sample so only our randomized fixture is crawled
         try (var children = Files.list(currentTestResourceDir)) {
