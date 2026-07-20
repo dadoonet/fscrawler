@@ -23,12 +23,16 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchHit;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.Digests;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.Duration;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
@@ -41,9 +45,6 @@ import org.junit.jupiter.api.Test;
 @Slow
 class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
 
-    private static final String EXPECTED_CHECKSUM_ID =
-            "25dbec55a124c8d85dd7f0abb117389114c7e801ed926cf8755a674d78fea5af";
-
     /**
      * Two identical files under different paths share one document when the ingest pipeline sets {@code _id} from
      * {@code file.checksum} and FSCrawler uses bulk {@code create}. The surviving document stays at version {@code 1}
@@ -51,6 +52,8 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
      */
     @Test
     void deduplicate_with_create() throws Exception {
+        String expectedChecksumId = sha256OfSample();
+
         String pipelineName = getCrawlerName();
         createChecksumIdPipeline(pipelineName);
 
@@ -75,7 +78,7 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
                 .pollDelay(Duration.ofSeconds(2))
                 .atMost(MAX_WAIT_FOR_SEARCH)
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(2)))
-                .untilAsserted(() -> assertSingleDocument(docsIndex, 1L));
+                .untilAsserted(() -> assertSingleDocument(docsIndex, expectedChecksumId, 1L));
     }
 
     /**
@@ -84,6 +87,8 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
      */
     @Test
     void deduplicate_with_index() throws Exception {
+        String expectedChecksumId = sha256OfSample();
+
         String pipelineName = getCrawlerName();
         createChecksumIdPipeline(pipelineName);
 
@@ -103,10 +108,27 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
         Awaitility.await()
                 .atMost(MAX_WAIT_FOR_SEARCH)
                 .pollInterval(ExponentialBackoffPollInterval.exponential(Duration.ofMillis(500), Duration.ofSeconds(2)))
-                .untilAsserted(() -> assertSingleDocument(docsIndex, 2L));
+                .untilAsserted(() -> assertSingleDocument(docsIndex, expectedChecksumId, 2L));
     }
 
-    private void assertSingleDocument(String docsIndex, long minVersion) throws Exception {
+    /**
+     * Hash the fixture bytes as present on disk. Windows checkouts may use CRLF, so the value must not be hardcoded
+     * (same reason {@link FsCrawlerTestChecksumIT} uses platform-specific expectations).
+     */
+    private String sha256OfSample() throws Exception {
+        Path copyA = currentTestResourceDir.resolve("copy_a").resolve("identical.txt");
+        Path copyB = currentTestResourceDir.resolve("copy_b").resolve("identical.txt");
+        MessageDigest digest = Digests.get("SHA-256");
+        String checksumA = Digests.toHex(digest.digest(Files.readAllBytes(copyA)));
+        digest.reset();
+        String checksumB = Digests.toHex(digest.digest(Files.readAllBytes(copyB)));
+        Assertions.assertThat(checksumA)
+                .as("duplicate fixtures must be binary-identical for this test")
+                .isEqualTo(checksumB);
+        return checksumA;
+    }
+
+    private void assertSingleDocument(String docsIndex, String expectedChecksumId, long minVersion) throws Exception {
         refresh(docsIndex);
         ESSearchResponse response = client.search(new ESSearchRequest().withIndex(docsIndex));
         Assertions.assertThat(response.getTotalHits()).isEqualTo(1L);
@@ -114,7 +136,9 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
 
         ESSearchHit hit = response.getHits().get(0);
         ESSearchHit getHit = client.get(hit.getIndex(), hit.getId());
-        Assertions.assertThat(getHit.getId()).isEqualTo(EXPECTED_CHECKSUM_ID);
+        Assertions.assertThat(getHit.getId())
+                .as("document _id must be the SHA-256 checksum from the ingest pipeline")
+                .isEqualTo(expectedChecksumId);
         if (minVersion <= 1L) {
             Assertions.assertThat(getHit.getVersion())
                     .as("create mode must keep the first indexed copy (version stays at 1)")
