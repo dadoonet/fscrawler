@@ -21,7 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 /** Thrown when the crawl source (root path or URL) does not exist. */
-public class FsCrawlerSourceNotFoundException extends RuntimeException {
+public class FsCrawlerSourceNotFoundException extends FsCrawlerException {
     public FsCrawlerSourceNotFoundException(String message) {
         super(message);
     }

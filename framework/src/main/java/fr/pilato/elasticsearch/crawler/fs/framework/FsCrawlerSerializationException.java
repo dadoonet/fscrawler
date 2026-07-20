@@ -21,7 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 /** Thrown when JSON/XML serialization or deserialization fails. */
-public class FsCrawlerSerializationException extends RuntimeException {
+public class FsCrawlerSerializationException extends FsCrawlerException {
     public FsCrawlerSerializationException(String message) {
         super(message);
     }

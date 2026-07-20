@@ -21,7 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
 /** Thrown when a framework filesystem or classpath resource I/O operation fails. */
-public class FsCrawlerIOException extends RuntimeException {
+public class FsCrawlerIOException extends FsCrawlerException {
     public FsCrawlerIOException(String message) {
         super(message);
     }

@@ -23,21 +23,21 @@ Also preserve exception causes in `DocUtils` and `FsCrawlerExtensionFsProviderAb
 
 Out of scope for A: Awaitility control-flow wraps in `ElasticsearchClient`, test-only `RuntimeException`s, narrowing public `throws Exception` APIs.
 
-## Phase B (unchecked base)
+## Phase B (unchecked base) — done
 
-Add `FsCrawlerException extends RuntimeException` in `framework`.
+Added `FsCrawlerException extends RuntimeException` in `framework`.
 
-Make these extend it:
+These now extend it:
 
 - `FsCrawlerIllegalConfigurationException`
 - `FsCrawlerSerializationException`
 - `FsCrawlerIOException`
 - `FsCrawlerMappingException`
 - `FsCrawlerSourceNotFoundException`
-- `FsCrawlerPluginException` (plugin module; depends on framework)
+- `FsCrawlerPluginException` (plugin module; explicit framework dependency)
 - `NetworkErrorRecoveryException` (core)
 
-Keep `ElasticsearchClientException` as a **checked** exception (extends `Exception`) — it stays outside the unchecked hierarchy.
+`ElasticsearchClientException` remains a **checked** exception (extends `Exception`) outside the unchecked hierarchy.
 
 ## Rationale
 

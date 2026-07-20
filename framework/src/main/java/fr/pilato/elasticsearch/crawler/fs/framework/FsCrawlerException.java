@@ -20,13 +20,22 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework;
 
-/** Thrown when an Elasticsearch mapping is incompatible with FSCrawler expectations. */
-public class FsCrawlerMappingException extends FsCrawlerException {
-    public FsCrawlerMappingException(String message) {
+/**
+ * Base unchecked exception for FSCrawler domain failures.
+ *
+ * <p>Callers that want to handle any FSCrawler-specific runtime error can catch this type. Elasticsearch client
+ * failures remain modeled by the checked {@code ElasticsearchClientException}.
+ */
+public class FsCrawlerException extends RuntimeException {
+    public FsCrawlerException(String message) {
         super(message);
     }
 
-    public FsCrawlerMappingException(String message, Throwable cause) {
+    public FsCrawlerException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public FsCrawlerException(Throwable cause) {
+        super(cause);
     }
 }

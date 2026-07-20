@@ -13,6 +13,10 @@
     <dependencies>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-framework</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-settings</artifactId>
         </dependency>
         <dependency>

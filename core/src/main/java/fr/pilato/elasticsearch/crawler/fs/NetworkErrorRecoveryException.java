@@ -20,11 +20,13 @@
  */
 package fr.pilato.elasticsearch.crawler.fs;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerException;
+
 /**
  * Thrown when network error recovery fails (max retries exceeded or reconnect failed). The failed path has already been
  * re-added to the checkpoint; callers must not add it again.
  */
-public class NetworkErrorRecoveryException extends RuntimeException {
+public class NetworkErrorRecoveryException extends FsCrawlerException {
 
     public NetworkErrorRecoveryException(String message, Throwable cause) {
         super(message, cause);
