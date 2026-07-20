@@ -487,7 +487,7 @@ public class FsCrawlerUtil {
         try {
             properties.load(FsCrawlerUtil.class.getClassLoader().getResourceAsStream(resource));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new FsCrawlerIOException("Cannot load properties resource [" + resource + "]", e);
         }
         return properties;
     }
@@ -501,7 +501,7 @@ public class FsCrawlerUtil {
      * exists.
      *
      * @param root the directory to create
-     * @throws RuntimeException if the directory could not be created (wraps IOException)
+     * @throws FsCrawlerIOException if the directory could not be created (wraps IOException)
      */
     public static void createDirIfMissing(Path root) {
         if (Files.exists(root)) {
@@ -511,7 +511,7 @@ public class FsCrawlerUtil {
             Files.createDirectories(root);
         } catch (IOException e) {
             logger.error("Failed to create directory [{}]: {}", root, e.getMessage());
-            throw new RuntimeException("Cannot create directory " + root + ": " + e.getMessage(), e);
+            throw new FsCrawlerIOException("Cannot create directory " + root + ": " + e.getMessage(), e);
         }
     }
 

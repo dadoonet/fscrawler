@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerSerializationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import java.io.InputStream;
 import java.util.Map;
@@ -76,7 +77,7 @@ public class XmlDocParser {
         try {
             return (Map<String, Object>) xmlMapper.readValue(stream, Object.class);
         } catch (JacksonException e) {
-            throw new RuntimeException(e);
+            throw new FsCrawlerSerializationException(e);
         }
     }
 }
