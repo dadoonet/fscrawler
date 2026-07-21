@@ -37,7 +37,8 @@ public class ServerUrl {
 
     public void setUrl(String url) {
         logger.fatal(
-                "Setting elasticsearch.nodes.url has been removed in favor of elasticsearch.urls. "
-                        + "Please update your configuration. See https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#node-settings.");
+                "Setting elasticsearch.nodes.url [{}] has been removed in favor of elasticsearch.urls. "
+                        + "Please update your configuration. See https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#node-settings.",
+                url);
     }
 }
