@@ -227,6 +227,10 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.debug("🧹 Removing existing index and component templates for [{}]", getCrawlerName());
         esClient.removeIndexAndComponentTemplates(cleanupSettings());
 
+        // Ingest pipelines created by tests use getCrawlerName() as the pipeline id.
+        logger.debug("🧹 Removing existing ingest pipeline [{}]", getCrawlerName());
+        esClient.deletePipeline(getCrawlerName());
+
         logger.info("🎬 Starting test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
 
@@ -238,6 +242,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
             // Remove the templates this test may have created, by their exact names.
             esClient.removeIndexAndComponentTemplates(cleanupSettings());
+            esClient.deletePipeline(getCrawlerName());
         }
 
         logger.info("✅ End of test [{}] with [{}] as the crawler name", jobName, getCrawlerName());

@@ -178,6 +178,13 @@ public interface IElasticsearchClient extends Closeable {
     void deleteIndex(String index) throws ElasticsearchClientException;
 
     /**
+     * Remove an ingest pipeline. Missing pipelines are ignored (same idea as {@link #deleteIndex(String)}).
+     *
+     * @param pipeline pipeline name
+     */
+    void deletePipeline(String pipeline) throws ElasticsearchClientException;
+
+    /**
      * Flush any pending Bulk operation. Used for tests only. Note that flushing means immediate execution of the bulk,
      * but it does not wait for the bulk to be fully executed.
      */

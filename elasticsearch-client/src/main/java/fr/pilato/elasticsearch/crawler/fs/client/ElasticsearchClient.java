@@ -1322,6 +1322,16 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
+    public void deletePipeline(String pipeline) throws ElasticsearchClientException {
+        logger.debug("delete pipeline [{}]", pipeline);
+        try {
+            httpDelete("_ingest/pipeline/" + pipeline, null);
+        } catch (NotFoundException e) {
+            logger.debug("Pipeline [{}] was not found", pipeline);
+        }
+    }
+
+    @Override
     public void flush() {
         bulkProcessor.flush();
     }
