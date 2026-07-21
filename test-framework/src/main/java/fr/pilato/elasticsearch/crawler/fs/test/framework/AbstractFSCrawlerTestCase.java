@@ -196,30 +196,31 @@ public abstract class AbstractFSCrawlerTestCase {
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
             if (Character.isUpperCase(c)) {
-                if (!changed) {
-                    sb.setLength(0);
-                    // copy it over here
-                    for (int j = 0; j < i; j++) {
-                        sb.append(value.charAt(j));
-                    }
-                    changed = true;
-                    if (i != 0) {
-                        sb.append('_');
-                    }
-                } else {
-                    sb.append('_');
-                }
-                sb.append(Character.toLowerCase(c));
-            } else {
-                if (changed) {
-                    sb.append(c);
-                }
+                changed = appendUpperCase(sb, value, i, changed);
+            } else if (changed) {
+                sb.append(c);
             }
         }
         if (!changed) {
             return value;
         }
         return sb.toString();
+    }
+
+    private static boolean appendUpperCase(StringBuilder sb, String value, int i, boolean changed) {
+        if (!changed) {
+            sb.setLength(0);
+            for (int j = 0; j < i; j++) {
+                sb.append(value.charAt(j));
+            }
+            if (i != 0) {
+                sb.append('_');
+            }
+        } else {
+            sb.append('_');
+        }
+        sb.append(Character.toLowerCase(value.charAt(i)));
+        return true;
     }
 
     public static File urlToFile(URL url) {
