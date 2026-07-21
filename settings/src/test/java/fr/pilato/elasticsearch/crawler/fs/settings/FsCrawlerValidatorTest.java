@@ -114,5 +114,17 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isFalse();
         Assertions.assertThat(settings.getRest()).isNotNull();
+
+        // Checking bulk_operation: DELETE is internal-only
+        settings = FsSettingsLoader.load();
+        settings.getElasticsearch().setBulkOperation(BulkOperation.DELETE);
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+        settings.getElasticsearch().setBulkOperation(BulkOperation.CREATE);
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+        settings.getElasticsearch().setBulkOperation(BulkOperation.INDEX);
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
     }
 }

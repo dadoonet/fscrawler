@@ -176,11 +176,11 @@ PUT _ingest/pipeline/set-id-from-checksum
 }
 ```
 
-Identical binary files then share the same `_id`. With the default `elasticsearch.bulk_op: index`,
+Identical binary files then share the same `_id`. With the default `elasticsearch.bulk_operation: index`,
 the last indexed copy wins and overwrites the previous document. That behaviour is useful when
 you update a file and want the index to reflect the latest path or metadata for that content.
 
-To **keep the first indexed copy** instead, set `elasticsearch.bulk_op: create`:
+To **keep the first indexed copy** instead, set `elasticsearch.bulk_operation: create`:
 
 ```yaml
 name: "test"
@@ -189,7 +189,7 @@ fs:
   checksum: "SHA-256"
 elasticsearch:
   pipeline: "set-id-from-checksum"
-  bulk_op: "create"
+  bulk_operation: "create"
 ```
 
 Later duplicates fail with a create conflict that FSCrawler treats as expected (non-fatal),
@@ -244,7 +244,7 @@ Conversely, different files that yield the same extracted text **are** treated a
 
 ### Caveats
 
-* **`bulk_op`**: with the default `index`, when several paths share the same fingerprint only
+* **`bulk_operation`**: with the default `index`, when several paths share the same fingerprint only
   one document remains and the **last writer wins**. With `create`, the **first writer wins**
   and later duplicates are skipped (see {ref}`elasticsearch-settings`).
 * **`fs.remove_deleted`**: deleting one of the duplicate files on disk can remove the shared
@@ -258,4 +258,4 @@ Conversely, different files that yield the same extracted text **are** treated a
 * {ref}`file-checksum` — `fs.checksum` / `file.checksum`
 * {ref}`ingest_node` — `elasticsearch.pipeline`
 * {ref}`document-ids` — default path-based `_id` generation
-* {ref}`elasticsearch-settings` — `elasticsearch.bulk_op`
+* {ref}`elasticsearch-settings` — `elasticsearch.bulk_operation`

@@ -20,13 +20,16 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
+
 /** Bulk write operation that carries a document body ({@code index} or {@code create}). */
 public abstract class ElasticsearchInsertOperation extends ElasticsearchOperation {
 
     private final String pipeline;
     private final String json;
 
-    protected ElasticsearchInsertOperation(Operation operation, String index, String id, String pipeline, String json) {
+    protected ElasticsearchInsertOperation(
+            BulkOperation operation, String index, String id, String pipeline, String json) {
         super(operation, index, id);
         this.pipeline = pipeline;
         this.json = json;

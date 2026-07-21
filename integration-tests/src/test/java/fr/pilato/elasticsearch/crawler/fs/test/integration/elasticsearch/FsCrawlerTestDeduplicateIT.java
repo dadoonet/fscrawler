@@ -26,7 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.Digests;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
@@ -39,8 +39,9 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end coverage for content-based {@code _id} deduplication (tips docs), including {@code elasticsearch.bulk_op:
- * create} first-writer-wins behaviour from <a href="https://github.com/dadoonet/fscrawler/issues/2462">#2462</a>.
+ * End-to-end coverage for content-based {@code _id} deduplication (tips docs), including
+ * {@code elasticsearch.bulk_operation: create} first-writer-wins behaviour from <a
+ * href="https://github.com/dadoonet/fscrawler/issues/2462">#2462</a>.
  */
 @Slow
 class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
@@ -61,7 +62,7 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexContent(true);
         fsSettings.getFs().setChecksum("SHA-256");
         fsSettings.getElasticsearch().setPipeline(pipelineName);
-        fsSettings.getElasticsearch().setBulkOp(Elasticsearch.BulkOp.CREATE);
+        fsSettings.getElasticsearch().setBulkOperation(BulkOperation.CREATE);
 
         crawler = startCrawler(fsSettings);
 
@@ -96,7 +97,7 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
         fsSettings.getFs().setIndexContent(true);
         fsSettings.getFs().setChecksum("SHA-256");
         fsSettings.getElasticsearch().setPipeline(pipelineName);
-        fsSettings.getElasticsearch().setBulkOp(Elasticsearch.BulkOp.INDEX);
+        fsSettings.getElasticsearch().setBulkOperation(BulkOperation.INDEX);
 
         crawler = startCrawler(fsSettings);
 

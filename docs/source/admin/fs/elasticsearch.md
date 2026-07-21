@@ -14,7 +14,7 @@ Here is a list of Elasticsearch settings (under `elasticsearch.` prefix):
 | `elasticsearch.push_templates`       | `FSCRAWLER_ELASTICSEARCH_PUSH_TEMPLATES`       | `true`                   | {ref}`mappings`                                               |
 | `elasticsearch.force_push_templates` | `FSCRAWLER_ELASTICSEARCH_FORCE_PUSH_TEMPLATES` | `false`                  | {ref}`mappings`                                               |
 | `elasticsearch.bulk_size`            | `FSCRAWLER_ELASTICSEARCH_BULK_SIZE`            | `100`                    | [Bulk settings](#bulk-settings)                               |
-| `elasticsearch.bulk_op`              | `FSCRAWLER_ELASTICSEARCH_BULK_OP`              | `"index"`                | [Bulk settings](#bulk-settings)                               |
+| `elasticsearch.bulk_operation`       | `FSCRAWLER_ELASTICSEARCH_BULK_OPERATION`       | `"index"`                | [Bulk settings](#bulk-settings)                               |
 | `elasticsearch.flush_interval`       | `FSCRAWLER_ELASTICSEARCH_FLUSH_INTERVAL`       | `"5s"`                   | [Bulk settings](#bulk-settings)                               |
 | `elasticsearch.byte_size`            | `FSCRAWLER_ELASTICSEARCH_BYTE_SIZE`            | `"10mb"`                 | [Bulk settings](#bulk-settings)                               |
 | `elasticsearch.pipeline`             | `FSCRAWLER_ELASTICSEARCH_PIPELINE`             | `null`                   | {ref}`ingest_node`                                            |
@@ -277,7 +277,7 @@ elasticsearch:
 ```{versionadded} 3.0
 ```
 
-You can also choose the Elasticsearch bulk write operation with `bulk_op`:
+You can also choose the Elasticsearch bulk write operation with `bulk_operation`:
 
 * `index` (default) — create or **replace** the document for a given `_id`
 * `create` — create the document only if the `_id` does **not** already exist
@@ -287,7 +287,7 @@ You can also choose the Elasticsearch bulk write operation with `bulk_op`:
 ```yaml
 name: "test"
 elasticsearch:
-  bulk_op: "create"
+  bulk_operation: "create"
 ```
 
 This is especially useful with content-based document ids (see
@@ -295,7 +295,7 @@ This is especially useful with content-based document ids (see
 `create` keeps the first indexed copy instead of overwriting it.
 
 ```{note}
-`bulk_op` applies to document writes sent through the bulk processor, including
+`bulk_operation` applies to document writes sent through the bulk processor, including
 folder documents when `fs.index_folders` is enabled. Folder ids are path-based
 and unique, so `create` only skips a folder document that already exists.
 ```

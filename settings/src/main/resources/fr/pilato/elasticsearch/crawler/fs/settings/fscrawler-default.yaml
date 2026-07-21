@@ -133,7 +133,7 @@ fs:
   # optional: the bulk size in number of documents
   #bulk_size: 1000
   # optional: bulk write operation for documents: "index" (default) or "create"
-  #bulk_op: "index"
+  #bulk_operation: "index"
   # optional: the bulk flush period
   #flush_interval: "5s"
   # optional: the bulk size in bytes

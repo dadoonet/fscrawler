@@ -69,6 +69,18 @@ public class FsCrawlerValidator {
             }
         }
 
+        // Checking bulk_operation (DELETE is internal-only)
+        BulkOperation bulkOperation = settings.getElasticsearch().getBulkOperation();
+        if (bulkOperation == BulkOperation.DELETE) {
+            logger.error(
+                    "elasticsearch.bulk_operation [{}] is not supported for document writes. Please use {} or {}."
+                            + " Disabling crawler",
+                    bulkOperation,
+                    BulkOperation.INDEX,
+                    BulkOperation.CREATE);
+            return true;
+        }
+
         // Checking Checksum Algorithm
         if (settings.getFs().getChecksum() != null
                 && !Digests.isSupported(settings.getFs().getChecksum())) {

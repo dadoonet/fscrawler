@@ -29,7 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
-import fr.pilato.elasticsearch.crawler.fs.settings.Elasticsearch;
+import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -148,7 +148,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration BOOTSTRAP_RETRY_MAX_DELAY = Duration.ofSeconds(10);
 
     private final FsSettings settings;
-    /** Factory for document writes, resolved once from {@code elasticsearch.bulk_op}. */
+    /** Factory for document writes, resolved once from {@code elasticsearch.bulk_operation}. */
     private final InsertOperationFactory insertOperationFactory;
 
     private Client client = null;
@@ -171,7 +171,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public ElasticsearchClient(FsSettings settings) {
         this.settings = settings;
         this.insertOperationFactory =
-                insertOperationFactory(settings.getElasticsearch().getBulkOp());
+                insertOperationFactory(settings.getElasticsearch().getBulkOperation());
         this.hosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
         this.initialHosts =
                 new ArrayList<>(settings.getElasticsearch().getUrls().size());
@@ -675,11 +675,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Chooses {@link ElasticsearchCreateOperation} or {@link ElasticsearchIndexOperation} from
-     * {@code elasticsearch.bulk_op}. Resolved once at client construction because the setting is immutable for the life
-     * of the client. Unset values fall back to {@code index}.
+     * {@code elasticsearch.bulk_operation}. Resolved once at client construction because the setting is immutable for
+     * the life of the client. Unset values fall back to {@code index}.
      */
-    private static InsertOperationFactory insertOperationFactory(Elasticsearch.BulkOp bulkOp) {
-        if (bulkOp == Elasticsearch.BulkOp.CREATE) {
+    private static InsertOperationFactory insertOperationFactory(BulkOperation bulkOperation) {
+        if (bulkOperation == BulkOperation.CREATE) {
             return ElasticsearchCreateOperation::new;
         }
         return ElasticsearchIndexOperation::new;

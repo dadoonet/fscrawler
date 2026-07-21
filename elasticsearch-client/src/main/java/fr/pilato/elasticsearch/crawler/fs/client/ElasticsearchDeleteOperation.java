@@ -20,9 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
+
 public class ElasticsearchDeleteOperation extends ElasticsearchOperation {
 
     public ElasticsearchDeleteOperation(String index, String id) {
-        super(Operation.DELETE, index, id);
+        super(BulkOperation.DELETE, index, id);
     }
 }

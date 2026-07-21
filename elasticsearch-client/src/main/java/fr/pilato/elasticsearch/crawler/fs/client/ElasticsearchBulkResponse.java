@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
+import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
 
             String index = (String) jsonItemResponse.get("_index");
             String id = (String) jsonItemResponse.get("_id");
-            ElasticsearchOperation.Operation operation = parseOperation(operationName);
+            BulkOperation operation = parseOperation(operationName);
 
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
             itemResponse.setOperation(toOperation(operation, index, id));
@@ -80,17 +81,16 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
         errors = hasRealErrors;
     }
 
-    private static ElasticsearchOperation.Operation parseOperation(String operationName) {
+    private static BulkOperation parseOperation(String operationName) {
         try {
-            return ElasticsearchOperation.Operation.valueOf(operationName.toUpperCase(Locale.ROOT));
+            return BulkOperation.valueOf(operationName.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             // Fallback for unexpected action names; treat as INDEX for response modelling.
-            return ElasticsearchOperation.Operation.INDEX;
+            return BulkOperation.INDEX;
         }
     }
 
-    private static ElasticsearchOperation toOperation(
-            ElasticsearchOperation.Operation operation, String index, String id) {
+    private static ElasticsearchOperation toOperation(BulkOperation operation, String index, String id) {
         return switch (operation) {
             case CREATE -> new ElasticsearchCreateOperation(index, id, null, null);
             case DELETE -> new ElasticsearchDeleteOperation(index, id);
@@ -102,9 +102,8 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
      * Elasticsearch returns a version conflict when bulk {@code create} targets an existing {@code _id}. That is the
      * intended “keep the first copy” behaviour for content-based ids.
      */
-    static boolean isExpectedCreateConflict(
-            ElasticsearchOperation.Operation operation, String errorType, String errorMessage) {
-        if (operation != ElasticsearchOperation.Operation.CREATE) {
+    static boolean isExpectedCreateConflict(BulkOperation operation, String errorType, String errorMessage) {
+        if (operation != BulkOperation.CREATE) {
             return false;
         }
         if ("version_conflict_engine_exception".equals(errorType)) {
