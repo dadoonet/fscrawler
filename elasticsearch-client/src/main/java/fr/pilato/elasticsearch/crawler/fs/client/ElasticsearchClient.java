@@ -742,7 +742,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public void createIndexAndComponentTemplates() throws Exception {
+    public void createIndexAndComponentTemplates() throws IOException, ElasticsearchClientException {
         if (settings.getElasticsearch().isPushTemplates()) {
             boolean forcePush = settings.getElasticsearch().isForcePushTemplates();
 

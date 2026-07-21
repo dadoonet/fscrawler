@@ -158,9 +158,10 @@ public interface IElasticsearchClient extends Closeable {
     /**
      * Create all needed component and index templates
      *
-     * @throws Exception in case of error
+     * @throws java.io.IOException in case of I/O error while loading templates
+     * @throws ElasticsearchClientException in case of Elasticsearch error
      */
-    void createIndexAndComponentTemplates() throws Exception;
+    void createIndexAndComponentTemplates() throws java.io.IOException, ElasticsearchClientException;
 
     /**
      * Run a search
