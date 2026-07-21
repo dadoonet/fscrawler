@@ -525,6 +525,9 @@ public class TikaDocParser {
             Consumer<T> setter,
             Function<String, T> transformer) {
         String sMeta = metadata.get(property);
+        if (sMeta == null) {
+            return;
+        }
         try {
             setter.accept(transformer.apply(sMeta));
         } catch (Exception e) {
@@ -535,7 +538,7 @@ public class TikaDocParser {
 
     private static List<String> commaDelimitedListToStringArray(String str) {
         if (str == null) {
-            return null;
+            return List.of();
         }
         List<String> result = new ArrayList<>();
         int pos = 0;
