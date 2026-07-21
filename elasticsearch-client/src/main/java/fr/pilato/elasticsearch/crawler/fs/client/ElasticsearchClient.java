@@ -124,6 +124,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public static final String API_SEARCH = "_search";
     public static final String API_SECURITY_API_KEY = "_security/api_key";
     public static final String API_INGEST_PIPELINE = "_ingest/pipeline/";
+    private static final String PATH_DELIMITER = "/";
 
     // User agent
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
@@ -1617,7 +1618,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String node = getNode();
         String path = localPath;
         if (settings.getElasticsearch().getPathPrefix() != null) {
-            path = settings.getElasticsearch().getPathPrefix() + "/" + localPath;
+            path = settings.getElasticsearch().getPathPrefix() + PATH_DELIMITER + localPath;
         }
         logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);
         try {
