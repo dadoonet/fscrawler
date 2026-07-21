@@ -327,9 +327,8 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
                 0L,
                 currentTestResourceDir);
 
-        // The scan that removed the old path already ran in the same pass as the new-path check
-        // (see FsParser.processDirectory). If #1300 is fixed, the document is already at the new path;
-        // if not, waiting longer will not help. Assert immediately with a clear message for CI.
+        // Same crawl pass already evaluated both paths (processDirectory). When issue 1300 is fixed the
+        // document is already under the new path; waiting longer does not help. Assert immediately for CI.
         String docsIndex = getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
         refresh(docsIndex);
         ESSearchResponse response = client.search(
