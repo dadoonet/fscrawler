@@ -193,47 +193,7 @@ public class TikaDocParser {
                 }
 
                 if (fsSettings.getFs().isIndexContent()) {
-                    try {
-                        // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
-                        logger.trace("Beginning Tika extraction");
-                        parsedContent = tikaInstance.extractText(indexedChars, inputStream, metadata);
-                        logger.trace("End of Tika extraction");
-                    } catch (Throwable e) {
-                        // Build a message from embedded errors
-                        Throwable current = e;
-                        StringBuilder sb = new StringBuilder();
-                        while (current != null) {
-                            sb.append(current.getMessage());
-                            current = current.getCause();
-                            if (current != null) {
-                                sb.append(" -> ");
-                            }
-                        }
-
-                        try {
-                            FSCrawlerLogger.documentError(
-                                    fsSettings.getFs().isFilenameAsId()
-                                            ? doc.getFile().getFilename()
-                                            : SignTool.sign(
-                                                    fsSettings.getFs().getHashAlgorithm(),
-                                                    doc.getPath().getReal()),
-                                    FsCrawlerUtil.computeVirtualPathName(
-                                            fsSettings.getFs().getUrl(),
-                                            doc.getPath().getReal()),
-                                    sb.toString());
-                        } catch (NoSuchAlgorithmException ignored) {
-                            // Error is already logged below; hash algorithm failure must not hide it
-                        }
-                        logger.warn(
-                                "Failed to extract [{}] characters of text for [{}]: {}",
-                                indexedChars,
-                                doc.getPath().getReal(),
-                                sb.toString());
-                        logger.debug(
-                                "Failed to extract [" + indexedChars + "] characters of text for ["
-                                        + doc.getPath().getReal() + "]",
-                                e);
-                    }
+                    parsedContent = extractParsedContent(tikaInstance, indexedChars, inputStream, metadata, doc);
 
                     // Adding what we found to the document we want to index
 
@@ -485,20 +445,11 @@ public class TikaDocParser {
             } finally {
                 // Close the temp file stream before deleting the file
                 if (tempFileStream != null) {
-                    try {
-                        tempFileStream.close();
-                    } catch (IOException e) {
-                        logger.debug("Failed to close temp file stream: {}", e.getMessage());
-                    }
+                    closeQuietly(tempFileStream);
                 }
                 // Clean up temp file if it was created
                 if (tempFile != null) {
-                    try {
-                        Files.deleteIfExists(tempFile);
-                        logger.trace("Deleted temp file [{}]", tempFile);
-                    } catch (IOException e) {
-                        logger.warn("Failed to delete temp file [{}]: {}", tempFile, e.getMessage());
-                    }
+                    deleteTempFileQuietly(tempFile);
                 }
             }
         } catch (Exception e) {
@@ -515,6 +466,75 @@ public class TikaDocParser {
                 tikaSpan.setAttribute("tika.indexed_chars", doc.getFile().getIndexedChars());
             }
             tikaSpan.end();
+        }
+    }
+
+    /**
+     * Extracts text via Tika. On failure, logs the document error (best-effort) and returns {@code null}.
+     */
+    private String extractParsedContent(
+            TikaInstance tikaInstance, int indexedChars, InputStream inputStream, Metadata metadata, Doc doc) {
+        try {
+            // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
+            logger.trace("Beginning Tika extraction");
+            String parsedContent = tikaInstance.extractText(indexedChars, inputStream, metadata);
+            logger.trace("End of Tika extraction");
+            return parsedContent;
+        } catch (Throwable e) {
+            // Build a message from embedded errors
+            Throwable current = e;
+            StringBuilder sb = new StringBuilder();
+            while (current != null) {
+                sb.append(current.getMessage());
+                current = current.getCause();
+                if (current != null) {
+                    sb.append(" -> ");
+                }
+            }
+
+            logDocumentError(doc, sb.toString());
+            logger.warn(
+                    "Failed to extract [{}] characters of text for [{}]: {}",
+                    indexedChars,
+                    doc.getPath().getReal(),
+                    sb.toString());
+            logger.debug(
+                    "Failed to extract [" + indexedChars + "] characters of text for ["
+                            + doc.getPath().getReal() + "]",
+                    e);
+            return null;
+        }
+    }
+
+    private void logDocumentError(Doc doc, String errorMessage) {
+        try {
+            FSCrawlerLogger.documentError(
+                    fsSettings.getFs().isFilenameAsId()
+                            ? doc.getFile().getFilename()
+                            : SignTool.sign(
+                                    fsSettings.getFs().getHashAlgorithm(), doc.getPath().getReal()),
+                    FsCrawlerUtil.computeVirtualPathName(
+                            fsSettings.getFs().getUrl(), doc.getPath().getReal()),
+                    errorMessage);
+        } catch (NoSuchAlgorithmException ignored) {
+            // Error is already logged below; hash algorithm failure must not hide it
+        }
+    }
+
+    private static void closeQuietly(InputStream inputStream) {
+        try {
+            inputStream.close();
+        } catch (IOException e) {
+            logger.debug("Failed to close temp file stream: {}", e.getMessage());
+        }
+    }
+
+    private static void deleteTempFileQuietly(Path tempFile) {
+        try {
+            Files.deleteIfExists(tempFile);
+            logger.trace("Deleted temp file [{}]", tempFile);
+        } catch (IOException e) {
+            logger.warn("Failed to delete temp file [{}]: {}", tempFile, e.getMessage());
         }
     }
 
