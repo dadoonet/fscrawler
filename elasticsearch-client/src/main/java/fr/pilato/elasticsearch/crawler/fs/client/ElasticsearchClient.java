@@ -1141,17 +1141,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             size = request.getSize();
             body.getAndUpdate(s -> s + (", \"size\":" + request.getSize()));
         }
-        if (!request.getStoredFields().isEmpty()) {
-            body.getAndUpdate(s -> s + ", \"stored_fields\" : [");
-            AtomicBoolean moreFields = new AtomicBoolean(false);
-            request.getStoredFields().forEach(f -> {
-                if (moreFields.getAndSet(true)) {
-                    body.getAndUpdate(s -> s + ",");
-                }
-                body.getAndUpdate(s -> s + ("\"" + f + "\""));
-            });
-            body.getAndUpdate(s -> s + "]");
-        }
+        appendStoredFields(body, request);
         if (request.getESQuery() != null) {
             body.getAndUpdate(s -> s + (", \"query\" : {" + toElasticsearchQuery(request.getESQuery()) + "}"));
         }
@@ -1284,35 +1274,58 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return String.format(PREFIX_QUERY, esQuery.getField(), esQuery.getValue());
         }
         if (query instanceof ESRangeQuery esQuery) {
-            String localQuery = "\"range\": { \"" + esQuery.getField() + "\": {";
-            if (esQuery.getGte() != null) {
-                localQuery += "\"gte\": " + esQuery.getGte();
-                if (esQuery.getLt() != null) {
-                    localQuery += ",";
-                }
-            }
-            if (esQuery.getLt() != null) {
-                localQuery += "\"lt\": " + esQuery.getLt();
-            }
-            localQuery += "}}";
-            return localQuery;
+            return toRangeQuery(esQuery);
         }
         if (query instanceof ESBoolQuery esQuery) {
-            StringBuilder localQuery = new StringBuilder("\"bool\": { \"must\" : [");
-            boolean hasClauses = false;
-            for (ESQuery clause : esQuery.getMustClauses()) {
-                if (hasClauses) {
-                    localQuery.append(",");
-                }
-                localQuery.append("{");
-                localQuery.append(toElasticsearchQuery(clause));
-                localQuery.append("}");
-                hasClauses = true;
-            }
-            localQuery.append("]}");
-            return localQuery.toString();
+            return toBoolMustQuery(esQuery);
         }
         throw new IllegalArgumentException("Query " + query.getClass().getSimpleName() + " not implemented yet");
+    }
+
+    private void appendStoredFields(AtomicReference<String> body, ESSearchRequest request) {
+        if (request.getStoredFields().isEmpty()) {
+            return;
+        }
+        body.getAndUpdate(s -> s + ", \"stored_fields\" : [");
+        AtomicBoolean moreFields = new AtomicBoolean(false);
+        request.getStoredFields().forEach(f -> {
+            if (moreFields.getAndSet(true)) {
+                body.getAndUpdate(s -> s + ",");
+            }
+            body.getAndUpdate(s -> s + ("\"" + f + "\""));
+        });
+        body.getAndUpdate(s -> s + "]");
+    }
+
+    private String toRangeQuery(ESRangeQuery esQuery) {
+        String localQuery = "\"range\": { \"" + esQuery.getField() + "\": {";
+        if (esQuery.getGte() != null) {
+            localQuery += "\"gte\": " + esQuery.getGte();
+            if (esQuery.getLt() != null) {
+                localQuery += ",";
+            }
+        }
+        if (esQuery.getLt() != null) {
+            localQuery += "\"lt\": " + esQuery.getLt();
+        }
+        localQuery += "}}";
+        return localQuery;
+    }
+
+    private String toBoolMustQuery(ESBoolQuery esQuery) {
+        StringBuilder localQuery = new StringBuilder("\"bool\": { \"must\" : [");
+        boolean hasClauses = false;
+        for (ESQuery clause : esQuery.getMustClauses()) {
+            if (hasClauses) {
+                localQuery.append(",");
+            }
+            localQuery.append("{");
+            localQuery.append(toElasticsearchQuery(clause));
+            localQuery.append("}");
+            hasClauses = true;
+        }
+        localQuery.append("]}");
+        return localQuery.toString();
     }
 
     @Override
@@ -1624,29 +1637,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
         logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);
         try {
             Invocation.Builder callBuilder = prepareHttpCall(node, path, params);
-            if (data == null) {
-                String response = callBuilder.method(method, String.class);
-                logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
-                return response;
-            }
-            String response = callBuilder.method(method, Entity.json(data), String.class);
-            logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
-            return response;
+            return invokeHttp(callBuilder, method, node, path, data);
         } catch (WebApplicationException e) {
-            if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.error(
-                        "Error on server side. {} -> {} / {}",
-                        e.getResponse().getStatus(),
-                        e.getResponse().getStatusInfo().getReasonPhrase(),
-                        e.getResponse().readEntity(String.class));
-            } else {
-                logger.trace(
-                        "Error while running {} {}/{}: {}",
-                        method,
-                        node,
-                        path == null ? "" : path,
-                        e.getResponse().readEntity(String.class));
-            }
+            handleWebApplicationError(e, method, node, path);
             throw e;
         } catch (ProcessingException e) {
             if (e.getCause() instanceof ConnectException && initialHosts.size() > 1) {
@@ -1662,6 +1655,34 @@ public class ElasticsearchClient implements IElasticsearchClient {
                                 + e.getCause().getMessage(),
                         e);
             }
+        }
+    }
+
+    private String invokeHttp(Invocation.Builder callBuilder, String method, String node, String path, Object data) {
+        if (data == null) {
+            String response = callBuilder.method(method, String.class);
+            logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
+            return response;
+        }
+        String response = callBuilder.method(method, Entity.json(data), String.class);
+        logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
+        return response;
+    }
+
+    private void handleWebApplicationError(WebApplicationException e, String method, String node, String path) {
+        if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
+            logger.error(
+                    "Error on server side. {} -> {} / {}",
+                    e.getResponse().getStatus(),
+                    e.getResponse().getStatusInfo().getReasonPhrase(),
+                    e.getResponse().readEntity(String.class));
+        } else {
+            logger.trace(
+                    "Error while running {} {}/{}: {}",
+                    method,
+                    node,
+                    path == null ? "" : path,
+                    e.getResponse().readEntity(String.class));
         }
     }
 
