@@ -7,7 +7,7 @@ RUN set -ex \
     && apt-get install -y --no-install-recommends \
     procps \
     curl \
-    ${langsPkg} \
+    "${langsPkg}" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd -g 10001 fscrawler \
