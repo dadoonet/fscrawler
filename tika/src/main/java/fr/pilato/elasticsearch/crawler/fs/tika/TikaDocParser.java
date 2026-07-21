@@ -282,8 +282,8 @@ public class TikaDocParser {
                             Office.KEYWORDS,
                             doc.getMeta()::setKeywords,
                             TikaDocParser::commaDelimitedListToStringArray);
-                    // TODO Fix this with Tika 2.2.1+
-                    // See https://issues.apache.org/jira/browse/TIKA-3629
+                    // PDF keywords often land only in pdf:docinfo:keywords (not Office.KEYWORDS), even with
+                    // recent Tika — keep this fallback. See https://issues.apache.org/jira/browse/TIKA-3629
                     if (doc.getMeta().getKeywords() == null) {
                         setMeta(
                                 doc.getPath().getReal(),
