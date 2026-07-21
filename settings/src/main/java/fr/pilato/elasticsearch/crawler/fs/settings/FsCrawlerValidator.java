@@ -44,29 +44,8 @@ public class FsCrawlerValidator {
             logger.warn("username/password is deprecated. Use apiKey instead.");
         }
 
-        // Checking protocol
-        if (settings.getServer() != null) {
-            if (!Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())
-                    && !Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
-                    && !Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
-                // Non supported protocol
-                logger.error(settings.getServer().getProtocol() + " is not supported yet. Please use "
-                        + Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH + " or " + Server.PROTOCOL.FTP
-                        + ". Disabling crawler");
-                return true;
-            }
-
-            // Checking username/password
-            if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
-                    && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
-                logger.error(
-                        "When using SSH, you need to set a username and probably a password or a pem file. Disabling crawler");
-                return true;
-            } else if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())
-                    && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
-                logger.error("When using FTP, you need to set a username and probably a password. Disabling crawler");
-                return true;
-            }
+        if (validateServerSettings(logger, settings)) {
+            return true;
         }
 
         // Checking bulk_operation (DELETE is internal-only)
@@ -81,35 +60,11 @@ public class FsCrawlerValidator {
             return true;
         }
 
-        // Checking Checksum Algorithm
-        if (settings.getFs().getChecksum() != null
-                && !Digests.isSupported(settings.getFs().getChecksum())) {
-            logger.error(
-                    "Algorithm [{}] not found. Disabling crawler",
-                    settings.getFs().getChecksum());
+        if (validateDigestSettings(logger, settings)) {
             return true;
         }
 
-        // Checking document _id hash algorithm
-        if (settings.getFs().getHashAlgorithm() != null
-                && !Digests.isSupported(settings.getFs().getHashAlgorithm())) {
-            logger.error(
-                    "Hash algorithm [{}] not found. Disabling crawler",
-                    settings.getFs().getHashAlgorithm());
-            return true;
-        }
-
-        // Checking That we don't try to do both xml and json
-        if (settings.getFs().isJsonSupport() && settings.getFs().isXmlSupport()) {
-            logger.error("Can not support both xml and json parsing. Disabling crawler");
-            return true;
-        }
-
-        // Checking That we don't try to have xml or json, but we don't want to index their content
-        if ((settings.getFs().isJsonSupport() || settings.getFs().isXmlSupport())
-                && !settings.getFs().isIndexContent()) {
-            logger.error(
-                    "Json or Xml indexation is activated but you disabled indexing content which does not make sense. Disabling crawler");
+        if (validateFsContentFlags(logger, settings)) {
             return true;
         }
 
@@ -123,6 +78,64 @@ public class FsCrawlerValidator {
             logger.warn("acl_support is set to true but attributes_support is false. ACL collection is disabled.");
         }
 
+        return false;
+    }
+
+    private static boolean validateServerSettings(Logger logger, FsSettings settings) {
+        if (settings.getServer() == null) {
+            return false;
+        }
+        if (!Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())
+                && !Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
+                && !Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
+            logger.error(settings.getServer().getProtocol() + " is not supported yet. Please use "
+                    + Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH + " or " + Server.PROTOCOL.FTP
+                    + ". Disabling crawler");
+            return true;
+        }
+        if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
+                && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
+            logger.error(
+                    "When using SSH, you need to set a username and probably a password or a pem file. Disabling crawler");
+            return true;
+        }
+        if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())
+                && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
+            logger.error("When using FTP, you need to set a username and probably a password. Disabling crawler");
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean validateDigestSettings(Logger logger, FsSettings settings) {
+        if (settings.getFs().getChecksum() != null
+                && !Digests.isSupported(settings.getFs().getChecksum())) {
+            logger.error(
+                    "Algorithm [{}] not found. Disabling crawler",
+                    settings.getFs().getChecksum());
+            return true;
+        }
+        if (settings.getFs().getHashAlgorithm() != null
+                && !Digests.isSupported(settings.getFs().getHashAlgorithm())) {
+            logger.error(
+                    "Hash algorithm [{}] not found. Disabling crawler",
+                    settings.getFs().getHashAlgorithm());
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean validateFsContentFlags(Logger logger, FsSettings settings) {
+        if (settings.getFs().isJsonSupport() && settings.getFs().isXmlSupport()) {
+            logger.error("Can not support both xml and json parsing. Disabling crawler");
+            return true;
+        }
+        if ((settings.getFs().isJsonSupport() || settings.getFs().isXmlSupport())
+                && !settings.getFs().isIndexContent()) {
+            logger.error(
+                    "Json or Xml indexation is activated but you disabled indexing content which does not make sense. Disabling crawler");
+            return true;
+        }
         return false;
     }
 }

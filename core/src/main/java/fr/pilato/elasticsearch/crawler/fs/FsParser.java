@@ -508,20 +508,8 @@ public class FsParser implements Runnable, AutoCloseable {
                                     "Waking up (resume or timeout). Waited {} / {} ms.", elapsedMillis, maxWaitTime);
                             // When not user-stopped, allow external checkpoint change (e.g. nextCheck in past) to
                             // trigger early run
-                            if (!userStopped.get()) {
-                                try {
-                                    FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
-                                    if (savedCheckpoint == null
-                                            || savedCheckpoint.getNextCheck() == null
-                                            || Instant.now().isAfter(savedCheckpoint.getNextCheck())) {
-                                        logger.debug(
-                                                "Fs crawler is waking up because next check time [{}] is in the past.",
-                                                savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
-                                        break;
-                                    }
-                                } catch (IOException e) {
-                                    logger.warn("Error while reading checkpoint: {}", e.getMessage());
-                                }
+                            if (!userStopped.get() && shouldWakeFromCheckpoint()) {
+                                break;
                             }
                         }
                         logger.debug(
@@ -569,12 +557,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     || (existing.getCurrentPath() != null
                             && !existing.getCurrentPath().isEmpty())) {
                 // Interrupted scan - resume (either pending queue non-empty or currentPath set but path was polled out)
-                if (existing.getCurrentPath() != null
-                        && !existing.getCurrentPath().isEmpty()
-                        && !existing.isPending(existing.getCurrentPath())) {
-                    existing.addPathFirst(existing.getCurrentPath());
-                    logger.debug("Re-added currentPath [{}] to pending queue for resume", existing.getCurrentPath());
-                }
+                requeueCurrentPathIfNeeded(existing);
                 if (!existing.hasPendingWork()) {
                     logger.info(
                             "Found existing checkpoint for job [{}] with currentPath but empty pending queue, resuming scan",
@@ -600,6 +583,15 @@ public class FsParser implements Runnable, AutoCloseable {
         }
 
         return FsCrawlerCheckpoint.newCheckpoint(rootPath);
+    }
+
+    private void requeueCurrentPathIfNeeded(FsCrawlerCheckpoint existing) {
+        if (existing.getCurrentPath() != null
+                && !existing.getCurrentPath().isEmpty()
+                && !existing.isPending(existing.getCurrentPath())) {
+            existing.addPathFirst(existing.getCurrentPath());
+            logger.debug("Re-added currentPath [{}] to pending queue for resume", existing.getCurrentPath());
+        }
     }
 
     /**
@@ -934,47 +926,11 @@ public class FsParser implements Runnable, AutoCloseable {
 
                                     if (FsCrawlerUtil.isFileSizeUnderLimit(
                                             fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
-                                        InputStream inputStream = null;
-                                        InputStream metadataStream = null;
-                                        try {
-                                            if (fsSettings.getFs().isIndexContent()
-                                                    || fsSettings.getFs().isStoreSource()) {
-                                                inputStream = crawlerPlugin.getInputStream(child);
-                                            }
-                                            if (metadataFile != null) {
-                                                metadataStream = crawlerPlugin.getInputStream(metadataFile);
-                                            }
-                                            indexFile(
-                                                    child,
-                                                    stats,
-                                                    filepath,
-                                                    inputStream,
-                                                    child.getSize(),
-                                                    metadataStream);
-                                            if (skipCount > 0) {
-                                                skipCount--;
-                                            } else {
-                                                stats.addFile();
-                                                checkpoint.get().incrementFilesProcessed();
-                                            }
+                                        Integer updatedSkipCount =
+                                                indexFileWithStreams(child, stats, filepath, metadataFile, skipCount);
+                                        if (updatedSkipCount != null) {
+                                            skipCount = updatedSkipCount;
                                             indexedInThisPass++;
-                                            maybeSaveCheckpoint();
-                                        } catch (Exception e) {
-                                            if (fsSettings.getFs().isContinueOnError()) {
-                                                logger.warn(
-                                                        "Unable to index {}, skipping...: {}",
-                                                        filename,
-                                                        e.getMessage());
-                                            } else {
-                                                throw e;
-                                            }
-                                        } finally {
-                                            if (metadataStream != null) {
-                                                crawlerPlugin.closeInputStream(metadataStream);
-                                            }
-                                            if (inputStream != null) {
-                                                crawlerPlugin.closeInputStream(inputStream);
-                                            }
                                         }
                                     } else {
                                         logger.debug(
@@ -1225,7 +1181,7 @@ public class FsParser implements Runnable, AutoCloseable {
         return false;
     }
 
-    private Collection<String> getFileDirectory(String path) throws Exception {
+    private Collection<String> getFileDirectory(String path) throws NoSuchAlgorithmException {
         // If the crawler is being closed, we return
         if (closed.get()) {
             return new ArrayList<>();
@@ -1233,7 +1189,7 @@ public class FsParser implements Runnable, AutoCloseable {
         return managementService.getFileDirectory(path);
     }
 
-    private Collection<String> getFolderDirectory(String path) throws Exception {
+    private Collection<String> getFolderDirectory(String path) throws NoSuchAlgorithmException {
         // If the crawler is being closed, we return
         if (closed.get()) {
             return new ArrayList<>();
@@ -1380,62 +1336,13 @@ public class FsParser implements Runnable, AutoCloseable {
                             generateIdFromFilename(filename, dirname),
                             FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
                             "Indexing json content");
-                    // We need to check that the provided file is actually a JSON file which can be parsed
-                    try {
-                        DocumentContext documentContext = JsonUtil.parseJsonAsDocumentContext(inputStream);
-                        String jsonString = documentContext.jsonString();
-
-                        // We index the json content directly
-                        if (!closed.get()) {
-                            documentService.indexRawJson(
-                                    fsSettings.getElasticsearch().getIndex(),
-                                    id,
-                                    jsonString,
-                                    fsSettings.getElasticsearch().getPipeline());
-                            rememberCurrentAclHash(id, fileAbstractModel);
-                        } else {
-                            logger.warn(
-                                    ADD_WHILE_CLOSING_MSG,
-                                    fsSettings.getElasticsearch().getIndex(),
-                                    id);
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
-                        logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
-                    } finally {
-                        if (inputStream != null) {
-                            crawlerPlugin.closeInputStream(inputStream);
-                        }
-                    }
+                    indexRawJsonContent(id, filename, dirname, fullFilename, inputStream, fileAbstractModel, stats);
                 } else if (fsSettings.getFs().isXmlSupport()) {
                     FSCrawlerLogger.documentDebug(
                             generateIdFromFilename(filename, dirname),
                             FsCrawlerUtil.computeVirtualPathName(stats.getRootPath(), fullFilename),
                             "Indexing xml content");
-                    // We need to check that the provided file is actually a JSON file which can be parsed
-                    try {
-                        // We index the xml content directly (after transformation to json)
-                        if (!closed.get()) {
-                            documentService.indexRawJson(
-                                    fsSettings.getElasticsearch().getIndex(),
-                                    id,
-                                    XmlDocParser.generate(inputStream),
-                                    fsSettings.getElasticsearch().getPipeline());
-                            rememberCurrentAclHash(id, fileAbstractModel);
-                        } else {
-                            logger.warn(
-                                    ADD_WHILE_CLOSING_MSG,
-                                    fsSettings.getElasticsearch().getIndex(),
-                                    id);
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
-                        logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
-                    } finally {
-                        if (inputStream != null) {
-                            crawlerPlugin.closeInputStream(inputStream);
-                        }
-                    }
+                    indexRawXmlContent(id, filename, dirname, fullFilename, inputStream, fileAbstractModel, stats);
                 }
             }
         } catch (Exception e) {
@@ -1446,6 +1353,138 @@ public class FsParser implements Runnable, AutoCloseable {
             throw e;
         } finally {
             fileSpan.end();
+        }
+    }
+
+    /**
+     * Returns {@code true} when the saved checkpoint is missing or its nextCheck is null/past, so the pause wait should
+     * end early. IO failures are logged and treated as "do not wake".
+     */
+    private boolean shouldWakeFromCheckpoint() {
+        try {
+            FsCrawlerCheckpoint savedCheckpoint = checkpointHandler.read(fsSettings.getName());
+            if (savedCheckpoint == null
+                    || savedCheckpoint.getNextCheck() == null
+                    || Instant.now().isAfter(savedCheckpoint.getNextCheck())) {
+                logger.debug(
+                        "Fs crawler is waking up because next check time [{}] is in the past.",
+                        savedCheckpoint != null ? savedCheckpoint.getNextCheck() : "null");
+                return true;
+            }
+            return false;
+        } catch (IOException e) {
+            logger.warn("Error while reading checkpoint: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Opens content/metadata streams, indexes the file, updates skipCount/stats, and closes streams.
+     *
+     * @return the updated skipCount on success; {@code null} when indexing failed and continue_on_error is enabled
+     */
+    private Integer indexFileWithStreams(
+            FileAbstractModel child,
+            ScanStatistic stats,
+            String filepath,
+            FileAbstractModel metadataFile,
+            int skipCount)
+            throws Exception {
+        InputStream inputStream = null;
+        InputStream metadataStream = null;
+        try {
+            if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
+                inputStream = crawlerPlugin.getInputStream(child);
+            }
+            if (metadataFile != null) {
+                metadataStream = crawlerPlugin.getInputStream(metadataFile);
+            }
+            indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
+            if (skipCount > 0) {
+                skipCount--;
+            } else {
+                stats.addFile();
+                checkpoint.get().incrementFilesProcessed();
+            }
+            maybeSaveCheckpoint();
+            return skipCount;
+        } catch (Exception e) {
+            if (fsSettings.getFs().isContinueOnError()) {
+                logger.warn("Unable to index {}, skipping...: {}", child.getName(), e.getMessage());
+                return null;
+            } else {
+                throw e;
+            }
+        } finally {
+            if (metadataStream != null) {
+                crawlerPlugin.closeInputStream(metadataStream);
+            }
+            if (inputStream != null) {
+                crawlerPlugin.closeInputStream(inputStream);
+            }
+        }
+    }
+
+    private void indexRawJsonContent(
+            String id,
+            String filename,
+            String dirname,
+            String fullFilename,
+            InputStream inputStream,
+            FileAbstractModel fileAbstractModel,
+            ScanStatistic stats) {
+        try {
+            DocumentContext documentContext = JsonUtil.parseJsonAsDocumentContext(inputStream);
+            String jsonString = documentContext.jsonString();
+
+            // We index the json content directly
+            if (!closed.get()) {
+                documentService.indexRawJson(
+                        fsSettings.getElasticsearch().getIndex(),
+                        id,
+                        jsonString,
+                        fsSettings.getElasticsearch().getPipeline());
+                rememberCurrentAclHash(id, fileAbstractModel);
+            } else {
+                logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndex(), id);
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+            logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+        } finally {
+            if (inputStream != null) {
+                crawlerPlugin.closeInputStream(inputStream);
+            }
+        }
+    }
+
+    private void indexRawXmlContent(
+            String id,
+            String filename,
+            String dirname,
+            String fullFilename,
+            InputStream inputStream,
+            FileAbstractModel fileAbstractModel,
+            ScanStatistic stats) {
+        try {
+            // We index the xml content directly (after transformation to json)
+            if (!closed.get()) {
+                documentService.indexRawJson(
+                        fsSettings.getElasticsearch().getIndex(),
+                        id,
+                        XmlDocParser.generate(inputStream),
+                        fsSettings.getElasticsearch().getPipeline());
+                rememberCurrentAclHash(id, fileAbstractModel);
+            } else {
+                logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndex(), id);
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+            logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+        } finally {
+            if (inputStream != null) {
+                crawlerPlugin.closeInputStream(inputStream);
+            }
         }
     }
 

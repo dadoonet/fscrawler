@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
@@ -78,7 +79,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public Collection<String> getFileDirectory(String path) throws Exception {
+    public Collection<String> getFileDirectory(String path) throws NoSuchAlgorithmException {
 
         if (logger.isTraceEnabled()) {
             logger.trace(
@@ -126,14 +127,14 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public Collection<String> getFolderDirectory(String path) throws Exception {
+    public Collection<String> getFolderDirectory(String path) throws NoSuchAlgorithmException {
         Collection<String> files = new ArrayList<>();
 
         try {
             // search() retries transient shard unavailability (503) until the index is searchable
             ESSearchResponse response = client.search(new ESSearchRequest()
                     .withIndex(settings.getElasticsearch().getIndexFolder())
-                    .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                    .withSize(REQUEST_SIZE)
                     .withESQuery(new ESTermQuery(
                             "path.root", SignTool.sign(settings.getFs().getHashAlgorithm(), path))));
 

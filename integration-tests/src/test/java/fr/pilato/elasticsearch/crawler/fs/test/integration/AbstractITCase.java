@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClient;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchIndexNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -470,8 +471,12 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
                             logger.warn("error caught", e);
                             errorWhileWaiting.set(e);
                             return false;
+                        } catch (ElasticsearchIndexNotFoundException e) {
+                            logger.debug("index not ready yet: [{}]", e.getMessage());
+                            logger.trace("index not ready yet", e);
+                            errorWhileWaiting.set(e);
+                            return false;
                         } catch (ElasticsearchClientException e) {
-                            // TODO create a NOT FOUND Exception instead
                             logger.debug("error caught: [{}] ", e.getMessage());
                             logger.trace("error caught", e);
                             errorWhileWaiting.set(e);

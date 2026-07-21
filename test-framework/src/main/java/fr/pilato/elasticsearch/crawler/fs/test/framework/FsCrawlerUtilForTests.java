@@ -26,6 +26,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -53,7 +54,7 @@ public class FsCrawlerUtilForTests {
 
         logger.debug("  --> Copying resources from [{}]", source);
         if (Files.notExists(source)) {
-            throw new RuntimeException(source + " doesn't seem to exist.");
+            throw new NoSuchFileException(source.toString());
         }
 
         Files.walkFileTree(

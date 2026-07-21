@@ -32,9 +32,10 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * Create a schema (templates + index) for the dataset. This is called when the service starts. This creates both
      * data structures when needed for documents and folders
      *
-     * @throws Exception in case of error
+     * @throws IOException in case of I/O error while loading templates
+     * @throws ElasticsearchClientException in case of Elasticsearch error
      */
-    void createSchema() throws Exception;
+    void createSchema() throws IOException, ElasticsearchClientException;
 
     /**
      * Send a document to the target service

@@ -180,28 +180,25 @@ public class FsCrawlerCli {
             LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
             Configuration config = ctx.getConfiguration();
             LoggerConfig loggerConfig = config.getLoggerConfig("fr.pilato.elasticsearch.crawler.fs");
-            ConsoleAppender console = config.getAppender("Console");
-
-            if (command.silent) {
-                // We don't write anything on the console anymore
-                if (console != null) {
-                    console.addFilter(LevelMatchFilter.newBuilder()
-                            .setLevel(Level.ALL)
-                            .setOnMatch(Filter.Result.DENY)
-                            .build());
-                }
-            } else {
-                if (console != null) {
-                    console.addFilter(LevelRangeFilter.createFilter(
-                            command.debug ? Level.TRACE : Level.ALL,
-                            Level.ALL,
-                            Filter.Result.DENY,
-                            Filter.Result.ACCEPT));
-                }
-            }
-
+            applyConsoleFilters(config.getAppender("Console"), command);
             loggerConfig.setLevel(command.debug ? Level.DEBUG : Level.TRACE);
             ctx.updateLoggers();
+        }
+    }
+
+    private static void applyConsoleFilters(ConsoleAppender console, FsCrawlerCommand command) {
+        if (console == null) {
+            return;
+        }
+        if (command.silent) {
+            // We don't write anything on the console anymore
+            console.addFilter(LevelMatchFilter.newBuilder()
+                    .setLevel(Level.ALL)
+                    .setOnMatch(Filter.Result.DENY)
+                    .build());
+        } else {
+            console.addFilter(LevelRangeFilter.createFilter(
+                    command.debug ? Level.TRACE : Level.ALL, Level.ALL, Filter.Result.DENY, Filter.Result.ACCEPT));
         }
     }
 
@@ -276,13 +273,7 @@ public class FsCrawlerCli {
 
         FsSettings fsSettings;
 
-        String jobName;
-        if (command.jobName == null || command.jobName.isEmpty()) {
-            logger.debug("No job name specified. Using default one [{}]...", Defaults.JOB_NAME_DEFAULT);
-            jobName = Defaults.JOB_NAME_DEFAULT;
-        } else {
-            jobName = command.jobName.get(0);
-        }
+        String jobName = resolveJobName(command);
 
         if (command.list) {
             // We are in list mode. We just display the list of existing jobs if any.
@@ -315,34 +306,7 @@ public class FsCrawlerCli {
             throw e;
         }
 
-        if (command.username != null) {
-            logger.fatal(
-                    "We don't support reading elasticsearch username from the command line anymore. "
-                            + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.username={}\" or set the env variable as "
-                            + "follows: FSCRAWLER_ELASTICSEARCH_USERNAME={} ",
-                    command.username,
-                    command.username);
-            return;
-        }
-
-        if (command.apiKey != null) {
-            logger.fatal(
-                    "We don't support reading elasticsearch API Key from the command line anymore. "
-                            + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.api-key={}\" or set the env variable as "
-                            + "follows: FSCRAWLER_ELASTICSEARCH_API-KEY={} ",
-                    command.apiKey,
-                    command.apiKey);
-            return;
-        }
-
-        if (fsSettings.getElasticsearch().getUsername() != null
-                && fsSettings.getElasticsearch().getPassword() == null
-                && scanner != null) {
-            logger.fatal("We don't support reading elasticsearch password from the command line anymore. "
-                    + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.password=YOUR_PASS\" or set the env variable as "
-                    + "follows: FSCRAWLER_ELASTICSEARCH_PASSWORD=YOUR_PASS.");
-            logger.warn("Using username and password is deprecated. Please use API Keys instead. See "
-                    + "https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#api-key");
+        if (rejectDeprecatedCliAuth(command, fsSettings, scanner)) {
             return;
         }
 
@@ -359,6 +323,58 @@ public class FsCrawlerCli {
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
 
+        runCrawlerSession(command, configDir, fsSettings, jobName, pluginsManager);
+    }
+
+    private static String resolveJobName(FsCrawlerCommand command) {
+        if (command.jobName == null || command.jobName.isEmpty()) {
+            logger.debug("No job name specified. Using default one [{}]...", Defaults.JOB_NAME_DEFAULT);
+            return Defaults.JOB_NAME_DEFAULT;
+        }
+        return command.jobName.get(0);
+    }
+
+    /** @return true if the command should abort because deprecated CLI auth was requested */
+    private static boolean rejectDeprecatedCliAuth(FsCrawlerCommand command, FsSettings fsSettings, Scanner scanner) {
+        if (command.username != null) {
+            logger.fatal(
+                    "We don't support reading elasticsearch username from the command line anymore. "
+                            + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.username={}\" or set the env variable as "
+                            + "follows: FSCRAWLER_ELASTICSEARCH_USERNAME={} ",
+                    command.username,
+                    command.username);
+            return true;
+        }
+
+        if (command.apiKey != null) {
+            logger.fatal(
+                    "We don't support reading elasticsearch API Key from the command line anymore. "
+                            + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.api-key={}\" or set the env variable as "
+                            + "follows: FSCRAWLER_ELASTICSEARCH_API-KEY={} ",
+                    command.apiKey,
+                    command.apiKey);
+            return true;
+        }
+
+        if (fsSettings.getElasticsearch().getUsername() != null
+                && fsSettings.getElasticsearch().getPassword() == null
+                && scanner != null) {
+            logger.fatal("We don't support reading elasticsearch password from the command line anymore. "
+                    + "Please use either FS_JAVA_OPTS=\"-Delasticsearch.password=YOUR_PASS\" or set the env variable as "
+                    + "follows: FSCRAWLER_ELASTICSEARCH_PASSWORD=YOUR_PASS.");
+            logger.warn("Using username and password is deprecated. Please use API Keys instead. See "
+                    + "https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html#api-key");
+            return true;
+        }
+        return false;
+    }
+
+    private static void runCrawlerSession(
+            FsCrawlerCommand command,
+            Path configDir,
+            FsSettings fsSettings,
+            String jobName,
+            FsCrawlerPluginsManager pluginsManager) {
         try (FsCrawlerImpl fsCrawler = new FsCrawlerImpl(configDir, fsSettings, command.loop, command.rest)) {
             // Let see if we want to upgrade an existing cluster to the latest version
             if (command.upgrade) {

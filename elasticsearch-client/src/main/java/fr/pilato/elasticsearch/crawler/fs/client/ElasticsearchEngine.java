@@ -35,9 +35,8 @@ public class ElasticsearchEngine
 
     @Override
     public ElasticsearchBulkResponse bulk(ElasticsearchBulkRequest request) {
+        String commonIndex = resolveCommonIndex(request);
         StringBuilder ndjson = new StringBuilder();
-
-        // TODO If all indices are the same, we could optimize this by calling POST index/_bulk instead
 
         request.getOperations().forEach(r -> {
             StringBuilder bulkRequest = new StringBuilder();
@@ -45,11 +44,13 @@ public class ElasticsearchEngine
             bulkRequest
                     .append("{\"")
                     .append(r.getOperation().asLowerCaseString())
-                    .append("\":{\"_index\":\"")
-                    .append(r.getIndex())
-                    .append("\"");
+                    .append("\":{");
 
-            bulkRequest.append(",\"_id\":\"").append(r.getId()).append("\"");
+            if (commonIndex == null) {
+                bulkRequest.append("\"_index\":\"").append(r.getIndex()).append("\",");
+            }
+
+            bulkRequest.append("\"_id\":\"").append(r.getId()).append("\"");
 
             if (r instanceof ElasticsearchInsertOperation insertOp && insertOp.getPipeline() != null) {
                 bulkRequest
@@ -74,11 +75,28 @@ public class ElasticsearchEngine
                 "Sending a bulk request of [{}] documents to the Elasticsearch service", request.numberOfActions());
         String response;
         try {
-            response = elasticsearchClient.bulk(ndjson.toString());
+            response = elasticsearchClient.bulk(commonIndex, ndjson.toString());
         } catch (ElasticsearchClientException e) {
             return new ElasticsearchBulkResponse(e);
         }
         return new ElasticsearchBulkResponse(response);
+    }
+
+    /**
+     * If every operation targets the same index, return that index so the client can call {@code POST index/_bulk}.
+     * Otherwise return {@code null} and keep {@code _index} on each action line.
+     */
+    static String resolveCommonIndex(ElasticsearchBulkRequest request) {
+        String common = null;
+        for (ElasticsearchOperation operation : request.getOperations()) {
+            String index = operation.getIndex();
+            if (common == null) {
+                common = index;
+            } else if (!common.equals(index)) {
+                return null;
+            }
+        }
+        return common;
     }
 
     /**

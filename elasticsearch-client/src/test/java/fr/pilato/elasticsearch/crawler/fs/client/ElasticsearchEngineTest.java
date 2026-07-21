@@ -21,8 +21,11 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -60,11 +63,11 @@ class ElasticsearchEngineTest extends AbstractFSCrawlerTestCase {
         AtomicReference<String> capturedNdjson = new AtomicReference<>();
         IElasticsearchClient client = mock(IElasticsearchClient.class);
         doAnswer(invocation -> {
-                    capturedNdjson.set(invocation.getArgument(0));
+                    capturedNdjson.set(invocation.getArgument(1));
                     return "{\"errors\":false,\"items\":[{\"create\":{\"_index\":\"idx\",\"_id\":\"1\"}}]}";
                 })
                 .when(client)
-                .bulk(anyString());
+                .bulk(anyString(), anyString());
 
         ElasticsearchBulkRequest request = new ElasticsearchBulkRequest();
         request.add(new ElasticsearchCreateOperation("idx", "1", "my-pipeline", "{\"foo\":\"bar\"}"));
@@ -72,13 +75,39 @@ class ElasticsearchEngineTest extends AbstractFSCrawlerTestCase {
         ElasticsearchBulkResponse response = new ElasticsearchEngine(client).bulk(request);
 
         Assertions.assertThat(response.isErrors()).isFalse();
+        verify(client).bulk(eq("idx"), anyString());
         String ndjson = capturedNdjson.get();
         String[] lines = ndjson.split("\n", -1);
         Assertions.assertThat(lines[0]).startsWith("{\"create\":");
-        Assertions.assertThat(lines[0]).contains("\"_index\":\"idx\"");
+        Assertions.assertThat(lines[0]).doesNotContain("\"_index\"");
         Assertions.assertThat(lines[0]).contains("\"_id\":\"1\"");
         Assertions.assertThat(lines[0]).contains("\"pipeline\":\"my-pipeline\"");
         Assertions.assertThat(lines[1]).isEqualTo("{\"foo\":\"bar\"}");
+    }
+
+    @Test
+    void bulkKeepsIndexInBodyWhenIndicesDiffer() throws Exception {
+        AtomicReference<String> capturedNdjson = new AtomicReference<>();
+        IElasticsearchClient client = mock(IElasticsearchClient.class);
+        doAnswer(invocation -> {
+                    capturedNdjson.set(invocation.getArgument(1));
+                    return "{\"errors\":false,\"items\":[]}";
+                })
+                .when(client)
+                .bulk(isNull(), anyString());
+
+        String indexA = RandomizedTest.randomAsciiLettersOfLength(randomizedRandomForTests, 6);
+        String indexB = RandomizedTest.randomAsciiLettersOfLength(randomizedRandomForTests, 6);
+        ElasticsearchBulkRequest request = new ElasticsearchBulkRequest();
+        request.add(new ElasticsearchIndexOperation(indexA, "1", null, "{\"a\":1}"));
+        request.add(new ElasticsearchIndexOperation(indexB, "2", null, "{\"b\":2}"));
+
+        new ElasticsearchEngine(client).bulk(request);
+
+        verify(client).bulk(isNull(), anyString());
+        Assertions.assertThat(capturedNdjson.get())
+                .contains("\"_index\":\"" + indexA + "\"")
+                .contains("\"_index\":\"" + indexB + "\"");
     }
 
     @Test
@@ -97,11 +126,11 @@ class ElasticsearchEngineTest extends AbstractFSCrawlerTestCase {
         AtomicReference<String> capturedNdjson = new AtomicReference<>();
         IElasticsearchClient client = mock(IElasticsearchClient.class);
         doAnswer(invocation -> {
-                    capturedNdjson.set(invocation.getArgument(0));
+                    capturedNdjson.set(invocation.getArgument(1));
                     return "{\"errors\":false,\"items\":[{\"index\":{\"_index\":\"idx\",\"_id\":\"1\"}}]}";
                 })
                 .when(client)
-                .bulk(anyString());
+                .bulk(anyString(), anyString());
 
         ElasticsearchBulkRequest request = new ElasticsearchBulkRequest();
         request.add(new ElasticsearchIndexOperation("idx", "1", null, prettyJson));
@@ -153,14 +182,14 @@ class ElasticsearchEngineTest extends AbstractFSCrawlerTestCase {
             AtomicLong capturedNdjsonLength = new AtomicLong();
             IElasticsearchClient client = mock(IElasticsearchClient.class);
             doAnswer(invocation -> {
-                        String ndjson = invocation.getArgument(0);
+                        String ndjson = invocation.getArgument(1);
                         capturedNdjsonLength.set(ndjson.length());
                         Assertions.assertThat(ndjson).startsWith("{\"index\":");
                         Assertions.assertThat(ndjson).contains("\"content\":\"");
                         return "{\"errors\":false,\"items\":[{\"index\":{\"_index\":\"idx\",\"_id\":\"1\"}}]}";
                     })
                     .when(client)
-                    .bulk(anyString());
+                    .bulk(anyString(), anyString());
 
             ElasticsearchBulkRequest request = new ElasticsearchBulkRequest();
             request.add(new ElasticsearchIndexOperation("idx", "1", null, json));
