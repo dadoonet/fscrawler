@@ -74,6 +74,7 @@ public class FsCrawlerBulkProcessor<
         try {
             internalClose();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new IOException(e);
         }
     }
