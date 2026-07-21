@@ -51,7 +51,7 @@ public class TimeBasedUUIDGenerator {
             }
         }
         // Could not find a mac address
-        return null;
+        return new byte[0];
     }
 
     private static boolean isValidAddress(byte[] address) {
