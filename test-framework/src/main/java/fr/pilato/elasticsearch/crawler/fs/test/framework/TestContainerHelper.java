@@ -111,19 +111,7 @@ public class TestContainerHelper {
                 elasticsearch = container;
                 elasticsearch.start();
 
-                String url = String.format(HTTPS_URL, elasticsearch.getHttpHostAddress());
-
-                // Try to get the https certificate if exists
-                try {
-                    certAsBytes = elasticsearch.copyFileFromContainer(
-                            "/usr/share/elasticsearch/config/certs/http_ca.crt", IOUtils::toByteArray);
-                    log.debug("Found an https elasticsearch cert for version [{}].", elasticsearchVersion);
-                } catch (Exception e) {
-                    log.debug(
-                            "We did not find the https elasticsearch cert for version [{}]. We switch to http instead.",
-                            elasticsearchVersion);
-                    url = String.format(HTTP_URL, elasticsearch.getHttpHostAddress());
-                }
+                String url = resolveUrlAndCert(elasticsearch);
 
                 log.info("Elasticsearch container is now running at {}", url);
 
@@ -164,6 +152,21 @@ public class TestContainerHelper {
 
     public String getElasticsearchVersion() {
         return elasticsearchVersion;
+    }
+
+    private String resolveUrlAndCert(ElasticsearchContainer container) {
+        String url = String.format(HTTPS_URL, container.getHttpHostAddress());
+        try {
+            certAsBytes = container.copyFileFromContainer(
+                    "/usr/share/elasticsearch/config/certs/http_ca.crt", IOUtils::toByteArray);
+            log.debug("Found an https elasticsearch cert for version [{}].", elasticsearchVersion);
+        } catch (Exception e) {
+            log.debug(
+                    "We did not find the https elasticsearch cert for version [{}]. We switch to http instead.",
+                    elasticsearchVersion);
+            url = String.format(HTTP_URL, container.getHttpHostAddress());
+        }
+        return url;
     }
 
     private synchronized void waitForReadiness() {
