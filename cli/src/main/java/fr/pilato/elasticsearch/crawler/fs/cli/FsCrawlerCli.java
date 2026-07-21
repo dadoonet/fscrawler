@@ -27,7 +27,6 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsJobFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.Banner;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.rest.RestServer;
