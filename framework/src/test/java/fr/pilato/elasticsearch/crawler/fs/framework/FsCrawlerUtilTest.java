@@ -47,6 +47,26 @@ class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private File file;
 
+    @Test
+    void getFirstNonNullValueReturnsFirstPresentCandidate() {
+        String first = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 3, 8);
+        String second = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 3, 8);
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue(first, second, null))
+                .isEqualTo(first);
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue(null, second, first))
+                .isEqualTo(second);
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue(null, null, first))
+                .isEqualTo(first);
+    }
+
+    @Test
+    void getFirstNonNullValueReturnsNullWhenAllCandidatesAreNull() {
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String) null)).isNull();
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String) null, null)).isNull();
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String[]) null)).isNull();
+        Assertions.assertThat(FsCrawlerUtil.<String>getFirstNonNullValue()).isNull();
+    }
+
     @BeforeEach
     void createTmpFile() throws IOException {
         Path path = rootTmpDir.resolve("test-group.txt");
