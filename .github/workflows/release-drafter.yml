@@ -16,20 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
       - name: Read version from pom.xml
         id: pom
-        run: |
-          VERSION="$(python3 - <<'PY'
-          import xml.etree.ElementTree as ET
-          ns = {"m": "http://maven.apache.org/POM/4.0.0"}
-          version = ET.parse("pom.xml").getroot().find("m:version", ns).text
-          if version.endswith("-SNAPSHOT"):
-              version = version[: -len("-SNAPSHOT")]
-          print(version)
-          PY
-          )"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Using pom version (without -SNAPSHOT): $VERSION"
+        run: echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')" >> "$GITHUB_OUTPUT"
       - uses: release-drafter/release-drafter@v7
         with:
           version: ${{ steps.pom.outputs.version }}
