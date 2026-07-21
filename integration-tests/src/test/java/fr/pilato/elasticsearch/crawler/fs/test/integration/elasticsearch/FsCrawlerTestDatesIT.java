@@ -138,8 +138,7 @@ class FsCrawlerTestDatesIT extends AbstractFsCrawlerITCase {
         String hitAfterLastAccessed = documentAfter.read("$.file.last_accessed");
 
         // Apparently on some FS, the creation date may be modified when changing the
-        // modification date... So we can't really compare.
-        // assertThat(hitBeforeCreated, equalTo(hitAfterCreated));
+        // modification date... So we can't really compare; only warn when it changes.
         if (!hitBeforeCreated.equals(hitAfterCreated)) {
             logger.warn(
                     "OS is [{}]. Creation date changed from [{}] to [{}].",
