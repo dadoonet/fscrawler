@@ -198,10 +198,7 @@ public class FsCrawlerCli {
                     .build());
         } else {
             console.addFilter(LevelRangeFilter.createFilter(
-                    command.debug ? Level.TRACE : Level.ALL,
-                    Level.ALL,
-                    Filter.Result.DENY,
-                    Filter.Result.ACCEPT));
+                    command.debug ? Level.TRACE : Level.ALL, Level.ALL, Filter.Result.DENY, Filter.Result.ACCEPT));
         }
     }
 
@@ -337,11 +334,8 @@ public class FsCrawlerCli {
         return command.jobName.get(0);
     }
 
-    /**
-     * @return true if the command should abort because deprecated CLI auth was requested
-     */
-    private static boolean rejectDeprecatedCliAuth(
-            FsCrawlerCommand command, FsSettings fsSettings, Scanner scanner) {
+    /** @return true if the command should abort because deprecated CLI auth was requested */
+    private static boolean rejectDeprecatedCliAuth(FsCrawlerCommand command, FsSettings fsSettings, Scanner scanner) {
         if (command.username != null) {
             logger.fatal(
                     "We don't support reading elasticsearch username from the command line anymore. "

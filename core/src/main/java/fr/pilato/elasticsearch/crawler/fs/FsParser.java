@@ -926,8 +926,8 @@ public class FsParser implements Runnable, AutoCloseable {
 
                                     if (FsCrawlerUtil.isFileSizeUnderLimit(
                                             fsSettings.getFs().getIgnoreAbove(), child.getSize())) {
-                                        Integer updatedSkipCount = indexFileWithStreams(
-                                                child, stats, filepath, metadataFile, skipCount);
+                                        Integer updatedSkipCount =
+                                                indexFileWithStreams(child, stats, filepath, metadataFile, skipCount);
                                         if (updatedSkipCount != null) {
                                             skipCount = updatedSkipCount;
                                             indexedInThisPass++;
@@ -1357,8 +1357,8 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     /**
-     * Returns {@code true} when the saved checkpoint is missing or its nextCheck is null/past, so the pause wait
-     * should end early. IO failures are logged and treated as "do not wake".
+     * Returns {@code true} when the saved checkpoint is missing or its nextCheck is null/past, so the pause wait should
+     * end early. IO failures are logged and treated as "do not wake".
      */
     private boolean shouldWakeFromCheckpoint() {
         try {

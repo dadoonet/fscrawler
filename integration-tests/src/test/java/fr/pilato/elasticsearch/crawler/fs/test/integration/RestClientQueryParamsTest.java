@@ -31,8 +31,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit coverage for {@link AbstractRestITCase#withQueryParams(WebTarget, Map)} — Jersey {@code queryParam} is
- * immutable and must be reassigned.
+ * Unit coverage for {@link AbstractRestITCase#withQueryParams(WebTarget, Map)} — Jersey {@code queryParam} is immutable
+ * and must be reassigned.
  */
 class RestClientQueryParamsTest extends AbstractFSCrawlerTestCase {
 

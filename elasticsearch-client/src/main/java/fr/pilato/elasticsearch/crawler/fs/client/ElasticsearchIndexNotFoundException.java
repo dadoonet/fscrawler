@@ -20,9 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-/**
- * Thrown when an Elasticsearch index is missing (HTTP 404 on index-scoped APIs).
- */
+/** Thrown when an Elasticsearch index is missing (HTTP 404 on index-scoped APIs). */
 public class ElasticsearchIndexNotFoundException extends ElasticsearchClientException {
 
     private final String index;

@@ -469,9 +469,7 @@ public class TikaDocParser {
         }
     }
 
-    /**
-     * Extracts text via Tika. On failure, logs the document error (best-effort) and returns {@code null}.
-     */
+    /** Extracts text via Tika. On failure, logs the document error (best-effort) and returns {@code null}. */
     private String extractParsedContent(
             TikaInstance tikaInstance, int indexedChars, InputStream inputStream, Metadata metadata, Doc doc) {
         try {
@@ -512,7 +510,8 @@ public class TikaDocParser {
                     fsSettings.getFs().isFilenameAsId()
                             ? doc.getFile().getFilename()
                             : SignTool.sign(
-                                    fsSettings.getFs().getHashAlgorithm(), doc.getPath().getReal()),
+                                    fsSettings.getFs().getHashAlgorithm(),
+                                    doc.getPath().getReal()),
                     FsCrawlerUtil.computeVirtualPathName(
                             fsSettings.getFs().getUrl(), doc.getPath().getReal()),
                     errorMessage);
