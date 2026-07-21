@@ -637,24 +637,29 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    private static final TrustManager[] trustAllCerts = new TrustManager[] {
-        new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                // Intentionally empty: used only when ssl_verification is disabled
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                // Intentionally empty: used only when ssl_verification is disabled
-            }
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[0];
-            }
+    /**
+     * Trust-all manager used only when {@code elasticsearch.ssl_verification} is false (tests / local clusters with
+     * self-signed certs). Production deployments should keep verification enabled.
+     */
+    @SuppressWarnings("java:S4830")
+    private static final class TrustAllX509TrustManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+            // Intentionally empty: certificate validation is opted out via ssl_verification=false
         }
-    };
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+            // Intentionally empty: certificate validation is opted out via ssl_verification=false
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+    }
+
+    private static final TrustManager[] trustAllCerts = new TrustManager[] {new TrustAllX509TrustManager()};
 
     public static class NullHostNameVerifier implements HostnameVerifier {
         @Override
