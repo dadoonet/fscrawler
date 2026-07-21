@@ -179,6 +179,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         expected.getElasticsearch().setIndex("test_docs");
         expected.getElasticsearch().setIndexFolder("test_folder");
         expected.getElasticsearch().setBulkSize(1000);
+        expected.getElasticsearch().setBulkOperation(BulkOperation.CREATE);
         expected.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(5));
         expected.getElasticsearch().setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));
         expected.getElasticsearch().setApiKey("VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==");
@@ -251,6 +252,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         es.setIndex(expected.getName() + "_docs");
         es.setIndexFolder(expected.getName() + "_folder");
         es.setBulkSize(100);
+        es.setBulkOperation(BulkOperation.INDEX);
         es.setFlushInterval(TimeValue.timeValueSeconds(5));
         es.setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));
         es.setSslVerification(true);

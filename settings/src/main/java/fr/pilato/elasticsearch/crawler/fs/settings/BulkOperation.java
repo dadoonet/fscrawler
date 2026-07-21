@@ -18,13 +18,25 @@
  *
  * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-package fr.pilato.elasticsearch.crawler.fs.client;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
+import java.util.Locale;
 
-public class ElasticsearchDeleteOperation extends ElasticsearchOperation {
+/**
+ * Elasticsearch bulk actions used by FSCrawler.
+ *
+ * <p>For {@code elasticsearch.bulk_operation}, only {@link #INDEX} and {@link #CREATE} are allowed. {@link #DELETE} is
+ * used internally for delete bulk items and must not be set in job settings.
+ */
+public enum BulkOperation {
+    /** Create or replace the document with the given {@code _id} (default for document writes). */
+    INDEX,
+    /** Create the document only if the {@code _id} does not already exist. */
+    CREATE,
+    /** Delete the document with the given {@code _id} (internal use only). */
+    DELETE;
 
-    public ElasticsearchDeleteOperation(String index, String id) {
-        super(BulkOperation.DELETE, index, id);
+    public String asLowerCaseString() {
+        return name().toLowerCase(Locale.ROOT);
     }
 }

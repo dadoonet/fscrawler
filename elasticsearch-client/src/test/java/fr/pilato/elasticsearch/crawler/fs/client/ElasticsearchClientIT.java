@@ -227,6 +227,10 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         logger.debug("🧹 Removing existing index and component templates for [{}]", getCrawlerName());
         esClient.removeIndexAndComponentTemplates(cleanupSettings());
 
+        // Ingest pipelines created by tests use getCrawlerName() as the pipeline id.
+        logger.debug("🧹 Removing existing ingest pipeline [{}]", getCrawlerName());
+        esClient.deletePipeline(getCrawlerName());
+
         logger.info("🎬 Starting test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
     }
 
@@ -238,6 +242,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
             esClient.deleteIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_FOLDER);
             // Remove the templates this test may have created, by their exact names.
             esClient.removeIndexAndComponentTemplates(cleanupSettings());
+            esClient.deletePipeline(getCrawlerName());
         }
 
         logger.info("✅ End of test [{}] with [{}] as the crawler name", jobName, getCrawlerName());
@@ -615,7 +620,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                     }
                   ]
                 }""";
-        esClient.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        esClient.createPipeline(crawlerName, pipeline);
 
         Assertions.assertThat(esClient.isExistingPipeline(crawlerName)).isTrue();
         Assertions.assertThat(esClient.isExistingPipeline(crawlerName + "_foo")).isFalse();
@@ -765,6 +770,37 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         countTestHelper(
                 new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
                 nbItems - nbErrors);
+    }
+
+    @Test
+    void bulk_create_skips_existing_document() throws Exception {
+        String index = getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+        esClient.deleteIndex(index);
+
+        String id = "shared-id";
+        ElasticsearchBulkRequest firstBulk = new ElasticsearchBulkRequest();
+        firstBulk.add(new ElasticsearchCreateOperation(index, id, null, "{\"path\":\"first\",\"content\":\"same\"}"));
+
+        ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
+        ElasticsearchBulkResponse firstResponse = engine.bulk(firstBulk);
+        Assertions.assertThat(firstResponse.hasFailures()).isFalse();
+
+        countTestHelper(new ESSearchRequest().withIndex(index), 1L);
+
+        ElasticsearchBulkRequest secondBulk = new ElasticsearchBulkRequest();
+        secondBulk.add(new ElasticsearchCreateOperation(index, id, null, "{\"path\":\"second\",\"content\":\"same\"}"));
+
+        ElasticsearchBulkResponse secondResponse = engine.bulk(secondBulk);
+        Assertions.assertThat(secondResponse.hasFailures())
+                .as("create conflict for an existing _id must be treated as non-fatal")
+                .isFalse();
+        Assertions.assertThat(secondResponse.getItems()).hasSize(1);
+        Assertions.assertThat(secondResponse.getItems().get(0).isFailed()).isFalse();
+
+        countTestHelper(new ESSearchRequest().withIndex(index), 1L);
+        ESSearchHit hit = esClient.get(index, id);
+        Assertions.assertThat(hit.getVersion()).isEqualTo(1L);
+        Assertions.assertThat(hit.getSource()).contains("\"path\":\"first\"");
     }
 
     @Test

@@ -22,9 +22,10 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 
-public class ElasticsearchDeleteOperation extends ElasticsearchOperation {
+/** Bulk {@code create} operation: create the document only if the {@code _id} does not already exist. */
+public class ElasticsearchCreateOperation extends ElasticsearchInsertOperation {
 
-    public ElasticsearchDeleteOperation(String index, String id) {
-        super(BulkOperation.DELETE, index, id);
+    public ElasticsearchCreateOperation(String index, String id, String pipeline, String json) {
+        super(BulkOperation.CREATE, index, id, pipeline, json);
     }
 }

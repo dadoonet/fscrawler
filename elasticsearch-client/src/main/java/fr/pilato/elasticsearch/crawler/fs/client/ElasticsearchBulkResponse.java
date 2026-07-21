@@ -38,7 +38,6 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
         exception = null;
         // We need to parse the response object
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
-        errors = document.read("$.errors");
         List<String> ids = document.read("$.._id");
         ids.forEach(id -> {
             Map<String, Object> jsonItemResponse =
@@ -49,11 +48,16 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
             Map<String, Object> error = (Map<String, Object>) jsonItemResponse.get("error");
             if (error != null) {
                 String errorMessage = (String) error.get("reason");
-                itemResponse.setFailureMessage(errorMessage);
-                itemResponse.setFailed(true);
+                // Create on an existing _id is expected when deduplicating (first writer wins).
+                // ES still sets errors=true for that case, so we ignore this item and recompute below.
+                if (!"version_conflict_engine_exception".equals(error.get("type"))) {
+                    itemResponse.setFailureMessage(errorMessage);
+                    itemResponse.setFailed(true);
+                }
             }
             items.add(itemResponse);
         });
+        errors = items.stream().anyMatch(BulkItemResponse::isFailed);
     }
 
     @Override

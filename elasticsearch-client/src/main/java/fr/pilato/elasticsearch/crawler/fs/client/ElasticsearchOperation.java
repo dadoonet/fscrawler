@@ -21,24 +21,20 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerOperation;
+import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 
 public abstract class ElasticsearchOperation implements FsCrawlerOperation<ElasticsearchOperation> {
-    private final Operation operation;
+    private final BulkOperation operation;
     private final String index;
     private final String id;
 
-    enum Operation {
-        INDEX,
-        DELETE
-    }
-
-    public ElasticsearchOperation(Operation operation, String index, String id) {
+    protected ElasticsearchOperation(BulkOperation operation, String index, String id) {
         this.operation = operation;
         this.index = index;
         this.id = id;
     }
 
-    public Operation getOperation() {
+    public BulkOperation getOperation() {
         return operation;
     }
 

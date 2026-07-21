@@ -646,5 +646,9 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         logger.debug("🧹 Removing existing index and component templates for [{}]", crawlerName);
         client.removeIndexAndComponentTemplates(
                 currentSettings != null ? currentSettings : AbstractFsCrawlerITCase.cleanupSettings(crawlerName));
+
+        // Ingest pipelines created by tests use getCrawlerName() as the pipeline id.
+        logger.debug("🧹 Removing existing ingest pipeline [{}]", crawlerName);
+        client.deletePipeline(crawlerName);
     }
 }

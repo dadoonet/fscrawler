@@ -1,0 +1,1 @@
+Identical binary content for FSCrawler deduplication tests.

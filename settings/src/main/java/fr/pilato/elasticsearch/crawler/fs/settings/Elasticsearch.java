@@ -47,6 +47,14 @@ public class Elasticsearch {
     @Nullable
     private Integer bulkSize;
 
+    /**
+     * Bulk write operation for document indexing ({@code index} or {@code create}). {@link BulkOperation#DELETE} is
+     * rejected by {@link FsCrawlerValidator}.
+     */
+    @Config(defaultVal = "index")
+    @Nullable
+    private BulkOperation bulkOperation;
+
     @Config(defaultVal = "5s")
     @Nullable
     private TimeValue flushInterval;
@@ -144,6 +152,14 @@ public class Elasticsearch {
 
     public void setBulkSize(@Nullable Integer bulkSize) {
         this.bulkSize = bulkSize;
+    }
+
+    public BulkOperation getBulkOperation() {
+        return bulkOperation;
+    }
+
+    public void setBulkOperation(@Nullable BulkOperation bulkOperation) {
+        this.bulkOperation = bulkOperation;
     }
 
     public TimeValue getFlushInterval() {
@@ -266,6 +282,7 @@ public class Elasticsearch {
         Elasticsearch that = (Elasticsearch) o;
 
         if (!Objects.equals(bulkSize, that.bulkSize)) return false;
+        if (!Objects.equals(bulkOperation, that.bulkOperation)) return false;
         if (!Objects.equals(urls, that.urls)) return false;
         if (!Objects.equals(index, that.index)) return false;
         if (!Objects.equals(indexFolder, that.indexFolder)) return false;
@@ -291,6 +308,7 @@ public class Elasticsearch {
         result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
         result = 31 * result + (pathPrefix != null ? pathPrefix.hashCode() : 0);
         result = 31 * result + bulkSize;
+        result = 31 * result + (bulkOperation != null ? bulkOperation.hashCode() : 0);
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
         result = 31 * result + (caCertificate != null ? caCertificate.hashCode() : 0);
         result = 31 * result + (sslVerification ? 1 : 0);
@@ -305,7 +323,8 @@ public class Elasticsearch {
                 + urls + ", index='"
                 + index + '\'' + ", indexFolder='"
                 + indexFolder + '\'' + ", bulkSize="
-                + bulkSize + ", flushInterval="
+                + bulkSize + ", bulkOperation="
+                + bulkOperation + ", flushInterval="
                 + flushInterval + ", byteSize="
                 + byteSize + ", apiKey='"
                 + apiKey + '\'' + ", username='"

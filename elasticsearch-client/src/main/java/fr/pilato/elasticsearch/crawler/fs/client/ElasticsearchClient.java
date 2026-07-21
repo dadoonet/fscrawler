@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
+import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -147,6 +148,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration BOOTSTRAP_RETRY_MAX_DELAY = Duration.ofSeconds(10);
 
     private final FsSettings settings;
+    /** Factory for document writes, resolved once from {@code elasticsearch.bulk_operation}. */
+    private final InsertOperationFactory insertOperationFactory;
+
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
@@ -166,6 +170,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     public ElasticsearchClient(FsSettings settings) {
         this.settings = settings;
+        this.insertOperationFactory =
+                insertOperationFactory(settings.getElasticsearch().getBulkOperation());
         this.hosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
         this.initialHosts =
                 new ArrayList<>(settings.getElasticsearch().getUrls().size());
@@ -178,6 +184,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
             currentNode = 0;
         }
         semanticSearch = settings.getElasticsearch().isSemanticSearch();
+    }
+
+    @FunctionalInterface
+    private interface InsertOperationFactory {
+        ElasticsearchInsertOperation create(String index, String id, String pipeline, String json);
     }
 
     @Override
@@ -659,7 +670,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexRawJson(String index, String id, String json, String pipeline) {
         logger.trace("JSon indexed : {}", json);
-        bulkProcessor.add(new ElasticsearchIndexOperation(index, id, pipeline, json));
+        bulkProcessor.add(insertOperationFactory.create(index, id, pipeline, json));
+    }
+
+    /**
+     * Chooses {@link ElasticsearchCreateOperation} or {@link ElasticsearchIndexOperation} from
+     * {@code elasticsearch.bulk_operation}. Resolved once at client construction because the setting is immutable for
+     * the life of the client. Unset values fall back to {@code index}.
+     */
+    private static InsertOperationFactory insertOperationFactory(BulkOperation bulkOperation) {
+        if (bulkOperation == BulkOperation.CREATE) {
+            return ElasticsearchCreateOperation::new;
+        }
+        return ElasticsearchIndexOperation::new;
     }
 
     @Override
@@ -1295,6 +1318,22 @@ public class ElasticsearchClient implements IElasticsearchClient {
             }
         } catch (NotFoundException e) {
             logger.debug("Index [{}] was not found", index);
+        }
+    }
+
+    @Override
+    public void createPipeline(String pipeline, String json) throws ElasticsearchClientException {
+        logger.debug("create pipeline [{}]", pipeline);
+        httpPut("_ingest/pipeline/" + pipeline, json);
+    }
+
+    @Override
+    public void deletePipeline(String pipeline) throws ElasticsearchClientException {
+        logger.debug("delete pipeline [{}]", pipeline);
+        try {
+            httpDelete("_ingest/pipeline/" + pipeline, null);
+        } catch (NotFoundException e) {
+            logger.debug("Pipeline [{}] was not found", pipeline);
         }
     }
 
