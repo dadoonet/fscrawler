@@ -167,15 +167,6 @@ public class FsCrawlerCli {
         JCommander jCommander = new JCommander(commands);
         jCommander.parse(args);
 
-        // Check the expected parameters when in silent mode
-        if (commands.silent && commands.jobName == null) {
-            Banner.print();
-            logger.warn(
-                    "--silent is set but no job has been defined. Add a job name or remove --silent option. Exiting.");
-            jCommander.usage();
-            throw new FsCrawlerIllegalConfigurationException("No job specified while in silent mode.");
-        }
-
         if (commands.help) {
             jCommander.usage();
             return null;
