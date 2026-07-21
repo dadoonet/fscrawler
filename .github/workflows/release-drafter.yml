@@ -15,10 +15,23 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
+      - name: Read version from pom.xml
+        id: pom
+        run: |
+          VERSION="$(python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+          version = ET.parse("pom.xml").getroot().find("m:version", ns).text
+          if version.endswith("-SNAPSHOT"):
+              version = version[: -len("-SNAPSHOT")]
+          print(version)
+          PY
+          )"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using pom version (without -SNAPSHOT): $VERSION"
       - uses: release-drafter/release-drafter@v7
         with:
-          # Force the next draft to 3.0 (pom is already 3.0-SNAPSHOT; last tag is fscrawler-2.9).
-          # Remove this input after FSCrawler 3.0 is published so later releases resolve from tags.
-          version: '3.0'
+          version: ${{ steps.pom.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
