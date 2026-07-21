@@ -133,7 +133,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
             // search() retries transient shard unavailability (503) until the index is searchable
             ESSearchResponse response = client.search(new ESSearchRequest()
                     .withIndex(settings.getElasticsearch().getIndexFolder())
-                    .withSize(REQUEST_SIZE) // TODO: WHAT? DID I REALLY WROTE THAT? :p
+                    .withSize(REQUEST_SIZE)
                     .withESQuery(new ESTermQuery(
                             "path.root", SignTool.sign(settings.getFs().getHashAlgorithm(), path))));
 
