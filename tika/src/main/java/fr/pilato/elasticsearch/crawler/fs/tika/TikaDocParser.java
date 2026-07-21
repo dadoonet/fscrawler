@@ -46,6 +46,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -544,11 +545,15 @@ public class TikaDocParser {
             Consumer<T> setter,
             Function<String, T> transformer) {
         String sMeta = metadata.get(property);
-        if (sMeta == null) {
-            return;
-        }
         try {
-            setter.accept(transformer.apply(sMeta));
+            T value = transformer.apply(sMeta);
+            // Transformers may return an empty collection when the property is absent/blank (java:S1168). Treat that
+            // as "field not present" so language detection and PDF keyword fallback still see null.
+            if (value == null
+                    || (value instanceof Collection<?> c && c.isEmpty() && (sMeta == null || sMeta.isBlank()))) {
+                return;
+            }
+            setter.accept(value);
         } catch (Exception e) {
             logger.warn(
                     "Can not parse meta [{}] for [{}]. Skipping [{}] field...", sMeta, filename, property.getName());
