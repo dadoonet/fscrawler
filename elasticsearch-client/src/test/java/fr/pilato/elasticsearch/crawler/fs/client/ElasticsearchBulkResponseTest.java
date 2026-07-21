@@ -61,10 +61,10 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(bulkResponse.getItems()).hasSize(2);
         Assertions.assertThat(bulkResponse.getItems().get(0).isFailed()).isFalse();
         Assertions.assertThat(bulkResponse.getItems().get(1).isFailed()).isFalse();
-        Assertions.assertThat(bulkResponse.getItems().get(0).getOperation())
-                .isInstanceOf(ElasticsearchCreateOperation.class);
-        Assertions.assertThat(bulkResponse.getItems().get(1).getOperation())
-                .isInstanceOf(ElasticsearchCreateOperation.class);
+        Assertions.assertThat(bulkResponse.getItems().get(0).getOperation().getId())
+                .isEqualTo("checksum-1");
+        Assertions.assertThat(bulkResponse.getItems().get(1).getOperation().getId())
+                .isEqualTo("checksum-1");
     }
 
     @Test
@@ -99,7 +99,7 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void indexAndDeleteItemsAreParsedInOrder() {
+    void itemsWithDuplicateIdsAreParsedInOrder() {
         String response = """
                 {
                   "errors": false,
@@ -127,9 +127,9 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
 
         Assertions.assertThat(bulkResponse.hasFailures()).isFalse();
         Assertions.assertThat(bulkResponse.getItems()).hasSize(2);
-        Assertions.assertThat(bulkResponse.getItems().get(0).getOperation())
-                .isInstanceOf(ElasticsearchIndexOperation.class);
-        Assertions.assertThat(bulkResponse.getItems().get(1).getOperation())
-                .isInstanceOf(ElasticsearchDeleteOperation.class);
+        Assertions.assertThat(bulkResponse.getItems().get(0).getOperation().getId())
+                .isEqualTo("1");
+        Assertions.assertThat(bulkResponse.getItems().get(1).getOperation().getId())
+                .isEqualTo("1");
     }
 }

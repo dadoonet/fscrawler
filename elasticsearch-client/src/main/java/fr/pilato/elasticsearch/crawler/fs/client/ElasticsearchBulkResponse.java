@@ -23,9 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
-import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,6 +43,7 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         boolean hasRealErrors = false;
 
+        // Walk $.items (not $.._id): duplicate _ids in one bulk are valid with create, and we need the action name.
         List<Map<String, Object>> responseItems = document.read("$.items");
         for (Map<String, Object> responseItem : responseItems) {
             Map.Entry<String, Object> entry = responseItem.entrySet().iterator().next();
@@ -54,21 +53,18 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
 
             String index = (String) jsonItemResponse.get("_index");
             String id = (String) jsonItemResponse.get("_id");
-            BulkOperation operation = parseOperation(operationName);
-
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
-            itemResponse.setOperation(toOperation(operation, index, id));
+            // Operation type is only needed for retry matching by id / logging; IndexOperation is enough.
+            itemResponse.setOperation(new ElasticsearchIndexOperation(index, id, null, null));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> error = (Map<String, Object>) jsonItemResponse.get("error");
             if (error != null) {
                 String errorType = (String) error.get("type");
                 String errorMessage = (String) error.get("reason");
-                if (isExpectedCreateConflict(operation, errorType, errorMessage)) {
-                    // First writer wins: a later create for an existing _id is expected when deduplicating.
+                // First writer wins: a later create for an existing _id is expected when deduplicating.
+                if ("create".equals(operationName) && "version_conflict_engine_exception".equals(errorType)) {
                     logger.debug("Ignoring expected create conflict for [{}/{}]: {}", index, id, errorMessage);
-                    itemResponse.setFailed(false);
-                    itemResponse.setFailureMessage(errorMessage);
                 } else {
                     itemResponse.setFailureMessage(errorMessage);
                     itemResponse.setFailed(true);
@@ -79,37 +75,6 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
         }
 
         errors = hasRealErrors;
-    }
-
-    private static BulkOperation parseOperation(String operationName) {
-        try {
-            return BulkOperation.valueOf(operationName.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            // Fallback for unexpected action names; treat as INDEX for response modelling.
-            return BulkOperation.INDEX;
-        }
-    }
-
-    private static ElasticsearchOperation toOperation(BulkOperation operation, String index, String id) {
-        return switch (operation) {
-            case CREATE -> new ElasticsearchCreateOperation(index, id, null, null);
-            case DELETE -> new ElasticsearchDeleteOperation(index, id);
-            case INDEX -> new ElasticsearchIndexOperation(index, id, null, null);
-        };
-    }
-
-    /**
-     * Elasticsearch returns a version conflict when bulk {@code create} targets an existing {@code _id}. That is the
-     * intended “keep the first copy” behaviour for content-based ids.
-     */
-    static boolean isExpectedCreateConflict(BulkOperation operation, String errorType, String errorMessage) {
-        if (operation != BulkOperation.CREATE) {
-            return false;
-        }
-        if ("version_conflict_engine_exception".equals(errorType)) {
-            return true;
-        }
-        return errorMessage != null && errorMessage.toLowerCase(Locale.ROOT).contains("document already exists");
     }
 
     @Override
