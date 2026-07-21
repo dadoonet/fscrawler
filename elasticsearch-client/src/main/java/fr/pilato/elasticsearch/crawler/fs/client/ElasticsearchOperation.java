@@ -21,26 +21,27 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerOperation;
+import java.util.Locale;
 
 public abstract class ElasticsearchOperation implements FsCrawlerOperation<ElasticsearchOperation> {
     private final Operation operation;
     private final String index;
     private final String id;
 
-    enum Operation {
+    protected enum Operation {
         INDEX,
         CREATE,
         DELETE
     }
 
-    public ElasticsearchOperation(Operation operation, String index, String id) {
+    protected ElasticsearchOperation(Operation operation, String index, String id) {
         this.operation = operation;
         this.index = index;
         this.id = id;
     }
 
-    public Operation getOperation() {
-        return operation;
+    public String getOperationAsString() {
+        return operation.toString().toLowerCase(Locale.ROOT);
     }
 
     public String getIndex() {

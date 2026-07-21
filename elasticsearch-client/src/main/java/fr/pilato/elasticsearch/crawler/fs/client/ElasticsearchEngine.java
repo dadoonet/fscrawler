@@ -21,7 +21,6 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.Engine;
-import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,7 +44,7 @@ public class ElasticsearchEngine
             // Header
             bulkRequest
                     .append("{\"")
-                    .append(r.getOperation().toString().toLowerCase(Locale.ROOT))
+                    .append(r.getOperationAsString())
                     .append("\":{\"_index\":\"")
                     .append(r.getIndex())
                     .append("\"");
