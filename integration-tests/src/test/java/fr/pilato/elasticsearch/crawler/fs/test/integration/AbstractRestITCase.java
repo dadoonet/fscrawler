@@ -155,11 +155,21 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         return target.path(path).request().get(clazz);
     }
 
+    /**
+     * Apply query parameters to a {@link WebTarget}. Jersey's {@code queryParam} returns a new instance, so the result
+     * must be reassigned.
+     */
+    static WebTarget withQueryParams(WebTarget target, Map<String, Object> params) {
+        WebTarget result = target;
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            result = result.queryParam(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
     public static <T> T post(
             WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
-        WebTarget targetPath = target.path(path);
-        // TODO check this as it does not seem to produce anything
-        params.forEach(targetPath::queryParam);
+        WebTarget targetPath = withQueryParams(target.path(path), params);
 
         return targetPath
                 .request(MediaType.MULTIPART_FORM_DATA)
@@ -177,9 +187,7 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
     public static <T> T put(
             WebTarget target, String path, FormDataMultiPart mp, Class<T> clazz, Map<String, Object> params) {
-        WebTarget targetPath = target.path(path);
-        // TODO check this as it does not seem to produce anything
-        params.forEach(targetPath::queryParam);
+        WebTarget targetPath = withQueryParams(target.path(path), params);
 
         return targetPath
                 .request(MediaType.MULTIPART_FORM_DATA)
