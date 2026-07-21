@@ -1198,8 +1198,11 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                             logger.warn("error caught", e);
                             errorWhileWaiting.set(e);
                             return false;
+                        } catch (ElasticsearchIndexNotFoundException e) {
+                            logger.debug("index not ready yet", e);
+                            errorWhileWaiting.set(e);
+                            return false;
                         } catch (ElasticsearchClientException e) {
-                            // TODO create a NOT FOUND Exception instead
                             logger.debug("error caught", e);
                             errorWhileWaiting.set(e);
                             return false;

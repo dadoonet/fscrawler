@@ -1192,7 +1192,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return parseSearchResponse(response, size);
         } catch (NotFoundException e) {
             logger.debug("index {} does not exist.", request.getIndex());
-            throw new ElasticsearchClientException("index " + request.getIndex() + " does not exist.");
+            throw new ElasticsearchIndexNotFoundException(request.getIndex());
         } catch (ServiceUnavailableException e) {
             logger.warn(
                     "search on index [{}] still unavailable after retries ({}). Shards may not be allocated yet.",
