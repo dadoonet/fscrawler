@@ -29,6 +29,10 @@ import org.github.gestalt.config.annotations.Config;
 public class Server {
 
     public static final class PROTOCOL {
+        private PROTOCOL() {
+            // Constants holder
+        }
+
         public static final String LOCAL = "local";
         public static final String SSH = "ssh";
         public static final String FTP = "ftp";
