@@ -28,7 +28,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterv
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,7 +42,6 @@ import org.junit.jupiter.api.Test;
  * {@code elasticsearch.bulk_operation: create} first-writer-wins behaviour from <a
  * href="https://github.com/dadoonet/fscrawler/issues/2462">#2462</a>.
  */
-@Slow
 class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
 
     /**

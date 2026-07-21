@@ -26,7 +26,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.io.File;
 import java.nio.file.Files;
@@ -43,7 +42,6 @@ import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 /** Tests with OCR configuration See <a href="https://github.com/dadoonet/fscrawler/issues/1988">#1988</a> */
-@Slow
 class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
 
