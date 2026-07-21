@@ -66,6 +66,7 @@ class FsCrawlerCliLoggerTest extends AbstractFSCrawlerTestCase {
                 try {
                     printLs(path);
                 } catch (IOException ignored) {
+                    // Best-effort debug listing; ignore nested directory failures
                 }
             } else {
                 logger.debug("{}", path);

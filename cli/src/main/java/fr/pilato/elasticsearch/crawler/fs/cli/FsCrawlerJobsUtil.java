@@ -55,6 +55,7 @@ public class FsCrawlerJobsUtil {
                 }
             }
         } catch (IOException ignored) {
+            // Directory listing failed; return whatever jobs were already found
         }
 
         return files;

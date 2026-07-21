@@ -170,7 +170,11 @@ public class TestContainerHelper {
         if (Integer.parseInt(elasticsearchVersion.split("\\.")[0]) > 8) {
             log.warn("From 9.0.0, we need to wait a bit before all security indices are allocated");
             try {
-                wait(2000);
+                long deadline = System.currentTimeMillis() + 2000L;
+                long remaining;
+                while ((remaining = deadline - System.currentTimeMillis()) > 0) {
+                    wait(remaining);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

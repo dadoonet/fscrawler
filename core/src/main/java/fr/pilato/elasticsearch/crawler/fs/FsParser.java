@@ -707,13 +707,12 @@ public class FsParser implements Runnable, AutoCloseable {
                         checkpoint.get().resetRetryCount();
                         maybeSaveCheckpoint();
                     } else {
-                        // Directory was interrupted (pause or close) - re-add to pending queue
+                        // Directory was interrupted (pause or close) - re-add to pending queue.
+                        // The while loop then re-checks paused/closed and can call waitForResume()
+                        // directly instead of exiting to run() and triggering a full new scan cycle
+                        // (connection close/reopen, checkpoint reload).
                         checkpoint.get().addPath(currentPath);
                         saveCheckpoint();
-                        // Use continue so the while loop re-checks paused/closed and can call
-                        // waitForResume() directly instead of exiting to run() and triggering
-                        // a full new scan cycle (connection close/reopen, checkpoint reload).
-                        continue;
                     }
                 } catch (Exception e) {
                     // Path already re-added in handleNetworkError; do not add again to avoid duplicate in pending queue

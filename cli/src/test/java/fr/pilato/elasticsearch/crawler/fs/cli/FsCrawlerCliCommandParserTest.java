@@ -20,11 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.nio.file.Path;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -64,8 +62,9 @@ class FsCrawlerCliCommandParserTest extends AbstractFSCrawlerTestCase {
     @Test
     void commandParserSilentModeNoJob() {
         String[] args = {"--silent"};
-        AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
-                .isThrownBy(() -> FsCrawlerCli.commandParser(args));
+        FsCrawlerCli.FsCrawlerCommand command = FsCrawlerCli.commandParser(args);
+        Assertions.assertThat(command).isNotNull();
+        Assertions.assertThat(command.silent).isTrue();
     }
 
     @Test

@@ -36,7 +36,7 @@ import org.apache.logging.log4j.Logger;
 
 /** REST API for controlling the crawler (pause, resume, status) */
 @Path("/_crawler")
-public class CrawlerApi extends RestApi {
+public class CrawlerApi implements RestApi {
     private static final Logger logger = LogManager.getLogger();
 
     private final FsParser fsParser;

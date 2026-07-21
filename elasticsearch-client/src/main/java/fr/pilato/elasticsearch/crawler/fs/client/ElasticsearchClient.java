@@ -121,8 +121,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
     // Elasticsearch API endpoints
     public static final String API_COMPONENT_TEMPLATE = "_component_template/";
     public static final String API_INDEX_TEMPLATE = "_index_template/";
-    public static final String API_SEARCH = "/_search";
-    public static final String API_SECURITY_API_KEY = "/_security/api_key";
+    public static final String API_SEARCH = "_search";
+    public static final String API_SECURITY_API_KEY = "_security/api_key";
+    public static final String API_INGEST_PIPELINE = "_ingest/pipeline/";
 
     // User agent
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
@@ -514,7 +515,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public boolean isExistingPipeline(String pipelineName) throws ElasticsearchClientException {
         logger.trace("is existing pipeline [{}]", pipelineName);
         try {
-            httpGet("_ingest/pipeline/" + pipelineName);
+            httpGet(API_INGEST_PIPELINE + pipelineName);
             logger.debug("Pipeline [{}] was found", pipelineName);
             return true;
         } catch (NotFoundException e) {
@@ -636,20 +637,29 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    private static final TrustManager[] trustAllCerts = new TrustManager[] {
-        new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
+    /**
+     * Trust-all manager used only when {@code elasticsearch.ssl_verification} is false (tests / local clusters with
+     * self-signed certs). Production deployments should keep verification enabled.
+     */
+    @SuppressWarnings("java:S4830")
+    private static final class TrustAllX509TrustManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+            // Intentionally empty: certificate validation is opted out via ssl_verification=false
         }
-    };
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+            // Intentionally empty: certificate validation is opted out via ssl_verification=false
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+    }
+
+    private static final TrustManager[] trustAllCerts = new TrustManager[] {new TrustAllX509TrustManager()};
 
     public static class NullHostNameVerifier implements HostnameVerifier {
         @Override
@@ -1117,7 +1127,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String url = "";
 
         if (!FsCrawlerUtil.isNullOrEmpty(request.getIndex())) {
-            url += request.getIndex();
+            url += request.getIndex() + "/";
         }
 
         url += API_SEARCH;
@@ -1324,14 +1334,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void createPipeline(String pipeline, String json) throws ElasticsearchClientException {
         logger.debug("create pipeline [{}]", pipeline);
-        httpPut("_ingest/pipeline/" + pipeline, json);
+        httpPut(API_INGEST_PIPELINE + pipeline, json);
     }
 
     @Override
     public void deletePipeline(String pipeline) throws ElasticsearchClientException {
         logger.debug("delete pipeline [{}]", pipeline);
         try {
-            httpDelete("_ingest/pipeline/" + pipeline, null);
+            httpDelete(API_INGEST_PIPELINE + pipeline, null);
         } catch (NotFoundException e) {
             logger.debug("Pipeline [{}] was not found", pipeline);
         }

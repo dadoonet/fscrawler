@@ -497,6 +497,26 @@ public class FsCrawlerUtil {
     }
 
     /**
+     * Returns the first non-null value among the given candidates, preserving order.
+     *
+     * @param values candidates to inspect
+     * @param <T> candidate type
+     * @return the first non-null value, or {@code null} if none is present
+     */
+    @SafeVarargs
+    public static <T> T getFirstNonNullValue(T... values) {
+        if (values == null) {
+            return null;
+        }
+        for (T value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Creates the given directory and any parent directories that do not exist. Does nothing if the directory already
      * exists.
      *

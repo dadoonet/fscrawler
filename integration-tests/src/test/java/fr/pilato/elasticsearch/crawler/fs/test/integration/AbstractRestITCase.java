@@ -198,7 +198,6 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
             builder.header(k + "*", "UTF-8''" + URLEncoder.encode((String) v, StandardCharsets.UTF_8));
         });
 
-        // params.forEach(builder::property);
         return builder.delete(clazz);
     }
 
@@ -279,30 +278,10 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
         if (index != null) {
             mp.field("index", index);
-            // Sadly this does not work
-            /*
-            if (RandomizedTest.rarely()) {
-                logger.info("Force index name to {} using a form field", index);
-                mp.field("index", index);
-            } else {
-                logger.info("Force index name to {} using a query string parameter", index);
-                params.put("index", index);
-            }
-            */
         }
 
         if (id != null) {
             mp.field("id", id);
-            // Sadly this does not work
-            /*
-            if (RandomizedTest.rarely()) {
-                logger.info("Force id to {} using a form field", id);
-                mp.field("id", id);
-            } else {
-                logger.info("Force id to {} using a query string parameter", id);
-                params.put("id", id);
-            }
-             */
         }
 
         if (tagsFile != null) {

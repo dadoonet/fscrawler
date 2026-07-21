@@ -20,4 +20,5 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
-class RestApi {}
+/** Marker type for FSCrawler REST resource classes. */
+interface RestApi {}

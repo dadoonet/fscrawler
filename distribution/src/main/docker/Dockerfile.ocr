@@ -7,6 +7,8 @@ RUN set -ex \
     && apt-get install -y --no-install-recommends \
     procps \
     curl \
+    # langsPkg is a space-separated package list (e.g. "imagemagick tesseract-ocr ...");
+    # word-splitting is intentional — do not quote. NOSONAR
     ${langsPkg} \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \

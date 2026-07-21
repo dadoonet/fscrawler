@@ -222,6 +222,7 @@ public class TikaDocParser {
                                             doc.getPath().getReal()),
                                     sb.toString());
                         } catch (NoSuchAlgorithmException ignored) {
+                            // Error is already logged below; hash algorithm failure must not hide it
                         }
                         logger.warn(
                                 "Failed to extract [{}] characters of text for [{}]: {}",

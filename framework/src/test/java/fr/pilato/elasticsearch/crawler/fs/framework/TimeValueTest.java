@@ -55,4 +55,17 @@ class TimeValueTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(TimeValue.parseTimeValue("2d")).hasToString("2d");
         Assertions.assertThat(TimeValue.parseTimeValue("30d")).hasToString("30d");
     }
+
+    @Test
+    void stringConstructorParsesValues() {
+        Assertions.assertThat(new TimeValue("15m").minutes()).isEqualTo(15L);
+        Assertions.assertThat(new TimeValue("5s").millis()).isEqualTo(5000L);
+    }
+
+    @Test
+    void stringConstructorRejectsNull() {
+        Assertions.assertThatThrownBy(() -> new TimeValue((String) null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("null");
+    }
 }

@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -54,7 +55,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/_document")
-public class DocumentApi extends RestApi {
+public class DocumentApi implements RestApi {
     private static final Logger logger = LogManager.getLogger();
 
     private final FsCrawlerDocumentService documentService;
@@ -86,8 +87,8 @@ public class DocumentApi extends RestApi {
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d)
             throws IOException, NoSuchAlgorithmException {
-        String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
-        String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+        String id = FsCrawlerUtil.getFirstNonNullValue(formId, headerId, queryParamId);
+        String index = FsCrawlerUtil.getFirstNonNullValue(formIndex, headerIndex, queryParamIndex);
         return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
     }
 
@@ -106,7 +107,7 @@ public class DocumentApi extends RestApi {
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d)
             throws IOException, NoSuchAlgorithmException {
-        String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+        String index = FsCrawlerUtil.getFirstNonNullValue(formIndex, headerIndex, queryParamIndex);
         return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
     }
 
@@ -121,8 +122,8 @@ public class DocumentApi extends RestApi {
             @HeaderParam("id") String headerId,
             @HeaderParam("index") String headerIndex,
             InputStream json) {
-        String id = headerId != null ? headerId : queryParamId;
-        String index = headerIndex != null ? headerIndex : queryParamIndex;
+        String id = FsCrawlerUtil.getFirstNonNullValue(headerId, queryParamId);
+        String index = FsCrawlerUtil.getFirstNonNullValue(headerIndex, queryParamIndex);
 
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(json);
         String type = document.read("$.type");
