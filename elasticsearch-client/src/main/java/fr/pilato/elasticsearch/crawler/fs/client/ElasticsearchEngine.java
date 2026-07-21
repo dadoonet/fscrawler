@@ -52,19 +52,19 @@ public class ElasticsearchEngine
 
             bulkRequest.append(",\"_id\":\"").append(r.getId()).append("\"");
 
-            if (r instanceof ElasticsearchIndexOperation indexOp && indexOp.getPipeline() != null) {
+            if (r instanceof ElasticsearchInsertOperation insertOp && insertOp.getPipeline() != null) {
                 bulkRequest
                         .append(",\"pipeline\":\"")
-                        .append(indexOp.getPipeline())
+                        .append(insertOp.getPipeline())
                         .append("\"");
             }
             bulkRequest.append("}}\n");
-            if (r instanceof ElasticsearchIndexOperation indexOp) {
+            if (r instanceof ElasticsearchInsertOperation insertOp) {
                 // NDJSON needs one JSON object per line. Pretty-printed documents may contain
                 // structural CR/LF; strip them without a Jackson round-trip (which rejects large
                 // string values via StreamReadConstraints). Valid JSON never has raw CR/LF inside
                 // strings — those must be escaped as \n / \r.
-                bulkRequest.append(toSingleLineJson(indexOp.getJson())).append("\n");
+                bulkRequest.append(toSingleLineJson(insertOp.getJson())).append("\n");
             }
             logger.trace("Adding to bulk request: {}", bulkRequest);
             ndjson.append(bulkRequest);

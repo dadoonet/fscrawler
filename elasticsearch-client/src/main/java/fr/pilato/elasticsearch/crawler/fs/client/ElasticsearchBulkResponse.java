@@ -56,11 +56,7 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
             ElasticsearchOperation.Operation operation = parseOperation(operationName);
 
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
-            if (operation == ElasticsearchOperation.Operation.DELETE) {
-                itemResponse.setOperation(new ElasticsearchDeleteOperation(index, id));
-            } else {
-                itemResponse.setOperation(new ElasticsearchIndexOperation(operation, index, id, null, null));
-            }
+            itemResponse.setOperation(toOperation(operation, index, id));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> error = (Map<String, Object>) jsonItemResponse.get("error");
@@ -91,6 +87,15 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
             // Fallback for unexpected action names; treat as INDEX for response modelling.
             return ElasticsearchOperation.Operation.INDEX;
         }
+    }
+
+    private static ElasticsearchOperation toOperation(
+            ElasticsearchOperation.Operation operation, String index, String id) {
+        return switch (operation) {
+            case CREATE -> new ElasticsearchCreateOperation(index, id, null, null);
+            case DELETE -> new ElasticsearchDeleteOperation(index, id);
+            case INDEX -> new ElasticsearchIndexOperation(index, id, null, null);
+        };
     }
 
     /**

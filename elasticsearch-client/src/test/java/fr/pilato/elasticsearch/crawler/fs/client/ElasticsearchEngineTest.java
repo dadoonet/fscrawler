@@ -67,8 +67,7 @@ class ElasticsearchEngineTest extends AbstractFSCrawlerTestCase {
                 .bulk(anyString());
 
         ElasticsearchBulkRequest request = new ElasticsearchBulkRequest();
-        request.add(new ElasticsearchIndexOperation(
-                ElasticsearchOperation.Operation.CREATE, "idx", "1", "my-pipeline", "{\"foo\":\"bar\"}"));
+        request.add(new ElasticsearchCreateOperation("idx", "1", "my-pipeline", "{\"foo\":\"bar\"}"));
 
         ElasticsearchBulkResponse response = new ElasticsearchEngine(client).bulk(request);
 

@@ -148,7 +148,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration BOOTSTRAP_RETRY_MAX_DELAY = Duration.ofSeconds(10);
 
     private final FsSettings settings;
-    private final ElasticsearchOperation.Operation bulkOperation;
+    /** Factory for document writes, resolved once from {@code elasticsearch.bulk_op}. */
+    private final InsertOperationFactory insertOperationFactory;
+
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
@@ -168,7 +170,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     public ElasticsearchClient(FsSettings settings) {
         this.settings = settings;
-        this.bulkOperation = toBulkOperation(settings.getElasticsearch().getBulkOp());
+        this.insertOperationFactory =
+                insertOperationFactory(settings.getElasticsearch().getBulkOp());
         this.hosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
         this.initialHosts =
                 new ArrayList<>(settings.getElasticsearch().getUrls().size());
@@ -181,6 +184,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
             currentNode = 0;
         }
         semanticSearch = settings.getElasticsearch().isSemanticSearch();
+    }
+
+    @FunctionalInterface
+    private interface InsertOperationFactory {
+        ElasticsearchInsertOperation create(String index, String id, String pipeline, String json);
     }
 
     @Override
@@ -662,19 +670,19 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexRawJson(String index, String id, String json, String pipeline) {
         logger.trace("JSon indexed : {}", json);
-        bulkProcessor.add(new ElasticsearchIndexOperation(bulkOperation, index, id, pipeline, json));
+        bulkProcessor.add(insertOperationFactory.create(index, id, pipeline, json));
     }
 
     /**
-     * Maps {@code elasticsearch.bulk_op} to the bulk action used for document writes. Resolved once at client
-     * construction because the setting is immutable for the life of the client. Unset values fall back to
-     * {@link ElasticsearchOperation.Operation#INDEX}.
+     * Chooses {@link ElasticsearchCreateOperation} or {@link ElasticsearchIndexOperation} from
+     * {@code elasticsearch.bulk_op}. Resolved once at client construction because the setting is immutable for the life
+     * of the client. Unset values fall back to {@code index}.
      */
-    private static ElasticsearchOperation.Operation toBulkOperation(Elasticsearch.BulkOp bulkOp) {
+    private static InsertOperationFactory insertOperationFactory(Elasticsearch.BulkOp bulkOp) {
         if (bulkOp == Elasticsearch.BulkOp.CREATE) {
-            return ElasticsearchOperation.Operation.CREATE;
+            return ElasticsearchCreateOperation::new;
         }
-        return ElasticsearchOperation.Operation.INDEX;
+        return ElasticsearchIndexOperation::new;
     }
 
     @Override

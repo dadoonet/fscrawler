@@ -774,8 +774,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         String id = "shared-id";
         ElasticsearchBulkRequest firstBulk = new ElasticsearchBulkRequest();
-        firstBulk.add(new ElasticsearchIndexOperation(
-                ElasticsearchOperation.Operation.CREATE, index, id, null, "{\"path\":\"first\",\"content\":\"same\"}"));
+        firstBulk.add(new ElasticsearchCreateOperation(index, id, null, "{\"path\":\"first\",\"content\":\"same\"}"));
 
         ElasticsearchEngine engine = new ElasticsearchEngine(esClient);
         ElasticsearchBulkResponse firstResponse = engine.bulk(firstBulk);
@@ -784,12 +783,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
         countTestHelper(new ESSearchRequest().withIndex(index), 1L);
 
         ElasticsearchBulkRequest secondBulk = new ElasticsearchBulkRequest();
-        secondBulk.add(new ElasticsearchIndexOperation(
-                ElasticsearchOperation.Operation.CREATE,
-                index,
-                id,
-                null,
-                "{\"path\":\"second\",\"content\":\"same\"}"));
+        secondBulk.add(new ElasticsearchCreateOperation(index, id, null, "{\"path\":\"second\",\"content\":\"same\"}"));
 
         ElasticsearchBulkResponse secondResponse = engine.bulk(secondBulk);
         Assertions.assertThat(secondResponse.hasFailures())

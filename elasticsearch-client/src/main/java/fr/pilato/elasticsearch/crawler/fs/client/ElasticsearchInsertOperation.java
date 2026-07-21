@@ -20,10 +20,23 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
-/** Bulk {@code index} operation: create or replace the document for a given {@code _id}. */
-public class ElasticsearchIndexOperation extends ElasticsearchInsertOperation {
+/** Bulk write operation that carries a document body ({@code index} or {@code create}). */
+public abstract class ElasticsearchInsertOperation extends ElasticsearchOperation {
 
-    public ElasticsearchIndexOperation(String index, String id, String pipeline, String json) {
-        super(Operation.INDEX, index, id, pipeline, json);
+    private final String pipeline;
+    private final String json;
+
+    protected ElasticsearchInsertOperation(Operation operation, String index, String id, String pipeline, String json) {
+        super(operation, index, id);
+        this.pipeline = pipeline;
+        this.json = json;
+    }
+
+    public String getPipeline() {
+        return pipeline;
+    }
+
+    public String getJson() {
+        return json;
     }
 }
