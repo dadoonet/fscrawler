@@ -62,8 +62,10 @@ class FsCrawlerUtilTest extends AbstractFSCrawlerTestCase {
     @Test
     void getFirstNonNullValueReturnsNullWhenAllCandidatesAreNull() {
         Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String) null)).isNull();
-        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String) null, null)).isNull();
-        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String[]) null)).isNull();
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String) null, null))
+                .isNull();
+        Assertions.assertThat(FsCrawlerUtil.getFirstNonNullValue((String[]) null))
+                .isNull();
         Assertions.assertThat(FsCrawlerUtil.<String>getFirstNonNullValue()).isNull();
     }
 
