@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
@@ -78,7 +79,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public Collection<String> getFileDirectory(String path) throws Exception {
+    public Collection<String> getFileDirectory(String path) throws NoSuchAlgorithmException {
 
         if (logger.isTraceEnabled()) {
             logger.trace(
@@ -126,7 +127,7 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     }
 
     @Override
-    public Collection<String> getFolderDirectory(String path) throws Exception {
+    public Collection<String> getFolderDirectory(String path) throws NoSuchAlgorithmException {
         Collection<String> files = new ArrayList<>();
 
         try {

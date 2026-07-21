@@ -1225,7 +1225,7 @@ public class FsParser implements Runnable, AutoCloseable {
         return false;
     }
 
-    private Collection<String> getFileDirectory(String path) throws Exception {
+    private Collection<String> getFileDirectory(String path) throws NoSuchAlgorithmException {
         // If the crawler is being closed, we return
         if (closed.get()) {
             return new ArrayList<>();
@@ -1233,7 +1233,7 @@ public class FsParser implements Runnable, AutoCloseable {
         return managementService.getFileDirectory(path);
     }
 
-    private Collection<String> getFolderDirectory(String path) throws Exception {
+    private Collection<String> getFolderDirectory(String path) throws NoSuchAlgorithmException {
         // If the crawler is being closed, we return
         if (closed.get()) {
             return new ArrayList<>();
