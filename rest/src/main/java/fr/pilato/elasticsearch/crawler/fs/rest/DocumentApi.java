@@ -54,7 +54,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/_document")
-public class DocumentApi extends RestApi {
+public class DocumentApi implements RestApi {
     private static final Logger logger = LogManager.getLogger();
 
     private final FsCrawlerDocumentService documentService;

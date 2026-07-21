@@ -32,7 +32,7 @@ import java.io.IOException;
 
 /** Root resource (exposed at "/" path) */
 @Path("/")
-public class ServerStatusApi extends RestApi {
+public class ServerStatusApi implements RestApi {
 
     private final FsCrawlerManagementService managementService;
     private final FsSettings settings;
