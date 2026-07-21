@@ -231,10 +231,12 @@ public interface IElasticsearchClient extends Closeable {
     /**
      * Send a _bulk request to Elasticsearch
      *
+     * @param index optional index name; when non-null, calls {@code POST {index}/_bulk} so action lines can omit
+     *     {@code _index}
      * @param ndjson the bulk content to send
      * @return the outcome
      */
-    String bulk(String ndjson) throws ElasticsearchClientException;
+    String bulk(String index, String ndjson) throws ElasticsearchClientException;
 
     /**
      * Generate an API key (for tests purposes only)

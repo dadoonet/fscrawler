@@ -1387,9 +1387,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
-    public String bulk(String ndjson) throws ElasticsearchClientException {
-        logger.debug("bulk a ndjson of {} characters", ndjson.length());
-        return httpPost("_bulk", ndjson);
+    public String bulk(String index, String ndjson) throws ElasticsearchClientException {
+        String path = index == null ? "_bulk" : index + PATH_DELIMITER + "_bulk";
+        logger.debug("bulk a ndjson of {} characters to [{}]", ndjson.length(), path);
+        return httpPost(path, ndjson);
     }
 
     @Override
