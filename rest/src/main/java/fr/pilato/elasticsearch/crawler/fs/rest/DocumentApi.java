@@ -86,8 +86,22 @@ public class DocumentApi extends RestApi {
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d)
             throws IOException, NoSuchAlgorithmException {
-        String id = formId != null ? formId : headerId != null ? headerId : queryParamId;
-        String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+        String id;
+        if (formId != null) {
+            id = formId;
+        } else if (headerId != null) {
+            id = headerId;
+        } else {
+            id = queryParamId;
+        }
+        String index;
+        if (formIndex != null) {
+            index = formIndex;
+        } else if (headerIndex != null) {
+            index = headerIndex;
+        } else {
+            index = queryParamIndex;
+        }
         return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
     }
 
@@ -106,7 +120,14 @@ public class DocumentApi extends RestApi {
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d)
             throws IOException, NoSuchAlgorithmException {
-        String index = formIndex != null ? formIndex : headerIndex != null ? headerIndex : queryParamIndex;
+        String index;
+        if (formIndex != null) {
+            index = formIndex;
+        } else if (headerIndex != null) {
+            index = headerIndex;
+        } else {
+            index = queryParamIndex;
+        }
         return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
     }
 
