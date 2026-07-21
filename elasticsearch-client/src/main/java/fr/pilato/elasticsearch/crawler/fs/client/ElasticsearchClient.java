@@ -128,7 +128,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
     // User agent
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
 
-    // TODO this should be configurable
     public static final int CHECK_NODES_EVERY = 10;
 
     // Retry configuration for server errors (5xx)
