@@ -121,8 +121,9 @@ public class ElasticsearchClient implements IElasticsearchClient {
     // Elasticsearch API endpoints
     public static final String API_COMPONENT_TEMPLATE = "_component_template/";
     public static final String API_INDEX_TEMPLATE = "_index_template/";
-    public static final String API_SEARCH = "/_search";
-    public static final String API_SECURITY_API_KEY = "/_security/api_key";
+    public static final String API_SEARCH = "_search";
+    public static final String API_SECURITY_API_KEY = "_security/api_key";
+    public static final String API_INGEST_PIPELINE = "_ingest/pipeline/";
 
     // User agent
     private static final String USER_AGENT = "FSCrawler-Rest-Client-" + Version.getVersion();
@@ -514,7 +515,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public boolean isExistingPipeline(String pipelineName) throws ElasticsearchClientException {
         logger.trace("is existing pipeline [{}]", pipelineName);
         try {
-            httpGet("_ingest/pipeline/" + pipelineName);
+            httpGet(API_INGEST_PIPELINE + pipelineName);
             logger.debug("Pipeline [{}] was found", pipelineName);
             return true;
         } catch (NotFoundException e) {
@@ -1117,7 +1118,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String url = "";
 
         if (!FsCrawlerUtil.isNullOrEmpty(request.getIndex())) {
-            url += request.getIndex();
+            url += request.getIndex() + "/";
         }
 
         url += API_SEARCH;
@@ -1324,14 +1325,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void createPipeline(String pipeline, String json) throws ElasticsearchClientException {
         logger.debug("create pipeline [{}]", pipeline);
-        httpPut("_ingest/pipeline/" + pipeline, json);
+        httpPut(API_INGEST_PIPELINE + pipeline, json);
     }
 
     @Override
     public void deletePipeline(String pipeline) throws ElasticsearchClientException {
         logger.debug("delete pipeline [{}]", pipeline);
         try {
-            httpDelete("_ingest/pipeline/" + pipeline, null);
+            httpDelete(API_INGEST_PIPELINE + pipeline, null);
         } catch (NotFoundException e) {
             logger.debug("Pipeline [{}] was not found", pipeline);
         }
