@@ -178,6 +178,14 @@ public interface IElasticsearchClient extends Closeable {
     void deleteIndex(String index) throws ElasticsearchClientException;
 
     /**
+     * Create or replace an ingest pipeline.
+     *
+     * @param pipeline pipeline name
+     * @param json pipeline definition as JSON
+     */
+    void createPipeline(String pipeline, String json) throws ElasticsearchClientException;
+
+    /**
      * Remove an ingest pipeline. Missing pipelines are ignored (same idea as {@link #deleteIndex(String)}).
      *
      * @param pipeline pipeline name

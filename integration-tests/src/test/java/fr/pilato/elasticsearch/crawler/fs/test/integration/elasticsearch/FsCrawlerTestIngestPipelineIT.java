@@ -56,7 +56,7 @@ class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                     }
                   ]
                 }""";
-        client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        client.createPipeline(crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setPipeline(crawlerName);
@@ -110,7 +110,7 @@ class FsCrawlerTestIngestPipelineIT extends AbstractFsCrawlerITCase {
                     }
                   ]
                 }""";
-        client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        client.createPipeline(crawlerName, pipeline);
 
         FsSettings fsSettings = createTestSettings();
         fsSettings.getElasticsearch().setPipeline(crawlerName);

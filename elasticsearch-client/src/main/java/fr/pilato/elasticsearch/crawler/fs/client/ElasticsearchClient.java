@@ -1322,6 +1322,12 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
+    public void createPipeline(String pipeline, String json) throws ElasticsearchClientException {
+        logger.debug("create pipeline [{}]", pipeline);
+        httpPut("_ingest/pipeline/" + pipeline, json);
+    }
+
+    @Override
     public void deletePipeline(String pipeline) throws ElasticsearchClientException {
         logger.debug("delete pipeline [{}]", pipeline);
         try {

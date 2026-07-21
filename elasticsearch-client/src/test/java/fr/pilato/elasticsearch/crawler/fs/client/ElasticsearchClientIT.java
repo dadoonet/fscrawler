@@ -620,7 +620,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                     }
                   ]
                 }""";
-        esClient.performLowLevelRequest("PUT", "/_ingest/pipeline/" + crawlerName, pipeline);
+        esClient.createPipeline(crawlerName, pipeline);
 
         Assertions.assertThat(esClient.isExistingPipeline(crawlerName)).isTrue();
         Assertions.assertThat(esClient.isExistingPipeline(crawlerName + "_foo")).isFalse();

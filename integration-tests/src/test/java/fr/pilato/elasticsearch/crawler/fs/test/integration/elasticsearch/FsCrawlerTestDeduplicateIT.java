@@ -165,6 +165,6 @@ class FsCrawlerTestDeduplicateIT extends AbstractFsCrawlerITCase {
                   ]
                 }
                 """;
-        client.performLowLevelRequest("PUT", "/_ingest/pipeline/" + pipelineName, pipeline);
+        client.createPipeline(pipelineName, pipeline);
     }
 }
