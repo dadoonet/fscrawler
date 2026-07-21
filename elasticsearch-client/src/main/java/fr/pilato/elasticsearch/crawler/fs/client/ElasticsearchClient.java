@@ -640,14 +640,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final TrustManager[] trustAllCerts = new TrustManager[] {
         new X509TrustManager() {
             @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+            public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                // Intentionally empty: used only when ssl_verification is disabled
+            }
 
             @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+            public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                // Intentionally empty: used only when ssl_verification is disabled
+            }
 
             @Override
             public X509Certificate[] getAcceptedIssuers() {
-                return null;
+                return new X509Certificate[0];
             }
         }
     };
