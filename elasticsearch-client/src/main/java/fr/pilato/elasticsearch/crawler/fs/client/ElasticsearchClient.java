@@ -148,6 +148,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private static final Duration BOOTSTRAP_RETRY_MAX_DELAY = Duration.ofSeconds(10);
 
     private final FsSettings settings;
+    private final ElasticsearchOperation.Operation bulkOperation;
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
@@ -167,6 +168,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     public ElasticsearchClient(FsSettings settings) {
         this.settings = settings;
+        this.bulkOperation = toBulkOperation(settings.getElasticsearch().getBulkOp());
         this.hosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
         this.initialHosts =
                 new ArrayList<>(settings.getElasticsearch().getUrls().size());
@@ -660,16 +662,16 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void indexRawJson(String index, String id, String json, String pipeline) {
         logger.trace("JSon indexed : {}", json);
-        bulkProcessor.add(new ElasticsearchIndexOperation(resolveBulkOperation(), index, id, pipeline, json));
+        bulkProcessor.add(new ElasticsearchIndexOperation(bulkOperation, index, id, pipeline, json));
     }
 
     /**
-     * Maps {@code elasticsearch.bulk_op} to the bulk action used for document writes. Unknown or unset values fall back
-     * to {@link ElasticsearchOperation.Operation#INDEX}.
+     * Maps {@code elasticsearch.bulk_op} to the bulk action used for document writes. Resolved once at client
+     * construction because the setting is immutable for the life of the client. Unset values fall back to
+     * {@link ElasticsearchOperation.Operation#INDEX}.
      */
-    private ElasticsearchOperation.Operation resolveBulkOperation() {
-        String bulkOp = settings.getElasticsearch().getBulkOp();
-        if (Elasticsearch.BulkOp.CREATE.equals(bulkOp)) {
+    private static ElasticsearchOperation.Operation toBulkOperation(Elasticsearch.BulkOp bulkOp) {
+        if (bulkOp == Elasticsearch.BulkOp.CREATE) {
             return ElasticsearchOperation.Operation.CREATE;
         }
         return ElasticsearchOperation.Operation.INDEX;

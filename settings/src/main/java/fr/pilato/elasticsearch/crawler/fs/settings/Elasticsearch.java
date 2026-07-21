@@ -31,16 +31,16 @@ import org.github.gestalt.config.annotations.Config;
 
 public class Elasticsearch {
 
-    /** Supported values for {@link #bulkOp}. */
-    public static final class BulkOp {
+    /**
+     * Elasticsearch bulk write operation used for document indexing.
+     *
+     * <p>Configured as {@code elasticsearch.bulk_op} with values {@code index} (default) or {@code create}.
+     */
+    public enum BulkOp {
         /** Create or replace the document with the given {@code _id} (default). */
-        public static final String INDEX = "index";
+        INDEX,
         /** Create the document only if the {@code _id} does not already exist. */
-        public static final String CREATE = "create";
-
-        private BulkOp() {
-            // constants only
-        }
+        CREATE
     }
 
     @Config(defaultVal = Defaults.ELASTICSEARCH_URL_DEFAULT)
@@ -59,9 +59,9 @@ public class Elasticsearch {
     @Nullable
     private Integer bulkSize;
 
-    @Config(defaultVal = BulkOp.INDEX)
+    @Config(defaultVal = "index")
     @Nullable
-    private String bulkOp;
+    private BulkOp bulkOp;
 
     @Config(defaultVal = "5s")
     @Nullable
@@ -162,11 +162,11 @@ public class Elasticsearch {
         this.bulkSize = bulkSize;
     }
 
-    public String getBulkOp() {
+    public BulkOp getBulkOp() {
         return bulkOp;
     }
 
-    public void setBulkOp(@Nullable String bulkOp) {
+    public void setBulkOp(@Nullable BulkOp bulkOp) {
         this.bulkOp = bulkOp;
     }
 
