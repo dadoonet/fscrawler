@@ -16,5 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: release-drafter/release-drafter@v7
+        with:
+          # Force the next draft to 3.0 (pom is already 3.0-SNAPSHOT; last tag is fscrawler-2.9).
+          # Remove this input after FSCrawler 3.0 is published so later releases resolve from tags.
+          version: '3.0'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
