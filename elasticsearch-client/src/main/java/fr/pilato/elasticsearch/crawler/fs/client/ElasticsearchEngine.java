@@ -44,7 +44,7 @@ public class ElasticsearchEngine
             // Header
             bulkRequest
                     .append("{\"")
-                    .append(r.getOperationAsString())
+                    .append(r.getOperation().asLowerCaseString())
                     .append("\":{\"_index\":\"")
                     .append(r.getIndex())
                     .append("\"");

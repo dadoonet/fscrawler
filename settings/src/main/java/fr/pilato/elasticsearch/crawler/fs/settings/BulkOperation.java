@@ -20,6 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import java.util.Locale;
+
 /**
  * Elasticsearch bulk actions used by FSCrawler.
  *
@@ -32,5 +34,9 @@ public enum BulkOperation {
     /** Create the document only if the {@code _id} does not already exist. */
     CREATE,
     /** Delete the document with the given {@code _id} (internal use only). */
-    DELETE
+    DELETE;
+
+    public String asLowerCaseString() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 }

@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.fs.client;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerOperation;
 import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
-import java.util.Locale;
 
 public abstract class ElasticsearchOperation implements FsCrawlerOperation<ElasticsearchOperation> {
     private final BulkOperation operation;
@@ -37,10 +36,6 @@ public abstract class ElasticsearchOperation implements FsCrawlerOperation<Elast
 
     public BulkOperation getOperation() {
         return operation;
-    }
-
-    public String getOperationAsString() {
-        return operation.toString().toLowerCase(Locale.ROOT);
     }
 
     public String getIndex() {
