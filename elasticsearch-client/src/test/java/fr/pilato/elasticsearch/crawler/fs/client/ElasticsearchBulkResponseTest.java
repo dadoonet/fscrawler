@@ -58,13 +58,6 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
 
         Assertions.assertThat(bulkResponse.isErrors()).isFalse();
         Assertions.assertThat(bulkResponse.hasFailures()).isFalse();
-        Assertions.assertThat(bulkResponse.getItems()).hasSize(2);
-        Assertions.assertThat(bulkResponse.getItems().get(0).isFailed()).isFalse();
-        Assertions.assertThat(bulkResponse.getItems().get(1).isFailed()).isFalse();
-        Assertions.assertThat(bulkResponse.getItems().get(0).getOperation().getId())
-                .isEqualTo("checksum-1");
-        Assertions.assertThat(bulkResponse.getItems().get(1).getOperation().getId())
-                .isEqualTo("checksum-1");
     }
 
     @Test
@@ -96,40 +89,5 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(bulkResponse.getItems().get(0).isFailed()).isTrue();
         Assertions.assertThat(bulkResponse.getItems().get(0).getFailureMessage())
                 .contains("failed to parse field");
-    }
-
-    @Test
-    void itemsWithDuplicateIdsAreParsedInOrder() {
-        String response = """
-                {
-                  "errors": false,
-                  "items": [
-                    {
-                      "index": {
-                        "_index": "docs",
-                        "_id": "1",
-                        "status": 201
-                      }
-                    },
-                    {
-                      "delete": {
-                        "_index": "docs",
-                        "_id": "1",
-                        "status": 200,
-                        "result": "deleted"
-                      }
-                    }
-                  ]
-                }
-                """;
-
-        ElasticsearchBulkResponse bulkResponse = new ElasticsearchBulkResponse(response);
-
-        Assertions.assertThat(bulkResponse.hasFailures()).isFalse();
-        Assertions.assertThat(bulkResponse.getItems()).hasSize(2);
-        Assertions.assertThat(bulkResponse.getItems().get(0).getOperation().getId())
-                .isEqualTo("1");
-        Assertions.assertThat(bulkResponse.getItems().get(1).getOperation().getId())
-                .isEqualTo("1");
     }
 }

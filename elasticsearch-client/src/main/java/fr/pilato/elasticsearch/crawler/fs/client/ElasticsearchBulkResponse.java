@@ -25,12 +25,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import java.util.List;
 import java.util.Map;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<ElasticsearchOperation> {
-
-    private static final Logger logger = LogManager.getLogger();
 
     private final ElasticsearchClientException exception;
 
@@ -40,41 +36,28 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
 
     public ElasticsearchBulkResponse(String response) {
         exception = null;
+        // We need to parse the response object
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
-        boolean hasRealErrors = false;
-
-        // Walk $.items (not $.._id): duplicate _ids in one bulk are valid with create, and we need the action name.
-        List<Map<String, Object>> responseItems = document.read("$.items");
-        for (Map<String, Object> responseItem : responseItems) {
-            Map.Entry<String, Object> entry = responseItem.entrySet().iterator().next();
-            String operationName = entry.getKey();
-            @SuppressWarnings("unchecked")
-            Map<String, Object> jsonItemResponse = (Map<String, Object>) entry.getValue();
-
+        List<String> ids = document.read("$.._id");
+        ids.forEach(id -> {
+            Map<String, Object> jsonItemResponse =
+                    ((List<Map<String, Object>>) document.read("$..[?(@._id == '" + id + "')]")).get(0);
             String index = (String) jsonItemResponse.get("_index");
-            String id = (String) jsonItemResponse.get("_id");
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
-            // Operation type is only needed for retry matching by id / logging; IndexOperation is enough.
             itemResponse.setOperation(new ElasticsearchIndexOperation(index, id, null, null));
-
-            @SuppressWarnings("unchecked")
             Map<String, Object> error = (Map<String, Object>) jsonItemResponse.get("error");
             if (error != null) {
-                String errorType = (String) error.get("type");
                 String errorMessage = (String) error.get("reason");
-                // First writer wins: a later create for an existing _id is expected when deduplicating.
-                if ("create".equals(operationName) && "version_conflict_engine_exception".equals(errorType)) {
-                    logger.debug("Ignoring expected create conflict for [{}/{}]: {}", index, id, errorMessage);
-                } else {
+                // Create on an existing _id is expected when deduplicating (first writer wins).
+                // ES still sets errors=true for that case, so we ignore this item and recompute below.
+                if (!"version_conflict_engine_exception".equals(error.get("type"))) {
                     itemResponse.setFailureMessage(errorMessage);
                     itemResponse.setFailed(true);
-                    hasRealErrors = true;
                 }
             }
             items.add(itemResponse);
-        }
-
-        errors = hasRealErrors;
+        });
+        errors = items.stream().anyMatch(BulkItemResponse::isFailed);
     }
 
     @Override
