@@ -113,8 +113,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     @Override
     public void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException {
-        client.flush();
-        client.ensureBulkSucceeded();
+        client.flushAndEnsureBulkSucceeded();
     }
 
     @Override
@@ -124,8 +123,7 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
 
     @Override
     public void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException {
-        client.flush();
-        client.ensureBulkSucceededSince(generation);
+        client.flushAndEnsureBulkSucceededSince(generation);
     }
 
     @Override

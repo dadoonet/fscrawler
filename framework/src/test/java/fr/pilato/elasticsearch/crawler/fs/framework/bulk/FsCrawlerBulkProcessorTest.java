@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -117,6 +118,31 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         generatePayload(bulkProcessor, 2 * maxActions + 1, 1);
         bulkProcessor.close();
         Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(3);
+    }
+
+    /**
+     * {@link FsCrawlerBulkProcessor#flushWhileQuiesced} must drain pending actions and run the callback only once the
+     * processor is idle — so flush+ensure cannot race with the flush-interval timer.
+     */
+    @Test
+    void bulkProcessorFlushWhileQuiescedRunsWhenIdle() throws IOException {
+        TestBulkListener listener = new TestBulkListener();
+        FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 100))
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
+
+        int pending = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 5);
+        generatePayload(bulkProcessor, 1, pending);
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
+
+        AtomicInteger actionsAtCallback = new AtomicInteger(-1);
+        bulkProcessor.flushWhileQuiesced(() -> actionsAtCallback.set(listener.nbSuccessfulExecutions));
+
+        Assertions.assertThat(actionsAtCallback.get()).isEqualTo(1);
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
+        bulkProcessor.close();
     }
 
     /**

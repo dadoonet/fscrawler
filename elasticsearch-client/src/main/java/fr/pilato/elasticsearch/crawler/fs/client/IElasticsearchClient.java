@@ -195,10 +195,27 @@ public interface IElasticsearchClient extends Closeable {
 
     /**
      * Flush any pending Bulk operation. Note that flushing means immediate execution of the bulk request (with HTTP
-     * retries), but does not by itself fail the caller when the bulk failed — use {@link #ensureBulkSucceeded()} after
-     * flush for that.
+     * retries), but does not by itself fail the caller when the bulk failed — use
+     * {@link #flushAndEnsureBulkSucceeded()} (or {@link #ensureBulkSucceeded()} after flush) for that.
      */
     void flush();
+
+    /**
+     * Atomically flush pending bulks and fail if a fatal bulk failure was recorded during that window. Prefer this over
+     * separate {@link #flush()}+{@link #ensureBulkSucceeded()} calls (timer/REST can sneak a bulk in between).
+     *
+     * @throws ElasticsearchClientException when a fatal bulk failure was recorded
+     */
+    void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException;
+
+    /**
+     * Like {@link #flushAndEnsureBulkSucceeded()}, but also fails if a bulk failure was recorded since
+     * {@code generation}.
+     *
+     * @param generation value from {@link #getBulkFailureGeneration()} captured before indexing
+     * @throws ElasticsearchClientException when a fatal bulk failure occurred since {@code generation}
+     */
+    void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException;
 
     /**
      * Throws if a previous bulk request failed after HTTP retries were exhausted. Does <b>not</b> clear the recorded

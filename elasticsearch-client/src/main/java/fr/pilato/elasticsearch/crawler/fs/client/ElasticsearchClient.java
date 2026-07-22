@@ -1417,7 +1417,33 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     @Override
     public void flush() {
-        bulkProcessor.flush();
+        if (bulkProcessor != null) {
+            bulkProcessor.flush();
+        }
+    }
+
+    @Override
+    public void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException {
+        flushAndEnsureBulkSucceededSince(bulkFailureGeneration.get());
+    }
+
+    @Override
+    public void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException {
+        if (bulkProcessor == null) {
+            ensureBulkSucceededSince(generation);
+            return;
+        }
+        AtomicReference<ElasticsearchClientException> error = new AtomicReference<>();
+        bulkProcessor.flushWhileQuiesced(() -> {
+            try {
+                ensureBulkSucceededSince(generation);
+            } catch (ElasticsearchClientException e) {
+                error.set(e);
+            }
+        });
+        if (error.get() != null) {
+            throw error.get();
+        }
     }
 
     @Override
