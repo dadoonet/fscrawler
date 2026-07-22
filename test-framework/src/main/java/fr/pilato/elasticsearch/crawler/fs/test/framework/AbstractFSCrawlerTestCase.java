@@ -71,13 +71,13 @@ public abstract class AbstractFSCrawlerTestCase {
     protected static final String INDEX_PREFIX = getSystemProperty("tests.index.prefix", "");
 
     /** For tests only: maximum time to wait for a search when we want to be sure that something is in the index. */
-    public static final Duration MAX_WAIT_FOR_SEARCH = Duration.ofMinutes(5);
+    public static final Duration MAX_WAIT_FOR_SEARCH = Duration.ofMinutes(2);
 
     /**
      * For tests only: maximum time to wait for a search when we want to be sure that something is in the index, but we
      * are running long tests (like with Tika OCR for instance).
      */
-    public static final Duration MAX_WAIT_FOR_SEARCH_LONG_TESTS = Duration.ofMinutes(10);
+    public static final Duration MAX_WAIT_FOR_SEARCH_LONG_TESTS = Duration.ofMinutes(5);
 
     @TempDir
     protected Path rootTmpDir;

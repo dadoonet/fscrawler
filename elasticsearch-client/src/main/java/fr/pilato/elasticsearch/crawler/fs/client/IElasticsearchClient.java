@@ -194,10 +194,57 @@ public interface IElasticsearchClient extends Closeable {
     void deletePipeline(String pipeline) throws ElasticsearchClientException;
 
     /**
-     * Flush any pending Bulk operation. Used for tests only. Note that flushing means immediate execution of the bulk,
-     * but it does not wait for the bulk to be fully executed.
+     * Flush any pending Bulk operation. Note that flushing means immediate execution of the bulk request (with HTTP
+     * retries), but does not by itself fail the caller when the bulk failed — use
+     * {@link #flushAndEnsureBulkSucceeded()} (or {@link #ensureBulkSucceeded()} after flush) for that.
      */
     void flush();
+
+    /**
+     * Atomically flush pending bulks and fail if a fatal bulk failure was recorded during that window. Prefer this over
+     * separate {@link #flush()}+{@link #ensureBulkSucceeded()} calls (timer/REST can sneak a bulk in between).
+     *
+     * @throws ElasticsearchClientException when a fatal bulk failure was recorded
+     */
+    void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException;
+
+    /**
+     * Like {@link #flushAndEnsureBulkSucceeded()}, but also fails if a bulk failure was recorded since
+     * {@code generation}.
+     *
+     * @param generation value from {@link #getBulkFailureGeneration()} captured before indexing
+     * @throws ElasticsearchClientException when a fatal bulk failure occurred since {@code generation}
+     */
+    void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException;
+
+    /**
+     * Throws if a previous bulk request failed after HTTP retries were exhausted. Does <b>not</b> clear the recorded
+     * failure (so concurrent callers — e.g. crawl + REST — all observe it). Clear explicitly with
+     * {@link #clearFatalBulkFailure()} at the start of a crawl run.
+     *
+     * @throws ElasticsearchClientException when a fatal bulk failure was recorded
+     */
+    void ensureBulkSucceeded() throws ElasticsearchClientException;
+
+    /**
+     * Monotonic counter bumped whenever a fatal bulk failure is recorded. Survives {@link #clearFatalBulkFailure()}.
+     */
+    long getBulkFailureGeneration();
+
+    /**
+     * Like {@link #ensureBulkSucceeded()}, but also fails if a bulk failure was recorded since {@code generation} (even
+     * if the sticky flag was cleared meanwhile). Used by REST around index+flush.
+     *
+     * @param generation value from {@link #getBulkFailureGeneration()} captured before indexing
+     * @throws ElasticsearchClientException when a fatal bulk failure occurred since {@code generation}
+     */
+    void ensureBulkSucceededSince(long generation) throws ElasticsearchClientException;
+
+    /**
+     * Clears the sticky fatal bulk failure flag so a new crawl run can start clean. Does not reset the failure
+     * generation counter.
+     */
+    void clearFatalBulkFailure();
 
     /**
      * Perform a LowLevel Request

@@ -1179,6 +1179,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                 expected == null ? "some" : expected,
                 request.getIndex());
         AtomicReference<Exception> errorWhileWaiting = new AtomicReference<>();
+        AtomicReference<Long> lastHitCount = new AtomicReference<>();
 
         try {
             Awaitility.await()
@@ -1208,6 +1209,7 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                             return false;
                         }
                         totalHits = response[0].getTotalHits();
+                        lastHitCount.set(totalHits);
 
                         logger.debug("got so far [{}] hits on expected [{}]", totalHits, expected);
 
@@ -1217,6 +1219,16 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
                         return totalHits == expected;
                     });
         } catch (ConditionTimeoutException e) {
+            Long lastHits = lastHitCount.get();
+            logger.warn(
+                    "Timed out waiting for {} documents in {} after {}. Last observed hit count: {}{}",
+                    expected == null ? "some" : expected,
+                    request.getIndex(),
+                    FsCrawlerUtil.durationToString(maxWaitForSearch),
+                    lastHits == null ? "unknown (search never succeeded)" : lastHits,
+                    errorWhileWaiting.get() != null
+                            ? "; last error: " + errorWhileWaiting.get().getMessage()
+                            : "");
             // If we caught an exception during waiting, throw it instead of the timeout
             if (errorWhileWaiting.get() != null) {
                 throw errorWhileWaiting.get();

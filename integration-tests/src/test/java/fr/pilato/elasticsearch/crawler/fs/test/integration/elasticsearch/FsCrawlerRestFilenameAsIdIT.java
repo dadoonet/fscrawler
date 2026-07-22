@@ -74,16 +74,19 @@ class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
         }
         Files.walk(from).filter(Files::isRegularFile).forEach(path -> {
             UploadResponse response = uploadFile(target, path);
+            Assertions.assertThat(response.isOk())
+                    .as("upload of [%s] should succeed: %s", path.getFileName(), response.getMessage())
+                    .isTrue();
             Assertions.assertThat(response.getFilename())
                     .isEqualTo(path.getFileName().toString());
         });
 
-        // We wait until we have all docs
+        // We wait until we have all docs (same workload as FsCrawlerImplAllDocumentsIT)
         ESSearchResponse response = countTestHelper(
                 new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS),
                 Files.list(from).count(),
                 null,
-                MAX_WAIT_FOR_SEARCH);
+                MAX_WAIT_FOR_SEARCH_LONG_TESTS);
         for (ESSearchHit hit : response.getHits()) {
             Assertions.assertThat(hit.getId()).isEqualTo((String) JsonPath.read(hit.getSource(), "$.file.filename"));
         }

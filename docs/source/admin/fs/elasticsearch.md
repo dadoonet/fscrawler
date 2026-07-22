@@ -274,6 +274,10 @@ elasticsearch:
   flush_interval: "2s"
 ```
 
+Whole `_bulk` HTTP calls are retried on `429` (Too Many Requests) and `5xx` responses, using the
+same backoff policy as search requests. If retries are exhausted, the failure is logged and the
+crawl run is marked as `ERROR` in the checkpoint (documents are not silently dropped).
+
 ```{versionadded} 3.0
 ```
 

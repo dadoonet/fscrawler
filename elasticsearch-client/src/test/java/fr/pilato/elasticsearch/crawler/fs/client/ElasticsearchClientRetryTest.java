@@ -491,6 +491,186 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: search retries exhausted and exception propagated");
     }
 
+    /** Test that {@code _bulk} retries on 503 and eventually succeeds. */
+    @Test
+    void testBulkRetryOnServerError() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        String bulkOk = """
+                {"errors":false,"items":[{"index":{"_index":"test-index","_id":"doc1","status":201}}]}
+                """;
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_bulk"))
+                .inScenario("Bulk Retry")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"no_shard_available_action_exception","status":503}}
+                                """))
+                .willSetStateTo("First Failure"));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_bulk"))
+                .inScenario("Bulk Retry")
+                .whenScenarioStateIs("First Failure")
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"no_shard_available_action_exception","status":503}}
+                                """))
+                .willSetStateTo("Recovered"));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_bulk"))
+                .inScenario("Bulk Retry")
+                .whenScenarioStateIs("Recovered")
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(bulkOk)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            String response = client.bulk("test-index", "{}\n{}\n");
+            Assertions.assertThat(response).contains("\"errors\":false");
+        }
+
+        WireMock.verify(3, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_bulk")));
+        logger.info("Test passed: bulk retry on server error works correctly");
+    }
+
+    /** Test that {@code _bulk} retries on 429 and eventually succeeds. */
+    @Test
+    @Slow
+    void testBulkRetryOn429TooManyRequests() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        String bulkOk = """
+                {"errors":false,"items":[{"index":{"_index":"test-index","_id":"doc1","status":201}}]}
+                """;
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_bulk"))
+                .inScenario("Bulk 429")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(WireMock.aResponse().withStatus(429).withBody("""
+                                {"error":{"type":"rate_limit_exception","reason":"rejected"}}
+                                """))
+                .willSetStateTo("First 429"));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_bulk"))
+                .inScenario("Bulk 429")
+                .whenScenarioStateIs("First 429")
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(bulkOk)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            String response = client.bulk("test-index", "{}\n{}\n");
+            Assertions.assertThat(response).contains("\"errors\":false");
+        }
+
+        WireMock.verify(2, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_bulk")));
+        logger.info("Test passed: bulk retry on 429 works correctly");
+    }
+
+    /**
+     * When bulk HTTP retries are exhausted, the failure is recorded and
+     * {@link ElasticsearchClient#ensureBulkSucceeded()} fails the caller so the crawl/run can be marked as ERROR.
+     */
+    @Test
+    @Slow
+    void testBulkRetriesExhaustedAreRecordedAsFatal() throws Exception {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_bulk"))
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"no_shard_available_action_exception","status":503}}
+                                """)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            // index + flush triggers engine.bulk -> client.bulk with retries; exhausted failures are recorded
+            client.indexRawJson("test-index", "doc1", "{\"foo\":\"bar\"}", null);
+            client.flush();
+
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(client::ensureBulkSucceeded)
+                    .withMessageContaining("Bulk indexing failed");
+
+            // Must not clear on ensure: concurrent REST ensureBulkSucceeded must not hide the failure from the crawl
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(client::ensureBulkSucceeded)
+                    .withMessageContaining("Bulk indexing failed");
+
+            // Explicit clear (start of crawl run) allows sticky ensure to proceed, but generation still records the
+            // event
+            long generationBeforeClear = client.getBulkFailureGeneration();
+            client.clearFatalBulkFailure();
+            client.ensureBulkSucceeded();
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(() -> client.ensureBulkSucceededSince(generationBeforeClear - 1))
+                    .withMessageContaining("Bulk indexing failed");
+            // Same generation as after the failure: no new failure since that point
+            client.ensureBulkSucceededSince(generationBeforeClear);
+        }
+
+        WireMock.verify(WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_bulk")));
+        logger.info("Test passed: exhausted bulk retries are recorded as fatal");
+    }
+
+    /**
+     * Empty end-of-run flush must not POST {@code _bulk} or record a fatal failure (Bugbot: empty flush after
+     * interval/size-triggered flushes).
+     */
+    @Test
+    @Slow
+    void testEmptyFlushDoesNotRecordFatalBulkFailure() throws Exception {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathMatching(".*/_bulk"))
+                .willReturn(WireMock.aResponse().withStatus(400).withBody("""
+                                {"error":{"type":"parse_exception","reason":"request body is required"}}
+                                """)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            client.flush();
+            client.ensureBulkSucceeded();
+        }
+
+        WireMock.verify(0, WireMock.postRequestedFor(WireMock.urlPathMatching(".*/_bulk")));
+        logger.info("Test passed: empty flush does not hit _bulk or record fatal failure");
+    }
+
     /**
      * Test that connection errors are propagated immediately without silent retry. This ensures the original error
      * message is preserved.

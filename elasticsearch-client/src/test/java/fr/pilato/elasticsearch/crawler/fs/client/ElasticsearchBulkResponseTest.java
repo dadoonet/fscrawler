@@ -90,4 +90,16 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(bulkResponse.getItems().get(0).getFailureMessage())
                 .contains("failed to parse field");
     }
+
+    @Test
+    void httpFailureIsTreatedAsFailure() {
+        ElasticsearchClientException exception = new ElasticsearchClientException("bulk failed with HTTP 503");
+
+        ElasticsearchBulkResponse bulkResponse = new ElasticsearchBulkResponse(exception);
+
+        Assertions.assertThat(bulkResponse.isErrors()).isTrue();
+        Assertions.assertThat(bulkResponse.hasFailures()).isTrue();
+        Assertions.assertThat(bulkResponse.getException()).isSameAs(exception);
+        Assertions.assertThat(bulkResponse.buildFailureMessage()).isSameAs(exception);
+    }
 }

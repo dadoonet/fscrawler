@@ -68,6 +68,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.StreamSupport;
@@ -155,6 +156,17 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
+    /**
+     * Set when a whole {@code _bulk} HTTP call fails after retries (429/5xx). Observed by
+     * {@link #ensureBulkSucceeded()} (without clearing) and cleared by {@link #clearFatalBulkFailure()}.
+     */
+    private final AtomicReference<Exception> fatalBulkFailure = new AtomicReference<>();
+    /**
+     * Monotonic counter bumped on every recorded bulk failure. Survives {@link #clearFatalBulkFailure()} so REST can
+     * detect a failure that the crawl cleared from the sticky flag.
+     */
+    private final AtomicLong bulkFailureGeneration = new AtomicLong();
+
     private final List<String> hosts;
     private final List<String> initialHosts;
 
@@ -315,13 +327,56 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     protected void initBulkProcessor() {
         bulkProcessor = new FsCrawlerBulkProcessor.Builder<>(
-                        new ElasticsearchEngine(this),
-                        new FsCrawlerRetryBulkProcessorListener<>("es_rejected_execution_exception"),
-                        ElasticsearchBulkRequest::new)
+                        new ElasticsearchEngine(this), new FailOnHttpBulkErrorListener(), ElasticsearchBulkRequest::new)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(settings.getElasticsearch().getFlushInterval())
                 .setByteSize(settings.getElasticsearch().getByteSize())
                 .build();
+    }
+
+    /**
+     * Retries item-level {@code es_rejected_execution_exception} and records whole-request HTTP failures (after
+     * retries) so {@link #ensureBulkSucceeded()} can fail the crawl/run.
+     */
+    private final class FailOnHttpBulkErrorListener
+            extends FsCrawlerRetryBulkProcessorListener<
+                    ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> {
+
+        private FailOnHttpBulkErrorListener() {
+            super("es_rejected_execution_exception");
+        }
+
+        @Override
+        public void afterBulk(long executionId, ElasticsearchBulkRequest request, ElasticsearchBulkResponse response) {
+            super.afterBulk(executionId, request, response);
+            if (response.getException() != null) {
+                logger.error(
+                        "Bulk request failed after retries ({} actions): {}",
+                        request.numberOfActions(),
+                        response.getException().getMessage());
+                recordFatalBulkFailure(response.getException());
+            }
+        }
+
+        @Override
+        public void afterBulk(long executionId, ElasticsearchBulkRequest request, Throwable failure) {
+            super.afterBulk(executionId, request, failure);
+            logger.error(
+                    "Bulk request failed ({} actions): {}",
+                    request.numberOfActions(),
+                    failure.getMessage() != null
+                            ? failure.getMessage()
+                            : failure.getClass().getName());
+            Exception asException = failure instanceof Exception e
+                    ? e
+                    : new ElasticsearchClientException("Bulk request failed", failure);
+            recordFatalBulkFailure(asException);
+        }
+    }
+
+    private void recordFatalBulkFailure(Exception failure) {
+        fatalBulkFailure.compareAndSet(null, failure);
+        bulkFailureGeneration.incrementAndGet();
     }
 
     private static SSLContext sslContextFromHttpCaCrt(File file) throws ElasticsearchClientException {
@@ -1362,7 +1417,33 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     @Override
     public void flush() {
-        bulkProcessor.flush();
+        if (bulkProcessor != null) {
+            bulkProcessor.flush();
+        }
+    }
+
+    @Override
+    public void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException {
+        flushAndEnsureBulkSucceededSince(bulkFailureGeneration.get());
+    }
+
+    @Override
+    public void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException {
+        if (bulkProcessor == null) {
+            ensureBulkSucceededSince(generation);
+            return;
+        }
+        AtomicReference<ElasticsearchClientException> error = new AtomicReference<>();
+        bulkProcessor.flushWhileQuiesced(() -> {
+            try {
+                ensureBulkSucceededSince(generation);
+            } catch (ElasticsearchClientException e) {
+                error.set(e);
+            }
+        });
+        if (error.get() != null) {
+            throw error.get();
+        }
     }
 
     @Override
@@ -1403,7 +1484,44 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public String bulk(String index, String ndjson) throws ElasticsearchClientException {
         String path = index == null ? "_bulk" : index + PATH_DELIMITER + "_bulk";
         logger.debug("bulk a ndjson of {} characters to [{}]", ndjson.length(), path);
-        return httpPost(path, ndjson);
+        // Same retry policy as _search: 5xx short backoff, 429 longer. Safe because FSCrawler always sets _id.
+        return httpPostWithRetry(path, ndjson);
+    }
+
+    /**
+     * Throws if a previous bulk request failed after HTTP retries were exhausted. Does not clear the failure so a
+     * concurrent REST {@code ensureBulkSucceeded()} cannot hide it from the crawl (and vice versa).
+     *
+     * @throws ElasticsearchClientException when a fatal bulk failure was recorded
+     */
+    @Override
+    public void ensureBulkSucceeded() throws ElasticsearchClientException {
+        Exception failure = fatalBulkFailure.get();
+        if (failure != null) {
+            throw new ElasticsearchClientException("Bulk indexing failed after retries", failure);
+        }
+    }
+
+    @Override
+    public long getBulkFailureGeneration() {
+        return bulkFailureGeneration.get();
+    }
+
+    @Override
+    public void ensureBulkSucceededSince(long generation) throws ElasticsearchClientException {
+        if (bulkFailureGeneration.get() != generation) {
+            Exception failure = fatalBulkFailure.get();
+            throw new ElasticsearchClientException(
+                    "Bulk indexing failed after retries",
+                    failure != null ? failure : new ElasticsearchClientException("Bulk indexing failed after retries"));
+        }
+        ensureBulkSucceeded();
+    }
+
+    @Override
+    public void clearFatalBulkFailure() {
+        // Clears the sticky flag only — generation is intentionally kept so concurrent REST can still detect the event.
+        fatalBulkFailure.set(null);
     }
 
     @Override

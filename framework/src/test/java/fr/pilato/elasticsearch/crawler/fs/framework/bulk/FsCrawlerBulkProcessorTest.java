@@ -29,6 +29,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -117,6 +119,81 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         generatePayload(bulkProcessor, 2 * maxActions + 1, 1);
         bulkProcessor.close();
         Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(3);
+    }
+
+    /**
+     * {@link FsCrawlerBulkProcessor#flushWhileQuiesced} must drain pending actions and run the callback only once the
+     * processor is idle — so flush+ensure cannot race with the flush-interval timer.
+     */
+    @Test
+    void bulkProcessorFlushWhileQuiescedRunsWhenIdle() throws IOException {
+        TestBulkListener listener = new TestBulkListener();
+        FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 100))
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
+
+        int pending = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 5);
+        generatePayload(bulkProcessor, 1, pending);
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
+
+        AtomicInteger actionsAtCallback = new AtomicInteger(-1);
+        bulkProcessor.flushWhileQuiesced(() -> actionsAtCallback.set(listener.nbSuccessfulExecutions));
+
+        Assertions.assertThat(actionsAtCallback.get()).isEqualTo(1);
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
+        bulkProcessor.close();
+    }
+
+    /**
+     * Retries re-queued in {@code afterBulk} under the bulk-size threshold must be drained before the quiesced callback
+     * runs — otherwise ensure would report success with documents still pending.
+     */
+    @Test
+    void bulkProcessorFlushWhileQuiescedDrainsRetryRequeues() throws IOException {
+        AtomicBoolean requeued = new AtomicBoolean();
+        TestBulkListener listener = new TestBulkListener() {
+            @Override
+            public void afterBulk(long executionId, TestBulkRequest request, TestBulkResponse response) {
+                super.afterBulk(executionId, request, response);
+                if (requeued.compareAndSet(false, true)) {
+                    bulkProcessor.add(new TestOperation(PAYLOAD));
+                }
+            }
+        };
+        FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 100))
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
+
+        generatePayload(bulkProcessor, 1, 1);
+        AtomicInteger executionsAtCallback = new AtomicInteger(-1);
+        bulkProcessor.flushWhileQuiesced(() -> executionsAtCallback.set(listener.nbSuccessfulExecutions));
+
+        Assertions.assertThat(executionsAtCallback.get()).isEqualTo(2);
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(2);
+        bulkProcessor.close();
+    }
+
+    /**
+     * Explicit {@link FsCrawlerBulkProcessor#flush()} must be a no-op when the queue is empty. Otherwise end-of-run
+     * flushes send an empty {@code _bulk} body and can mark a successful crawl as failed.
+     */
+    @Test
+    void bulkProcessorFlushWithNoPendingActionsIsNoOp() throws IOException {
+        TestBulkListener listener = new TestBulkListener();
+        FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 100))
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
+
+        bulkProcessor.flush();
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
+        bulkProcessor.close();
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
     }
 
     @Test
