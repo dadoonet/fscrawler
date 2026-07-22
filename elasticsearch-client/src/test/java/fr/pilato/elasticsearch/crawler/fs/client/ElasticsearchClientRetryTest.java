@@ -623,9 +623,16 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                     .isThrownBy(client::ensureBulkSucceeded)
                     .withMessageContaining("Bulk indexing failed");
 
-            // Explicit clear (start/end of crawl run) allows the next run to proceed
+            // Explicit clear (start of crawl run) allows sticky ensure to proceed, but generation still records the
+            // event
+            long generationBeforeClear = client.getBulkFailureGeneration();
             client.clearFatalBulkFailure();
             client.ensureBulkSucceeded();
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(() -> client.ensureBulkSucceededSince(generationBeforeClear - 1))
+                    .withMessageContaining("Bulk indexing failed");
+            // Same generation as after the failure: no new failure since that point
+            client.ensureBulkSucceededSince(generationBeforeClear);
         }
 
         WireMock.verify(WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_bulk")));

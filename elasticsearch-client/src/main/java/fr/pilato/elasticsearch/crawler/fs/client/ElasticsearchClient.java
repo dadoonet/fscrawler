@@ -68,6 +68,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.StreamSupport;
@@ -160,6 +161,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * {@link #ensureBulkSucceeded()} (without clearing) and cleared by {@link #clearFatalBulkFailure()}.
      */
     private final AtomicReference<Exception> fatalBulkFailure = new AtomicReference<>();
+    /**
+     * Monotonic counter bumped on every recorded bulk failure. Survives {@link #clearFatalBulkFailure()} so REST can
+     * detect a failure that the crawl cleared from the sticky flag.
+     */
+    private final AtomicLong bulkFailureGeneration = new AtomicLong();
 
     private final List<String> hosts;
     private final List<String> initialHosts;
@@ -348,7 +354,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                         "Bulk request failed after retries ({} actions): {}",
                         request.numberOfActions(),
                         response.getException().getMessage());
-                fatalBulkFailure.compareAndSet(null, response.getException());
+                recordFatalBulkFailure(response.getException());
             }
         }
 
@@ -364,8 +370,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
             Exception asException = failure instanceof Exception e
                     ? e
                     : new ElasticsearchClientException("Bulk request failed", failure);
-            fatalBulkFailure.compareAndSet(null, asException);
+            recordFatalBulkFailure(asException);
         }
+    }
+
+    private void recordFatalBulkFailure(Exception failure) {
+        fatalBulkFailure.compareAndSet(null, failure);
+        bulkFailureGeneration.incrementAndGet();
     }
 
     private static SSLContext sslContextFromHttpCaCrt(File file) throws ElasticsearchClientException {
@@ -1466,7 +1477,24 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     @Override
+    public long getBulkFailureGeneration() {
+        return bulkFailureGeneration.get();
+    }
+
+    @Override
+    public void ensureBulkSucceededSince(long generation) throws ElasticsearchClientException {
+        if (bulkFailureGeneration.get() != generation) {
+            Exception failure = fatalBulkFailure.get();
+            throw new ElasticsearchClientException(
+                    "Bulk indexing failed after retries",
+                    failure != null ? failure : new ElasticsearchClientException("Bulk indexing failed after retries"));
+        }
+        ensureBulkSucceeded();
+    }
+
+    @Override
     public void clearFatalBulkFailure() {
+        // Clears the sticky flag only — generation is intentionally kept so concurrent REST can still detect the event.
         fatalBulkFailure.set(null);
     }
 

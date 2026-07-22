@@ -203,13 +203,30 @@ public interface IElasticsearchClient extends Closeable {
     /**
      * Throws if a previous bulk request failed after HTTP retries were exhausted. Does <b>not</b> clear the recorded
      * failure (so concurrent callers — e.g. crawl + REST — all observe it). Clear explicitly with
-     * {@link #clearFatalBulkFailure()} at the start/end of a crawl run.
+     * {@link #clearFatalBulkFailure()} at the start of a crawl run.
      *
      * @throws ElasticsearchClientException when a fatal bulk failure was recorded
      */
     void ensureBulkSucceeded() throws ElasticsearchClientException;
 
-    /** Clears any recorded fatal bulk failure so a new crawl run (or test) can start clean. */
+    /**
+     * Monotonic counter bumped whenever a fatal bulk failure is recorded. Survives {@link #clearFatalBulkFailure()}.
+     */
+    long getBulkFailureGeneration();
+
+    /**
+     * Like {@link #ensureBulkSucceeded()}, but also fails if a bulk failure was recorded since {@code generation} (even
+     * if the sticky flag was cleared meanwhile). Used by REST around index+flush.
+     *
+     * @param generation value from {@link #getBulkFailureGeneration()} captured before indexing
+     * @throws ElasticsearchClientException when a fatal bulk failure occurred since {@code generation}
+     */
+    void ensureBulkSucceededSince(long generation) throws ElasticsearchClientException;
+
+    /**
+     * Clears the sticky fatal bulk failure flag so a new crawl run can start clean. Does not reset the failure
+     * generation counter.
+     */
     void clearFatalBulkFailure();
 
     /**

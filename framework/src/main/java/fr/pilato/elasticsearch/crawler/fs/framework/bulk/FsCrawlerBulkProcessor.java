@@ -201,8 +201,9 @@ public class FsCrawlerBulkProcessor<
                     inFlightMonitor.wait();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    logger.warn("Interrupted while waiting for in-flight bulk execution(s)");
-                    return;
+                    // Do not return while a bulk is still in flight: callers would run ensureBulkSucceeded()
+                    // too early and miss a fatal HTTP failure recorded by the completing bulk.
+                    throw new IllegalStateException("Interrupted while waiting for in-flight bulk execution(s)", e);
                 }
             }
         }

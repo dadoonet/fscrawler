@@ -118,6 +118,17 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
     }
 
     @Override
+    public long getBulkFailureGeneration() {
+        return client.getBulkFailureGeneration();
+    }
+
+    @Override
+    public void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException {
+        client.flush();
+        client.ensureBulkSucceededSince(generation);
+    }
+
+    @Override
     public void clearFatalBulkFailure() {
         client.clearFatalBulkFailure();
     }

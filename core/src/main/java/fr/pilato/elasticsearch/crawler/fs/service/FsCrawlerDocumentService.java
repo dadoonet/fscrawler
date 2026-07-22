@@ -107,6 +107,21 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      */
     void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException;
 
+    /**
+     * Current bulk-failure generation. Capture before index for REST, then pass to
+     * {@link #flushAndEnsureBulkSucceededSince(long)}.
+     */
+    long getBulkFailureGeneration();
+
+    /**
+     * Flush and fail if any bulk failure was recorded since {@code generation} (REST path). Survives a concurrent crawl
+     * {@link #clearFatalBulkFailure()}.
+     *
+     * @param generation value from {@link #getBulkFailureGeneration()} before indexing
+     * @throws ElasticsearchClientException when a fatal bulk failure occurred since {@code generation}
+     */
+    void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException;
+
     /** Clears any sticky fatal bulk failure from a previous run so a new crawl does not fail on a stale error. */
     void clearFatalBulkFailure();
 }

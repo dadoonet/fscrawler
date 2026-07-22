@@ -325,8 +325,9 @@ public class FsParser implements Runnable, AutoCloseable {
 
             try (Scope ignored = crawlSpan.makeCurrent()) {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
-                // Drop sticky bulk failures from a previous run (ensureBulkSucceeded does not clear them)
-                documentService.clearFatalBulkFailure();
+                // Drop sticky bulk failures from a previous run (ensureBulkSucceeded does not clear them).
+                // REST-only unit tests may pass a null documentService.
+                clearFatalBulkFailureIfPresent();
                 filesSinceLastCheckpoint = 0;
 
                 String url = fsSettings.getFs().getUrl();
@@ -450,8 +451,8 @@ public class FsParser implements Runnable, AutoCloseable {
                     saveCheckpoint();
                 }
             } finally {
-                // Always clear so a mid-run bulk failure + early exit cannot poison the next successful run
-                documentService.clearFatalBulkFailure();
+                // Do not clear fatalBulkFailure here: REST shares this client and may still need to observe a
+                // timer-driven bulk failure. The next crawl run clears at start instead.
                 crawlSpan.end();
                 persistAclHashCacheIfNeeded();
                 if (crawlerPlugin != null) {
@@ -606,6 +607,12 @@ public class FsParser implements Runnable, AutoCloseable {
      * error handler only persists when we have actually loaded/created this checkpoint (avoids overwriting a valid
      * checkpoint file with the default empty instance on early failures).
      */
+    private void clearFatalBulkFailureIfPresent() {
+        if (documentService != null) {
+            documentService.clearFatalBulkFailure();
+        }
+    }
+
     private void setCurrentCheckpoint(FsCrawlerCheckpoint cp) {
         cp.setLoadedThisRun(true);
         checkpoint.set(cp);

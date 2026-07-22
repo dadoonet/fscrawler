@@ -267,10 +267,12 @@ public class DocumentApi implements RestApi {
             logger.debug(
                     "Sending document [{}] to elasticsearch.", doc.getFile().getFilename());
             try {
+                // Capture generation before index so a timer-driven bulk failure (and a concurrent crawl clear of the
+                // sticky flag) still makes this upload return ok:false.
+                long bulkFailureGeneration = documentService.getBulkFailureGeneration();
                 documentService.index(
                         index, id, doc, settings.getElasticsearch().getPipeline());
-                // Make the REST response reflect ES acknowledgment: flush and fail if bulk retries were exhausted
-                documentService.flushAndEnsureBulkSucceeded();
+                documentService.flushAndEnsureBulkSucceededSince(bulkFailureGeneration);
             } catch (ElasticsearchClientException e) {
                 logger.error(
                         "Failed to index document [{}] via REST after bulk retries: {}",
