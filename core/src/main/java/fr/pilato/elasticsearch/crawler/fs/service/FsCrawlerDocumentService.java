@@ -98,4 +98,12 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @return the document or null
      */
     ESSearchHit get(String index, String id) throws IOException, ElasticsearchClientException;
+
+    /**
+     * Flush pending bulk operations and fail if a bulk request failed after retries (429/5xx). Used at the end of a
+     * crawl run so the checkpoint can be marked {@code ERROR} instead of silently losing documents.
+     *
+     * @throws ElasticsearchClientException when a fatal bulk failure was recorded
+     */
+    void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException;
 }

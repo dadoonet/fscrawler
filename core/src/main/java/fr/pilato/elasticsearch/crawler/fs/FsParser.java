@@ -383,6 +383,9 @@ public class FsParser implements Runnable, AutoCloseable {
                     // Process directories using work queue instead of recursion
                     processDirectoriesWithCheckpoint(effectiveScanDate, stats);
 
+                    // Flush async bulks and fail the run if HTTP retries were exhausted (marks checkpoint ERROR)
+                    documentService.flushAndEnsureBulkSucceeded();
+
                     stats.setEndTime(Instant.now());
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
                     stats.setNbDocDeleted((int) checkpoint.get().getFilesDeleted());

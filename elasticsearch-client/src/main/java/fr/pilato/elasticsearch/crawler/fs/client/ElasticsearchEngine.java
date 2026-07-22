@@ -78,6 +78,9 @@ public class ElasticsearchEngine
             response = elasticsearchClient.bulk(commonIndex, ndjson.toString());
         } catch (ElasticsearchClientException e) {
             return new ElasticsearchBulkResponse(e);
+        } catch (RuntimeException e) {
+            // httpPostWithRetry may throw WebApplicationException (e.g. 503) when retries are exhausted
+            return new ElasticsearchBulkResponse(new ElasticsearchClientException("Bulk request failed", e));
         }
         return new ElasticsearchBulkResponse(response);
     }

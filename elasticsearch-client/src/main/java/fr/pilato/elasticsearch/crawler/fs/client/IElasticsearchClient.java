@@ -194,10 +194,19 @@ public interface IElasticsearchClient extends Closeable {
     void deletePipeline(String pipeline) throws ElasticsearchClientException;
 
     /**
-     * Flush any pending Bulk operation. Used for tests only. Note that flushing means immediate execution of the bulk,
-     * but it does not wait for the bulk to be fully executed.
+     * Flush any pending Bulk operation. Note that flushing means immediate execution of the bulk request (with HTTP
+     * retries), but does not by itself fail the caller when the bulk failed — use {@link #ensureBulkSucceeded()} after
+     * flush for that.
      */
     void flush();
+
+    /**
+     * Throws if a previous bulk request failed after HTTP retries were exhausted. Clears the recorded failure.
+     * Typically called after {@link #flush()} at the end of a crawl run or REST upload.
+     *
+     * @throws ElasticsearchClientException when a fatal bulk failure was recorded
+     */
+    void ensureBulkSucceeded() throws ElasticsearchClientException;
 
     /**
      * Perform a LowLevel Request

@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.rest;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -265,7 +266,22 @@ public class DocumentApi implements RestApi {
         } else {
             logger.debug(
                     "Sending document [{}] to elasticsearch.", doc.getFile().getFilename());
-            documentService.index(index, id, doc, settings.getElasticsearch().getPipeline());
+            try {
+                documentService.index(
+                        index, id, doc, settings.getElasticsearch().getPipeline());
+                // Make the REST response reflect ES acknowledgment: flush and fail if bulk retries were exhausted
+                documentService.flushAndEnsureBulkSucceeded();
+            } catch (ElasticsearchClientException e) {
+                logger.error(
+                        "Failed to index document [{}] via REST after bulk retries: {}",
+                        doc.getFile().getFilename(),
+                        e.getMessage());
+                UploadResponse response = new UploadResponse(
+                        false, "Can not index document [" + doc.getFile().getFilename() + "]: " + e.getMessage());
+                response.setFilename(doc.getFile().getFilename());
+                response.setUrl(url);
+                return response;
+            }
         }
 
         UploadResponse response = new UploadResponse(true);

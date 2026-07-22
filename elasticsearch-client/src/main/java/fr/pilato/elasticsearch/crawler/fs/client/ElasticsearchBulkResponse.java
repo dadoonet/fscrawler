@@ -32,6 +32,8 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
 
     public ElasticsearchBulkResponse(ElasticsearchClientException exception) {
         this.exception = exception;
+        // Whole-request failures (HTTP 429/5xx after retries, connection errors, …) must not look like success.
+        this.errors = true;
     }
 
     public ElasticsearchBulkResponse(String response) {
@@ -58,6 +60,16 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
             items.add(itemResponse);
         });
         errors = items.stream().anyMatch(BulkItemResponse::isFailed);
+    }
+
+    /** The transport-level failure when the whole {@code _bulk} call failed; {@code null} for item-level failures. */
+    public ElasticsearchClientException getException() {
+        return exception;
+    }
+
+    @Override
+    public boolean hasFailures() {
+        return exception != null || super.hasFailures();
     }
 
     @Override

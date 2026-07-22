@@ -74,6 +74,9 @@ class FsCrawlerRestFilenameAsIdIT extends AbstractRestITCase {
         }
         Files.walk(from).filter(Files::isRegularFile).forEach(path -> {
             UploadResponse response = uploadFile(target, path);
+            Assertions.assertThat(response.isOk())
+                    .as("upload of [%s] should succeed: %s", path.getFileName(), response.getMessage())
+                    .isTrue();
             Assertions.assertThat(response.getFilename())
                     .isEqualTo(path.getFileName().toString());
         });

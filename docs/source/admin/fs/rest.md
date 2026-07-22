@@ -123,6 +123,10 @@ It will give you a response similar to:
 }
 ```
 
+The REST layer flushes the bulk processor before returning, so `ok: true` means Elasticsearch
+accepted the document (after any `429`/`5xx` retries). If indexing still fails, the response has
+`ok: false` and a `message` describing the error.
+
 The `url` represents the elasticsearch address of the indexed
 document. If you call:
 
