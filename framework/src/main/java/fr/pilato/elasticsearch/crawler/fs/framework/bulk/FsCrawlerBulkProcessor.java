@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,12 +59,12 @@ public class FsCrawlerBulkProcessor<
 
     private int inFlightExecutions = 0;
     /**
-     * When true, only the thread inside {@link #flushWhileQuiesced(Runnable)} may start a new bulk execute. The
-     * flush-interval timer and size-triggered flushes from {@link #add} are suppressed so flush+ensure is atomic.
+     * When true, only the thread holding {@link #quiesceLock} may start a new bulk execute. The flush-interval timer
+     * and size-triggered flushes from {@link #add} are suppressed so flush+ensure is atomic.
      */
     private final AtomicBoolean quiesced = new AtomicBoolean();
-
-    private final ThreadLocal<Boolean> flushOwner = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    /** Exclusive lock so crawl-end and REST cannot interleave two {@link #flushWhileQuiesced} calls. */
+    private final ReentrantLock quiesceLock = new ReentrantLock();
 
     private FsCrawlerBulkProcessor(
             Engine<O, Q, S> engine,
@@ -153,7 +154,7 @@ public class FsCrawlerBulkProcessor<
     }
 
     private boolean isQuiescedForOtherThreads() {
-        return quiesced.get() && !Boolean.TRUE.equals(flushOwner.get());
+        return quiesced.get() && !quiesceLock.isHeldByCurrentThread();
     }
 
     private void execute() {
@@ -213,28 +214,28 @@ public class FsCrawlerBulkProcessor<
     }
 
     /**
-     * Suppress concurrent timer/size-triggered executes, drain pending (+ retry re-queues), then run {@code action}
-     * before releasing quiesce. Closes the race where a bulk starts after {@link #flush()} and fails after ensure.
+     * Exclusively suppress concurrent timer/size-triggered executes, drain until idle (including retry re-queues), then
+     * run {@code action} before releasing quiesce. Closes the race where a bulk starts after {@link #flush()} and fails
+     * after ensure.
      *
      * @param action runs after the processor is idle (no pending actions, no in-flight execute)
      */
     public void flushWhileQuiesced(Runnable action) {
-        flushOwner.set(Boolean.TRUE);
+        quiesceLock.lock();
         try {
             quiesced.set(true);
             try {
-                // First pass: pending work + wait for in-flight (including timer bulks started before quiesce).
-                executeWhenNeeded();
-                awaitInFlightExecutions();
-                // Second pass: operations re-queued by retry listeners during afterBulk.
-                executeWhenNeeded();
-                awaitInFlightExecutions();
+                // Drain until empty: afterBulk retry listeners may re-queue under the bulk-size threshold.
+                do {
+                    executeWhenNeeded();
+                    awaitInFlightExecutions();
+                } while (bulkRequest.numberOfActions() > 0);
                 action.run();
             } finally {
                 quiesced.set(false);
             }
         } finally {
-            flushOwner.set(Boolean.FALSE);
+            quiesceLock.unlock();
         }
     }
 

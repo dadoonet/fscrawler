@@ -29,6 +29,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -142,6 +143,37 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
 
         Assertions.assertThat(actionsAtCallback.get()).isEqualTo(1);
         Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(1);
+        bulkProcessor.close();
+    }
+
+    /**
+     * Retries re-queued in {@code afterBulk} under the bulk-size threshold must be drained before the quiesced callback
+     * runs — otherwise ensure would report success with documents still pending.
+     */
+    @Test
+    void bulkProcessorFlushWhileQuiescedDrainsRetryRequeues() throws IOException {
+        AtomicBoolean requeued = new AtomicBoolean();
+        TestBulkListener listener = new TestBulkListener() {
+            @Override
+            public void afterBulk(long executionId, TestBulkRequest request, TestBulkResponse response) {
+                super.afterBulk(executionId, request, response);
+                if (requeued.compareAndSet(false, true)) {
+                    bulkProcessor.add(new TestOperation(PAYLOAD));
+                }
+            }
+        };
+        FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 100))
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
+
+        generatePayload(bulkProcessor, 1, 1);
+        AtomicInteger executionsAtCallback = new AtomicInteger(-1);
+        bulkProcessor.flushWhileQuiesced(() -> executionsAtCallback.set(listener.nbSuccessfulExecutions));
+
+        Assertions.assertThat(executionsAtCallback.get()).isEqualTo(2);
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(2);
         bulkProcessor.close();
     }
 
