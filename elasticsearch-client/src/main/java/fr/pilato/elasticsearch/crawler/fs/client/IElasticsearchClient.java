@@ -201,12 +201,16 @@ public interface IElasticsearchClient extends Closeable {
     void flush();
 
     /**
-     * Throws if a previous bulk request failed after HTTP retries were exhausted. Clears the recorded failure.
-     * Typically called after {@link #flush()} at the end of a crawl run or REST upload.
+     * Throws if a previous bulk request failed after HTTP retries were exhausted. Does <b>not</b> clear the recorded
+     * failure (so concurrent callers — e.g. crawl + REST — all observe it). Clear explicitly with
+     * {@link #clearFatalBulkFailure()} at the start/end of a crawl run.
      *
      * @throws ElasticsearchClientException when a fatal bulk failure was recorded
      */
     void ensureBulkSucceeded() throws ElasticsearchClientException;
+
+    /** Clears any recorded fatal bulk failure so a new crawl run (or test) can start clean. */
+    void clearFatalBulkFailure();
 
     /**
      * Perform a LowLevel Request

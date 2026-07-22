@@ -617,10 +617,51 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
             Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
                     .isThrownBy(client::ensureBulkSucceeded)
                     .withMessageContaining("Bulk indexing failed");
+
+            // Must not clear on ensure: concurrent REST ensureBulkSucceeded must not hide the failure from the crawl
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(client::ensureBulkSucceeded)
+                    .withMessageContaining("Bulk indexing failed");
+
+            // Explicit clear (start/end of crawl run) allows the next run to proceed
+            client.clearFatalBulkFailure();
+            client.ensureBulkSucceeded();
         }
 
         WireMock.verify(WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_bulk")));
         logger.info("Test passed: exhausted bulk retries are recorded as fatal");
+    }
+
+    /**
+     * Empty end-of-run flush must not POST {@code _bulk} or record a fatal failure (Bugbot: empty flush after
+     * interval/size-triggered flushes).
+     */
+    @Test
+    @Slow
+    void testEmptyFlushDoesNotRecordFatalBulkFailure() throws Exception {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathMatching(".*/_bulk"))
+                .willReturn(WireMock.aResponse().withStatus(400).withBody("""
+                                {"error":{"type":"parse_exception","reason":"request body is required"}}
+                                """)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            client.flush();
+            client.ensureBulkSucceeded();
+        }
+
+        WireMock.verify(0, WireMock.postRequestedFor(WireMock.urlPathMatching(".*/_bulk")));
+        logger.info("Test passed: empty flush does not hit _bulk or record fatal failure");
     }
 
     /**

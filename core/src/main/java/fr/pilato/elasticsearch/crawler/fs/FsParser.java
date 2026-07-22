@@ -325,6 +325,8 @@ public class FsParser implements Runnable, AutoCloseable {
 
             try (Scope ignored = crawlSpan.makeCurrent()) {
                 logger.info("Run #{}: job [{}]: starting...", run, fsSettings.getName());
+                // Drop sticky bulk failures from a previous run (ensureBulkSucceeded does not clear them)
+                documentService.clearFatalBulkFailure();
                 filesSinceLastCheckpoint = 0;
 
                 String url = fsSettings.getFs().getUrl();
@@ -448,6 +450,8 @@ public class FsParser implements Runnable, AutoCloseable {
                     saveCheckpoint();
                 }
             } finally {
+                // Always clear so a mid-run bulk failure + early exit cannot poison the next successful run
+                documentService.clearFatalBulkFailure();
                 crawlSpan.end();
                 persistAclHashCacheIfNeeded();
                 if (crawlerPlugin != null) {

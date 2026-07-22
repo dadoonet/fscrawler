@@ -52,6 +52,10 @@ public class FsCrawlerBulkProcessor<
     private final ScheduledExecutorService executor;
     private volatile boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
+    /** Guards {@link #inFlightExecutions} so {@link #flush()} can wait for timer-triggered bulks to finish. */
+    private final Object inFlightMonitor = new Object();
+
+    private int inFlightExecutions = 0;
 
     private FsCrawlerBulkProcessor(
             Engine<O, Q, S> engine,
@@ -139,6 +143,10 @@ public class FsCrawlerBulkProcessor<
         this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         final long executionId = executionIdGen.incrementAndGet();
 
+        synchronized (inFlightMonitor) {
+            inFlightExecutions++;
+        }
+
         Span bulkSpan = FsCrawlerTracing.startSpan("fscrawler.es.bulk");
         bulkSpan.setAttribute("es.bulk.actions", br.numberOfActions());
 
@@ -159,6 +167,10 @@ public class FsCrawlerBulkProcessor<
             }
         } finally {
             bulkSpan.end();
+            synchronized (inFlightMonitor) {
+                inFlightExecutions--;
+                inFlightMonitor.notifyAll();
+            }
         }
     }
 
@@ -173,8 +185,27 @@ public class FsCrawlerBulkProcessor<
         return listener;
     }
 
+    /**
+     * Flush pending actions if any, then wait for any in-flight bulk (including one started by the flush interval
+     * timer) to finish. No-op HTTP when the queue is empty so callers do not POST an empty {@code _bulk} body.
+     */
     public void flush() {
-        execute();
+        executeWhenNeeded();
+        awaitInFlightExecutions();
+    }
+
+    private void awaitInFlightExecutions() {
+        synchronized (inFlightMonitor) {
+            while (inFlightExecutions > 0) {
+                try {
+                    inFlightMonitor.wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    logger.warn("Interrupted while waiting for in-flight bulk execution(s)");
+                    return;
+                }
+            }
+        }
     }
 
     public static class Builder<

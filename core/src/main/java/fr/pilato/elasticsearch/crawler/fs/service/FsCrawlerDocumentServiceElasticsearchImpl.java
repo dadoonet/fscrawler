@@ -116,4 +116,9 @@ public class FsCrawlerDocumentServiceElasticsearchImpl implements FsCrawlerDocum
         client.flush();
         client.ensureBulkSucceeded();
     }
+
+    @Override
+    public void clearFatalBulkFailure() {
+        client.clearFatalBulkFailure();
+    }
 }

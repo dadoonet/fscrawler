@@ -156,8 +156,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
     /**
-     * Set when a whole {@code _bulk} HTTP call fails after retries (429/5xx). Cleared by
-     * {@link #ensureBulkSucceeded()}.
+     * Set when a whole {@code _bulk} HTTP call fails after retries (429/5xx). Observed by
+     * {@link #ensureBulkSucceeded()} (without clearing) and cleared by {@link #clearFatalBulkFailure()}.
      */
     private final AtomicReference<Exception> fatalBulkFailure = new AtomicReference<>();
 
@@ -1452,16 +1452,22 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     /**
-     * Throws if a previous bulk request failed after HTTP retries were exhausted. Clears the recorded failure so the
-     * next successful run can proceed. Call after {@link #flush()} at the end of a crawl run (or REST upload).
+     * Throws if a previous bulk request failed after HTTP retries were exhausted. Does not clear the failure so a
+     * concurrent REST {@code ensureBulkSucceeded()} cannot hide it from the crawl (and vice versa).
      *
      * @throws ElasticsearchClientException when a fatal bulk failure was recorded
      */
+    @Override
     public void ensureBulkSucceeded() throws ElasticsearchClientException {
-        Exception failure = fatalBulkFailure.getAndSet(null);
+        Exception failure = fatalBulkFailure.get();
         if (failure != null) {
             throw new ElasticsearchClientException("Bulk indexing failed after retries", failure);
         }
+    }
+
+    @Override
+    public void clearFatalBulkFailure() {
+        fatalBulkFailure.set(null);
     }
 
     @Override

@@ -119,6 +119,25 @@ class FsCrawlerBulkProcessorTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(listener.nbSuccessfulExecutions).isEqualTo(3);
     }
 
+    /**
+     * Explicit {@link FsCrawlerBulkProcessor#flush()} must be a no-op when the queue is empty. Otherwise end-of-run
+     * flushes send an empty {@code _bulk} body and can mark a successful crawl as failed.
+     */
+    @Test
+    void bulkProcessorFlushWithNoPendingActionsIsNoOp() throws IOException {
+        TestBulkListener listener = new TestBulkListener();
+        FsCrawlerBulkProcessor<TestOperation, TestBulkRequest, TestBulkResponse> bulkProcessor =
+                new FsCrawlerBulkProcessor.Builder<>(new TestEngine(), listener, TestBulkRequest::new)
+                        .setBulkActions(RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 100))
+                        .setByteSize(new ByteSizeValue(1, ByteSizeUnit.MB))
+                        .build();
+
+        bulkProcessor.flush();
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
+        bulkProcessor.close();
+        Assertions.assertThat(listener.nbSuccessfulExecutions).isZero();
+    }
+
     @Test
     void bulkProcessorFlushInterval() throws IOException {
         int maxActions = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);

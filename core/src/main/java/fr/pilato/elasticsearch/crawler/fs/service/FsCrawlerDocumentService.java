@@ -106,4 +106,7 @@ public interface FsCrawlerDocumentService extends FsCrawlerService {
      * @throws ElasticsearchClientException when a fatal bulk failure was recorded
      */
     void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException;
+
+    /** Clears any sticky fatal bulk failure from a previous run so a new crawl does not fail on a stale error. */
+    void clearFatalBulkFailure();
 }
