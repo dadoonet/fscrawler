@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,48 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(bulkResponse.getItems().get(0).isFailed()).isTrue();
         Assertions.assertThat(bulkResponse.getItems().get(0).getFailureMessage())
                 .contains("failed to parse field");
+    }
+
+    @Test
+    void laterFailureWithDuplicateIdIsNotHiddenByEarlierSuccess() {
+        String index = RandomizedTest.randomAsciiLettersOfLength(randomizedRandomForTests, 8);
+        String id = RandomizedTest.randomAsciiLettersOfLength(randomizedRandomForTests, 12);
+        String reason = RandomizedTest.randomAsciiLettersOfLength(randomizedRandomForTests, 20);
+        String response = """
+                {
+                  "errors": true,
+                  "items": [
+                    {
+                      "index": {
+                        "_index": "%s",
+                        "_id": "%s",
+                        "status": 201
+                      }
+                    },
+                    {
+                      "index": {
+                        "_index": "%s",
+                        "_id": "%s",
+                        "status": 400,
+                        "error": {
+                          "type": "mapper_parsing_exception",
+                          "reason": "%s"
+                        }
+                      }
+                    }
+                  ]
+                }
+                """
+                .formatted(index, id, index, id, reason);
+
+        ElasticsearchBulkResponse bulkResponse = new ElasticsearchBulkResponse(response);
+
+        Assertions.assertThat(bulkResponse.hasFailures()).isTrue();
+        Assertions.assertThat(bulkResponse.getItems()).hasSize(2);
+        Assertions.assertThat(bulkResponse.getItems().get(0).isFailed()).isFalse();
+        Assertions.assertThat(bulkResponse.getItems().get(1).isFailed()).isTrue();
+        Assertions.assertThat(bulkResponse.getItems().get(1).getFailureMessage())
+                .isEqualTo(reason);
     }
 
     @Test
