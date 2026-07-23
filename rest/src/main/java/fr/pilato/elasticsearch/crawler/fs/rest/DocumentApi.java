@@ -52,8 +52,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -161,6 +165,11 @@ public class DocumentApi implements RestApi {
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());
             provider.start(settings, document.jsonString());
+            // Probe accessibility first so missing-object errors keep the provider's native message
+            // (e.g. S3 "The specified key does not exist"), matching historical readFile-before-createDocument order.
+            try (InputStream ignored = provider.readFile()) {
+                // Stream closed immediately; enrichDoc reopens via provider::readFile for each parse attempt.
+            }
             Doc doc = provider.createDocument();
             doc = enrichDoc(doc, null, provider::readFile, password, resolvePasswordProvider(password));
             return uploadToDocumentService(debug, simulate, id, index, doc);
@@ -292,18 +301,46 @@ public class DocumentApi implements RestApi {
         java.nio.file.Path tempFile = createMultipartTempFile();
         try (OutputStream outputStream = Files.newOutputStream(tempFile)) {
             filecontent.transferTo(outputStream);
+        } catch (IOException e) {
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException cleanupException) {
+                e.addSuppressed(cleanupException);
+            }
+            throw e;
         }
         return new ReopenableContent(() -> Files.newInputStream(tempFile), tempFile);
     }
 
     private java.nio.file.Path createMultipartTempFile() throws IOException {
-        if (settings.getFs().getTempDir() == null) {
-            return Files.createTempFile("fscrawler-rest-", ".tmp");
+        java.nio.file.Path tempDir = resolveMultipartTempDir();
+        try {
+            FileAttribute<Set<PosixFilePermission>> ownerOnly =
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+            return Files.createTempFile(tempDir, "fscrawler-rest-", ".tmp", ownerOnly);
+        } catch (UnsupportedOperationException e) {
+            // Non-POSIX filesystems (e.g. Windows) do not support POSIX permission attributes.
+            return Files.createTempFile(tempDir, "fscrawler-rest-", ".tmp");
         }
+    }
 
-        java.nio.file.Path tempDir = Paths.get(settings.getFs().getTempDir());
-        Files.createDirectories(tempDir);
-        return Files.createTempFile(tempDir, "fscrawler-rest-", ".tmp");
+    private java.nio.file.Path resolveMultipartTempDir() throws IOException {
+        java.nio.file.Path tempDir;
+        if (settings.getFs().getTempDir() != null) {
+            tempDir = Paths.get(settings.getFs().getTempDir());
+        } else {
+            // Prefer a private subdirectory under java.io.tmpdir instead of writing directly into a
+            // world-writable directory (Sonar java:S5443).
+            tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "fscrawler-rest");
+        }
+        try {
+            FileAttribute<Set<PosixFilePermission>> ownerOnlyDir =
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
+            Files.createDirectories(tempDir, ownerOnlyDir);
+        } catch (UnsupportedOperationException e) {
+            Files.createDirectories(tempDir);
+        }
+        return tempDir;
     }
 
     private UploadResponse uploadToDocumentService(String debug, String simulate, String id, String index, Doc doc)

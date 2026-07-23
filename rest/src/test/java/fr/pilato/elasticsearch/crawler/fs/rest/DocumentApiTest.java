@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -44,6 +45,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -146,6 +149,34 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void multipartUploadDeletesSpoolFileWhenTransferFails() throws Exception {
+        String filename = randomFilename("pdf");
+        byte[] partialContent = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 1024, 1024)
+                .getBytes(StandardCharsets.UTF_8);
+        long declaredSize = 65L * 1024;
+
+        assertThatThrownBy(() -> documentApi.addDocument(
+                        null,
+                        "true",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        new ThrowingMultipartInputStream(partialContent),
+                        formData(filename, declaredSize)))
+                .isInstanceOf(IOException.class)
+                .hasMessage("multipart transfer failed");
+
+        assertThat(spooledMultipartFiles()).isEmpty();
+    }
+
+    @Test
     void thirdPartyUploadPrefersHeaderPasswordAndSkipsJobPasswordProvider() {
         configurePasswordProvider();
 
@@ -174,7 +205,8 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         assertThat(tikaDocParser.reopenedPayloads).hasSize(2);
         assertThat(tikaDocParser.reopenedPayloads.get(0)).containsExactly(content);
         assertThat(tikaDocParser.reopenedPayloads.get(1)).containsExactly(content);
-        assertThat(fsProvider.readFileCalls.get()).isEqualTo(2);
+        // Accessibility probe + two reopen calls from RecordingTikaDocParser.
+        assertThat(fsProvider.readFileCalls.get()).isEqualTo(3);
         verify(pluginsManager, never()).findPasswordProvider(anyString());
     }
 
@@ -206,7 +238,8 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         assertThat(tikaDocParser.reopenedPayloads).hasSize(2);
         assertThat(tikaDocParser.reopenedPayloads.get(0)).containsExactly(content);
         assertThat(tikaDocParser.reopenedPayloads.get(1)).containsExactly(content);
-        assertThat(fsProvider.readFileCalls.get()).isEqualTo(2);
+        // Accessibility probe + two reopen calls from RecordingTikaDocParser.
+        assertThat(fsProvider.readFileCalls.get()).isEqualTo(3);
         verify(pluginsManager).findPasswordProvider(PASSWORD_PROVIDER_TYPE);
     }
 
@@ -236,6 +269,13 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         when(disposition.getFileName()).thenReturn(filename);
         when(disposition.getSize()).thenReturn(Long.valueOf(size));
         return disposition;
+    }
+
+    private List<Path> spooledMultipartFiles() throws IOException {
+        try (var entries = Files.list(testTmpDir)) {
+            return entries.filter(path -> path.getFileName().toString().startsWith("fscrawler-rest-"))
+                    .toList();
+        }
     }
 
     private static class RecordingTikaDocParser extends TikaDocParser {
@@ -275,7 +315,9 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {}
+        public void start(FsSettings settings, PasswordProviderLookup lookup) {
+            // No configuration needed for this test double.
+        }
 
         @Override
         public PasswordSession open(String documentPath) {
@@ -286,12 +328,34 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
                 }
 
                 @Override
-                public void close() {}
+                public void close() {
+                    // No resources to release.
+                }
             };
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            // No resources to release.
+        }
+    }
+
+    private static class ThrowingMultipartInputStream extends InputStream {
+        private final byte[] content;
+        private int index;
+
+        private ThrowingMultipartInputStream(byte[] content) {
+            this.content = content;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (index < content.length) {
+                return content[index++] & 0xff;
+            }
+
+            throw new IOException("multipart transfer failed");
+        }
     }
 
     private static class RecordingFsProvider implements FsCrawlerExtensionFsProvider {
@@ -305,10 +369,14 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings fsSettings, String restSettings) {}
+        public void start(FsSettings fsSettings, String restSettings) {
+            // No configuration needed for this test double.
+        }
 
         @Override
-        public void stop() {}
+        public void stop() {
+            // No resources to release.
+        }
 
         @Override
         public String getType() {
@@ -332,6 +400,8 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            // No resources to release.
+        }
     }
 }

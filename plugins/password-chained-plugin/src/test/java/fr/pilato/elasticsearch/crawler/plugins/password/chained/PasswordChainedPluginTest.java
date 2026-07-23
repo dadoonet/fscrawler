@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.plugins.password.chained;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.ChainedPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
@@ -80,6 +81,24 @@ class PasswordChainedPluginTest extends AbstractFSCrawlerTestCase {
                             "close-session:" + firstType,
                             "open:" + secondType + ":" + documentPath,
                             "close-session:" + secondType);
+        } finally {
+            provider.close();
+        }
+    }
+
+    @Test
+    void providerStartFailsWhenAChainedChildProviderIsUnknown() throws Exception {
+        String knownType = randomToken();
+        String missingType = randomToken();
+        PasswordProviderLookup lookup =
+                Map.of(knownType, new StubProvider(knownType, List.of(randomPassword()), new ArrayList<>()))::get;
+
+        FsCrawlerExtensionPasswordProvider provider = instantiateProvider();
+        try {
+            Assertions.assertThatThrownBy(() -> provider.start(settings(knownType, missingType), lookup))
+                    .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                    .hasMessage("passwords.providers.chained.providers contains unknown password provider ["
+                            + missingType + "]");
         } finally {
             provider.close();
         }

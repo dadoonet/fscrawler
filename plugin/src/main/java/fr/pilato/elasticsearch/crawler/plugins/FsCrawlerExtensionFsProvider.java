@@ -74,6 +74,8 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     /**
      * Read the file content as an input stream. Used by REST API for single file uploads.
      *
+     * <p>REST password retries may call this method more than once after a single {@link #start(FsSettings, String)}.
+     *
      * @return an input stream for reading the file
      * @throws FsCrawlerPluginException if an error occurs while reading
      */

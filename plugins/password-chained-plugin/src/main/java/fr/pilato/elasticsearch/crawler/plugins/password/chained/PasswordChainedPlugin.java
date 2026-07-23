@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.password.chained;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.ChainedPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
@@ -56,6 +57,7 @@ public class PasswordChainedPlugin extends FsCrawlerPlugin {
         @Override
         public void start(FsSettings settings, PasswordProviderLookup lookup) {
             providerTypes = resolveProviderTypes(settings);
+            validateProviderTypes(providerTypes, lookup);
             this.lookup = lookup;
         }
 
@@ -86,6 +88,27 @@ public class PasswordChainedPlugin extends FsCrawlerPlugin {
             }
 
             return List.copyOf(chained.getProviders());
+        }
+
+        private static void validateProviderTypes(List<String> providerTypes, PasswordProviderLookup lookup) {
+            for (String providerType : providerTypes) {
+                try {
+                    if (lookup.get(providerType) == null) {
+                        throw unknownProviderException(providerType, null);
+                    }
+                } catch (FsCrawlerIllegalConfigurationException e) {
+                    throw unknownProviderException(providerType, e);
+                }
+            }
+        }
+
+        private static FsCrawlerIllegalConfigurationException unknownProviderException(
+                String providerType, RuntimeException cause) {
+            String message =
+                    "passwords.providers.chained.providers contains unknown password provider [" + providerType + "]";
+            return cause == null
+                    ? new FsCrawlerIllegalConfigurationException(message)
+                    : new FsCrawlerIllegalConfigurationException(message, cause);
         }
 
         private static class ChainedPasswordSession implements PasswordSession {
