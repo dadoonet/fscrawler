@@ -52,6 +52,10 @@
         </dependency>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-password-disk-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-password-static-plugin</artifactId>
         </dependency>
         <dependency>
