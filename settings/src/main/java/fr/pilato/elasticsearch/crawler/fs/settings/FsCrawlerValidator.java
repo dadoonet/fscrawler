@@ -96,6 +96,17 @@ public class FsCrawlerValidator {
         return false;
     }
 
+    /**
+     * Ensure password sidecar files are never crawled as documents.
+     *
+     * <p>The disk password provider stores secrets next to documents as {@code <file>.password} or directory
+     * {@code .password} files. Those must stay out of the index, so this method merges the built-in sidecar exclude
+     * patterns ({@link #DOCUMENT_SIDECAR_EXCLUDES}) into {@code fs.excludes} when missing. Existing excludes are
+     * preserved; the list is rewritten only when something is added (including when {@code fs.excludes} was
+     * {@code null}).
+     *
+     * @param settings settings mutated in place during validation
+     */
     private static void ensurePasswordSidecarExcludes(FsSettings settings) {
         List<String> excludes = settings.getFs().getExcludes();
         List<String> mergedExcludes = excludes == null ? new ArrayList<>() : new ArrayList<>(excludes);
