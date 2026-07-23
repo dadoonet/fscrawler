@@ -46,6 +46,9 @@ public class PasswordDiskPlugin extends FsCrawlerPlugin {
     public static class Provider extends FsCrawlerExtensionPasswordProviderAbstract {
 
         private static final Logger logger = LogManager.getLogger();
+        // Sidecar filename / suffix next to documents (not a credential value).
+        @SuppressWarnings("java:S2068")
+        private static final String PASSWORD_SIDECAR = ".password";
 
         private Path fsRoot;
         private Path diskRoot;
@@ -106,15 +109,15 @@ public class PasswordDiskPlugin extends FsCrawlerPlugin {
             }
 
             List<Path> candidates = new ArrayList<>();
-            candidates.add(diskRoot.resolve(relativePath + ".password"));
+            candidates.add(diskRoot.resolve(relativePath + PASSWORD_SIDECAR));
 
             Path parent = relativePath.getParent();
             while (parent != null) {
-                candidates.add(diskRoot.resolve(parent).resolve(".password"));
+                candidates.add(diskRoot.resolve(parent).resolve(PASSWORD_SIDECAR));
                 parent = parent.getParent();
             }
 
-            candidates.add(diskRoot.resolve(".password"));
+            candidates.add(diskRoot.resolve(PASSWORD_SIDECAR));
             return candidates;
         }
 
