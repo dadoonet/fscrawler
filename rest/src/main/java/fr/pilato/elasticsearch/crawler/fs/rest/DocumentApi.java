@@ -161,11 +161,6 @@ public class DocumentApi implements RestApi {
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());
             provider.start(settings, document.jsonString());
-            // Probe accessibility first so missing-object errors keep the provider's native message
-            // (e.g. S3 "The specified key does not exist"), matching historical readFile-before-createDocument order.
-            try (InputStream ignored = provider.readFile()) {
-                // Stream closed immediately; enrichDoc reopens via provider::readFile for each parse attempt.
-            }
             Doc doc = provider.createDocument();
             doc = enrichDoc(doc, null, provider::readFile, password, resolvePasswordProvider(password));
             return uploadToDocumentService(debug, simulate, id, index, doc);

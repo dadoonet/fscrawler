@@ -234,8 +234,8 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         assertThat(tikaDocParser.reopenedPayloads).hasSize(2);
         assertThat(tikaDocParser.reopenedPayloads.get(0)).containsExactly(content);
         assertThat(tikaDocParser.reopenedPayloads.get(1)).containsExactly(content);
-        // Accessibility probe + two reopen calls from RecordingTikaDocParser.
-        assertThat(fsProvider.readFileCalls.get()).isEqualTo(3);
+        // Two reopen calls from RecordingTikaDocParser (no accessibility probe).
+        assertThat(fsProvider.readFileCalls.get()).isEqualTo(2);
         verify(pluginsManager, never()).findPasswordProvider(anyString());
     }
 
@@ -267,8 +267,8 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         assertThat(tikaDocParser.reopenedPayloads).hasSize(2);
         assertThat(tikaDocParser.reopenedPayloads.get(0)).containsExactly(content);
         assertThat(tikaDocParser.reopenedPayloads.get(1)).containsExactly(content);
-        // Accessibility probe + two reopen calls from RecordingTikaDocParser.
-        assertThat(fsProvider.readFileCalls.get()).isEqualTo(3);
+        // Two reopen calls from RecordingTikaDocParser (no accessibility probe).
+        assertThat(fsProvider.readFileCalls.get()).isEqualTo(2);
         verify(pluginsManager).findPasswordProvider(PASSWORD_PROVIDER_TYPE);
     }
 

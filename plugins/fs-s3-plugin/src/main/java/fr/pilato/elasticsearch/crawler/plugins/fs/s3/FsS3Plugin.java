@@ -131,8 +131,11 @@ public class FsS3Plugin extends FsCrawlerPlugin {
                 logger.trace("S3 response headers [{}]", response.headers());
                 return Long.parseLong(response.headers().get("Content-Length"));
             } catch (MinioException | IOException e) {
+                // Include the provider/native message (e.g. MinIO "The specified key does not exist")
+                // so REST error responses stay informative when createDocument runs before readFile.
                 throw new FsCrawlerPluginException(
-                        "Can not get file size for object " + object + " of bucket " + bucket, e);
+                        "Can not get file size for object " + object + " of bucket " + bucket + ": " + e.getMessage(),
+                        e);
             }
         }
 
