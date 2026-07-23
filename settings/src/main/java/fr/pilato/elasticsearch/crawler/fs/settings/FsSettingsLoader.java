@@ -27,7 +27,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -163,6 +166,7 @@ public class FsSettingsLoader extends MetaFileHandler {
 
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
             settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
+            settings.setPasswords(loadPasswords(gestalt, configFiles));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class)
                     .orElse(null));
             settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(null));
@@ -179,6 +183,73 @@ public class FsSettingsLoader extends MetaFileHandler {
             throw new FsCrawlerIllegalConfigurationException(
                     "Can not load settings. " + "Please make sure that your setting file(s) are properly formatted.",
                     e);
+        }
+    }
+
+    /**
+     * Load password settings without a closed typed graph for {@code providers}.
+     *
+     * <p>{@code passwords.provider} comes from Gestalt (YAML + env/sysprops). {@code passwords.providers} is an opaque
+     * map keyed by plugin type and is loaded from YAML/JSON job files via SnakeYAML: Gestalt cannot decode mixed nested
+     * maps/lists into {@code Map&lt;String, Object&gt;}. Each password plugin parses its own section.
+     */
+    private static Passwords loadPasswords(Gestalt gestalt, Path... configFiles) {
+        Optional<String> provider = gestalt.getConfigOptional("passwords.provider", String.class);
+        Map<String, Object> providers = loadPasswordProvidersFromFiles(configFiles);
+
+        if (provider.isEmpty() && providers.isEmpty()) {
+            return null;
+        }
+
+        Passwords passwords = new Passwords();
+        passwords.setProvider(provider.orElse("noop"));
+        passwords.setProviders(providers.isEmpty() ? null : providers);
+        return passwords;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> loadPasswordProvidersFromFiles(Path... configFiles) {
+        Map<String, Object> merged = new LinkedHashMap<>();
+        if (configFiles == null || configFiles.length == 0) {
+            return merged;
+        }
+
+        Yaml yaml = new Yaml();
+        for (Path configFile : configFiles) {
+            if (configFile == null || Files.notExists(configFile)) {
+                continue;
+            }
+            try (InputStream inputStream = Files.newInputStream(configFile)) {
+                Object loaded = yaml.load(inputStream);
+                if (loaded instanceof Map<?, ?> root) {
+                    Object passwordsNode = root.get("passwords");
+                    if (passwordsNode instanceof Map<?, ?> passwordsMap) {
+                        Object providersNode = passwordsMap.get("providers");
+                        if (providersNode instanceof Map<?, ?> providersMap) {
+                            deepMerge(merged, (Map<String, Object>) providersMap);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                logger.debug("Can not read [{}] while loading passwords.providers: {}", configFile, e.getMessage());
+            }
+        }
+        return merged;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void deepMerge(Map<String, Object> target, Map<String, Object> source) {
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            String key = String.valueOf(entry.getKey());
+            Object value = entry.getValue();
+            Object existing = target.get(key);
+            if (existing instanceof Map<?, ?> existingMap && value instanceof Map<?, ?> valueMap) {
+                Map<String, Object> nested = new LinkedHashMap<>((Map<String, Object>) existingMap);
+                deepMerge(nested, (Map<String, Object>) valueMap);
+                target.put(key, nested);
+            } else {
+                target.put(key, value);
+            }
         }
     }
 }

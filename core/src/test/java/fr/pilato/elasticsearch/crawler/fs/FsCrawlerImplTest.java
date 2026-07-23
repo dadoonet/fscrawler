@@ -23,7 +23,15 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
+import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
+import fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup;
+import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 
@@ -50,5 +58,94 @@ class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         fsSettings.getFs().setJsonSupport(true);
         AssertionsForClassTypes.assertThatExceptionOfType(FsCrawlerIllegalConfigurationException.class)
                 .isThrownBy(() -> new FsCrawlerImpl(rootTmpDir, fsSettings, FsCrawlerImpl.LOOP_INFINITE, false));
+    }
+
+    @SuppressWarnings("resource")
+    @Test
+    void unknown_password_provider_fails_fast() {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(jobName);
+        Passwords passwords = new Passwords();
+        passwords.setProvider("missing-password-provider");
+        fsSettings.setPasswords(passwords);
+
+        Assertions.assertThatThrownBy(() -> resolvePasswordProvider(new StubPluginsManager(), fsSettings))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessage("No PasswordProvider found for type [missing-password-provider]");
+    }
+
+    @Test
+    void null_passwords_section_resolves_noop_provider() throws Exception {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName(jobName);
+        fsSettings.setPasswords(null);
+
+        FsCrawlerExtensionPasswordProvider passwordProvider =
+                resolvePasswordProvider(new StubPluginsManager(), fsSettings);
+        Assertions.assertThat(passwordProvider).isNotNull();
+        Assertions.assertThat(passwordProvider.getType()).isEqualTo("noop");
+    }
+
+    private static FsCrawlerExtensionPasswordProvider resolvePasswordProvider(
+            FsCrawlerPluginsManager pluginsManager, FsSettings fsSettings) throws Exception {
+        Method resolvePasswordProvider = FsCrawlerImpl.class.getDeclaredMethod(
+                "resolvePasswordProvider", FsCrawlerPluginsManager.class, FsSettings.class);
+        resolvePasswordProvider.setAccessible(true);
+        try {
+            return (FsCrawlerExtensionPasswordProvider)
+                    resolvePasswordProvider.invoke(null, pluginsManager, fsSettings);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof Exception exception) {
+                throw exception;
+            }
+            throw e;
+        }
+    }
+
+    private static class StubPluginsManager extends FsCrawlerPluginsManager {
+        @Override
+        public void startPasswordProviders(FsSettings settings) {
+            // Stub: password providers are resolved via findPasswordProvider only.
+        }
+
+        @Override
+        public FsCrawlerExtensionPasswordProvider findPasswordProvider(String type) {
+            if ("noop".equals(type)) {
+                return new StubPasswordProvider(type);
+            }
+            throw new FsCrawlerIllegalConfigurationException("No PasswordProvider found for type [" + type + "]");
+        }
+    }
+
+    private record StubPasswordProvider(String type) implements FsCrawlerExtensionPasswordProvider {
+        @Override
+        public String getType() {
+            return type;
+        }
+
+        @Override
+        public void start(FsSettings settings, PasswordProviderLookup lookup) {
+            // Stub noop provider needs no startup work.
+        }
+
+        @Override
+        public PasswordSession open(String documentPath) {
+            return new PasswordSession() {
+                @Override
+                public java.util.Optional<String> next() {
+                    return java.util.Optional.empty();
+                }
+
+                @Override
+                public void close() {
+                    // Stub session has no resources.
+                }
+            };
+        }
+
+        @Override
+        public void close() {
+            // Stub provider has no resources.
+        }
     }
 }

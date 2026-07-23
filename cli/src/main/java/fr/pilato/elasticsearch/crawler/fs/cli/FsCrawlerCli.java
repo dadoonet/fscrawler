@@ -322,6 +322,7 @@ public class FsCrawlerCli {
         FsCrawlerPluginsManager pluginsManager = new FsCrawlerPluginsManager();
         pluginsManager.loadPlugins();
         pluginsManager.startPlugins();
+        pluginsManager.startPasswordProviders(fsSettings);
 
         runCrawlerSession(command, configDir, fsSettings, jobName, pluginsManager);
     }

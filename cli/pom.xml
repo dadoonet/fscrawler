@@ -48,6 +48,22 @@
         </dependency>
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-password-noop-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-password-disk-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-password-static-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-password-chained-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-fs-s3-plugin</artifactId>
         </dependency>
         <dependency>

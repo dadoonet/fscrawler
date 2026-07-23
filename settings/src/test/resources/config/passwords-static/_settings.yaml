@@ -1,0 +1,7 @@
+passwords:
+  provider: static
+  providers:
+    static:
+      values:
+        - alpha
+        - beta

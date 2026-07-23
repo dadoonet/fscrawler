@@ -25,6 +25,8 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -36,10 +38,14 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
@@ -1206,6 +1212,182 @@ class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         Doc doc = extractFromFile("test-protected.docx", fsSettings);
         Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/x-tika-ooxml-protected");
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+
+        doc = extractFromFile("test-protected.docx", "david");
+        Assertions.assertThat(doc.getFile().getContentType())
+                .isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
+
+        doc = extractFromFile("test-protected.pdf");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+
+        doc = extractFromFile("test-protected.pdf", "pdfpassword");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
+
+        doc = extractFromFile("test-protected.pdf", "thisdoesnotmatch");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+    }
+
+    @Test
+    void protectedDocumentExplicitPasswordDoesNotUseProviderFallback() throws IOException {
+        AtomicInteger openCalls = new AtomicInteger();
+        FsCrawlerExtensionPasswordProvider provider = new FsCrawlerExtensionPasswordProvider() {
+            @Override
+            public String getType() {
+                return "test";
+            }
+
+            @Override
+            public void start(
+                    fr.pilato.elasticsearch.crawler.fs.settings.FsSettings settings,
+                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {
+                // Provider must not be started for this explicit-password assertion.
+            }
+
+            @Override
+            public PasswordSession open(String documentPath) {
+                openCalls.incrementAndGet();
+                return new PasswordSession() {
+                    @Override
+                    public Optional<String> next() {
+                        return Optional.of("david");
+                    }
+
+                    @Override
+                    public void close() {
+                        // Test session has no resources.
+                    }
+                };
+            }
+
+            @Override
+            public void close() {
+                // Test provider has no resources.
+            }
+        };
+
+        Doc doc = extractFromFile("test-protected.docx", FsSettingsLoader.load(), "thisdoesnotmatch", provider);
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+        Assertions.assertThat(openCalls).hasValue(0);
+    }
+
+    @Test
+    void protectedDocumentRetriesProviderCandidatesUntilOneWorks() throws IOException {
+        AtomicInteger openCalls = new AtomicInteger();
+        AtomicInteger nextCalls = new AtomicInteger();
+        AtomicReference<String> openedPath = new AtomicReference<>();
+        FsCrawlerExtensionPasswordProvider provider = new FsCrawlerExtensionPasswordProvider() {
+            @Override
+            public String getType() {
+                return "test";
+            }
+
+            @Override
+            public void start(
+                    fr.pilato.elasticsearch.crawler.fs.settings.FsSettings settings,
+                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {
+                // Candidates are hard-coded in open()/next() for this retry test.
+            }
+
+            @Override
+            public PasswordSession open(String documentPath) {
+                openCalls.incrementAndGet();
+                openedPath.set(documentPath);
+                return new PasswordSession() {
+                    @Override
+                    public Optional<String> next() {
+                        return switch (nextCalls.getAndIncrement()) {
+                            case 0 -> Optional.of("thisdoesnotmatch");
+                            case 1 -> Optional.of("david");
+                            default -> Optional.empty();
+                        };
+                    }
+
+                    @Override
+                    public void close() {
+                        // Test session has no resources.
+                    }
+                };
+            }
+
+            @Override
+            public void close() {
+                // Test provider has no resources.
+            }
+        };
+
+        Doc doc = extractFromFile("test-protected.docx", FsSettingsLoader.load(), null, provider);
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
+        Assertions.assertThat(openCalls).hasValue(1);
+        Assertions.assertThat(nextCalls).hasValue(2);
+        Assertions.assertThat(openedPath).hasValue("test-protected.docx");
+    }
+
+    /**
+     * A shared parser instance must keep password state isolated per parse call even when protected documents are
+     * extracted in parallel. Guards against password state leaking through shared ParseContext instances.
+     */
+    @Test
+    @Slow
+    void concurrentProtectedDocumentsWithDifferentPasswordsStayIsolated() throws Exception {
+        TikaDocParser parser = new TikaDocParser(FsSettingsLoader.load());
+        int iterations = RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 20);
+
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        try {
+            for (int i = 0; i < iterations; i++) {
+                CountDownLatch ready = new CountDownLatch(4);
+                CountDownLatch start = new CountDownLatch(1);
+
+                Future<Doc> protectedDocxWithPassword = executor.submit(
+                        () -> parseWithSharedStart(ready, start, parser, "test-protected.docx", "david"));
+                Future<Doc> protectedDocxWithoutPassword =
+                        executor.submit(() -> parseWithSharedStart(ready, start, parser, "test-protected.docx", null));
+                Future<Doc> protectedDocxWithWrongPassword = executor.submit(
+                        () -> parseWithSharedStart(ready, start, parser, "test-protected.docx", "thisdoesnotmatch"));
+                Future<Doc> protectedPdfWithPassword = executor.submit(
+                        () -> parseWithSharedStart(ready, start, parser, "test-protected.pdf", "pdfpassword"));
+
+                Assertions.assertThat(ready.await(5, TimeUnit.SECONDS))
+                        .as("iteration %d: concurrent protected parses should all be ready", i)
+                        .isTrue();
+                start.countDown();
+
+                Assertions.assertThat(protectedDocxWithPassword
+                                .get(30, TimeUnit.SECONDS)
+                                .getContent())
+                        .as("iteration %d: explicit docx password must keep unlocking that doc only", i)
+                        .contains("This is a sample text available in page");
+
+                Doc docxWithoutPassword = protectedDocxWithoutPassword.get(30, TimeUnit.SECONDS);
+                Assertions.assertThat(docxWithoutPassword.getFile().getContentType())
+                        .as("iteration %d: missing password must still leave the docx protected", i)
+                        .isEqualTo("application/x-tika-ooxml-protected");
+                Assertions.assertThat(docxWithoutPassword.getContent())
+                        .as("iteration %d: missing password must not inherit another thread's password", i)
+                        .isNullOrEmpty();
+
+                Doc docxWithWrongPassword = protectedDocxWithWrongPassword.get(30, TimeUnit.SECONDS);
+                Assertions.assertThat(docxWithWrongPassword.getFile().getContentType())
+                        .as("iteration %d: wrong password must still leave the docx protected", i)
+                        .isEqualTo("application/x-tika-ooxml-protected");
+                Assertions.assertThat(docxWithWrongPassword.getContent())
+                        .as("iteration %d: wrong password must not inherit another thread's password", i)
+                        .isNullOrEmpty();
+
+                Assertions.assertThat(protectedPdfWithPassword
+                                .get(30, TimeUnit.SECONDS)
+                                .getContent())
+                        .as("iteration %d: explicit pdf password must keep unlocking the pdf", i)
+                        .contains("This is a sample text available in page");
+            }
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test
@@ -1268,6 +1450,21 @@ class TikaDocParserTest extends DocParserTestCase {
         return doc;
     }
 
+    private Doc parseWithSharedStart(
+            CountDownLatch ready, CountDownLatch start, TikaDocParser parser, String filename, String password)
+            throws Exception {
+        ready.countDown();
+        if (start.await(5, TimeUnit.SECONDS) == false) {
+            throw new IllegalStateException("Timed out waiting to start concurrent protected parse");
+        }
+
+        Doc doc = new Doc();
+        doc.getPath().setReal(filename);
+        doc.getFile().setFilename(filename);
+        parser.generate(() -> getBinaryContent(filename), doc, 0, password, null);
+        return doc;
+    }
+
     private Doc extractFromFileExtension(String extension) throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
@@ -1275,17 +1472,27 @@ class TikaDocParserTest extends DocParserTestCase {
     }
 
     private Doc extractFromFile(String filename) throws IOException {
-        return extractFromFile(filename, FsSettingsLoader.load());
+        return extractFromFile(filename, FsSettingsLoader.load(), null, null);
+    }
+
+    private Doc extractFromFile(String filename, String password) throws IOException {
+        return extractFromFile(filename, FsSettingsLoader.load(), password, null);
     }
 
     private Doc extractFromFile(String filename, FsSettings fsSettings) throws IOException {
-        logger.info("Test extraction of [{}]", filename);
+        return extractFromFile(filename, fsSettings, null, null);
+    }
+
+    private Doc extractFromFile(
+            String filename, FsSettings fsSettings, String password, FsCrawlerExtensionPasswordProvider provider)
+            throws IOException {
+        logger.info("Test extraction of [{}]{}", filename, password != null ? " with password" : "");
         Doc doc = new Doc();
         doc.getPath().setReal(filename);
         doc.getFile().setFilename(filename);
 
         // A fresh, isolated parser instance for every extraction under test
-        new TikaDocParser(fsSettings).generate(getBinaryContent(filename), doc, 0);
+        new TikaDocParser(fsSettings).generate(() -> getBinaryContent(filename), doc, 0, password, provider);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());

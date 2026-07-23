@@ -97,6 +97,28 @@ fs:
     # optional: if true, we will try to preserve interword spacing
     #preserve_interword_spacing: false
 
+# optional: define password providers for protected documents
+#passwords:
+  # optional: noop (default), static, disk, chained
+  #provider: "noop"
+  #providers:
+    # optional: passwords defined inline
+    #static:
+      # optional: a single password
+      #value: "your-password@{secret}"
+      # optional: multiple passwords to try in order
+      #values:
+      #  - "your-first-password@{secret}"
+      #  - "your-second-password@{secret}"
+    # optional: load passwords from disk (defaults later to fs.url)
+    #disk:
+      #url: "/path/to/passwords"
+    # optional: chain providers by name
+    #chained:
+      #providers:
+      #  - "static"
+      #  - "disk"
+
 # optional: define metadata tags to be added to each document
 #tags:
   # optional: if the filename is found in the directory, it will be used as a metadata

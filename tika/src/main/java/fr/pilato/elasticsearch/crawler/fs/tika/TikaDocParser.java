@@ -28,6 +28,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
@@ -48,6 +50,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
@@ -89,6 +92,15 @@ public class TikaDocParser {
      */
     private static final long IN_MEMORY_THRESHOLD = 64L * 1024; // 64KB
 
+    @FunctionalInterface
+    public interface InputStreamSupplier {
+        InputStream open() throws IOException;
+    }
+
+    private record ParsedContentResult(String content, Metadata metadata) {}
+
+    private record ExtractionAttempt(TikaInstance.ExtractResult result, Metadata metadata) {}
+
     /**
      * Parses one document and fills the given {@link Doc} (content, metadata, checksum, attachment) according to this
      * job's settings.
@@ -99,6 +111,27 @@ public class TikaDocParser {
      * @throws IOException on stream or temp-file errors
      */
     public void generate(InputStream inputStream, Doc doc, long filesize) throws IOException {
+        generate(inputStream, null, doc, filesize, null, null);
+    }
+
+    public void generate(
+            InputStreamSupplier reopen,
+            Doc doc,
+            long filesize,
+            String explicitPassword,
+            FsCrawlerExtensionPasswordProvider provider)
+            throws IOException {
+        generate(null, reopen, doc, filesize, explicitPassword, provider);
+    }
+
+    private void generate(
+            InputStream inputStream,
+            InputStreamSupplier reopen,
+            Doc doc,
+            long filesize,
+            String explicitPassword,
+            FsCrawlerExtensionPasswordProvider provider)
+            throws IOException {
         Span tikaSpan = FsCrawlerTracing.startSpan("fscrawler.tika.extract");
         tikaSpan.setAttribute("file.size", filesize);
         try (Scope scope = tikaSpan.makeCurrent()) {
@@ -142,8 +175,8 @@ public class TikaDocParser {
             boolean useInMemory = needsBuffering && filesize > 0 && filesize <= IN_MEMORY_THRESHOLD;
             boolean useTempFile = needsBuffering && (filesize <= 0 || filesize > IN_MEMORY_THRESHOLD);
             Path tempFile = null;
-            InputStream tempFileStream = null;
             byte[] contentBuffer = null;
+            InputStreamSupplier extractionSupplier = reopen;
             try {
                 if (useInMemory) {
                     logger.trace(
@@ -153,15 +186,19 @@ public class TikaDocParser {
                             fsSettings.getFs().isStoreSource());
                     // Read entire stream into memory
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    InputStream sourceStream = inputStream != null ? inputStream : reopen.open();
                     if (messageDigest != null) {
-                        try (DigestInputStream dis = new DigestInputStream(inputStream, messageDigest)) {
+                        try (DigestInputStream dis = new DigestInputStream(sourceStream, messageDigest)) {
                             dis.transferTo(bos);
                         }
                     } else {
-                        inputStream.transferTo(bos);
+                        try (InputStream in = sourceStream) {
+                            in.transferTo(bos);
+                        }
                     }
                     contentBuffer = bos.toByteArray();
-                    inputStream = new ByteArrayInputStream(contentBuffer);
+                    byte[] inMemoryContent = contentBuffer;
+                    extractionSupplier = () -> new ByteArrayInputStream(inMemoryContent);
                 } else if (useTempFile) {
                     logger.trace(
                             "Using temp file for large file (size: {}, checksum: {}, storeSource: {})",
@@ -178,23 +215,29 @@ public class TikaDocParser {
                     Files.createDirectories(tempDir);
                     tempFile = Files.createTempFile(tempDir, "fscrawler-", ".tmp");
                     // Copy stream to temp file, optionally computing the digest
+                    InputStream sourceStream = inputStream != null ? inputStream : reopen.open();
                     if (messageDigest != null) {
-                        try (DigestInputStream dis = new DigestInputStream(inputStream, messageDigest);
+                        try (DigestInputStream dis = new DigestInputStream(sourceStream, messageDigest);
                                 OutputStream fos = Files.newOutputStream(tempFile)) {
                             dis.transferTo(fos);
                         }
                     } else {
-                        try (OutputStream fos = Files.newOutputStream(tempFile)) {
-                            inputStream.transferTo(fos);
+                        try (InputStream in = sourceStream;
+                                OutputStream fos = Files.newOutputStream(tempFile)) {
+                            in.transferTo(fos);
                         }
                     }
-                    // Now use the temp file as input for Tika
-                    tempFileStream = Files.newInputStream(tempFile);
-                    inputStream = tempFileStream;
+                    Path bufferedTempFile = tempFile;
+                    extractionSupplier = () -> Files.newInputStream(bufferedTempFile);
                 }
 
                 if (fsSettings.getFs().isIndexContent()) {
-                    parsedContent = extractParsedContent(tikaInstance, indexedChars, inputStream, metadata, doc);
+                    ParsedContentResult parsedContentResult = extractionSupplier != null
+                            ? extractParsedContent(
+                                    tikaInstance, indexedChars, extractionSupplier, doc, explicitPassword, provider)
+                            : extractParsedContent(tikaInstance, indexedChars, inputStream, doc);
+                    parsedContent = parsedContentResult.content();
+                    metadata = parsedContentResult.metadata();
 
                     // Adding what we found to the document we want to index
 
@@ -398,13 +441,14 @@ public class TikaDocParser {
                     // Add support for more OOTB standard metadata
 
                     if (fsSettings.getFs().isRawMetadata()) {
+                        Metadata finalMetadata = metadata;
                         FSCrawlerLogger.metadata("Listing all available metadata:");
                         FSCrawlerLogger.metadata("  Assertions.assertThat(raw)");
-                        FSCrawlerLogger.metadata("    .hasSize({})", metadata.size());
-                        Arrays.stream(metadata.names())
+                        FSCrawlerLogger.metadata("    .hasSize({})", finalMetadata.size());
+                        Arrays.stream(finalMetadata.names())
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .forEach(metadataName -> {
-                                    String value = metadata.get(metadataName);
+                                    String value = finalMetadata.get(metadataName);
                                     // This is a logger trick which helps to generate our unit tests
                                     // You need to change test/resources/log4j2.xml
                                     // fr.pilato.elasticsearch.crawler.fs.tika
@@ -444,10 +488,6 @@ public class TikaDocParser {
                 logger.trace("End document generation");
                 // End of our document
             } finally {
-                // Close the temp file stream before deleting the file
-                if (tempFileStream != null) {
-                    closeQuietly(tempFileStream);
-                }
                 // Clean up temp file if it was created
                 if (tempFile != null) {
                     deleteTempFileQuietly(tempFile);
@@ -470,39 +510,88 @@ public class TikaDocParser {
         }
     }
 
-    /** Extracts text via Tika. On failure, logs the document error (best-effort) and returns {@code null}. */
-    private String extractParsedContent(
-            TikaInstance tikaInstance, int indexedChars, InputStream inputStream, Metadata metadata, Doc doc) {
-        try {
-            // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
-            logger.trace("Beginning Tika extraction");
-            String parsedContent = tikaInstance.extractText(indexedChars, inputStream, metadata);
-            logger.trace("End of Tika extraction");
-            return parsedContent;
-        } catch (Throwable e) {
-            // Build a message from embedded errors
-            Throwable current = e;
-            StringBuilder sb = new StringBuilder();
-            while (current != null) {
-                sb.append(current.getMessage());
-                current = current.getCause();
-                if (current != null) {
-                    sb.append(" -> ");
-                }
-            }
+    private ParsedContentResult extractParsedContent(
+            TikaInstance tikaInstance, int indexedChars, InputStream inputStream, Doc doc) throws IOException {
+        Metadata metadata = createMetadata(doc);
+        logger.trace("Beginning Tika extraction");
+        TikaInstance.ExtractResult result = tikaInstance.extractText(indexedChars, inputStream, metadata, null);
+        logger.trace("End of Tika extraction");
+        return finalizeAttempt(indexedChars, doc, new ExtractionAttempt(result, metadata));
+    }
 
-            logDocumentError(doc, sb.toString());
-            logger.warn(
-                    "Failed to extract [{}] characters of text for [{}]: {}",
-                    indexedChars,
-                    doc.getPath().getReal(),
-                    sb.toString());
-            logger.debug(
-                    "Failed to extract [" + indexedChars + "] characters of text for ["
-                            + doc.getPath().getReal() + "]",
-                    e);
-            return null;
+    private ParsedContentResult extractParsedContent(
+            TikaInstance tikaInstance,
+            int indexedChars,
+            InputStreamSupplier reopen,
+            Doc doc,
+            String explicitPassword,
+            FsCrawlerExtensionPasswordProvider provider)
+            throws IOException {
+        if (explicitPassword != null) {
+            return finalizeAttempt(
+                    indexedChars, doc, extractAttempt(tikaInstance, indexedChars, reopen, doc, explicitPassword));
         }
+
+        ExtractionAttempt initialAttempt = extractAttempt(tikaInstance, indexedChars, reopen, doc, null);
+        if (initialAttempt.result().status() != TikaInstance.ExtractStatus.ENCRYPTED) {
+            return finalizeAttempt(indexedChars, doc, initialAttempt);
+        }
+
+        if (provider == null) {
+            return new ParsedContentResult(null, initialAttempt.metadata());
+        }
+
+        int candidateCount = 0;
+        try (PasswordSession session = provider.open(doc.getPath().getReal())) {
+            Optional<String> candidate;
+            while ((candidate = session.next()).isPresent()) {
+                candidateCount++;
+                ExtractionAttempt candidateAttempt =
+                        extractAttempt(tikaInstance, indexedChars, reopen, doc, candidate.get());
+                if (candidateAttempt.result().status() == TikaInstance.ExtractStatus.ENCRYPTED) {
+                    continue;
+                }
+                return finalizeAttempt(indexedChars, doc, candidateAttempt);
+            }
+        }
+
+        if (candidateCount > 0) {
+            logger.warn(
+                    "Exhausted [{}] password candidates for [{}] without extracting content.",
+                    candidateCount,
+                    doc.getPath().getReal());
+        }
+
+        return new ParsedContentResult(null, initialAttempt.metadata());
+    }
+
+    private ExtractionAttempt extractAttempt(
+            TikaInstance tikaInstance, int indexedChars, InputStreamSupplier reopen, Doc doc, String password)
+            throws IOException {
+        Metadata metadata = createMetadata(doc);
+        try (InputStream inputStream = reopen.open()) {
+            logger.trace("Beginning Tika extraction");
+            TikaInstance.ExtractResult result = tikaInstance.extractText(indexedChars, inputStream, metadata, password);
+            logger.trace("End of Tika extraction");
+            return new ExtractionAttempt(result, metadata);
+        }
+    }
+
+    private ParsedContentResult finalizeAttempt(int indexedChars, Doc doc, ExtractionAttempt attempt) {
+        return switch (attempt.result().status()) {
+            case OK -> new ParsedContentResult(attempt.result().content(), attempt.metadata());
+            case ENCRYPTED -> new ParsedContentResult(null, attempt.metadata());
+            case FAILED -> {
+                logExtractionFailure(doc, indexedChars, attempt.result().failure());
+                yield new ParsedContentResult(null, attempt.metadata());
+            }
+        };
+    }
+
+    private static Metadata createMetadata(Doc doc) {
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, doc.getFile().getFilename());
+        return metadata;
     }
 
     private void logDocumentError(Doc doc, String errorMessage) {
@@ -521,14 +610,6 @@ public class TikaDocParser {
         }
     }
 
-    private static void closeQuietly(InputStream inputStream) {
-        try {
-            inputStream.close();
-        } catch (IOException e) {
-            logger.debug("Failed to close temp file stream: {}", e.getMessage());
-        }
-    }
-
     private static void deleteTempFileQuietly(Path tempFile) {
         try {
             Files.deleteIfExists(tempFile);
@@ -536,6 +617,33 @@ public class TikaDocParser {
         } catch (IOException e) {
             logger.warn("Failed to delete temp file [{}]: {}", tempFile, e.getMessage());
         }
+    }
+
+    private void logExtractionFailure(Doc doc, int indexedChars, Throwable failure) {
+        String failureMessage = buildFailureMessage(failure);
+        logDocumentError(doc, failureMessage);
+        logger.warn(
+                "Failed to extract [{}] characters of text for [{}]: {}",
+                indexedChars,
+                doc.getPath().getReal(),
+                failureMessage);
+        logger.debug(
+                "Failed to extract [" + indexedChars + "] characters of text for ["
+                        + doc.getPath().getReal() + "]",
+                failure);
+    }
+
+    private static String buildFailureMessage(Throwable failure) {
+        StringBuilder builder = new StringBuilder();
+        Throwable current = failure;
+        while (current != null) {
+            if (builder.length() > 0) {
+                builder.append(" -> ");
+            }
+            builder.append(current.getMessage());
+            current = current.getCause();
+        }
+        return builder.toString();
     }
 
     private static <T> void setMeta(

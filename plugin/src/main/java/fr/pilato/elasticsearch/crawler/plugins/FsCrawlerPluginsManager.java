@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.plugins;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,6 +35,8 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
     private static final Logger logger = LogManager.getLogger();
     private final PluginManager pluginManager;
     private final HashMap<String, FsCrawlerExtensionFsProvider> fsProviders;
+    private final HashMap<String, FsCrawlerExtensionPasswordProvider> passwordProviders;
+    private boolean passwordProvidersStarted;
 
     public FsCrawlerPluginsManager() {
         pluginManager = new DefaultPluginManager() {
@@ -41,10 +44,12 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
             protected ExtensionFinder createExtensionFinder() {
                 DefaultExtensionFinder extensionFinder = (DefaultExtensionFinder) super.createExtensionFinder();
                 extensionFinder.add(new FsCrawlerServiceProviderExtensionFinder(this));
+                extensionFinder.add(new FsCrawlerPasswordProviderExtensionFinder(this));
                 return extensionFinder;
             }
         };
         fsProviders = new HashMap<>();
+        passwordProviders = new HashMap<>();
     }
 
     public void loadPlugins() {
@@ -63,6 +68,26 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
                     extension.supportsCrawling());
             fsProviders.put(extension.getType(), extension);
         }
+
+        for (FsCrawlerExtensionPasswordProvider extension :
+                pluginManager.getExtensions(FsCrawlerExtensionPasswordProvider.class)) {
+            logger.debug("Found FsCrawlerExtensionPasswordProvider extension for type [{}]", extension.getType());
+            passwordProviders.put(extension.getType(), extension);
+        }
+    }
+
+    public void startPasswordProviders(FsSettings settings) {
+        if (passwordProvidersStarted) {
+            logger.trace("Password providers already started");
+            return;
+        }
+
+        logger.debug("Starting password providers");
+        for (FsCrawlerExtensionPasswordProvider provider : passwordProviders.values()) {
+            logger.trace("Starting password provider [{}]", provider.getType());
+            provider.start(settings, this::findPasswordProvider);
+        }
+        passwordProvidersStarted = true;
     }
 
     public void close() {
@@ -73,6 +98,14 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
                 provider.close();
             } catch (Exception e) {
                 logger.warn("Error closing provider [{}]: {}", provider.getType(), e.getMessage());
+            }
+        }
+        for (FsCrawlerExtensionPasswordProvider provider : passwordProviders.values()) {
+            try {
+                logger.trace("Closing password provider [{}]", provider.getType());
+                provider.close();
+            } catch (Exception e) {
+                logger.warn("Error closing password provider [{}]: {}", provider.getType(), e.getMessage());
             }
         }
         pluginManager.stopPlugins();
@@ -111,6 +144,23 @@ public class FsCrawlerPluginsManager implements AutoCloseable {
             throw new FsCrawlerIllegalConfigurationException(
                     "Provider [" + type + "] does not support directory crawling. "
                             + "Only local, ftp, and ssh providers support crawling.");
+        }
+        return provider;
+    }
+
+    /**
+     * Find a password provider.
+     *
+     * @param type the provider type (e.g., "noop", "disk", "static")
+     * @return the provider for the given type
+     * @throws FsCrawlerIllegalConfigurationException if no provider is found for the type
+     */
+    public FsCrawlerExtensionPasswordProvider findPasswordProvider(String type) {
+        logger.debug("Load PasswordProvider extension for type [{}]", type);
+        FsCrawlerExtensionPasswordProvider provider = passwordProviders.get(type);
+        if (provider == null) {
+            logger.warn("Can not find PasswordProvider for type [{}]", type);
+            throw new FsCrawlerIllegalConfigurationException("No PasswordProvider found for type [" + type + "]");
         }
         return provider;
     }

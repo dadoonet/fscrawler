@@ -33,6 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
@@ -87,9 +88,17 @@ import org.testcontainers.utility.MountableFile;
 class FsCrawlerRestIT extends AbstractRestITCase {
     private static final Logger logger = LogManager.getLogger();
     private static final String CUSTOM_INDEX_NAME = getCrawlerName(FsCrawlerRestIT.class, "custom");
+    private static final String PROTECTED_DOCUMENT_TEXT = "This is a sample text available in page";
+    private static final String PROTECTED_DOCX_PASSWORD = "david";
+    private static final String STATIC_PASSWORD_RETRY_JOB =
+            "upload_protected_document_without_request_password_uses_static_candidates";
 
     public FsSettings getFsSettings() {
-        return createTestSettings();
+        FsSettings fsSettings = createTestSettings();
+        if (STATIC_PASSWORD_RETRY_JOB.equals(jobName)) {
+            configureStaticPasswords(fsSettings, List.of("thisdoesnotmatch", PROTECTED_DOCX_PASSWORD));
+        }
+        return fsSettings;
     }
 
     @BeforeEach
@@ -179,6 +188,37 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         Assertions.assertThat(response.getHits().get(0).getId()).isEqualTo("1234");
         Assertions.assertThat((Integer) JsonPath.read(response.getHits().get(0).getSource(), "$.file.filesize"))
                 .isGreaterThan(0);
+    }
+
+    @Test
+    void uploadProtectedDocumentWithFormPassword() throws Exception {
+        Path from = testDocumentsDir.resolve("test-protected.docx");
+        if (Files.notExists(from)) {
+            logger.error("file [{}] should exist before we start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        UploadResponse uploadResponse =
+                uploadFileUsingApi(target, from, null, null, null, null, PROTECTED_DOCX_PASSWORD);
+        Assertions.assertThat(uploadResponse.isOk()).isTrue();
+
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
+        assertProtectedDocumentContent(response, "test-protected.docx");
+    }
+
+    @Test
+    void uploadProtectedDocumentWithoutRequestPasswordUsesStaticCandidates() throws Exception {
+        Path from = testDocumentsDir.resolve("test-protected.docx");
+        if (Files.notExists(from)) {
+            logger.error("file [{}] should exist before we start tests", from);
+            throw new RuntimeException(from + " doesn't seem to exist. Check your JUnit tests.");
+        }
+        UploadResponse uploadResponse = uploadFile(target, from);
+        Assertions.assertThat(uploadResponse.isOk()).isTrue();
+
+        ESSearchResponse response = countTestHelper(
+                new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
+        assertProtectedDocumentContent(response, "test-protected.docx");
     }
 
     @Test
@@ -641,6 +681,20 @@ class FsCrawlerRestIT extends AbstractRestITCase {
         logger.debug("Create fake content [{}]; [{}]", objectName, object);
         Path file = root.resolve(objectName);
         Files.writeString(file, object);
+    }
+
+    private void configureStaticPasswords(FsSettings fsSettings, List<String> passwords) {
+        Passwords passwordSettings = new Passwords();
+        passwordSettings.setProvider("static");
+        passwordSettings.setProviders(Map.of("static", Map.of("values", passwords)));
+        fsSettings.setPasswords(passwordSettings);
+    }
+
+    private void assertProtectedDocumentContent(ESSearchResponse response, String filename) {
+        ESSearchHit hit = findHitByFilename(response, filename);
+        Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
+                .isNotBlank()
+                .contains(PROTECTED_DOCUMENT_TEXT);
     }
 
     @Test

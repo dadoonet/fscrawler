@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -93,6 +94,8 @@ public class FsCrawlerImpl implements AutoCloseable {
             logger.debug("Using default temp directory: [{}]", tempDir);
         }
 
+        FsCrawlerExtensionPasswordProvider passwordProvider = resolvePasswordProvider(pluginsManager, settings);
+
         // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
         // pass null so we don't resolve/start a provider (e.g. SSH/FTP) that could fail if config is missing.
         final FsCrawlerExtensionFsProvider crawlerPlugin;
@@ -106,8 +109,21 @@ public class FsCrawlerImpl implements AutoCloseable {
             crawlerPlugin.start(settings, "{}");
         }
 
-        fsParser = new FsParser(settings, config, managementService, documentService, loop, rest, crawlerPlugin);
+        fsParser = new FsParser(
+                settings, config, managementService, documentService, loop, rest, crawlerPlugin, passwordProvider);
         fsCrawlerThread = new Thread(fsParser, "fs-crawler");
+    }
+
+    private static FsCrawlerExtensionPasswordProvider resolvePasswordProvider(
+            FsCrawlerPluginsManager pluginsManager, FsSettings settings) {
+        pluginsManager.startPasswordProviders(settings);
+
+        String providerType =
+                settings.getPasswords() == null || settings.getPasswords().getProvider() == null
+                        ? "noop"
+                        : settings.getPasswords().getProvider();
+        logger.debug("Using password provider [{}]", providerType);
+        return pluginsManager.findPasswordProvider(providerType);
     }
 
     /**

@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -42,11 +43,15 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import org.apache.commons.io.FilenameUtils;
@@ -58,6 +63,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Path("/_document")
 public class DocumentApi implements RestApi {
     private static final Logger logger = LogManager.getLogger();
+    private static final long MULTIPART_IN_MEMORY_SPOOL_THRESHOLD = 64L * 1024;
 
     private final FsCrawlerDocumentService documentService;
     private final FsSettings settings;
@@ -66,10 +72,18 @@ public class DocumentApi implements RestApi {
     private final TikaDocParser tikaDocParser;
 
     DocumentApi(FsSettings settings, FsCrawlerDocumentService documentService, FsCrawlerPluginsManager pluginsManager) {
+        this(settings, documentService, pluginsManager, new TikaDocParser(settings));
+    }
+
+    DocumentApi(
+            FsSettings settings,
+            FsCrawlerDocumentService documentService,
+            FsCrawlerPluginsManager pluginsManager,
+            TikaDocParser tikaDocParser) {
         this.settings = settings;
         this.documentService = documentService;
         this.pluginsManager = pluginsManager;
-        this.tikaDocParser = new TikaDocParser(settings);
+        this.tikaDocParser = tikaDocParser;
     }
 
     @POST
@@ -84,13 +98,18 @@ public class DocumentApi implements RestApi {
             @HeaderParam("index") String headerIndex,
             @QueryParam("id") String queryParamId,
             @QueryParam("index") String queryParamIndex,
+            @FormDataParam("password") String formDocumentPassword,
+            @HeaderParam("password") String headerDocumentPassword,
+            @QueryParam("password") String queryParamDocumentPassword,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d)
             throws IOException, NoSuchAlgorithmException {
         String id = FsCrawlerUtil.getFirstNonNullValue(formId, headerId, queryParamId);
         String index = FsCrawlerUtil.getFirstNonNullValue(formIndex, headerIndex, queryParamIndex);
-        return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
+        String password = FsCrawlerUtil.getFirstNonNullValue(
+                formDocumentPassword, headerDocumentPassword, queryParamDocumentPassword);
+        return uploadToDocumentService(debug, simulate, id, index, password, tags, filecontent, d);
     }
 
     @PUT
@@ -104,12 +123,17 @@ public class DocumentApi implements RestApi {
             @FormDataParam("index") String formIndex,
             @HeaderParam("index") String headerIndex,
             @QueryParam("index") String queryParamIndex,
+            @FormDataParam("password") String formDocumentPassword,
+            @HeaderParam("password") String headerDocumentPassword,
+            @QueryParam("password") String queryParamDocumentPassword,
             @FormDataParam("tags") InputStream tags,
             @FormDataParam("file") InputStream filecontent,
             @FormDataParam("file") FormDataContentDisposition d)
             throws IOException, NoSuchAlgorithmException {
         String index = FsCrawlerUtil.getFirstNonNullValue(formIndex, headerIndex, queryParamIndex);
-        return uploadToDocumentService(debug, simulate, id, index, tags, filecontent, d);
+        String password = FsCrawlerUtil.getFirstNonNullValue(
+                formDocumentPassword, headerDocumentPassword, queryParamDocumentPassword);
+        return uploadToDocumentService(debug, simulate, id, index, password, tags, filecontent, d);
     }
 
     @POST
@@ -122,9 +146,12 @@ public class DocumentApi implements RestApi {
             @QueryParam("index") String queryParamIndex,
             @HeaderParam("id") String headerId,
             @HeaderParam("index") String headerIndex,
+            @HeaderParam("password") String headerDocumentPassword,
+            @QueryParam("password") String queryParamDocumentPassword,
             InputStream json) {
         String id = FsCrawlerUtil.getFirstNonNullValue(headerId, queryParamId);
         String index = FsCrawlerUtil.getFirstNonNullValue(headerIndex, queryParamIndex);
+        String password = FsCrawlerUtil.getFirstNonNullValue(headerDocumentPassword, queryParamDocumentPassword);
 
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(json);
         String type = document.read("$.type");
@@ -134,11 +161,9 @@ public class DocumentApi implements RestApi {
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());
             provider.start(settings, document.jsonString());
-            try (InputStream inputStream = provider.readFile()) {
-                Doc doc = provider.createDocument();
-                doc = enrichDoc(doc, null, inputStream);
-                return uploadToDocumentService(debug, simulate, id, index, doc);
-            }
+            Doc doc = provider.createDocument();
+            doc = enrichDoc(doc, null, provider::readFile, password, resolvePasswordProvider(password));
+            return uploadToDocumentService(debug, simulate, id, index, doc);
         } catch (Exception e) {
             logger.debug(
                     "Failed to add document from [{}] 3rd-party: [{}] - [{}]",
@@ -192,11 +217,15 @@ public class DocumentApi implements RestApi {
         return removeDocumentInDocumentService(id, null, headerIndex == null ? queryParamIndex : headerIndex);
     }
 
+    // Multipart upload keeps JAX-RS-resolved fields together; extracting a param object would not reduce call-site
+    // noise.
+    @SuppressWarnings("java:S107")
     private UploadResponse uploadToDocumentService(
             String debug,
             String simulate,
             String id,
             String index,
+            String explicitPassword,
             InputStream tags,
             InputStream filecontent,
             FormDataContentDisposition d)
@@ -215,13 +244,21 @@ public class DocumentApi implements RestApi {
         doc.getPath().setReal(filename);
         doc.getFile().setFilesize(d.getSize());
 
-        try (filecontent) {
-            doc = enrichDoc(doc, tags, filecontent);
+        try (filecontent;
+                ReopenableContent reopenableContent = spoolMultipartContent(filecontent, d.getSize())) {
+            doc = enrichDoc(
+                    doc, tags, reopenableContent.reopen(), explicitPassword, resolvePasswordProvider(explicitPassword));
             return uploadToDocumentService(debug, simulate, id, index, doc);
         }
     }
 
-    private Doc enrichDoc(Doc doc, InputStream tags, InputStream filecontent) throws IOException {
+    private Doc enrichDoc(
+            Doc doc,
+            InputStream tags,
+            TikaDocParser.InputStreamSupplier reopenableInputStream,
+            String explicitPassword,
+            FsCrawlerExtensionPasswordProvider passwordProvider)
+            throws IOException {
         // File
         doc.getFile()
                 .setExtension(
@@ -230,10 +267,55 @@ public class DocumentApi implements RestApi {
         // File
 
         // Read the file content
-        tikaDocParser.generate(filecontent, doc, doc.getFile().getFilesize());
+        tikaDocParser.generate(
+                reopenableInputStream, doc, doc.getFile().getFilesize(), explicitPassword, passwordProvider);
 
         // We merge tags if any and return the final doc
         return DocUtils.getMergedDoc(doc, tags, JsonUtil.mapper);
+    }
+
+    private FsCrawlerExtensionPasswordProvider resolvePasswordProvider(String explicitPassword) {
+        if (explicitPassword != null) {
+            return null;
+        }
+
+        String providerType =
+                settings.getPasswords() == null || settings.getPasswords().getProvider() == null
+                        ? "noop"
+                        : settings.getPasswords().getProvider();
+        return pluginsManager.findPasswordProvider(providerType);
+    }
+
+    private ReopenableContent spoolMultipartContent(InputStream filecontent, long filesize) throws IOException {
+        if (filesize > 0 && filesize <= MULTIPART_IN_MEMORY_SPOOL_THRESHOLD) {
+            byte[] content = filecontent.readAllBytes();
+            return new ReopenableContent(() -> new ByteArrayInputStream(content), null);
+        }
+
+        java.nio.file.Path tempFile = createMultipartTempFile();
+        try (OutputStream outputStream = Files.newOutputStream(tempFile)) {
+            filecontent.transferTo(outputStream);
+        } catch (IOException e) {
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException cleanupException) {
+                e.addSuppressed(cleanupException);
+            }
+            throw e;
+        }
+        return new ReopenableContent(() -> Files.newInputStream(tempFile), tempFile);
+    }
+
+    private java.nio.file.Path createMultipartTempFile() throws IOException {
+        // Use the job-private fs.temp_dir (set by FsCrawlerImpl). Never fall back to java.io.tmpdir
+        // (Sonar java:S5443 — publicly writable directories).
+        if (settings.getFs().getTempDir() == null) {
+            throw new IOException("tempDir must be configured when REST multipart content is spooled to disk. "
+                    + "This is normally set automatically by FsCrawlerImpl.");
+        }
+        java.nio.file.Path tempDir = Paths.get(settings.getFs().getTempDir());
+        Files.createDirectories(tempDir);
+        return Files.createTempFile(tempDir, "fscrawler-rest-", ".tmp");
     }
 
     private UploadResponse uploadToDocumentService(String debug, String simulate, String id, String index, Doc doc)
@@ -326,5 +408,15 @@ public class DocumentApi implements RestApi {
         response.setFilename(filename);
 
         return response;
+    }
+
+    private record ReopenableContent(TikaDocParser.InputStreamSupplier reopen, java.nio.file.Path tempFile)
+            implements AutoCloseable {
+        @Override
+        public void close() throws IOException {
+            if (tempFile != null) {
+                Files.deleteIfExists(tempFile);
+            }
+        }
     }
 }

@@ -113,6 +113,25 @@ echo "This is my text" > test.txt
 curl -F "file=@test.txt" "http://127.0.0.1:8080/_document"
 ```
 
+If the document is password-protected, you can pass a request password with the `password`
+parameter. FSCrawler accepts it as a multipart form field, HTTP header, or query parameter. When
+more than one is provided, the precedence is form field, then header, then query string.
+
+```sh
+curl -F "file=@protected.pdf" -F "password=secret" "http://127.0.0.1:8080/_document"
+```
+
+Header and query forms are also supported:
+
+```sh
+curl -F "file=@protected.pdf" -H "password: secret" "http://127.0.0.1:8080/_document"
+curl -F "file=@protected.pdf" "http://127.0.0.1:8080/_document?password=secret"
+```
+
+When a request password is provided, FSCrawler uses only that password for the upload. It
+short-circuits the job's configured password provider for that request. When it is omitted,
+FSCrawler falls back to the job password provider instead. See {ref}`password-settings`.
+
 It will give you a response similar to:
 
 ```json
@@ -230,6 +249,35 @@ a JSON document which describes the service settings:
    }
  }'
 ```
+
+For password-protected remote documents, you can pass the request password as an HTTP header or a
+query parameter named `password`. If both are set, the header wins:
+
+```sh
+curl -XPOST http://127.0.0.1:8080/_document \
+  -H 'Content-Type: application/json' \
+  -H 'password: secret' \
+  -d '{
+    "type": "http",
+    "http": {
+      "url": "https://example.org/protected.pdf"
+    }
+  }'
+```
+
+```sh
+curl -XPOST "http://127.0.0.1:8080/_document?password=secret" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "type": "http",
+    "http": {
+      "url": "https://example.org/protected.pdf"
+    }
+  }'
+```
+
+As with multipart uploads, a request password short-circuits the job password provider for that
+upload only. Without an explicit request password, FSCrawler falls back to the configured provider.
 
 ### Local plugin
 

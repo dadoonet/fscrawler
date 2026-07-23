@@ -23,9 +23,17 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import fr.pilato.elasticsearch.crawler.fs.framework.Digests;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerValidator {
+    // Filename suffix for document password sidecars (*.password / */.password), not a credential.
+    @SuppressWarnings("java:S2068")
+    private static final String SIDECAR_SUFFIX = "password";
+
+    private static final List<String> DOCUMENT_SIDECAR_EXCLUDES =
+            List.of("*." + SIDECAR_SUFFIX, "*/." + SIDECAR_SUFFIX);
 
     private FsCrawlerValidator() {
         // Utility class, do not instantiate
@@ -39,6 +47,8 @@ public class FsCrawlerValidator {
      * @return true if we found fatal errors and should prevent from starting
      */
     public static boolean validateSettings(Logger logger, FsSettings settings) {
+        ensurePasswordSidecarExcludes(settings);
+
         if (settings.getElasticsearch().getUsername() != null
                 || settings.getElasticsearch().getPassword() != null) {
             logger.warn("username/password is deprecated. Use apiKey instead.");
@@ -79,6 +89,34 @@ public class FsCrawlerValidator {
         }
 
         return false;
+    }
+
+    /**
+     * Ensure password sidecar files are never crawled as documents.
+     *
+     * <p>The disk password provider stores secrets next to documents as {@code <file>.password} or directory
+     * {@code .password} files. Those must stay out of the index, so this method merges the built-in sidecar exclude
+     * patterns ({@link #DOCUMENT_SIDECAR_EXCLUDES}) into {@code fs.excludes} when missing. Existing excludes are
+     * preserved; the list is rewritten only when something is added (including when {@code fs.excludes} was
+     * {@code null}).
+     *
+     * @param settings settings mutated in place during validation
+     */
+    private static void ensurePasswordSidecarExcludes(FsSettings settings) {
+        List<String> excludes = settings.getFs().getExcludes();
+        List<String> mergedExcludes = excludes == null ? new ArrayList<>() : new ArrayList<>(excludes);
+        boolean updated = excludes == null;
+
+        for (String passwordSidecarExclude : DOCUMENT_SIDECAR_EXCLUDES) {
+            if (!mergedExcludes.contains(passwordSidecarExclude)) {
+                mergedExcludes.add(passwordSidecarExclude);
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            settings.getFs().setExcludes(mergedExcludes);
+        }
     }
 
     private static boolean validateServerSettings(Logger logger, FsSettings settings) {

@@ -33,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
 import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.exception.WriteLimitReachedException;
@@ -47,6 +48,7 @@ import org.apache.tika.parser.DefaultParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParserDecorator;
+import org.apache.tika.parser.PasswordProvider;
 import org.apache.tika.parser.gdal.GDALParser;
 import org.apache.tika.parser.image.BPGParser;
 import org.apache.tika.parser.image.HeifParser;
@@ -79,6 +81,26 @@ class TikaInstance {
     private Parser parser;
     private ParseContext context;
     private boolean ocrActivated;
+
+    enum ExtractStatus {
+        OK,
+        ENCRYPTED,
+        FAILED
+    }
+
+    record ExtractResult(ExtractStatus status, String content, Throwable failure) {
+        static ExtractResult ok(String content) {
+            return new ExtractResult(ExtractStatus.OK, content, null);
+        }
+
+        static ExtractResult encrypted(Throwable failure) {
+            return new ExtractResult(ExtractStatus.ENCRYPTED, null, failure);
+        }
+
+        static ExtractResult failed(Throwable failure) {
+            return new ExtractResult(ExtractStatus.FAILED, null, failure);
+        }
+    }
 
     /**
      * Builds the parser and parse context for the given settings. Note the construction order: the context is built
@@ -224,30 +246,56 @@ class TikaInstance {
         }
     }
 
-    /**
-     * Extracts the text of a document with this job's parser.
-     *
-     * @param indexedChars maximum number of characters to extract
-     * @param stream document content
-     * @param metadata Tika metadata, filled during extraction
-     * @return the extracted text
-     * @throws IOException on stream errors
-     * @throws TikaException on parser errors
-     */
-    String extractText(int indexedChars, InputStream stream, Metadata metadata) throws IOException, TikaException {
+    ExtractResult extractText(int indexedChars, InputStream stream, Metadata metadata, String password)
+            throws IOException {
         WriteOutContentHandler handler = new WriteOutContentHandler(indexedChars);
         try {
-            parser.parse(stream, new BodyContentHandler(handler), metadata, context);
+            parser.parse(stream, new BodyContentHandler(handler), metadata, createParseContext(password));
         } catch (WriteLimitReachedException e) {
             String resourceName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
             logger.debug("We reached the limit we set ({}) for {}: {}", indexedChars, resourceName, e.getMessage());
+            return ExtractResult.ok(handler.toString());
         } catch (SAXException e) {
-            throw new TikaException("Unexpected SAX processing failure", e);
+            return classifyFailure(new TikaException("Unexpected SAX processing failure", e));
         } catch (ZeroByteFileException e) {
             String resourceName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
             logger.debug("Got an empty file for {}, so we are just skipping it.", resourceName);
+            return ExtractResult.ok(handler.toString());
+        } catch (Exception e) {
+            return classifyFailure(e);
         }
-        return handler.toString();
+        return ExtractResult.ok(handler.toString());
+    }
+
+    private ParseContext createParseContext(String password) {
+        ParseContext parseContext = new ParseContext();
+        parseContext.set(Parser.class, context.get(Parser.class));
+
+        TesseractOCRConfig ocrConfig = context.get(TesseractOCRConfig.class);
+        if (ocrConfig != null) {
+            parseContext.set(TesseractOCRConfig.class, ocrConfig);
+        }
+
+        if (password != null) {
+            parseContext.set(PasswordProvider.class, metadata -> password);
+        }
+
+        return parseContext;
+    }
+
+    private static ExtractResult classifyFailure(Exception e) {
+        return causedBy(e, EncryptedDocumentException.class) ? ExtractResult.encrypted(e) : ExtractResult.failed(e);
+    }
+
+    private static boolean causedBy(Throwable throwable, Class<? extends Throwable> type) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     static synchronized LanguageDetector langDetector() {
