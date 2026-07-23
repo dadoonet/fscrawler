@@ -49,12 +49,14 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -117,6 +119,8 @@ public class FsParser implements Runnable, AutoCloseable {
     /** Null when loop == 0 (REST-only mode); no crawl is performed. */
     private final FsCrawlerExtensionFsProvider crawlerPlugin;
 
+    private final FsCrawlerExtensionPasswordProvider passwordProvider;
+
     private final String metadataFilename;
     private final byte[] staticMetadata;
     /** Null json/xml jobs: documents passed through without Tika extraction. */
@@ -138,6 +142,18 @@ public class FsParser implements Runnable, AutoCloseable {
             Integer loop,
             boolean rest,
             FsCrawlerExtensionFsProvider crawlerPlugin) {
+        this(fsSettings, config, managementService, documentService, loop, rest, crawlerPlugin, null);
+    }
+
+    public FsParser(
+            FsSettings fsSettings,
+            Path config,
+            FsCrawlerManagementService managementService,
+            FsCrawlerDocumentService documentService,
+            Integer loop,
+            boolean rest,
+            FsCrawlerExtensionFsProvider crawlerPlugin,
+            FsCrawlerExtensionPasswordProvider passwordProvider) {
         this.fsSettings = fsSettings;
         this.checkpointHandler = new FsCrawlerCheckpointFileHandler(config);
         this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
@@ -146,6 +162,7 @@ public class FsParser implements Runnable, AutoCloseable {
         this.managementService = managementService;
         this.documentService = documentService;
         this.crawlerPlugin = crawlerPlugin;
+        this.passwordProvider = passwordProvider;
 
         this.loop = loop;
         this.rest = rest;
@@ -1217,6 +1234,7 @@ public class FsParser implements Runnable, AutoCloseable {
             ScanStatistic stats,
             String dirname,
             InputStream inputStream,
+            TikaDocParser.InputStreamSupplier reopenableInputStream,
             long filesize,
             InputStream externalTags)
             throws Exception {
@@ -1304,7 +1322,11 @@ public class FsParser implements Runnable, AutoCloseable {
                     doc.setObject(XmlDocParser.generateMap(inputStream));
                 } else {
                     // Extracting content with Tika
-                    tikaDocParser.generate(inputStream, doc, filesize);
+                    if (reopenableInputStream != null) {
+                        tikaDocParser.generate(reopenableInputStream, doc, filesize, null, passwordProvider);
+                    } else {
+                        tikaDocParser.generate(inputStream, doc, filesize);
+                    }
                 }
 
                 // Merge static metadata if available
@@ -1406,14 +1428,19 @@ public class FsParser implements Runnable, AutoCloseable {
             throws Exception {
         InputStream inputStream = null;
         InputStream metadataStream = null;
+        TikaDocParser.InputStreamSupplier reopenableInputStream = null;
         try {
-            if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
-                inputStream = crawlerPlugin.getInputStream(child);
+            if (fsSettings.getFs().isJsonSupport() || fsSettings.getFs().isXmlSupport()) {
+                if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
+                    inputStream = crawlerPlugin.getInputStream(child);
+                }
+            } else {
+                reopenableInputStream = createReopenableInputStreamSupplier(child);
             }
             if (metadataFile != null) {
                 metadataStream = crawlerPlugin.getInputStream(metadataFile);
             }
-            indexFile(child, stats, filepath, inputStream, child.getSize(), metadataStream);
+            indexFile(child, stats, filepath, inputStream, reopenableInputStream, child.getSize(), metadataStream);
             if (skipCount > 0) {
                 skipCount--;
             } else {
@@ -1437,6 +1464,29 @@ public class FsParser implements Runnable, AutoCloseable {
                 crawlerPlugin.closeInputStream(inputStream);
             }
         }
+    }
+
+    private TikaDocParser.InputStreamSupplier createReopenableInputStreamSupplier(FileAbstractModel child) {
+        return () -> {
+            InputStream delegate = crawlerPlugin.getInputStream(child);
+            return new FilterInputStream(delegate) {
+                private boolean closed;
+
+                @Override
+                public void close() throws IOException {
+                    if (closed) {
+                        return;
+                    }
+                    closed = true;
+                    try {
+                        crawlerPlugin.closeInputStream(delegate);
+                    } catch (FsCrawlerPluginException e) {
+                        throw new IOException(
+                                "Unable to close crawl input stream for [" + child.getFullpath() + "]", e);
+                    }
+                }
+            };
+        };
     }
 
     private void indexRawJsonContent(
