@@ -121,8 +121,7 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
                     }
                   ]
                 }
-                """
-                .formatted(index, id, index, id, reason);
+                """.formatted(index, id, index, id, reason);
 
         ElasticsearchBulkResponse bulkResponse = new ElasticsearchBulkResponse(response);
 

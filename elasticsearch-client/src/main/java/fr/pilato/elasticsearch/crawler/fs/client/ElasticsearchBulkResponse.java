@@ -42,8 +42,8 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
         List<Map<String, Object>> responseItems = document.read("$.items");
         for (Map<String, Object> responseItem : responseItems) {
             @SuppressWarnings("unchecked")
-            Map<String, Object> jsonItemResponse =
-                    (Map<String, Object>) responseItem.entrySet().iterator().next().getValue();
+            Map<String, Object> jsonItemResponse = (Map<String, Object>)
+                    responseItem.entrySet().iterator().next().getValue();
             String index = (String) jsonItemResponse.get("_index");
             String id = (String) jsonItemResponse.get("_id");
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
