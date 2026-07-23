@@ -61,7 +61,7 @@ public class PasswordDiskPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void parseSettings() {
-            configuredUrl = providerConfig == null ? null : asString(providerConfig.get("url"));
+            configuredUrl = asString(providerConfig.get("url"));
             fsRoot = normalizePath(
                     fsSettings != null && fsSettings.getFs() != null
                             ? fsSettings.getFs().getUrl()
@@ -171,7 +171,9 @@ public class PasswordDiskPlugin extends FsCrawlerPlugin {
             }
 
             @Override
-            public void close() {}
+            public void close() {
+                // Session holds only candidate paths; nothing to release.
+            }
 
             private Optional<String> readPassword(Path candidate) {
                 if (Files.notExists(candidate)) {

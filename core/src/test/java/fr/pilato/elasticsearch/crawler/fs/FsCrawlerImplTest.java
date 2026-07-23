@@ -104,7 +104,9 @@ class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
 
     private static class StubPluginsManager extends FsCrawlerPluginsManager {
         @Override
-        public void startPasswordProviders(FsSettings settings) {}
+        public void startPasswordProviders(FsSettings settings) {
+            // Stub: password providers are resolved via findPasswordProvider only.
+        }
 
         @Override
         public FsCrawlerExtensionPasswordProvider findPasswordProvider(String type) {
@@ -122,7 +124,9 @@ class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {}
+        public void start(FsSettings settings, PasswordProviderLookup lookup) {
+            // Stub noop provider needs no startup work.
+        }
 
         @Override
         public PasswordSession open(String documentPath) {
@@ -133,11 +137,15 @@ class FsCrawlerImplTest extends AbstractFSCrawlerTestCase {
                 }
 
                 @Override
-                public void close() {}
+                public void close() {
+                    // Stub session has no resources.
+                }
             };
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            // Stub provider has no resources.
+        }
     }
 }

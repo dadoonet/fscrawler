@@ -69,7 +69,9 @@ public class PasswordStaticPlugin extends FsCrawlerPlugin {
                 }
 
                 @Override
-                public void close() {}
+                public void close() {
+                    // Static session only iterates an in-memory list.
+                }
             };
         }
 
@@ -80,10 +82,6 @@ public class PasswordStaticPlugin extends FsCrawlerPlugin {
         }
 
         private List<String> resolvePasswords() {
-            if (providerConfig == null) {
-                return List.of();
-            }
-
             List<String> values = asStringList(providerConfig.get("values"));
             if (!values.isEmpty()) {
                 return values;

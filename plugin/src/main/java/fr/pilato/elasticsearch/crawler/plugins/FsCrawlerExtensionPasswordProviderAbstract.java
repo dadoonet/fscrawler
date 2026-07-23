@@ -41,8 +41,8 @@ public abstract class FsCrawlerExtensionPasswordProviderAbstract implements FsCr
 
     protected FsSettings fsSettings;
     protected PasswordProviderLookup lookup;
-    /** Configuration map for this provider type, or {@code null} when absent. */
-    protected Map<String, Object> providerConfig;
+    /** Configuration map for this provider type; empty when the section is absent. */
+    protected Map<String, Object> providerConfig = Map.of();
 
     protected abstract void parseSettings();
 
@@ -58,10 +58,9 @@ public abstract class FsCrawlerExtensionPasswordProviderAbstract implements FsCr
         try {
             parseSettings();
             validateSettings();
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            throw e;
         } catch (RuntimeException e) {
-            if (e instanceof FsCrawlerIllegalConfigurationException) {
-                throw e;
-            }
             throw new FsCrawlerIllegalConfigurationException(
                     "Invalid passwords.providers." + getType() + " settings: " + e.getMessage(), e);
         }
@@ -71,18 +70,19 @@ public abstract class FsCrawlerExtensionPasswordProviderAbstract implements FsCr
     public void close() {
         fsSettings = null;
         lookup = null;
-        providerConfig = null;
+        providerConfig = Map.of();
     }
 
     protected static Map<String, Object> extractProviderConfig(FsSettings settings, String type) {
         if (settings == null) {
-            return null;
+            return Map.of();
         }
         Passwords passwords = settings.getPasswords();
         if (passwords == null) {
-            return null;
+            return Map.of();
         }
-        return passwords.getProviderConfig(type);
+        Map<String, Object> config = passwords.getProviderConfig(type);
+        return config == null ? Map.of() : config;
     }
 
     protected static String asString(Object value) {

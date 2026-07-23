@@ -1244,7 +1244,9 @@ class TikaDocParserTest extends DocParserTestCase {
             @Override
             public void start(
                     fr.pilato.elasticsearch.crawler.fs.settings.FsSettings settings,
-                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {}
+                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {
+                // Provider must not be started for this explicit-password assertion.
+            }
 
             @Override
             public PasswordSession open(String documentPath) {
@@ -1256,12 +1258,16 @@ class TikaDocParserTest extends DocParserTestCase {
                     }
 
                     @Override
-                    public void close() {}
+                    public void close() {
+                        // Test session has no resources.
+                    }
                 };
             }
 
             @Override
-            public void close() {}
+            public void close() {
+                // Test provider has no resources.
+            }
         };
 
         Doc doc = extractFromFile("test-protected.docx", FsSettingsLoader.load(), "thisdoesnotmatch", provider);
@@ -1283,7 +1289,9 @@ class TikaDocParserTest extends DocParserTestCase {
             @Override
             public void start(
                     fr.pilato.elasticsearch.crawler.fs.settings.FsSettings settings,
-                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {}
+                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {
+                // Candidates are hard-coded in open()/next() for this retry test.
+            }
 
             @Override
             public PasswordSession open(String documentPath) {
@@ -1300,12 +1308,16 @@ class TikaDocParserTest extends DocParserTestCase {
                     }
 
                     @Override
-                    public void close() {}
+                    public void close() {
+                        // Test session has no resources.
+                    }
                 };
             }
 
             @Override
-            public void close() {}
+            public void close() {
+                // Test provider has no resources.
+            }
         };
 
         Doc doc = extractFromFile("test-protected.docx", FsSettingsLoader.load(), null, provider);

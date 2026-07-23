@@ -77,7 +77,9 @@ public class TestPasswordProvider implements FsCrawlerExtensionPasswordProvider 
             }
 
             @Override
-            public void close() {}
+            public void close() {
+                // Test session has no resources.
+            }
         };
     }
 

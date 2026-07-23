@@ -155,7 +155,9 @@ class FsParserPasswordProviderTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {}
+        public void start(FsSettings settings, PasswordProviderLookup lookup) {
+            // Recording stub does not use job settings.
+        }
 
         @Override
         public PasswordSession open(String documentPath) {
@@ -166,12 +168,16 @@ class FsParserPasswordProviderTest extends AbstractFSCrawlerTestCase {
                 }
 
                 @Override
-                public void close() {}
+                public void close() {
+                    // Recording stub session has no resources.
+                }
             };
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            // Recording stub provider has no resources.
+        }
     }
 
     private static class RecordingFsProvider implements FsCrawlerExtensionFsProvider {
@@ -184,10 +190,14 @@ class FsParserPasswordProviderTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings fsSettings, String restSettings) {}
+        public void start(FsSettings fsSettings, String restSettings) {
+            // Recording stub ignores REST settings.
+        }
 
         @Override
-        public void stop() {}
+        public void stop() {
+            // Recording stub has no background work to stop.
+        }
 
         @Override
         public String getType() {
@@ -210,7 +220,9 @@ class FsParserPasswordProviderTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void closeConnection() {}
+        public void closeConnection() {
+            // Recording stub keeps no remote connection.
+        }
 
         @Override
         public boolean exists(String directory) {
@@ -239,6 +251,8 @@ class FsParserPasswordProviderTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            // Recording stub provider has no resources beyond closed streams.
+        }
     }
 }

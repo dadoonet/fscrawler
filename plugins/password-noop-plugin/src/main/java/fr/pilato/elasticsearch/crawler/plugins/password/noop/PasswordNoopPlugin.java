@@ -60,7 +60,9 @@ public class PasswordNoopPlugin extends FsCrawlerPlugin {
                 }
 
                 @Override
-                public void close() {}
+                public void close() {
+                    // Noop session has no resources.
+                }
             };
         }
     }

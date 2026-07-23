@@ -197,47 +197,44 @@ public class FsSettingsLoader extends MetaFileHandler {
         Optional<String> provider = gestalt.getConfigOptional("passwords.provider", String.class);
         Map<String, Object> providers = loadPasswordProvidersFromFiles(configFiles);
 
-        if (provider.isEmpty() && providers == null) {
+        if (provider.isEmpty() && providers.isEmpty()) {
             return null;
         }
 
         Passwords passwords = new Passwords();
         passwords.setProvider(provider.orElse("noop"));
-        passwords.setProviders(providers);
+        passwords.setProviders(providers.isEmpty() ? null : providers);
         return passwords;
     }
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> loadPasswordProvidersFromFiles(Path... configFiles) {
+        Map<String, Object> merged = new LinkedHashMap<>();
         if (configFiles == null || configFiles.length == 0) {
-            return null;
+            return merged;
         }
 
         Yaml yaml = new Yaml();
-        Map<String, Object> merged = new LinkedHashMap<>();
         for (Path configFile : configFiles) {
             if (configFile == null || Files.notExists(configFile)) {
                 continue;
             }
             try (InputStream inputStream = Files.newInputStream(configFile)) {
                 Object loaded = yaml.load(inputStream);
-                if (!(loaded instanceof Map<?, ?> root)) {
-                    continue;
+                if (loaded instanceof Map<?, ?> root) {
+                    Object passwordsNode = root.get("passwords");
+                    if (passwordsNode instanceof Map<?, ?> passwordsMap) {
+                        Object providersNode = passwordsMap.get("providers");
+                        if (providersNode instanceof Map<?, ?> providersMap) {
+                            deepMerge(merged, (Map<String, Object>) providersMap);
+                        }
+                    }
                 }
-                Object passwordsNode = root.get("passwords");
-                if (!(passwordsNode instanceof Map<?, ?> passwordsMap)) {
-                    continue;
-                }
-                Object providersNode = passwordsMap.get("providers");
-                if (!(providersNode instanceof Map<?, ?> providersMap)) {
-                    continue;
-                }
-                deepMerge(merged, (Map<String, Object>) providersMap);
             } catch (IOException e) {
                 logger.debug("Can not read [{}] while loading passwords.providers: {}", configFile, e.getMessage());
             }
         }
-        return merged.isEmpty() ? null : merged;
+        return merged;
     }
 
     @SuppressWarnings("unchecked")

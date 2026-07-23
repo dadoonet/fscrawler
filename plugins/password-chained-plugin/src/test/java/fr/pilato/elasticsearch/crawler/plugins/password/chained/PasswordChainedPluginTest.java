@@ -174,7 +174,9 @@ class PasswordChainedPluginTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {}
+        public void start(FsSettings settings, PasswordProviderLookup lookup) {
+            // Stub child provider: configuration is irrelevant for chained ordering tests.
+        }
 
         @Override
         public PasswordSession open(String documentPath) {
@@ -201,6 +203,8 @@ class PasswordChainedPluginTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void close() {}
+        public void close() {
+            // Stub provider keeps no resources.
+        }
     }
 }

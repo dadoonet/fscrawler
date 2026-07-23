@@ -54,10 +54,6 @@ public class PasswordChainedPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void parseSettings() {
-            if (providerConfig == null) {
-                providerTypes = List.of();
-                return;
-            }
             providerTypes = asStringList(providerConfig.get("providers"));
         }
 
