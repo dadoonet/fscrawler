@@ -17,6 +17,7 @@
         <module>password-noop-plugin</module>
         <module>password-disk-plugin</module>
         <module>password-static-plugin</module>
+        <module>password-chained-plugin</module>
         <module>fs-s3-plugin</module>
         <module>fs-http-plugin</module>
         <module>fs-ftp-plugin</module>
