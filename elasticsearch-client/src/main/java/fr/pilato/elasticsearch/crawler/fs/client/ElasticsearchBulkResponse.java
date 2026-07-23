@@ -38,27 +38,27 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
 
     public ElasticsearchBulkResponse(String response) {
         exception = null;
-        // We need to parse the response object
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
-        List<String> ids = document.read("$.._id");
-        ids.forEach(id -> {
-            Map<String, Object> jsonItemResponse =
-                    ((List<Map<String, Object>>) document.read("$..[?(@._id == '" + id + "')]")).get(0);
+        List<Map<String, Object>> responseItems = document.read("$.items");
+        for (Map<String, Object> responseItem : responseItems) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> jsonItemResponse = (Map<String, Object>)
+                    responseItem.entrySet().iterator().next().getValue();
             String index = (String) jsonItemResponse.get("_index");
+            String id = (String) jsonItemResponse.get("_id");
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
             itemResponse.setOperation(new ElasticsearchIndexOperation(index, id, null, null));
+            @SuppressWarnings("unchecked")
             Map<String, Object> error = (Map<String, Object>) jsonItemResponse.get("error");
             if (error != null) {
                 String errorMessage = (String) error.get("reason");
-                // Create on an existing _id is expected when deduplicating (first writer wins).
-                // ES still sets errors=true for that case, so we ignore this item and recompute below.
                 if (!"version_conflict_engine_exception".equals(error.get("type"))) {
                     itemResponse.setFailureMessage(errorMessage);
                     itemResponse.setFailed(true);
                 }
             }
             items.add(itemResponse);
-        });
+        }
         errors = items.stream().anyMatch(BulkItemResponse::isFailed);
     }
 
