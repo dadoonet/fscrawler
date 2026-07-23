@@ -48,6 +48,9 @@ For a document, it tries candidates in this order:
 2. `<relative/path/to/dir>/.password`, then each parent directory `.password`
 3. `<disk-root>/.password`
 
+Each sidecar file is plain text UTF-8. The first non-empty trimmed line is the password.
+Missing or empty files are skipped and the next candidate is tried.
+
 When `passwords.providers.disk.url` is not set, the disk root defaults to `fs.url`.
 
 ### Disk mirror under `fs.url`
