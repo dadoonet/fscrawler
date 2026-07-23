@@ -20,8 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
-
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -31,9 +29,7 @@ import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
 
-@Execution(SAME_THREAD)
 class PasswordsSettingsTest extends AbstractFSCrawlerTestCase {
 
     @Test
