@@ -53,7 +53,7 @@ public abstract class FsCrawlerExtensionPasswordProviderAbstract implements FsCr
         this.fsSettings = settings;
         this.lookup = lookup;
         this.providerConfig = extractProviderConfig(settings, getType());
-        logger.trace("Starting password provider [{}] with config {}", getType(), providerConfig);
+        logger.trace("Starting password provider [{}] with config keys {}", getType(), providerConfig.keySet());
 
         try {
             parseSettings();
