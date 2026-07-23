@@ -145,6 +145,8 @@ public class FsParser implements Runnable, AutoCloseable {
         this(fsSettings, config, managementService, documentService, loop, rest, crawlerPlugin, null);
     }
 
+    // Wiring constructor: a context object would still expose the same dependencies at the call site.
+    @SuppressWarnings("java:S107")
     public FsParser(
             FsSettings fsSettings,
             Path config,
