@@ -45,7 +45,31 @@ Tika already supports this via `org.apache.tika.parser.PasswordProvider`.
 | Disk cascade | `<rel>.password` then parent `.password` files up to disk root |
 | REST password | Court-circuits providers; parse **directly** with that password |
 | REST multi-retry | Spool to memory/temp when provider may yield multiple candidates |
+| Maven modules | **One module per built-in provider** under `plugins/` (same pattern as `fs-*-plugin`) |
 | Delivery | **New PR from current `master`**; close #2241 as superseded |
+
+## Maven modules
+
+Follow the existing FS plugin layout: API in `plugin/`, one artifact per provider under `plugins/`, wired into `plugins/pom.xml`, `cli` classpath, and dependencyManagement in the root POM.
+
+| Module | Artifact (proposed) | Contents |
+|---|---|---|
+| `plugin/` (existing) | `fscrawler-plugin` | `FsCrawlerExtensionPasswordProvider`, `PasswordSession`, manager lookup/SPI |
+| `settings/` (existing) | `fscrawler-settings` | `Passwords` settings model + validation |
+| `tika/` (existing) | `fscrawler-tika` | Parse/retry orchestration + Tika `PasswordProvider` bridge |
+| `core/` / `rest/` (existing) | — | Crawl reopen-stream; REST court-circuit + spool when needed |
+| `plugins/password-noop-plugin` | `fscrawler-password-noop-plugin` | type `noop` |
+| `plugins/password-disk-plugin` | `fscrawler-password-disk-plugin` | type `disk` |
+| `plugins/password-static-plugin` | `fscrawler-password-static-plugin` | type `static` |
+| `plugins/password-chained-plugin` | `fscrawler-password-chained-plugin` | type `chained` |
+
+Packaging notes:
+
+- Each password plugin is a PF4J plugin JAR (MANIFEST + SPI), same as `fscrawler-fs-local-plugin`
+- `cli` depends on all four built-ins so they ship on the distribution classpath (like current fs-* plugins)
+- Third-party providers are additional JARs in the distribution `plugins/` directory
+- `chained` resolves children at runtime via `FsCrawlerPluginsManager` (no compile-time dependency on `disk`/`static` JARs)
+- Future `password-es-plugin` / vault plugins add a module the same way without touching the API module
 
 ## Architecture
 
@@ -87,12 +111,12 @@ public interface PasswordSession extends AutoCloseable {
 
 ### Built-in providers (v1)
 
-| Type | Role |
-|---|---|
-| `noop` | Default. `open()` returns a session whose first `next()` is empty |
-| `disk` | Sidecar files under a configurable root (path mirror + directory walk-up) |
-| `static` | Ordered list from settings |
-| `chained` | Opens child providers in order; exhausts N before N+1 |
+| Type | Module | Role |
+|---|---|---|
+| `noop` | `password-noop-plugin` | Default. `open()` returns a session whose first `next()` is empty |
+| `disk` | `password-disk-plugin` | Sidecar files under a configurable root (path mirror + directory walk-up) |
+| `static` | `password-static-plugin` | Ordered list from settings |
+| `chained` | `password-chained-plugin` | Opens child providers in order; exhausts N before N+1 |
 
 Third-party JARs dropped into the distribution `plugins/` directory can register new types and be referenced by `passwords.provider` or listed under `chained`.
 
@@ -122,7 +146,7 @@ passwords:
 
 - If `passwords` section omitted: `provider: noop` (current behavior for encrypted docs: empty content)
 - `disk.url` defaults to `fs.url` when unset
-- Auto-exclude password sidecars from crawling by adding `*.password` and `*/.password` to the effective excludes (merged with user `fs.excludes`), so secrets are not indexed as documents
+- Auto-exclude password sidecars from indexing: any file named `.password` or whose name ends with `.password` (merged into effective `fs.excludes` so users can still override only if explicitly required later; v1 always excludes them)
 
 ## Disk provider resolution
 
@@ -240,15 +264,16 @@ Reuse protected fixtures from #2241 (`test-protected.pdf`, `test-protected.docx`
 
 ## Implementation outline (for later plan)
 
-1. Settings model + defaults + validation  
-2. Extension point + plugin manager lookup + `noop`  
-3. Parse/retry orchestration in `TikaDocParser` (stream reopen / spool)  
-4. REST password court-circuit (port from #2241 as needed)  
-5. `static`, then `disk`, then `chained`  
-6. Sidecar excludes  
-7. Unit + integration tests  
-8. User docs  
-9. Close #2241 as superseded  
+1. Settings model + defaults + validation (`settings/`)  
+2. Extension point + plugin manager lookup (`plugin/`)  
+3. Maven modules for the four built-in providers; ship `noop` first  
+4. Parse/retry orchestration in `TikaDocParser` (stream reopen / spool)  
+5. REST password court-circuit (port from #2241 as needed)  
+6. `static`, then `disk`, then `chained` modules  
+7. Sidecar excludes  
+8. Unit + integration tests  
+9. User docs  
+10. Close #2241 as superseded  
 
 ## Open points intentionally deferred
 
