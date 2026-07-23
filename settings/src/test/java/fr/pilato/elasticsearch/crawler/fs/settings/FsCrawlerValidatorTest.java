@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -29,6 +30,51 @@ import org.junit.jupiter.api.Test;
 
 class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
+
+    @Test
+    void chainedWithoutProvidersIsFatal() {
+        FsSettings settings = FsSettingsLoader.load();
+        settings.setPasswords(new Passwords());
+        settings.getPasswords().setProvider("chained");
+        settings.getPasswords().setProviders(new PasswordProviders());
+        settings.getPasswords().getProviders().setChained(new ChainedPasswordProviderSettings());
+
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+    }
+
+    @Test
+    void chainedSelfRefRejected() {
+        FsSettings settings = FsSettingsLoader.load();
+        settings.setPasswords(new Passwords());
+        settings.getPasswords().setProvider("chained");
+        settings.getPasswords().setProviders(new PasswordProviders());
+        ChainedPasswordProviderSettings chained = new ChainedPasswordProviderSettings();
+        chained.setProviders(List.of("chained"));
+        settings.getPasswords().getProviders().setChained(chained);
+
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+    }
+
+    @Test
+    void passwordSidecarExcludesMerged() {
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setExcludes(List.of("*/~*"));
+
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+        Assertions.assertThat(settings.getFs().getExcludes()).contains("*.password", "*/.password");
+        Assertions.assertThat(FsCrawlerUtil.isExcluded(
+                        "foo.txt.password", settings.getFs().getExcludes()))
+                .isTrue();
+        Assertions.assertThat(FsCrawlerUtil.isExcluded(
+                        "foo/.password", settings.getFs().getExcludes()))
+                .isTrue();
+        Assertions.assertThat(
+                        FsCrawlerUtil.isExcluded("foo.txt", settings.getFs().getExcludes()))
+                .isFalse();
+    }
 
     @Test
     void settingsValidation() {

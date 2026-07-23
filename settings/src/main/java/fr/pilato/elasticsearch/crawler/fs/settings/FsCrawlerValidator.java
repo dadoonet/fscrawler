@@ -23,9 +23,13 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 import fr.pilato.elasticsearch.crawler.fs.framework.Digests;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerValidator {
+    private static final String CHAINED_PASSWORD_PROVIDER = "chained";
+    private static final List<String> PASSWORD_SIDECAR_EXCLUDES = List.of("*.password", "*/.password");
 
     private FsCrawlerValidator() {
         // Utility class, do not instantiate
@@ -39,6 +43,12 @@ public class FsCrawlerValidator {
      * @return true if we found fatal errors and should prevent from starting
      */
     public static boolean validateSettings(Logger logger, FsSettings settings) {
+        ensurePasswordSidecarExcludes(settings);
+
+        if (validatePasswordSettings(logger, settings)) {
+            return true;
+        }
+
         if (settings.getElasticsearch().getUsername() != null
                 || settings.getElasticsearch().getPassword() != null) {
             logger.warn("username/password is deprecated. Use apiKey instead.");
@@ -76,6 +86,47 @@ public class FsCrawlerValidator {
 
         if (settings.getFs().isAclSupport() && !settings.getFs().isAttributesSupport()) {
             logger.warn("acl_support is set to true but attributes_support is false. ACL collection is disabled.");
+        }
+
+        return false;
+    }
+
+    private static void ensurePasswordSidecarExcludes(FsSettings settings) {
+        List<String> excludes = settings.getFs().getExcludes();
+        List<String> mergedExcludes = excludes == null ? new ArrayList<>() : new ArrayList<>(excludes);
+        boolean updated = excludes == null;
+
+        for (String passwordSidecarExclude : PASSWORD_SIDECAR_EXCLUDES) {
+            if (!mergedExcludes.contains(passwordSidecarExclude)) {
+                mergedExcludes.add(passwordSidecarExclude);
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            settings.getFs().setExcludes(mergedExcludes);
+        }
+    }
+
+    private static boolean validatePasswordSettings(Logger logger, FsSettings settings) {
+        Passwords passwords = settings.getPasswords();
+        if (passwords == null || !CHAINED_PASSWORD_PROVIDER.equals(passwords.getProvider())) {
+            return false;
+        }
+
+        PasswordProviders providers = passwords.getProviders();
+        ChainedPasswordProviderSettings chained = providers == null ? null : providers.getChained();
+        List<String> chainedProviders = chained == null ? null : chained.getProviders();
+
+        if (chainedProviders == null || chainedProviders.isEmpty()) {
+            logger.error(
+                    "passwords.provider [chained] requires passwords.providers.chained.providers. Disabling crawler");
+            return true;
+        }
+
+        if (chainedProviders.stream().anyMatch(CHAINED_PASSWORD_PROVIDER::equals)) {
+            logger.error("passwords.providers.chained.providers cannot contain [chained]. Disabling crawler");
+            return true;
         }
 
         return false;
