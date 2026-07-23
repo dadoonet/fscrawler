@@ -29,8 +29,10 @@ import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerValidator {
     private static final String CHAINED_PROVIDER_TYPE = "chained";
-    // Split literal to avoid Sonar hard-coded credential rule (java:S2068) on "*.password".
+    // Filename suffix for document password sidecars (*.password / */.password), not a credential.
+    @SuppressWarnings("java:S2068")
     private static final String SIDECAR_SUFFIX = "password";
+
     private static final List<String> DOCUMENT_SIDECAR_EXCLUDES =
             List.of("*." + SIDECAR_SUFFIX, "*/." + SIDECAR_SUFFIX);
 

@@ -177,6 +177,35 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void multipartUploadRequiresConfiguredTempDirWhenSpoolingToDisk() {
+        settings.getFs().setTempDir(null);
+        documentApi = new DocumentApi(settings, mock(FsCrawlerDocumentService.class), pluginsManager, tikaDocParser);
+
+        String filename = randomFilename("pdf");
+        byte[] content = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 1024, 1024)
+                .getBytes(StandardCharsets.UTF_8);
+        long declaredSize = 65L * 1024;
+
+        assertThatThrownBy(() -> documentApi.addDocument(
+                        null,
+                        "true",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        new ByteArrayInputStream(content),
+                        formData(filename, declaredSize)))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("tempDir");
+    }
+
+    @Test
     void thirdPartyUploadPrefersHeaderPasswordAndSkipsJobPasswordProvider() {
         configurePasswordProvider();
 
