@@ -217,6 +217,9 @@ public class DocumentApi implements RestApi {
         return removeDocumentInDocumentService(id, null, headerIndex == null ? queryParamIndex : headerIndex);
     }
 
+    // Multipart upload keeps JAX-RS-resolved fields together; extracting a param object would not reduce call-site
+    // noise.
+    @SuppressWarnings("java:S107")
     private UploadResponse uploadToDocumentService(
             String debug,
             String simulate,
