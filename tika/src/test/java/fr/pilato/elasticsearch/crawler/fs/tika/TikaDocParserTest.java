@@ -38,10 +38,12 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -1313,6 +1315,69 @@ class TikaDocParserTest extends DocParserTestCase {
         Assertions.assertThat(openedPath).hasValue("test-protected.docx");
     }
 
+    /**
+     * A shared parser instance must keep password state isolated per parse call even when protected documents are
+     * extracted in parallel. Guards against password state leaking through shared ParseContext instances.
+     */
+    @Test
+    @Slow
+    void concurrentProtectedDocumentsWithDifferentPasswordsStayIsolated() throws Exception {
+        TikaDocParser parser = new TikaDocParser(FsSettingsLoader.load());
+        int iterations = RandomizedTest.randomIntInRange(randomizedRandomForTests, 10, 20);
+
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        try {
+            for (int i = 0; i < iterations; i++) {
+                CountDownLatch ready = new CountDownLatch(4);
+                CountDownLatch start = new CountDownLatch(1);
+
+                Future<Doc> protectedDocxWithPassword = executor.submit(
+                        () -> parseWithSharedStart(ready, start, parser, "test-protected.docx", "david"));
+                Future<Doc> protectedDocxWithoutPassword =
+                        executor.submit(() -> parseWithSharedStart(ready, start, parser, "test-protected.docx", null));
+                Future<Doc> protectedDocxWithWrongPassword = executor.submit(
+                        () -> parseWithSharedStart(ready, start, parser, "test-protected.docx", "thisdoesnotmatch"));
+                Future<Doc> protectedPdfWithPassword = executor.submit(
+                        () -> parseWithSharedStart(ready, start, parser, "test-protected.pdf", "pdfpassword"));
+
+                Assertions.assertThat(ready.await(5, TimeUnit.SECONDS))
+                        .as("iteration %d: concurrent protected parses should all be ready", i)
+                        .isTrue();
+                start.countDown();
+
+                Assertions.assertThat(protectedDocxWithPassword
+                                .get(30, TimeUnit.SECONDS)
+                                .getContent())
+                        .as("iteration %d: explicit docx password must keep unlocking that doc only", i)
+                        .contains("This is a sample text available in page");
+
+                Doc docxWithoutPassword = protectedDocxWithoutPassword.get(30, TimeUnit.SECONDS);
+                Assertions.assertThat(docxWithoutPassword.getFile().getContentType())
+                        .as("iteration %d: missing password must still leave the docx protected", i)
+                        .isEqualTo("application/x-tika-ooxml-protected");
+                Assertions.assertThat(docxWithoutPassword.getContent())
+                        .as("iteration %d: missing password must not inherit another thread's password", i)
+                        .isNullOrEmpty();
+
+                Doc docxWithWrongPassword = protectedDocxWithWrongPassword.get(30, TimeUnit.SECONDS);
+                Assertions.assertThat(docxWithWrongPassword.getFile().getContentType())
+                        .as("iteration %d: wrong password must still leave the docx protected", i)
+                        .isEqualTo("application/x-tika-ooxml-protected");
+                Assertions.assertThat(docxWithWrongPassword.getContent())
+                        .as("iteration %d: wrong password must not inherit another thread's password", i)
+                        .isNullOrEmpty();
+
+                Assertions.assertThat(protectedPdfWithPassword
+                                .get(30, TimeUnit.SECONDS)
+                                .getContent())
+                        .as("iteration %d: explicit pdf password must keep unlocking the pdf", i)
+                        .contains("This is a sample text available in page");
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     @Test
     void docxWithEmbeddedBadPDF() throws IOException {
         Doc doc = extractFromFile("issue-stackoverflow.docx");
@@ -1370,6 +1435,21 @@ class TikaDocParserTest extends DocParserTestCase {
         // The filename should still be set
         Assertions.assertThat(doc.getFile().getFilename()).isEqualTo(mockFilename);
 
+        return doc;
+    }
+
+    private Doc parseWithSharedStart(
+            CountDownLatch ready, CountDownLatch start, TikaDocParser parser, String filename, String password)
+            throws Exception {
+        ready.countDown();
+        if (start.await(5, TimeUnit.SECONDS) == false) {
+            throw new IllegalStateException("Timed out waiting to start concurrent protected parse");
+        }
+
+        Doc doc = new Doc();
+        doc.getPath().setReal(filename);
+        doc.getFile().setFilename(filename);
+        parser.generate(() -> getBinaryContent(filename), doc, 0, password, null);
         return doc;
     }
 
