@@ -62,6 +62,7 @@ admin/otel
 admin/fs/index
 admin/fs/simple
 admin/fs/local-fs
+admin/fs/passwords
 admin/fs/document-ids
 admin/fs/tags
 admin/fs/ssh

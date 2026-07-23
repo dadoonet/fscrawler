@@ -156,6 +156,13 @@ tags:
   # optional: add static metadata to all indexed documents
   staticMetaFilename: "/path/to/static_metadata.json"
 
+# optional: configure password lookup for protected documents
+passwords:
+  provider: "disk"
+  providers:
+    disk:
+      url: "/path/to/password-sidecars"
+
 # optional: specify a crawler provider (default is "local")
 # available providers: "local", "ftp", "ssh"
 # provider: "ssh"
@@ -201,6 +208,7 @@ Here is a list of existing top level settings:
 | `name` (mandatory field) | {ref}`simple_crawler`         |
 | `fs`                     | {ref}`local-fs-settings`      |
 | `tags`                   | {ref}`tags`                   |
+| `passwords`              | {ref}`password-settings`      |
 | `elasticsearch`          | {ref}`elasticsearch-settings` |
 | `server`                 | {ref}`ssh-settings`           |
 | `rest`                   | {ref}`rest-service`           |
