@@ -121,7 +121,11 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         this.documentService = restCrawler.getDocumentService();
 
         restServer = new RestServer(
-                fsSettings, managementService, documentService, pluginsManager, restCrawler.getFsParser());
+                fsSettings,
+                managementService,
+                documentService,
+                restCrawler.getPluginsManager(),
+                restCrawler.getFsParser());
         restServer.start();
 
         logger.info(" -> Removing existing index [{}]", getCrawlerName() + "*");
