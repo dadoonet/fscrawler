@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-23  
 **Related:** [#1916](https://github.com/dadoonet/fscrawler/issues/1916), WIP [#2241](https://github.com/dadoonet/fscrawler/pull/2241)  
-**Status:** Draft for review
+**Status:** Approved
 
 ## Problem
 
