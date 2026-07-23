@@ -29,7 +29,7 @@ Review code changes in FSCrawler against project conventions.
 
 ### Commit / PR
 - [ ] Commit message follows `type(scope): emoji description` format
-- [ ] PR targets `master` branch
+- [ ] PR targets `main` branch
 - [ ] PR description explains *why*, not just *what*
 
 Report each item as ✅ pass or ❌ fail with a brief explanation. Suggest fixes for any failures.

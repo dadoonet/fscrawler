@@ -130,13 +130,13 @@ Key directories and their purposes:
 
 The project uses several workflows:
 - `.github/workflows/pr.yml`: Pull request validation
-- `.github/workflows/maven.yml`: Master branch build and deploy
+- `.github/workflows/maven.yml`: Main branch build and deploy
 - Build runs unit tests, integration tests for ES 7.x/8.x/9.x, Docker builds
 
 ## Git Workflow
 
 ### Branches
-- `master`: Main development branch, target for all PRs
+- `main`: Main development branch, target for all PRs
 - Feature branches: `feature/<description>` or `<username>/<description>`
 - Bug fix branches: `fix/<description>` or `fix/xxxx-<description>` where `xxxx` is the issue number.
 
@@ -153,7 +153,7 @@ Closes #xxxx.
 ```
 
 ### Pull Requests
-- Target `master` branch
+- Target `main` branch
 - Ensure all CI checks pass (unit tests, integration tests)
 - PRs are merged via merge commit or squash (maintainer discretion). Very often using mergify.
 

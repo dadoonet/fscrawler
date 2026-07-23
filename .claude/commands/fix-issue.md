@@ -15,7 +15,7 @@ Fix a GitHub issue in FSCrawler following the test-first workflow.
 6. **Create a PR**:
    - Branch name: `fix/<issue-number>-<short-description>`
    - Commit format: `fix(scope): 🐛 description` (see `.claude/rules/git-workflow.md`)
-   - Use `gh pr create` targeting `master`
+   - Use `gh pr create` targeting `main`
    - Reference the issue in the PR body with `Fixes #<number>`
 
 Ask the user for the issue number if not provided.

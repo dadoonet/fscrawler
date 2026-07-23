@@ -156,7 +156,7 @@ Docker Hub tags can usually be overwritten by deploying the same tag again.
 ## Release Drafter
 
 The repository uses [Release Drafter](https://github.com/release-drafter/release-drafter) to
-maintain a **draft** GitHub release on each push to `master`. Tags follow the `fscrawler-{version}`
+maintain a **draft** GitHub release on each push to `main`. Tags follow the `fscrawler-{version}`
 convention. The final published release uses the hybrid notes assembled by `release.sh`.
 
 Logs are written to `release/<release-version>/release.log`. On failure, the script prints the

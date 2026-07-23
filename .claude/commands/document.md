@@ -3,7 +3,7 @@ Update the FSCrawler documentation and generate a changelog summary.
 ## Workflow
 
 ### 1. Analyze recent changes
-Run `git log master..HEAD --oneline` to list commits since diverging from master.
+Run `git log main..HEAD --oneline` to list commits since diverging from main.
 For each commit, identify:
 - What changed (feature, fix, config option, API endpoint, etc.)
 - Which user-facing behaviour is affected

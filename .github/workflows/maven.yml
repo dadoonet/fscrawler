@@ -1,16 +1,16 @@
-name: Build and Deploy the master branch
+name: Build and Deploy the main branch
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Fetch origin/master for Spotless ratchet
-        run: git fetch origin master --depth=1
+      - name: Fetch origin/main for Spotless ratchet
+        run: git fetch origin main --depth=1
       - name: Set up JDK 21 and Maven Central Repository
         uses: actions/setup-java@v5
         with:

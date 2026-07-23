@@ -48,7 +48,7 @@ Current "most stable" versions are:
 
 ## GitHub stats
 
-![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/dadoonet/fscrawler/latest/master)
+![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/dadoonet/fscrawler/latest/main)
 ![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/t/dadoonet/fscrawler)
 ![GitHub contributors](https://img.shields.io/github/contributors/dadoonet/fscrawler)
 

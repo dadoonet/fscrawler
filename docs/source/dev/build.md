@@ -211,13 +211,13 @@ mvn verify -Pnightly
 The project uses [Spotless](https://github.com/diffplug/spotless) to enforce consistent code formatting
 (Java via Palantir Java Format, POM sorting, JSON and YAML formatting).
 
-To check that the code you changed since `origin/master` is correctly formatted, run:
+To check that the code you changed since `origin/main` is correctly formatted, run:
 
 ```shell
 mvn spotless:check
 ```
 
-To check the **entire** codebase (not just files changed since `origin/master`):
+To check the **entire** codebase (not just files changed since `origin/main`):
 
 ```shell
 mvn spotless:check -DratchetFrom=NONE

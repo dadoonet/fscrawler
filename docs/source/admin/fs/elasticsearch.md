@@ -111,7 +111,7 @@ elasticsearch:
 ```
 
 If you want to know what are the component templates and index templates
-that will be created, you can get them from [the source](https://github.com/dadoonet/fscrawler/blob/master/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/9).
+that will be created, you can get them from [the source](https://github.com/dadoonet/fscrawler/blob/main/elasticsearch-client/src/main/resources/fr/pilato/elasticsearch/crawler/fs/client/9).
 
 #### Creating your own mapping (analyzers)
 

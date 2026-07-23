@@ -2,7 +2,7 @@
 
 ## Branch Naming
 
-- **Main branch**: `master` (target for all PRs)
+- **Main branch**: `main` (target for all PRs)
 - **Feature branches**: `feature/<description>` or `<username>/<description>`
 - **Bug fix branches**: `fix/<description>` or `fix/<issue-number>-<description>`
 
@@ -62,7 +62,7 @@ mvn spotless:apply   # fix
 
 ## Pull Requests
 
-- Target branch: `master`
+- Target branch: `main`
 - Title: short (under 70 chars), no colon needed
 - Body: bullet summary + test plan
 - If the change has user-visible impact, confirm doc updates are included

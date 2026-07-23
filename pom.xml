@@ -995,7 +995,7 @@
                     <version>3.8.0</version>
                     <configuration>
                         <!-- optional: limit format enforcement to just the files changed by this feature branch -->
-                        <ratchetFrom>origin/master</ratchetFrom>
+                        <ratchetFrom>origin/main</ratchetFrom>
                         <java>
                             <palantirJavaFormat>
                                 <version>2.89.0</version>

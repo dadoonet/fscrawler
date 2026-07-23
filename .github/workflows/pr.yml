@@ -57,7 +57,7 @@ jobs:
         curl https://ipapi.co/json/
     - uses: actions/checkout@v7
     - name: Fetch base branch for Spotless ratchet
-      run: git fetch origin master --depth=1
+      run: git fetch origin main --depth=1
     - name: Set up JDK 21
       uses: actions/setup-java@v5
       with:
@@ -79,7 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
-        run: git fetch origin master --depth=1
+        run: git fetch origin main --depth=1
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
@@ -104,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
-        run: git fetch origin master --depth=1
+        run: git fetch origin main --depth=1
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
@@ -132,7 +132,7 @@ jobs:
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
       - name: Fetch base branch for Spotless ratchet
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
-        run: git fetch origin master --depth=1
+        run: git fetch origin main --depth=1
       - name: Warm up Elastic Cloud cluster
         if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
         env:
@@ -171,7 +171,7 @@ jobs:
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
       - name: Fetch base branch for Spotless ratchet
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
-        run: git fetch origin master --depth=1
+        run: git fetch origin main --depth=1
       - name: Warm up Elastic Cloud Serverless cluster
         if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
         env:
@@ -208,7 +208,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
-        run: git fetch origin master --depth=1
+        run: git fetch origin main --depth=1
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
@@ -239,7 +239,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Fetch base branch for Spotless ratchet
-        run: git fetch origin master --depth=1
+        run: git fetch origin main --depth=1
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
