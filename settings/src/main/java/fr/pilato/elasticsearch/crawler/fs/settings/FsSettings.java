@@ -27,6 +27,7 @@ public class FsSettings {
 
     private String name;
     private Fs fs;
+    private Passwords passwords;
     private Server server;
     private Elasticsearch elasticsearch;
     private Rest rest;
@@ -46,6 +47,14 @@ public class FsSettings {
 
     public void setFs(Fs fs) {
         this.fs = fs;
+    }
+
+    public Passwords getPasswords() {
+        return passwords;
+    }
+
+    public void setPasswords(Passwords passwords) {
+        this.passwords = passwords;
     }
 
     public Server getServer() {
@@ -89,6 +98,7 @@ public class FsSettings {
 
         if (!Objects.equals(name, that.name)) return false;
         if (!Objects.equals(fs, that.fs)) return false;
+        if (!Objects.equals(passwords, that.passwords)) return false;
         if (!Objects.equals(server, that.server)) return false;
         if (!Objects.equals(rest, that.rest)) return false;
         if (!Objects.equals(tags, that.tags)) return false;
@@ -99,6 +109,7 @@ public class FsSettings {
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (fs != null ? fs.hashCode() : 0);
+        result = 31 * result + (passwords != null ? passwords.hashCode() : 0);
         result = 31 * result + (server != null ? server.hashCode() : 0);
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (tags != null ? tags.hashCode() : 0);
@@ -109,7 +120,8 @@ public class FsSettings {
     @Override
     public String toString() {
         return "FsSettings{" + "name='" + name + '\'' + ", fs="
-                + fs + ", server="
+                + fs + ", passwords="
+                + passwords + ", server="
                 + server + ", elasticsearch="
                 + elasticsearch + ", rest="
                 + rest + ", tags="
