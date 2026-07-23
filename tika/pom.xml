@@ -29,6 +29,11 @@
             <artifactId>fscrawler-settings</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-plugin</artifactId>
+        </dependency>
+
         <!-- OpenTelemetry API — noop at runtime unless elastic-otel-javaagent is attached -->
         <dependency>
             <groupId>io.opentelemetry</groupId>

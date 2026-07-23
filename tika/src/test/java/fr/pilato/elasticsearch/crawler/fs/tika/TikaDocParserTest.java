@@ -25,6 +25,8 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +42,8 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
@@ -1206,6 +1210,107 @@ class TikaDocParserTest extends DocParserTestCase {
         FsSettings fsSettings = FsSettingsLoader.load();
         Doc doc = extractFromFile("test-protected.docx", fsSettings);
         Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/x-tika-ooxml-protected");
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+
+        doc = extractFromFile("test-protected.docx", "david");
+        Assertions.assertThat(doc.getFile().getContentType())
+                .isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
+
+        doc = extractFromFile("test-protected.pdf");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+
+        doc = extractFromFile("test-protected.pdf", "pdfpassword");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
+
+        doc = extractFromFile("test-protected.pdf", "thisdoesnotmatch");
+        Assertions.assertThat(doc.getFile().getContentType()).isEqualTo("application/pdf");
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+    }
+
+    @Test
+    void protectedDocumentExplicitPasswordDoesNotUseProviderFallback() throws IOException {
+        AtomicInteger openCalls = new AtomicInteger();
+        FsCrawlerExtensionPasswordProvider provider = new FsCrawlerExtensionPasswordProvider() {
+            @Override
+            public String getType() {
+                return "test";
+            }
+
+            @Override
+            public void start(
+                    fr.pilato.elasticsearch.crawler.fs.settings.FsSettings settings,
+                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {}
+
+            @Override
+            public PasswordSession open(String documentPath) {
+                openCalls.incrementAndGet();
+                return new PasswordSession() {
+                    @Override
+                    public Optional<String> next() {
+                        return Optional.of("david");
+                    }
+
+                    @Override
+                    public void close() {}
+                };
+            }
+
+            @Override
+            public void close() {}
+        };
+
+        Doc doc = extractFromFile("test-protected.docx", FsSettingsLoader.load(), "thisdoesnotmatch", provider);
+        Assertions.assertThat(doc.getContent()).isNullOrEmpty();
+        Assertions.assertThat(openCalls).hasValue(0);
+    }
+
+    @Test
+    void protectedDocumentRetriesProviderCandidatesUntilOneWorks() throws IOException {
+        AtomicInteger openCalls = new AtomicInteger();
+        AtomicInteger nextCalls = new AtomicInteger();
+        AtomicReference<String> openedPath = new AtomicReference<>();
+        FsCrawlerExtensionPasswordProvider provider = new FsCrawlerExtensionPasswordProvider() {
+            @Override
+            public String getType() {
+                return "test";
+            }
+
+            @Override
+            public void start(
+                    fr.pilato.elasticsearch.crawler.fs.settings.FsSettings settings,
+                    fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup lookup) {}
+
+            @Override
+            public PasswordSession open(String documentPath) {
+                openCalls.incrementAndGet();
+                openedPath.set(documentPath);
+                return new PasswordSession() {
+                    @Override
+                    public Optional<String> next() {
+                        return switch (nextCalls.getAndIncrement()) {
+                            case 0 -> Optional.of("thisdoesnotmatch");
+                            case 1 -> Optional.of("david");
+                            default -> Optional.empty();
+                        };
+                    }
+
+                    @Override
+                    public void close() {}
+                };
+            }
+
+            @Override
+            public void close() {}
+        };
+
+        Doc doc = extractFromFile("test-protected.docx", FsSettingsLoader.load(), null, provider);
+        Assertions.assertThat(doc.getContent()).contains("This is a sample text available in page");
+        Assertions.assertThat(openCalls).hasValue(1);
+        Assertions.assertThat(nextCalls).hasValue(2);
+        Assertions.assertThat(openedPath).hasValue("test-protected.docx");
     }
 
     @Test
@@ -1275,17 +1380,27 @@ class TikaDocParserTest extends DocParserTestCase {
     }
 
     private Doc extractFromFile(String filename) throws IOException {
-        return extractFromFile(filename, FsSettingsLoader.load());
+        return extractFromFile(filename, FsSettingsLoader.load(), null, null);
+    }
+
+    private Doc extractFromFile(String filename, String password) throws IOException {
+        return extractFromFile(filename, FsSettingsLoader.load(), password, null);
     }
 
     private Doc extractFromFile(String filename, FsSettings fsSettings) throws IOException {
-        logger.info("Test extraction of [{}]", filename);
+        return extractFromFile(filename, fsSettings, null, null);
+    }
+
+    private Doc extractFromFile(
+            String filename, FsSettings fsSettings, String password, FsCrawlerExtensionPasswordProvider provider)
+            throws IOException {
+        logger.info("Test extraction of [{}]{}", filename, password != null ? " with password" : "");
         Doc doc = new Doc();
         doc.getPath().setReal(filename);
         doc.getFile().setFilename(filename);
 
         // A fresh, isolated parser instance for every extraction under test
-        new TikaDocParser(fsSettings).generate(getBinaryContent(filename), doc, 0);
+        new TikaDocParser(fsSettings).generate(() -> getBinaryContent(filename), doc, 0, password, provider);
 
         logger.debug("Generated Content: [{}]", doc.getContent());
         logger.debug("Generated Raw Metadata: [{}]", doc.getMeta().getRaw());
