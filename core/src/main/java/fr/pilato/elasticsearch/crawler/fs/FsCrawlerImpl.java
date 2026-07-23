@@ -93,6 +93,8 @@ public class FsCrawlerImpl implements AutoCloseable {
             logger.debug("Using default temp directory: [{}]", tempDir);
         }
 
+        pluginsManager.startPasswordProviders(settings);
+
         // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
         // pass null so we don't resolve/start a provider (e.g. SSH/FTP) that could fail if config is missing.
         final FsCrawlerExtensionFsProvider crawlerPlugin;
