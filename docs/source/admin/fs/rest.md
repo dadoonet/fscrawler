@@ -113,6 +113,17 @@ echo "This is my text" > test.txt
 curl -F "file=@test.txt" "http://127.0.0.1:8080/_document"
 ```
 
+If the document is password-protected, you can pass a request password with the `password`
+parameter. FSCrawler accepts it as a multipart form field, HTTP header, or query parameter. When
+more than one is provided, the precedence is form field, then header, then query string.
+
+```sh
+curl -F "file=@protected.pdf" -F "password=secret" "http://127.0.0.1:8080/_document"
+```
+
+When a request password is provided, FSCrawler uses only that password for the upload. When it is
+omitted, FSCrawler falls back to the job's configured password provider.
+
 It will give you a response similar to:
 
 ```json
@@ -230,6 +241,10 @@ a JSON document which describes the service settings:
    }
  }'
 ```
+
+For password-protected remote documents, you can pass the request password as an HTTP header or a
+query parameter named `password`. If both are set, the header wins. As with multipart uploads, a
+request password bypasses the job password provider for that upload only.
 
 ### Local plugin
 

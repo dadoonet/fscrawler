@@ -270,6 +270,11 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
     public static UploadResponse uploadFileUsingApi(
             WebTarget target, Path file, Path tagsFile, String index, String api, String id) {
+        return uploadFileUsingApi(target, file, tagsFile, index, api, id, null);
+    }
+
+    public static UploadResponse uploadFileUsingApi(
+            WebTarget target, Path file, Path tagsFile, String index, String api, String id, String password) {
         Assertions.assertThat(file).exists();
 
         Map<String, Object> params = new HashMap<>();
@@ -290,6 +295,10 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
 
         if (id != null) {
             mp.field("id", id);
+        }
+
+        if (password != null) {
+            mp.field("password", password);
         }
 
         if (tagsFile != null) {

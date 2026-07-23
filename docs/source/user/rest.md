@@ -33,6 +33,9 @@ echo "This is my text" > test.txt
 curl -F "file=@test.txt" "http://127.0.0.1:8080/_document"
 ```
 
+For password-protected files, pass `password` as a multipart form field, request header, or query
+parameter. If more than one is present, FSCrawler uses form first, then header, then query.
+
 It will index the file into elasticsearch and will give you back the
 elasticsearch URL for the created document, like:
 
