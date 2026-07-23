@@ -21,18 +21,28 @@
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import jakarta.annotation.Nullable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
-import org.github.gestalt.config.annotations.Config;
 
+/**
+ * Job-level password provider selection.
+ *
+ * <p>Provider-specific options live under {@code providers} as an opaque map keyed by provider type ({@code disk},
+ * {@code static}, {@code chained}, …). Each password plugin parses and validates its own section; the settings module
+ * does not model those shapes.
+ */
 @SuppressWarnings("SameParameterValue")
 public class Passwords {
 
-    @Config(defaultVal = "noop")
-    private String provider;
+    private String provider = "noop";
 
-    @Config
+    /**
+     * Opaque per-provider configuration ({@code passwords.providers.<type>}). Loaded by {@link FsSettingsLoader} from
+     * job YAML/JSON files.
+     */
     @Nullable
-    private PasswordProviders providers;
+    private Map<String, Object> providers;
 
     public String getProvider() {
         return provider;
@@ -43,12 +53,40 @@ public class Passwords {
     }
 
     @Nullable
-    public PasswordProviders getProviders() {
+    public Map<String, Object> getProviders() {
         return providers;
     }
 
-    public void setProviders(@Nullable PasswordProviders providers) {
+    public void setProviders(@Nullable Map<String, Object> providers) {
         this.providers = providers;
+    }
+
+    /**
+     * Return the configuration map for one provider type, or {@code null} when absent.
+     *
+     * @param type provider type key under {@code passwords.providers}
+     * @return mutable copy of that section, or {@code null}
+     */
+    @Nullable
+    public Map<String, Object> getProviderConfig(String type) {
+        if (providers == null || type == null) {
+            return null;
+        }
+
+        Object section = providers.get(type);
+        if (section == null) {
+            return null;
+        }
+        if (!(section instanceof Map<?, ?> map)) {
+            throw new IllegalArgumentException("passwords.providers." + type + " must be a map, got "
+                    + section.getClass().getName());
+        }
+
+        Map<String, Object> copy = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            copy.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return copy;
     }
 
     @Override

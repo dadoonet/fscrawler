@@ -28,16 +28,14 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.client.ESTermQuery;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.settings.ChainedPasswordProviderSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.DiskPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
 import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
-import fr.pilato.elasticsearch.crawler.fs.settings.StaticPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -111,21 +109,12 @@ class FsCrawlerTestPasswordIT extends AbstractFsCrawlerITCase {
         Passwords passwords = new Passwords();
         passwords.setProvider("chained");
 
-        DiskPasswordProviderSettings diskSettings = new DiskPasswordProviderSettings();
-        diskSettings.setUrl(passwordMirrorDir.toString());
-
-        StaticPasswordProviderSettings staticSettings = new StaticPasswordProviderSettings();
-        staticSettings.setValues(staticFallbackPasswords);
-
-        ChainedPasswordProviderSettings chainedSettings = new ChainedPasswordProviderSettings();
-        chainedSettings.setProviders(List.of("disk", "static"));
-
-        PasswordProviders providers = new PasswordProviders();
-        providers.setDisk(diskSettings);
-        providers.setStatic(staticSettings);
-        providers.setChained(chainedSettings);
-
+        Map<String, Object> providers = new LinkedHashMap<>();
+        providers.put("disk", Map.of("url", passwordMirrorDir.toString()));
+        providers.put("static", Map.of("values", staticFallbackPasswords));
+        providers.put("chained", Map.of("providers", List.of("disk", "static")));
         passwords.setProviders(providers);
+
         fsSettings.setPasswords(passwords);
     }
 }

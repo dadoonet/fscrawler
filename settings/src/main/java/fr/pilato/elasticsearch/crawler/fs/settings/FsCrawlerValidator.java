@@ -28,7 +28,6 @@ import java.util.List;
 import org.apache.logging.log4j.Logger;
 
 public class FsCrawlerValidator {
-    private static final String CHAINED_PROVIDER_TYPE = "chained";
     // Filename suffix for document password sidecars (*.password / */.password), not a credential.
     @SuppressWarnings("java:S2068")
     private static final String SIDECAR_SUFFIX = "password";
@@ -49,10 +48,6 @@ public class FsCrawlerValidator {
      */
     public static boolean validateSettings(Logger logger, FsSettings settings) {
         ensurePasswordSidecarExcludes(settings);
-
-        if (validatePasswordSettings(logger, settings)) {
-            return true;
-        }
 
         if (settings.getElasticsearch().getUsername() != null
                 || settings.getElasticsearch().getPassword() != null) {
@@ -122,30 +117,6 @@ public class FsCrawlerValidator {
         if (updated) {
             settings.getFs().setExcludes(mergedExcludes);
         }
-    }
-
-    private static boolean validatePasswordSettings(Logger logger, FsSettings settings) {
-        Passwords passwords = settings.getPasswords();
-        if (passwords == null || !CHAINED_PROVIDER_TYPE.equals(passwords.getProvider())) {
-            return false;
-        }
-
-        PasswordProviders providers = passwords.getProviders();
-        ChainedPasswordProviderSettings chained = providers == null ? null : providers.getChained();
-        List<String> chainedProviders = chained == null ? null : chained.getProviders();
-
-        if (chainedProviders == null || chainedProviders.isEmpty()) {
-            logger.error(
-                    "passwords.provider [chained] requires passwords.providers.chained.providers. Disabling crawler");
-            return true;
-        }
-
-        if (chainedProviders.stream().anyMatch(CHAINED_PROVIDER_TYPE::equals)) {
-            logger.error("passwords.providers.chained.providers cannot contain [chained]. Disabling crawler");
-            return true;
-        }
-
-        return false;
     }
 
     private static boolean validateServerSettings(Logger logger, FsSettings settings) {

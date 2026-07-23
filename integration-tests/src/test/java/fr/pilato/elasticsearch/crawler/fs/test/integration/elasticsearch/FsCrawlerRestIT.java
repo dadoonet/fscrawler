@@ -33,9 +33,7 @@ import fr.pilato.elasticsearch.crawler.fs.rest.DeleteResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.ServerStatusResponse;
 import fr.pilato.elasticsearch.crawler.fs.rest.UploadResponse;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
 import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
-import fr.pilato.elasticsearch.crawler.fs.settings.StaticPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.DisabledIfNoDocker;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractRestITCase;
@@ -688,14 +686,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     private void configureStaticPasswords(FsSettings fsSettings, List<String> passwords) {
         Passwords passwordSettings = new Passwords();
         passwordSettings.setProvider("static");
-
-        StaticPasswordProviderSettings staticSettings = new StaticPasswordProviderSettings();
-        staticSettings.setValues(passwords);
-
-        PasswordProviders providers = new PasswordProviders();
-        providers.setStatic(staticSettings);
-
-        passwordSettings.setProviders(providers);
+        passwordSettings.setProviders(Map.of("static", Map.of("values", passwords)));
         fsSettings.setPasswords(passwordSettings);
     }
 

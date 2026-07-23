@@ -21,16 +21,16 @@
 package fr.pilato.elasticsearch.crawler.plugins.password.disk;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
-import fr.pilato.elasticsearch.crawler.fs.settings.DiskPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
 import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -127,17 +127,14 @@ class PasswordDiskPluginTest extends AbstractFSCrawlerTestCase {
         Fs fs = new Fs();
         fs.setUrl(fsRoot.toString());
 
-        DiskPasswordProviderSettings disk = new DiskPasswordProviderSettings();
+        Map<String, Object> disk = new LinkedHashMap<>();
         if (diskRoot != null) {
-            disk.setUrl(diskRoot.toString());
+            disk.put("url", diskRoot.toString());
         }
-
-        PasswordProviders providers = new PasswordProviders();
-        providers.setDisk(disk);
 
         Passwords passwords = new Passwords();
         passwords.setProvider("disk");
-        passwords.setProviders(providers);
+        passwords.setProviders(Map.of("disk", disk));
 
         FsSettings settings = new FsSettings();
         settings.setFs(fs);

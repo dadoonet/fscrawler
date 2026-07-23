@@ -22,11 +22,11 @@ package fr.pilato.elasticsearch.crawler.plugins.password.staticprovider;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
 import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
-import fr.pilato.elasticsearch.crawler.fs.settings.StaticPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -37,14 +37,8 @@ class PasswordStaticPluginTest extends AbstractFSCrawlerTestCase {
         FsSettings settings = new FsSettings();
         Passwords passwords = new Passwords();
         passwords.setProvider("static");
+        passwords.setProviders(Map.of("static", Map.of("values", List.of("a", "b"))));
         settings.setPasswords(passwords);
-
-        StaticPasswordProviderSettings staticSettings = new StaticPasswordProviderSettings();
-        staticSettings.setValues(java.util.List.of("a", "b"));
-
-        PasswordProviders providers = new PasswordProviders();
-        providers.setStatic(staticSettings);
-        settings.getPasswords().setProviders(providers);
 
         String documentPath = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 8, 16);
 

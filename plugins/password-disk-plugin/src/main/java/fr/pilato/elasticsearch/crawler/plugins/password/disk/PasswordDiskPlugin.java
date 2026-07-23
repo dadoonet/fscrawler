@@ -20,13 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.password.disk;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.DiskPasswordProviderSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
-import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
-import fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup;
 import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,12 +43,13 @@ public class PasswordDiskPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class Provider implements FsCrawlerExtensionPasswordProvider {
+    public static class Provider extends FsCrawlerExtensionPasswordProviderAbstract {
 
         private static final Logger logger = LogManager.getLogger();
 
         private Path fsRoot;
         private Path diskRoot;
+        private String configuredUrl;
 
         @Override
         public String getType() {
@@ -61,12 +57,18 @@ public class PasswordDiskPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {
+        protected void parseSettings() {
+            configuredUrl = providerConfig == null ? null : asString(providerConfig.get("url"));
             fsRoot = normalizePath(
-                    settings != null && settings.getFs() != null
-                            ? settings.getFs().getUrl()
+                    fsSettings != null && fsSettings.getFs() != null
+                            ? fsSettings.getFs().getUrl()
                             : null);
-            diskRoot = normalizePath(resolveDiskUrl(settings));
+            diskRoot = normalizePath(resolveDiskUrl());
+        }
+
+        @Override
+        protected void validateSettings() {
+            // url is optional and falls back to fs.url at runtime.
         }
 
         @Override
@@ -76,23 +78,20 @@ public class PasswordDiskPlugin extends FsCrawlerPlugin {
 
         @Override
         public void close() {
+            super.close();
             fsRoot = null;
             diskRoot = null;
+            configuredUrl = null;
         }
 
-        private String resolveDiskUrl(FsSettings settings) {
-            if (settings == null || settings.getFs() == null) {
+        private String resolveDiskUrl() {
+            if (configuredUrl != null) {
+                return configuredUrl;
+            }
+            if (fsSettings == null || fsSettings.getFs() == null) {
                 return null;
             }
-
-            Passwords passwords = settings.getPasswords();
-            PasswordProviders providers = passwords != null ? passwords.getProviders() : null;
-            DiskPasswordProviderSettings diskSettings = providers != null ? providers.getDisk() : null;
-            String configuredUrl = diskSettings != null ? diskSettings.getUrl() : null;
-            if (configuredUrl == null || configuredUrl.isBlank()) {
-                return settings.getFs().getUrl();
-            }
-            return configuredUrl;
+            return fsSettings.getFs().getUrl();
         }
 
         private List<Path> candidatePaths(String documentPath) {

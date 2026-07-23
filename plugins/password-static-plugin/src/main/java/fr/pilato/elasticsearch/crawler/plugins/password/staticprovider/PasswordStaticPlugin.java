@@ -20,12 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.password.staticprovider;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
-import fr.pilato.elasticsearch.crawler.fs.settings.StaticPasswordProviderSettings;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
-import fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup;
 import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +35,7 @@ public class PasswordStaticPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class Provider implements FsCrawlerExtensionPasswordProvider {
+    public static class Provider extends FsCrawlerExtensionPasswordProviderAbstract {
 
         private List<String> passwords = List.of();
 
@@ -49,8 +45,13 @@ public class PasswordStaticPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {
-            passwords = resolvePasswords(settings);
+        protected void parseSettings() {
+            passwords = resolvePasswords();
+        }
+
+        @Override
+        protected void validateSettings() {
+            // Empty configuration is valid (session yields no candidates).
         }
 
         @Override
@@ -74,25 +75,22 @@ public class PasswordStaticPlugin extends FsCrawlerPlugin {
 
         @Override
         public void close() {
+            super.close();
             passwords = List.of();
         }
 
-        private static List<String> resolvePasswords(FsSettings settings) {
-            if (settings == null || settings.getPasswords() == null) {
+        private List<String> resolvePasswords() {
+            if (providerConfig == null) {
                 return List.of();
             }
 
-            PasswordProviders providers = settings.getPasswords().getProviders();
-            if (providers == null) {
-                return List.of();
+            List<String> values = asStringList(providerConfig.get("values"));
+            if (!values.isEmpty()) {
+                return values;
             }
 
-            StaticPasswordProviderSettings staticSettings = providers.getStatic();
-            if (staticSettings == null) {
-                return List.of();
-            }
-
-            return List.copyOf(staticSettings.resolvedValues());
+            String value = asString(providerConfig.get("value"));
+            return value == null ? List.of() : List.of(value);
         }
     }
 }

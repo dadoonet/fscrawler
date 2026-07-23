@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -35,7 +37,7 @@ import org.junit.jupiter.api.parallel.Execution;
 class PasswordsSettingsTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    void passwordsStaticValuesLoaded() throws Exception {
+    void passwordsStaticValuesLoadedAsOpaqueProviderMap() throws Exception {
         Path configRoot = Files.createDirectories(rootTmpDir.resolve("config"));
         Path jobDir = Files.createDirectories(configRoot.resolve("passwords-static"));
         try (InputStream fixture =
@@ -46,11 +48,16 @@ class PasswordsSettingsTest extends AbstractFSCrawlerTestCase {
 
         FsSettings settings = new FsSettingsLoader(configRoot).read("passwords-static");
 
+        Assertions.assertThat(settings.getPasswords()).isNotNull();
         Assertions.assertThat(settings.getPasswords().getProvider()).isEqualTo("static");
-        Assertions.assertThat(settings.getPasswords()
-                        .getProviders()
-                        .getStaticSettings()
-                        .getValues())
-                .containsExactly("alpha", "beta");
+        Assertions.assertThat(settings.getPasswords().getProviders())
+                .as("opaque passwords.providers map")
+                .isNotNull()
+                .containsKey("static");
+        Map<String, Object> staticConfig = settings.getPasswords().getProviderConfig("static");
+        Assertions.assertThat(staticConfig).isNotNull();
+        @SuppressWarnings("unchecked")
+        List<String> values = (List<String>) staticConfig.get("values");
+        Assertions.assertThat(values).containsExactly("alpha", "beta");
     }
 }

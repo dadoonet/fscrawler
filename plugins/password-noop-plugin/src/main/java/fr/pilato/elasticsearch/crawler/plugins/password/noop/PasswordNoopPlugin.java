@@ -20,10 +20,8 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.password.noop;
 
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
-import fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup;
 import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
 import java.util.Optional;
 import org.pf4j.Extension;
@@ -36,7 +34,7 @@ public class PasswordNoopPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class Provider implements FsCrawlerExtensionPasswordProvider {
+    public static class Provider extends FsCrawlerExtensionPasswordProviderAbstract {
 
         @Override
         public String getType() {
@@ -44,8 +42,13 @@ public class PasswordNoopPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {
-            // No configuration or chaining is required for the noop provider.
+        protected void parseSettings() {
+            // No configuration.
+        }
+
+        @Override
+        protected void validateSettings() {
+            // No configuration.
         }
 
         @Override
@@ -60,8 +63,5 @@ public class PasswordNoopPlugin extends FsCrawlerPlugin {
                 public void close() {}
             };
         }
-
-        @Override
-        public void close() {}
     }
 }

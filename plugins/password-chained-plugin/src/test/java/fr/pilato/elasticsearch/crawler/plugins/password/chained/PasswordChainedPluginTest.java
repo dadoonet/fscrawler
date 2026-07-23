@@ -22,9 +22,7 @@ package fr.pilato.elasticsearch.crawler.plugins.password.chained;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
-import fr.pilato.elasticsearch.crawler.fs.settings.ChainedPasswordProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
 import fr.pilato.elasticsearch.crawler.fs.settings.Passwords;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
@@ -57,7 +55,7 @@ class PasswordChainedPluginTest extends AbstractFSCrawlerTestCase {
                 new StubProvider(secondType, List.of(thirdPassword), events))::get;
 
         FsCrawlerExtensionPasswordProvider provider = instantiateProvider();
-        provider.start(settings(firstType, secondType), lookup);
+        provider.start(settings("chained", firstType, secondType), lookup);
 
         try (var session = provider.open(documentPath)) {
             Assertions.assertThat(provider.getType()).isEqualTo("chained");
@@ -95,7 +93,7 @@ class PasswordChainedPluginTest extends AbstractFSCrawlerTestCase {
 
         FsCrawlerExtensionPasswordProvider provider = instantiateProvider();
         try {
-            Assertions.assertThatThrownBy(() -> provider.start(settings(knownType, missingType), lookup))
+            Assertions.assertThatThrownBy(() -> provider.start(settings("chained", knownType, missingType), lookup))
                     .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                     .hasMessage("passwords.providers.chained.providers contains unknown password provider ["
                             + missingType + "]");
@@ -104,16 +102,38 @@ class PasswordChainedPluginTest extends AbstractFSCrawlerTestCase {
         }
     }
 
-    private FsSettings settings(String firstType, String secondType) {
-        ChainedPasswordProviderSettings chained = new ChainedPasswordProviderSettings();
-        chained.setProviders(List.of(firstType, secondType));
+    @Test
+    void providerStartFailsWhenActiveChainedHasNoProviders() throws Exception {
+        FsCrawlerExtensionPasswordProvider provider = instantiateProvider();
+        try {
+            Assertions.assertThatThrownBy(() -> provider.start(settings("chained"), type -> null))
+                    .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                    .hasMessage("passwords.provider [chained] requires passwords.providers.chained.providers");
+        } finally {
+            provider.close();
+        }
+    }
 
-        PasswordProviders providers = new PasswordProviders();
-        providers.setChained(chained);
+    @Test
+    void providerStartFailsWhenChainedProvidersContainSelfReference() throws Exception {
+        FsCrawlerExtensionPasswordProvider provider = instantiateProvider();
+        try {
+            Assertions.assertThatThrownBy(() -> provider.start(settings("chained", "chained"), type -> null))
+                    .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                    .hasMessage("passwords.providers.chained.providers cannot contain [chained]");
+        } finally {
+            provider.close();
+        }
+    }
 
+    private FsSettings settings(String activeProvider, String... chainedProviders) {
         Passwords passwords = new Passwords();
-        passwords.setProvider("chained");
-        passwords.setProviders(providers);
+        passwords.setProvider(activeProvider);
+        if (chainedProviders.length > 0) {
+            passwords.setProviders(Map.of("chained", Map.of("providers", List.of(chainedProviders))));
+        } else {
+            passwords.setProviders(Map.of("chained", Map.of()));
+        }
 
         FsSettings settings = new FsSettings();
         settings.setPasswords(passwords);

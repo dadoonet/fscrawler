@@ -21,10 +21,8 @@
 package fr.pilato.elasticsearch.crawler.plugins.password.chained;
 
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
-import fr.pilato.elasticsearch.crawler.fs.settings.ChainedPasswordProviderSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.PasswordProviders;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionPasswordProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.PasswordProviderLookup;
 import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
@@ -42,55 +40,39 @@ public class PasswordChainedPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class Provider implements FsCrawlerExtensionPasswordProvider {
+    public static class Provider extends FsCrawlerExtensionPasswordProviderAbstract {
 
         private static final Logger logger = LogManager.getLogger();
+        private static final String TYPE = "chained";
 
         private List<String> providerTypes = List.of();
-        private PasswordProviderLookup lookup = type -> null;
 
         @Override
         public String getType() {
-            return "chained";
+            return TYPE;
         }
 
         @Override
-        public void start(FsSettings settings, PasswordProviderLookup lookup) {
-            providerTypes = resolveProviderTypes(settings);
-            validateProviderTypes(providerTypes, lookup);
-            this.lookup = lookup;
+        protected void parseSettings() {
+            if (providerConfig == null) {
+                providerTypes = List.of();
+                return;
+            }
+            providerTypes = asStringList(providerConfig.get("providers"));
         }
 
         @Override
-        public PasswordSession open(String documentPath) {
-            return new ChainedPasswordSession(documentPath, providerTypes, lookup);
-        }
-
-        @Override
-        public void close() {
-            providerTypes = List.of();
-            lookup = type -> null;
-        }
-
-        private static List<String> resolveProviderTypes(FsSettings settings) {
-            if (settings == null || settings.getPasswords() == null) {
-                return List.of();
+        protected void validateSettings() {
+            if (providerTypes.stream().anyMatch(TYPE::equals)) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "passwords.providers.chained.providers cannot contain [chained]");
             }
 
-            PasswordProviders providers = settings.getPasswords().getProviders();
-            if (providers == null) {
-                return List.of();
+            if (isActiveProvider() && providerTypes.isEmpty()) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "passwords.provider [chained] requires passwords.providers.chained.providers");
             }
 
-            ChainedPasswordProviderSettings chained = providers.getChained();
-            if (chained == null || chained.getProviders() == null) {
-                return List.of();
-            }
-
-            return List.copyOf(chained.getProviders());
-        }
-
-        private static void validateProviderTypes(List<String> providerTypes, PasswordProviderLookup lookup) {
             for (String providerType : providerTypes) {
                 try {
                     if (lookup.get(providerType) == null) {
@@ -100,6 +82,17 @@ public class PasswordChainedPlugin extends FsCrawlerPlugin {
                     throw unknownProviderException(providerType, e);
                 }
             }
+        }
+
+        @Override
+        public PasswordSession open(String documentPath) {
+            return new ChainedPasswordSession(documentPath, providerTypes, lookup);
+        }
+
+        @Override
+        public void close() {
+            super.close();
+            providerTypes = List.of();
         }
 
         private static FsCrawlerIllegalConfigurationException unknownProviderException(
