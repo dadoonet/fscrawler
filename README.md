@@ -26,10 +26,13 @@ Current "most stable" versions are:
 ![GitHub last commit](https://img.shields.io/github/last-commit/dadoonet/fscrawler)
 
 ![Docker Pulls](https://img.shields.io/docker/pulls/dadoonet/fscrawler)
-![Docker Image Size (tag)](https://img.shields.io/docker/image-size/dadoonet/fscrawler/3.0-SNAPSHOT?label=Docker%20image%20size)
-![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler?sort=semver)
-![Docker Image Version (latest build)](https://img.shields.io/docker/v/dadoonet/fscrawler)
 ![Docker Stars](https://img.shields.io/docker/stars/dadoonet/fscrawler)
+
+![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler?sort=semver)
+![Docker Image Size](https://img.shields.io/docker/image-size/dadoonet/fscrawler?sort=semver)
+
+![Docker Image Version (latest build)](https://img.shields.io/docker/v/dadoonet/fscrawler?label=Latest%20build)
+![Docker Image Size (latest build)](https://img.shields.io/docker/image-size/dadoonet/fscrawler?label=Latest%20build%20size)
 
 ## Build and Quality Status
 
