@@ -26,3 +26,4 @@ CLAUDE.local.md
 __pycache__/
 *.py[cod]
 .superpowers/
+/.cursor/
