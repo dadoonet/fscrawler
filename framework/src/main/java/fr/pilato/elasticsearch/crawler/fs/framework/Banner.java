@@ -42,7 +42,8 @@ public final class Banner {
 
     /** Renders the full banner. The version is injected so the output is deterministic and testable. */
     static String render(String version) {
-        return separatorLine(",", ".")
+        return "\n"
+                + separatorLine(",", ".")
                 + centerAsciiArt(version)
                 + separatorLine("+", "+")
                 + bannerLine("You know, for Files!")
