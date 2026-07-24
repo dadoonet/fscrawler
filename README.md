@@ -31,8 +31,8 @@ Current "most stable" versions are:
 ![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler?sort=semver)
 ![Docker Image Size](https://img.shields.io/docker/image-size/dadoonet/fscrawler?sort=semver)
 
-![Docker Image Version (latest build)](https://img.shields.io/docker/v/dadoonet/fscrawler?label=Latest%20build)
-![Docker Image Size (latest build)](https://img.shields.io/docker/image-size/dadoonet/fscrawler?label=Latest%20build%20size)
+![Docker Image Version (latest build)](https://img.shields.io/docker/v/dadoonet/fscrawler?label=latest%20build)
+![Docker Image Size (latest build)](https://img.shields.io/docker/image-size/dadoonet/fscrawler?label=latest%20build%20size)
 
 ## Build and Quality Status
 
