@@ -1,6 +1,6 @@
 # File System Crawler for Elasticsearch
 
-Welcome to the FS Crawler for [Elasticsearch](https://elastic.co/)
+Welcome to FSCrawler for [Elasticsearch](https://elastic.co/)
 
 This crawler helps to index binary documents such as PDF, Open Office, MS Office.
 
@@ -16,11 +16,67 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
 Current "most stable" versions are:
 
-| Elasticsearch | FS Crawler    | Released   | Docs                                                                          |
-|---------------|---------------|------------|-------------------------------------------------------------------------------|
-| 7.x, 8.x, 9.x | 3.0-SNAPSHOT |            | [3.0-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)                  |
+| Elasticsearch | FSCrawler    | Released   | Docs                                                                  |
+|---------------|--------------|------------|-----------------------------------------------------------------------|
+| 7.x, 8.x, 9.x | 3.0-SNAPSHOT |            | [3.0-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)           |
 
-## Project stats
+## Quick start
+
+Run Elasticsearch with `start-local`:
+
+```sh
+# Start Elasticsearch and Kibana
+curl -fsSL https://elastic.co/start-local | sh
+# Get the generated API key (you will need it for FSCrawler)
+source elastic-start-local/.env
+```
+
+Run FSCrawler with Docker:
+
+```sh
+docker pull dadoonet/fscrawler
+docker run -it --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -v ~/.fscrawler:/root/.fscrawler \
+  -v $(pwd)/resumes:/tmp/es:ro \
+  -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
+  -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
+  -e FS_JAVA_OPTS="-DLOG_LEVEL=debug" \
+  dadoonet/fscrawler
+```
+
+Then [open Kibana](http://localhost:5601) and watch for your documents coming to the `fscrawler` alias:
+
+```sql
+FROM fscrawler 
+| STATS numDocs = COUNT(*)
+```
+
+Or search for some text:
+
+```sql
+FROM fscrawler
+| WHERE content : "David"
+```
+
+Or count by `file.content_type`:
+
+```sql
+FROM fscrawler 
+| STATS numDocs = COUNT(*) BY file.content_type
+```
+
+Note:
+
+* `~/resumes` contains the documents you want to index
+* Job settings will be stored in `~/.fscrawler/fscrawler/_settings.yaml`
+
+Read the [documentation](https://fscrawler.readthedocs.io/) for more details and specifically the 
+[tutorial](https://fscrawler.readthedocs.io/en/latest/user/tutorial.html) page.
+
+## Project information
+
+### Stats
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/dadoonet/fscrawler)
 ![GitHub forks](https://img.shields.io/github/forks/dadoonet/fscrawler)
@@ -28,14 +84,7 @@ Current "most stable" versions are:
 ![Docker Pulls](https://img.shields.io/docker/pulls/dadoonet/fscrawler)
 ![GitHub License](https://img.shields.io/github/license/dadoonet/fscrawler)
 
-## Latest release
-
-[![Maven Central](https://img.shields.io/maven-central/v/fr.pilato.elasticsearch.crawler/fscrawler-distribution)](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
-![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)
-![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler?sort=semver)
-![Docker Image Size](https://img.shields.io/docker/image-size/dadoonet/fscrawler?sort=semver)
-
-## Version in preparation
+### Version in preparation
 
 [![Latest SNAPSHOT](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2Fmaven-metadata.xml&label=Latest%20SNAPSHOT)](https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
 ![Docker Image Version (latest build)](https://img.shields.io/docker/v/dadoonet/fscrawler?label=latest%20build)
@@ -45,7 +94,14 @@ Current "most stable" versions are:
 [![Build](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml/badge.svg)](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml)
 [![Documentation Status](https://readthedocs.org/projects/fscrawler/badge/?version=latest)](https://fscrawler.readthedocs.io/en/latest/?badge=latest)
 
-## Build & quality
+### Latest release
+
+[![Maven Central](https://img.shields.io/maven-central/v/fr.pilato.elasticsearch.crawler/fscrawler-distribution)](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
+![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)
+![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler?sort=semver&label=docker%20image%20version)
+![Docker Image Size](https://img.shields.io/docker/image-size/dadoonet/fscrawler?sort=semver&label=docker%20image%20size)
+
+### Build & quality
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
@@ -59,24 +115,14 @@ Current "most stable" versions are:
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=dadoonet_fscrawler&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
 
-## Documentation
-
-The guide has been moved to [ReadTheDocs](https://fscrawler.readthedocs.io/en/latest/).
-
-## Contribute
-
-Works on my machine - and yours ! Spin up pre-configured, standardized dev environments of this repository, by clicking on the button below.
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#/https://github.com/dadoonet/fscrawler)
-
 # License
 
 Read more about the [Apache2 License](https://fscrawler.readthedocs.io/en/latest/index.html#license).
 
 # Thanks
 
-Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
+Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License! The best IDE out there!
 
-Thanks to SonarCloud for the free analysis!
+Thanks to SonarCloud for the free analysis! You guys rock!
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=dadoonet_fscrawler)
