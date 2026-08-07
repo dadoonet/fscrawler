@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.plugins.PasswordSession;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -1138,15 +1139,65 @@ class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    void customTikaConfig() {
-        // Apache Tika 4 removed the XML Tika configuration file mechanism, so fs.tika_config_path is no longer
-        // supported. Setting it must fail fast with a clear configuration error rather than being silently ignored.
+    void customTikaConfig() throws IOException {
+        // Apache Tika 4 replaced the XML Tika configuration file mechanism with a JSON one. The custom
+        // configuration excludes the HTML parser from the default parser and routes XHTML to the XML parser,
+        // mirroring the historical XML example.
+        InputStream tikaConfigIS = getClass().getResourceAsStream("/config/tikaConfig.json");
+        Path testTikaConfig = testTmpDir.resolve("tika-config");
+        Files.createDirectories(testTikaConfig);
+        Files.copy(tikaConfigIS, testTikaConfig.resolve("tikaConfig.json"));
+
         FsSettings fsSettings = FsSettingsLoader.load();
-        fsSettings.getFs().setTikaConfigPath("/any/path/tikaConfig.xml");
+        fsSettings
+                .getFs()
+                .setTikaConfigPath(testTikaConfig.resolve("tikaConfig.json").toString());
+
+        // Test that default parser for HTML is HTML parser
+        Doc doc = extractFromFile("test.html");
+        Assertions.assertThat(doc.getContent()).doesNotContain("Test Tika title");
+        Assertions.assertThat(doc.getContent()).contains("This second part of the text is in Page 2");
+
+        // Test HTML parser is never used, TXT parser used instead
+        doc = extractFromFile("test.html", fsSettings);
+        Assertions.assertThat(doc.getContent()).contains("<title>Test Tika title</title>");
+
+        // Test that default parser for XHTML is HTML parser
+        doc = extractFromFile("test.xhtml");
+        Assertions.assertThat(doc.getContent()).doesNotContain("Test Tika title");
+        Assertions.assertThat(doc.getContent()).contains("This is an example of XHTML");
+
+        // Test XML parser is used to parse XHTML
+        doc = extractFromFile("test.xhtml", fsSettings);
+        Assertions.assertThat(doc.getContent()).contains("Test Tika title");
+        Assertions.assertThat(doc.getContent()).doesNotContain("<title>Test Tika title</title>");
+    }
+
+    @Test
+    void customTikaConfigMissingFile() {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings
+                .getFs()
+                .setTikaConfigPath(testTmpDir.resolve("does-not-exist.json").toString());
 
         Assertions.assertThatThrownBy(() -> new TikaDocParser(fsSettings))
                 .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
-                .hasMessageContaining("fs.tika_config_path is not supported with Apache Tika 4.x");
+                .hasMessageContaining("not found");
+    }
+
+    @Test
+    void customTikaConfigInvalidFile() throws IOException {
+        Path testTikaConfig = testTmpDir.resolve("tika-config-invalid");
+        Files.createDirectories(testTikaConfig);
+        Path configFile = testTikaConfig.resolve("tikaConfig.json");
+        Files.writeString(configFile, "{ this is not valid json");
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setTikaConfigPath(configFile.toString());
+
+        Assertions.assertThatThrownBy(() -> new TikaDocParser(fsSettings))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("Can not load Tika configuration");
     }
 
     @Test
