@@ -835,19 +835,35 @@ fs:
 ```{versionadded} 3.0
 ```
 
-```{warning}
-Since the upgrade to Apache Tika 4, `fs.tika_config_path` is **temporarily not supported**. Tika 4
-removed the XML-based Tika configuration file mechanism, and there is currently no drop-in replacement
-to assemble a parser from a configuration file. If this setting is provided, FSCrawler fails fast with
-a clear configuration error. Support is expected to return on top of Tika 4's new JSON-based
-configuration.
-```
+If you want to override the default Tika parser configuration, you can set the path to a custom Tika
+configuration file, which will be used instead.
 
-This setting used to let you override the default Tika parser configuration by pointing to a custom Tika
-configuration file:
+```{note}
+Apache Tika 4 replaced the XML-based configuration file mechanism with a JSON one. If you were using an
+XML Tika configuration with a previous version of FSCrawler, you need to convert it to the equivalent
+JSON configuration. If the configuration file cannot be loaded, FSCrawler fails fast with a
+configuration error instead of silently ignoring the setting.
+```
 
 ```yaml
 name: "test"
 fs:
-  tika_config_path: '/path/to/tikaConfig.xml'
+  tika_config_path: '/path/to/tikaConfig.json'
 ```
+
+An example Tika JSON config file is shown below. It excludes the HTML parser (`jsoup-parser`) from the
+default parser (HTML files are then handled as plain text) and routes XHTML files to the XML parser:
+
+```json
+{
+  "parsers": [
+    { "default-parser": { "exclude": ["jsoup-parser"] } },
+    { "xml-parser": { "_mime-include": ["application/xhtml+xml"] } }
+  ]
+}
+```
+
+The `parsers` array lists the parsers to load, in order. Each entry is either a Tika component name (like
+`pdf-parser` or `xml-parser`) with its configuration object, or the special
+`default-parser` marker which enables SPI loading of all remaining parsers (with optional `exclude`
+list). Parsers support mime filtering via the `_mime-include` and `_mime-exclude` decorations.
