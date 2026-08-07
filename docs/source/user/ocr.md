@@ -175,3 +175,68 @@ Set Tesseract to only run a subset of layout analysis and assume a certain form 
 ## OCR Preserve Interword Spacing
 
 Spaces between the words will be deleted.
+
+(vlm-ocr)=
+## Using a Vision Language Model (VLM) for OCR
+
+```{versionadded} 3.0
+```
+
+FSCrawler ships with Apache Tika's `tika-vlm` module, which can send images — including PDF pages
+rendered by the PDF parser — to a Vision Language Model (VLM) instead of Tesseract. The module
+provides parsers for OpenAI-compatible chat completions endpoints (`openai-vlm-parser`, which works
+with vLLM, Ollama, OpenRouter, Azure OpenAI, LiteLLM…), Anthropic Claude (`claude-vlm-parser`) and
+Google Gemini (`gemini-vlm-parser`).
+
+The VLM parsers are configured through a custom Tika configuration file (see
+{ref}`local-fs-settings`, `fs.tika_config_path`). The example below routes OCR to a local
+[vLLM](https://docs.vllm.ai) server running an OpenAI-compatible endpoint on
+`http://localhost:8000`:
+
+```json
+{
+  "parsers": [
+    { "default-parser": { "exclude": ["tesseract-ocr-parser"] } },
+    { "pdf-parser": {
+        "ocr": {
+          "strategy": "AUTO",
+          "maxPagesToOcr": 10
+        }
+      } },
+    { "openai-vlm-parser": {
+        "baseUrl": "http://localhost:8000",
+        "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+        "maxTokens": 4096,
+        "timeoutSeconds": 300
+      } }
+  ]
+}
+```
+
+```yaml
+name: "test"
+fs:
+  tika_config_path: '/path/to/tikaConfig.json'
+```
+
+Some notes about this configuration:
+
+* The VLM parser must be listed **explicitly** in the configuration: Tika only initializes explicitly
+  configured components. Without a custom Tika configuration, FSCrawler's default parser chain keeps
+  the VLM parsers disabled.
+* `default-parser` with `exclude` removes Tesseract from the parser chain, so OCR-able images are
+  claimed by the VLM parser instead. If you leave Tesseract in, it takes precedence when installed.
+* The PDF parser renders pages according to the `ocr.strategy` and hands them to the OCR parser —
+  the VLM in this setup. Always set `maxPagesToOcr` explicitly: every OCR'ed page is one VLM
+  request, so an unbounded value can be slow and expensive on large documents.
+* `apiKey` can be set for hosted endpoints; for a local vLLM server it can usually be omitted.
+* Extracted metadata includes the model used and token usage (`vlm:model`,
+  `vlm:prompt_tokens`, `vlm:completion_tokens`) in the raw metadata.
+
+```{warning}
+The VLM parser performs a **single health check** (`GET {baseUrl}/v1/models`) when it is
+initialized, at crawler startup. If the VLM server is not reachable at that moment, the parser
+marks itself unavailable and silently skips OCR **for the whole lifetime of the crawler** — no
+per-document retry is attempted. Make sure the VLM server is up before starting FSCrawler, and
+restart FSCrawler if the server was down when it started.
+```

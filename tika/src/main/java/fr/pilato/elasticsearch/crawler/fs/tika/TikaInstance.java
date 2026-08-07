@@ -64,6 +64,7 @@ import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.apache.tika.parser.pdf.OcrConfig;
 import org.apache.tika.parser.pdf.PDFParser;
 import org.apache.tika.parser.pdf.PDFParserConfig;
+import org.apache.tika.parser.vlm.AbstractVLMParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.WriteOutContentHandler;
 import org.xml.sax.SAXException;
@@ -205,10 +206,13 @@ class TikaInstance {
         if (ocrActivated) {
             logger.info("OCR is enabled. This might slowdown the process.");
             // We are excluding the pdf parser as we built one that we want to use instead.
+            // The VLM parsers (tika-vlm) are excluded from the default SPI chain: they are only functional
+            // when explicitly listed in a custom Tika configuration (which initializes them), and blind SPI
+            // instantiation would needlessly create their HTTP client.
             defaultParser = new DefaultParser(
                     MediaTypeRegistry.getDefaultRegistry(),
                     new ServiceLoader(),
-                    List.of(PDFParser.class, GDALParser.class));
+                    List.of(PDFParser.class, GDALParser.class, AbstractVLMParser.class));
         } else {
             logger.info("OCR is disabled.");
             TesseractOCRConfig config = context.get(TesseractOCRConfig.class);
@@ -216,11 +220,11 @@ class TikaInstance {
                 config.setSkipOcr(true);
             }
             // We are excluding the pdf parser as we built one that we want to use instead
-            // and the OCR Parser as it's explicitly disabled.
+            // and the OCR Parser as it's explicitly disabled. See above for the VLM parsers exclusion.
             defaultParser = new DefaultParser(
                     MediaTypeRegistry.getDefaultRegistry(),
                     new ServiceLoader(),
-                    Arrays.asList(PDFParser.class, TesseractOCRParser.class));
+                    Arrays.asList(PDFParser.class, TesseractOCRParser.class, AbstractVLMParser.class));
         }
         parser = new AutoDetectParser(
                 defaultParser,
