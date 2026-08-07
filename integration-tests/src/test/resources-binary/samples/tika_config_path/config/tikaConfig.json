@@ -1,6 +1,8 @@
 {
   "parsers": [
-    { "default-parser": { "exclude": ["jsoup-parser"] } },
+    // openai-vlm-parser is excluded from the SPI chain: simply instantiating it opens an HTTP client,
+    // which leaks threads in unit tests. Enable it by listing it explicitly (see the OCR documentation).
+    { "default-parser": { "exclude": ["jsoup-parser", "openai-vlm-parser"] } },
     { "xml-parser": { "_mime-include": ["application/xhtml+xml"] } }
   ]
 }
