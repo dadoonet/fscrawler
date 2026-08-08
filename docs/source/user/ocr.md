@@ -233,6 +233,18 @@ Some notes about this configuration:
 * Extracted metadata includes the model used and token usage (`vlm:model`,
   `vlm:prompt_tokens`, `vlm:completion_tokens`) in the raw metadata.
 
+### Deterministic decoding (`openai-vlm-deterministic-parser`)
+
+Tika's `openai-vlm-parser` does not send a `temperature` field, so the server decides the sampling
+temperature (vLLM typically defaults to `1.0`). Small OCR-oriented vision models hallucinate
+heavily under sampling — measured against a local PaddleOCR-VL-1.6-0.9B, the very same request
+returned the actual page text with `temperature: 0` and Chinese hallucinations with
+`<|LOC_*|>` layout tokens without it. FSCrawler therefore ships
+`openai-vlm-deterministic-parser`, a drop-in variant of `openai-vlm-parser` that forces
+`"temperature": 0` (greedy decoding) on every request. It accepts exactly the same configuration
+keys; simply use it in place of `openai-vlm-parser` in the custom Tika configuration. For OCR
+workloads it should be the default choice.
+
 ```{warning}
 The VLM parser performs a **single health check** (`GET {baseUrl}/v1/models`) when it is
 initialized, at crawler startup. If the VLM server is not reachable at that moment, the parser
