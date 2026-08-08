@@ -76,6 +76,9 @@ class TikaInstance {
 
     private static final Logger logger = LogManager.getLogger();
 
+    /** FSCrawler PDF OCR strategy value disabling OCR (see {@link #mapPdfOcrStrategy(String)}). */
+    private static final String PDF_STRATEGY_NO_OCR = "no_ocr";
+
     /**
      * Shared, settings-independent language detector. Kept static because loading the Optimaize models is expensive;
      * access is synchronized as jobs may run concurrently.
@@ -179,13 +182,13 @@ class TikaInstance {
                 } else {
                     logger.debug("But Tesseract is not installed so we won't run OCR.");
                     ocrActivated = false;
-                    setPdfOcrStrategy(pdfParser, "no_ocr");
+                    setPdfOcrStrategy(pdfParser, PDF_STRATEGY_NO_OCR);
                 }
             } catch (TikaConfigException e) {
                 logger.debug("Tesseract is not correctly set up so we won't run OCR. Error is: {}", e.getMessage());
                 logger.debug("Fullstack trace error for Tesseract", e);
                 ocrActivated = false;
-                setPdfOcrStrategy(pdfParser, "no_ocr");
+                setPdfOcrStrategy(pdfParser, PDF_STRATEGY_NO_OCR);
             }
         }
 
@@ -252,7 +255,7 @@ class TikaInstance {
             return OcrConfig.Strategy.AUTO;
         }
         return switch (strategy.toLowerCase(Locale.ROOT)) {
-            case "no_ocr" -> OcrConfig.Strategy.NO_OCR;
+            case PDF_STRATEGY_NO_OCR -> OcrConfig.Strategy.NO_OCR;
             case "ocr_only" -> OcrConfig.Strategy.OCR_ONLY;
             case "ocr_and_text", "ocr_and_text_extraction" -> OcrConfig.Strategy.OCR_AND_TEXT_EXTRACTION;
             default -> OcrConfig.Strategy.AUTO;
