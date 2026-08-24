@@ -62,8 +62,8 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /**
- * End-to-end unit test for {@link DeterministicOpenAIVLMParser}: health check, chat completions call,
- * response parsing. Uses WireMock instead of a real VLM server.
+ * End-to-end unit test for {@link DeterministicOpenAIVLMParser}: health check, chat completions call, response parsing.
+ * Uses WireMock instead of a real VLM server.
  */
 @DetectThreadLeaks.ExcludeThreads({
     WireMockThreadFilter.class,
@@ -131,8 +131,7 @@ class DeterministicOpenAIVLMParserWireMockTest extends AbstractFSCrawlerTestCase
                                     "completion_tokens": 7
                                   }
                                 }
-                                """
-                                .formatted(ocrText))));
+                                """.formatted(ocrText))));
 
         VLMOCRConfig config = new VLMOCRConfig();
         config.setBaseUrl("http://localhost:" + wireMockServer.port());
@@ -155,9 +154,12 @@ class DeterministicOpenAIVLMParserWireMockTest extends AbstractFSCrawlerTestCase
         }
 
         Assertions.assertThat(handler.toString()).contains(ocrText);
-        Assertions.assertThat(metadata.get(AbstractVLMParser.VLM_MODEL.getName())).isEqualTo("test-model");
-        Assertions.assertThat(metadata.get(AbstractVLMParser.VLM_PROMPT_TOKENS.getName())).isEqualTo("42");
-        Assertions.assertThat(metadata.get(AbstractVLMParser.VLM_COMPLETION_TOKENS.getName())).isEqualTo("7");
+        Assertions.assertThat(metadata.get(AbstractVLMParser.VLM_MODEL.getName()))
+                .isEqualTo("test-model");
+        Assertions.assertThat(metadata.get(AbstractVLMParser.VLM_PROMPT_TOKENS.getName()))
+                .isEqualTo("42");
+        Assertions.assertThat(metadata.get(AbstractVLMParser.VLM_COMPLETION_TOKENS.getName()))
+                .isEqualTo("7");
 
         WireMock.verify(getRequestedFor(urlEqualTo("/v1/models")));
         WireMock.verify(postRequestedFor(urlEqualTo("/v1/chat/completions"))
