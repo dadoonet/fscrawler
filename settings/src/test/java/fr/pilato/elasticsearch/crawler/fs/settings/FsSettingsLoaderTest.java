@@ -276,6 +276,16 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
     // System properties set here (name, fs.url, fs.xml_support) are cleared before and after each test by
     // cleanupSystemProperties(), so no per-test save/restore is needed.
     @Test
+    void loadYamlKibana() throws IOException {
+        FsSettings settings = new FsSettingsLoader(configPath).read("yaml-kibana");
+        Assertions.assertThat(settings.getKibana()).isNotNull();
+        Assertions.assertThat(settings.getKibana().getUrl()).isEqualTo("http://127.0.0.1:5601");
+        Assertions.assertThat(settings.getKibana().isPushDashboard()).isTrue();
+        Assertions.assertThat(settings.getKibana().getSpace()).isEqualTo("default");
+        Assertions.assertThat(settings.getKibana().getApiKey()).isEqualTo("test-kibana-api-key");
+    }
+
+    @Test
     void withDefaultNamesForEnvVariables() throws Exception {
         System.setProperty("name", "foo");
         System.setProperty("fs.url", "/tmp/test");

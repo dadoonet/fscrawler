@@ -18,19 +18,16 @@
  *
  * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-package fr.pilato.elasticsearch.crawler.fs.settings;
+package fr.pilato.elasticsearch.crawler.fs.service;
 
-import java.util.List;
+import fr.pilato.elasticsearch.crawler.fs.kibana.KibanaClientException;
+import java.io.Closeable;
+import java.io.IOException;
 
-public class Defaults {
-    public static final String DEFAULT_DIR = "/tmp/es";
-    public static final List<String> DEFAULT_EXCLUDED = List.of("*/~*", "*/.ds_store");
-    public static final String ELASTICSEARCH_URL_DEFAULT = "https://127.0.0.1:9200";
-    public static final String DEFAULT_META_FILENAME = ".meta.yml";
-    public static final String REST_URL_DEFAULT = "http://127.0.0.1:8080/fscrawler";
-    public static final String KIBANA_URL_DEFAULT = "http://127.0.0.1:5601";
-    public static final String JOB_NAME_DEFAULT = "fscrawler";
+public interface FsCrawlerKibanaService extends Closeable {
 
-    // To make sur we don't create an instance of this class
-    private Defaults() {}
+    void start() throws IOException, KibanaClientException;
+
+    /** Creates the default FSCrawler data view and dashboard when they do not exist yet. */
+    void setupDashboard() throws KibanaClientException;
 }

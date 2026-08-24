@@ -35,6 +35,7 @@
         <module>beans</module>
         <module>plugin</module>
         <module>elasticsearch-client</module>
+        <module>kibana-client</module>
         <module>core</module>
         <module>plugins</module>
         <module>integration-tests</module>
@@ -179,6 +180,11 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client</artifactId>
+                <version>3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-kibana-client</artifactId>
                 <version>3.0-SNAPSHOT</version>
             </dependency>
             <dependency>

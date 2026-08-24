@@ -79,6 +79,10 @@ public class FsCrawlerValidator {
             return true;
         }
 
+        if (validateKibanaSettings(logger, settings)) {
+            return true;
+        }
+
         // We just warn the user if he is running on Windows but want to get attributes
         if (OsValidator.WINDOWS && settings.getFs().isAttributesSupport()) {
             logger.info(
@@ -158,6 +162,26 @@ public class FsCrawlerValidator {
             logger.error(
                     "Hash algorithm [{}] not found. Disabling crawler",
                     settings.getFs().getHashAlgorithm());
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean validateKibanaSettings(Logger logger, FsSettings settings) {
+        Kibana kibana = settings.getKibana();
+        if (kibana == null || !kibana.isPushDashboard()) {
+            return false;
+        }
+        if (FsCrawlerUtil.isNullOrEmpty(kibana.getUrl())) {
+            logger.error("kibana.url must be set when kibana.push_dashboard is true. Disabling crawler");
+            return true;
+        }
+        Elasticsearch elasticsearch = settings.getElasticsearch();
+        if (FsCrawlerUtil.isNullOrEmpty(kibana.getApiKey())
+                && FsCrawlerUtil.isNullOrEmpty(elasticsearch.getApiKey())
+                && FsCrawlerUtil.isNullOrEmpty(elasticsearch.getUsername())) {
+            logger.error("kibana.push_dashboard is enabled but no credentials were found. "
+                    + "Set elasticsearch.api_key or kibana.api_key. Disabling crawler");
             return true;
         }
         return false;

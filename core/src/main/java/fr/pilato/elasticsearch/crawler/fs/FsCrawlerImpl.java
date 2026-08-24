@@ -23,8 +23,12 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.kibana.IKibanaClient;
+import fr.pilato.elasticsearch.crawler.fs.kibana.KibanaClientException;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentServiceElasticsearchImpl;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerKibanaService;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerKibanaServiceImpl;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementServiceElasticsearchImpl;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsCrawlerValidator;
@@ -54,6 +58,7 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     private final FsCrawlerDocumentService documentService;
     private final FsCrawlerManagementService managementService;
+    private final FsCrawlerKibanaService kibanaService;
     private final FsCrawlerPluginsManager pluginsManager;
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
@@ -67,6 +72,7 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(settings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(settings);
+        this.kibanaService = IKibanaClient.isEnabled(settings) ? new FsCrawlerKibanaServiceImpl(settings) : null;
 
         // Initialize and start the plugin manager
         this.pluginsManager = new FsCrawlerPluginsManager();
@@ -199,6 +205,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         managementService.start();
         documentService.start();
         documentService.createSchema();
+        setupKibanaDashboardIfNeeded();
 
         if (loop == 0 && !rest) {
             logger.warn("Number of runs is set to 0 and rest layer has not been started. Exiting");
@@ -261,6 +268,9 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         managementService.close();
         documentService.close();
+        if (kibanaService != null) {
+            kibanaService.close();
+        }
         logger.debug("ES Client Manager stopped");
 
         pluginsManager.close();
@@ -271,5 +281,25 @@ public class FsCrawlerImpl implements AutoCloseable {
 
     public FsParser getFsParser() {
         return fsParser;
+    }
+
+    private void setupKibanaDashboardIfNeeded() {
+        if (kibanaService == null) {
+            return;
+        }
+        try {
+            kibanaService.start();
+            kibanaService.setupDashboard();
+        } catch (KibanaClientException e) {
+            logger.warn(
+                    "Failed to create the default Kibana dashboard for job [{}]. Crawler will continue without it.",
+                    settings.getName(),
+                    e);
+        } catch (IOException e) {
+            logger.warn(
+                    "Failed to connect to Kibana for job [{}]. Crawler will continue without dashboard provisioning.",
+                    settings.getName(),
+                    e);
+        }
     }
 }

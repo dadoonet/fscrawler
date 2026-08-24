@@ -1,0 +1,6 @@
+name: yaml-kibana
+kibana:
+  url: http://127.0.0.1:5601
+  push_dashboard: true
+  space: default
+  api_key: test-kibana-api-key

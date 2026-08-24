@@ -149,5 +149,23 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         settings.getElasticsearch().setBulkOperation(BulkOperation.INDEX);
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isFalse();
+
+        // kibana.push_dashboard requires url and credentials
+        settings = FsSettingsLoader.load();
+        Kibana kibana = new Kibana();
+        kibana.setPushDashboard(true);
+        settings.setKibana(kibana);
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+
+        settings.getKibana().setUrl("http://127.0.0.1:5601");
+        settings.getElasticsearch().setApiKey(null);
+        settings.getElasticsearch().setUsername(null);
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+
+        settings.getElasticsearch().setApiKey("test-api-key");
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
     }
 }
