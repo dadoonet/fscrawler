@@ -70,13 +70,13 @@
         <snakeyaml.version>2.6</snakeyaml.version>
 
         <tika.version>4.0.0-beta-1</tika.version>
-        <jackson.version>3.2.1</jackson.version>
+        <jackson.version>3.2.2</jackson.version>
         <!--
             Jackson 2.x is still pulled transitively by Tika (jackson-databind). Pin it to a patched
             release (2.22.0 is outside the vulnerable range of CVE-2026-54512 / CVE-2026-54513, fixed in
             2.21.4) via the jackson-bom import below. Also used by the Spotless plugin (its own classpath).
         -->
-        <jackson2.version>2.22.1</jackson2.version>
+        <jackson2.version>2.22.2</jackson2.version>
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.1</log4j.version>
         <jersey.version>4.0.2</jersey.version>
@@ -91,7 +91,7 @@
         <minio.version>9.0.3</minio.version>
 
         <!-- Tests -->
-        <junit.version>6.1.2</junit.version>
+        <junit.version>6.1.3</junit.version>
         <randomizedtesting.version>0.3.0</randomizedtesting.version>
         <mockito.version>5.23.0</mockito.version>
 
@@ -135,9 +135,9 @@
         <ossindex.exclude/>
 
         <!-- OpenTelemetry API (instrumentation only; SDK provided by elastic-otel-javaagent at runtime) -->
-        <opentelemetry.version>1.64.0</opentelemetry.version>
+        <opentelemetry.version>1.65.0</opentelemetry.version>
         <!-- Elastic OTel javaagent bundled in distribution/external/ -->
-        <elastic.otel.agent.version>1.11.0</elastic.otel.agent.version>
+        <elastic.otel.agent.version>1.12.0</elastic.otel.agent.version>
 
         <java.compiler.version>17</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -294,7 +294,7 @@
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp-jvm</artifactId>
-                <version>5.4.0</version>
+                <version>5.5.0</version>
             </dependency>
             <dependency>
                 <groupId>com.squareup.okio</groupId>
@@ -446,7 +446,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>33.6.0-jre</version>
+                <version>33.7.1-jre</version>
             </dependency>
 
             <!-- Because of CVE-2024-29857 - this comes from Tika 2.9.2 -->
@@ -491,7 +491,7 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
-                <version>4.35.1</version>
+                <version>4.36.0</version>
             </dependency>
 
             <!-- For Language detection -->
@@ -914,7 +914,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.48.1</version>
+                    <version>0.49.0</version>
                 </plugin>
 
                 <!-- Generate the release zip file (run during package step) -->
@@ -993,7 +993,7 @@
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>3.9.0</version>
+                    <version>3.10.0</version>
                     <configuration>
                         <!-- optional: limit format enforcement to just the files changed by this feature branch -->
                         <ratchetFrom>origin/main</ratchetFrom>
