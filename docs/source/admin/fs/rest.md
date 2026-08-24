@@ -165,19 +165,22 @@ You will get back your document as it has been stored by elasticsearch:
   "_source" : {
     "content" : "This file contains some words.\n",
     "file" : {
-      "content_type" : "text/plain; charset=ISO-8859-1",
+      "content_type" : "text/plain; charset=windows-1252",
       "extension" : "txt",
       "filename" : "test.txt",
       "indexing_date" : "2017-01-04T21:01:08.043"
     },
     "meta" : {
       "raw" : {
-        "Content-Encoding" : "ISO-8859-1",
-        "Content-Type" : "text/plain; charset=ISO-8859-1",
-        "Content-Type-Magic-Detected" : "text/plain",
-        "X-TIKA:Parsed-By" : "org.apache.tika.parser.DefaultParser",
-        "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.DefaultParser",
-        "X-TIKA:resourceName" : "test.txt"
+        "Content-Encoding" : "windows-1252",
+        "Content-Type" : "text/plain; charset=windows-1252",
+        "tk:content-type-magic-detected" : "text/plain",
+        "tk:detected-encoding" : "windows-1252",
+        "tk:encoding-detection-trace" : "MojibusterEncodingDetector->windows-1252[STATISTICAL](0.10)",
+        "tk:encoding-detector" : "MojibusterEncodingDetector",
+        "tk:parsed-by" : "org.apache.tika.parser.DefaultParser",
+        "tk:parsed-by-full-set" : "org.apache.tika.parser.DefaultParser",
+        "tk:resource-name" : "test.txt"
       }
     },
     "path" : {
@@ -186,6 +189,11 @@ You will get back your document as it has been stored by elasticsearch:
     }
   }
 }
+```
+
+```{note}
+The `meta.raw` key names shown here are those produced since FSCrawler 3.0 (Apache Tika 4).
+They changed compared to FSCrawler 2.9. See {ref}`enabling-raw-metadata`.
 ```
 
 If you started FSCrawler in debug mode or if you pass
@@ -204,19 +212,22 @@ will give
   "doc" : {
     "content" : "This file contains some words.\n",
     "file" : {
-      "content_type" : "text/plain; charset=ISO-8859-1",
+      "content_type" : "text/plain; charset=windows-1252",
       "extension" : "txt",
       "filename" : "test.txt",
       "indexing_date" : "2017-01-04T14:05:10.325"
     },
     "meta" : {
       "raw" : {
-        "Content-Encoding" : "ISO-8859-1",
-        "Content-Type" : "text/plain; charset=ISO-8859-1",
-        "Content-Type-Magic-Detected" : "text/plain",
-        "X-TIKA:Parsed-By" : "org.apache.tika.parser.DefaultParser",
-        "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.DefaultParser",
-        "X-TIKA:resourceName" : "test.txt"
+        "Content-Encoding" : "windows-1252",
+        "Content-Type" : "text/plain; charset=windows-1252",
+        "tk:content-type-magic-detected" : "text/plain",
+        "tk:detected-encoding" : "windows-1252",
+        "tk:encoding-detection-trace" : "MojibusterEncodingDetector->windows-1252[STATISTICAL](0.10)",
+        "tk:encoding-detector" : "MojibusterEncodingDetector",
+        "tk:parsed-by" : "org.apache.tika.parser.DefaultParser",
+        "tk:parsed-by-full-set" : "org.apache.tika.parser.DefaultParser",
+        "tk:resource-name" : "test.txt"
       }
     },
     "path" : {

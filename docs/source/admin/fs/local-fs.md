@@ -446,6 +446,7 @@ fs:
 When `acl_support` is disabled, FSCrawler skips resolving ACLs even if
 `attributes_support` is active.
 
+(enabling-raw-metadata)=
 ## Enabling raw metadata
 
 FSCrawler can extract all found metadata within a `meta.raw` object in addition
@@ -458,23 +459,30 @@ fs:
   raw_metadata: true
 ```
 
+```{versionchanged} 3.0
+The names of the keys stored in `meta.raw` changed compared to FSCrawler 2.9 because of
+the Apache Tika 4 upgrade. For example, `resourceName` is now `tk:resource-name`, Tika
+internal keys use the `tk:` prefix instead of `X-TIKA:`, ICC keys use `icc:` instead of
+`ICC:`, and many PDF keys now use hyphens (`pdf:pdf-version` instead of `pdf:PDFVersion`).
+See the {ref}`3.0 release notes <release-notes-3.0>` for a summary of the renamed keys.
+```
+
 Generated raw metadata depends on the file format itself.
 
 For example, a PDF document could generate:
 
 ```json
 {
-   "access_permission:assemble_document" : "true",
-   "access_permission:can_modify" : "true",
-   "access_permission:can_print" : "true",
-   "access_permission:can_print_faithful" : "true",
-   "access_permission:extract_content" : "true",
-   "access_permission:extract_for_accessibility" : "true",
-   "access_permission:fill_in_form" : "true",
-   "access_permission:modify_annotations" : "true",
+   "access-permission:assemble-document" : "true",
+   "access-permission:can-modify" : "true",
+   "access-permission:can-print" : "true",
+   "access-permission:can-print-faithful" : "true",
+   "access-permission:extract-content" : "true",
+   "access-permission:extract-for-accessibility" : "true",
+   "access-permission:fill-in-form" : "true",
+   "access-permission:modify-annotations" : "true",
    "Content-Length" : "101643",
    "Content-Type" : "application/pdf",
-   "Content-Type-Magic-Detected" : "application/pdf",
    "dc:creator" : "David Pilato",
    "dc:format" : "application/pdf; version=1.5",
    "dc:language" : "en-US",
@@ -482,33 +490,34 @@ For example, a PDF document could generate:
    "dc:title" : "Test Tika title",
    "dcterms:created" : "2016-07-07T08:37:42Z",
    "dcterms:modified" : "2016-07-07T08:37:42Z",
-   "pdf:charsPerPage" : "42",
-   "pdf:containsDamagedFont" : "false",
-   "pdf:containsNonEmbeddedFont" : "false",
+   "pdf:chars-per-page" : "42",
+   "pdf:contains-damaged-font" : "false",
+   "pdf:contains-non-embedded-font" : "false",
    "pdf:docinfo:created" : "2016-07-07T08:37:42Z",
    "pdf:docinfo:creator" : "David Pilato",
-   "pdf:docinfo:creator_tool" : "Microsoft Word",
+   "pdf:docinfo:creator-tool" : "Microsoft Word",
    "pdf:docinfo:keywords" : "keyword1, keyword2",
    "pdf:docinfo:modified" : "2016-07-07T08:37:42Z",
    "pdf:docinfo:subject" : "Test Tika Object",
    "pdf:docinfo:title" : "Test Tika title",
    "pdf:encrypted" : "false",
-   "pdf:eofOffsets" : "101460",
-   "pdf:hasCollection" : "false",
-   "pdf:hasMarkedContent" : "true",
-   "pdf:hasXFA" : "false",
-   "pdf:hasXMP" : "false",
-   "pdf:incrementalUpdateCount" : "1",
-   "pdf:num3DAnnotations" : "0",
-   "pdf:ocrPageCount" : "0",
-   "pdf:overallPercentageUnmappedUnicodeChars" : "0.0",
-   "pdf:PDFVersion" : "1.5",
-   "pdf:totalUnmappedUnicodeChars" : "0",
-   "pdf:unmappedUnicodeCharsPerPage" : "0",
-   "X-TIKA:Parsed-By" : "org.apache.tika.parser.pdf.PDFParser",
-   "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.pdf.PDFParser",
-   "X-TIKA:resourceName" : "test.pdf",
-   "X-TIKA:versionCount" : "1",
+   "pdf:eof-offsets" : "101460",
+   "pdf:has-collection" : "false",
+   "pdf:has-marked-content" : "true",
+   "pdf:has-xfa" : "false",
+   "pdf:has-xmp" : "false",
+   "pdf:incremental-update-count" : "1",
+   "pdf:num-3d-annotations" : "0",
+   "pdf:ocr-page-count" : "0",
+   "pdf:overall-percentage-unmapped-unicode-chars" : "0.0",
+   "pdf:pdf-version" : "1.5",
+   "pdf:total-unmapped-unicode-chars" : "0",
+   "pdf:unmapped-unicode-chars-per-page" : "0",
+   "tk:content-type-magic-detected" : "application/pdf",
+   "tk:parsed-by" : "org.apache.tika.parser.pdf.PDFParser",
+   "tk:parsed-by-full-set" : "org.apache.tika.parser.pdf.PDFParser",
+   "tk:resource-name" : "test.pdf",
+   "tk:version-count" : "1",
    "xmp:CreatorTool" : "Microsoft Word",
    "xmpTPg:NPages" : "2"
 }
@@ -518,16 +527,18 @@ Where a MP3 file would generate:
 
 ```json
 {
-   "channels" : "2",
+   "audio:bitrate" : "192000",
+   "audio:channels" : "2",
+   "audio:is-variable-bitrate" : "false",
+   "audio:raw-track-number" : "1",
    "Content-Type" : "audio/mpeg",
-   "Content-Type-Magic-Detected" : "audio/mpeg",
    "dc:creator" : "David Pilato",
    "dc:title" : "Test Tika",
-   "samplerate" : "44100",
-   "version" : "MPEG 3 Layer III Version 1",
-   "X-TIKA:Parsed-By" : "org.apache.tika.parser.DefaultParser",
-   "X-TIKA:Parsed-By-Full-Set" : "org.apache.tika.parser.DefaultParser",
-   "X-TIKA:resourceName" : "test.mp3",
+   "mp3:version" : "MPEG 3 Layer III Version 1",
+   "tk:content-type-magic-detected" : "audio/mpeg",
+   "tk:parsed-by" : "org.apache.tika.parser.DefaultParser",
+   "tk:parsed-by-full-set" : "org.apache.tika.parser.DefaultParser",
+   "tk:resource-name" : "test.mp3",
    "xmpDM:album" : "FS Crawler",
    "xmpDM:artist" : "David Pilato",
    "xmpDM:audioChannelType" : "Stereo",
