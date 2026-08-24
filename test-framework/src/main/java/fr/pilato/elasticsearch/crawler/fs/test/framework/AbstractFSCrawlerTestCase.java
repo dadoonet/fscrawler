@@ -61,6 +61,7 @@ import org.junit.jupiter.api.io.TempDir;
     JUnitThreadsFilter.class,
     KeepAliveTimerThreadFilter.class,
     JdkHttpClientSelectorThreadFilter.class,
+    TikaHttpJdkThreadFilter.class,
     Java2DThreadFilter.class
 })
 @Fast
