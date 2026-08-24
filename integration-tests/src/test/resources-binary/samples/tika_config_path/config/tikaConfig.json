@@ -1,0 +1,6 @@
+{
+  "parsers": [
+    { "default-parser": { "exclude": ["jsoup-parser"] } },
+    { "xml-parser": { "_mime-include": ["application/xhtml+xml"] } }
+  ]
+}

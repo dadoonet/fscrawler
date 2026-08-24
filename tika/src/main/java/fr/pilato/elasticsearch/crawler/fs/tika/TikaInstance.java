@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.config.ServiceLoader;
+import org.apache.tika.config.loader.TikaLoader;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaConfigException;
 import org.apache.tika.exception.TikaException;
@@ -75,6 +77,9 @@ import org.xml.sax.SAXException;
 class TikaInstance {
 
     private static final Logger logger = LogManager.getLogger();
+
+    /** FSCrawler PDF OCR strategy value disabling OCR (see {@link #mapPdfOcrStrategy(String)}). */
+    private static final String PDF_STRATEGY_NO_OCR = "no_ocr";
 
     /**
      * Shared, settings-independent language detector. Kept static because loading the Optimaize models is expensive;
@@ -122,14 +127,22 @@ class TikaInstance {
 
     private void initParser(Fs fs) {
         if (fs.getTikaConfigPath() != null) {
-            // Apache Tika 4 removed the XML-based Tika configuration file mechanism (configuration moved to
-            // per-component JSON, and there is no drop-in way to assemble an AutoDetectParser from a file).
-            // Fail fast with a clear message instead of silently ignoring the setting.
-            // TODO Re-introduce custom Tika configuration on top of Tika 4's JSON config mechanism (temporary removal).
-            throw new FsCrawlerIllegalConfigurationException(
-                    "fs.tika_config_path is not supported with Apache Tika 4.x: "
-                            + "the XML Tika configuration file mechanism was removed upstream. Please remove this setting ["
-                            + fs.getTikaConfigPath() + "].");
+            if (!(new File(fs.getTikaConfigPath())).exists()) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Tika configuration file " + fs.getTikaConfigPath() + " not found!");
+            }
+            logger.info("Using custom tika configuration from [{}].", fs.getTikaConfigPath());
+            // Apache Tika 4 removed the XML-based Tika configuration file mechanism. Custom configurations
+            // are now JSON files loaded through TikaLoader (tika-serialization). A configuration error fails
+            // fast instead of being silently ignored: a user providing a config expects it to be applied.
+            try {
+                TikaLoader tikaLoader = TikaLoader.load(Paths.get(fs.getTikaConfigPath()));
+                parser = tikaLoader.loadAutoDetectParser();
+            } catch (TikaConfigException | IOException e) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Can not load Tika configuration from [" + fs.getTikaConfigPath() + "]: " + e.getMessage(), e);
+            }
+            return;
         }
 
         PDFParser pdfParser = new PDFParser();
@@ -179,13 +192,13 @@ class TikaInstance {
                 } else {
                     logger.debug("But Tesseract is not installed so we won't run OCR.");
                     ocrActivated = false;
-                    setPdfOcrStrategy(pdfParser, "no_ocr");
+                    setPdfOcrStrategy(pdfParser, PDF_STRATEGY_NO_OCR);
                 }
             } catch (TikaConfigException e) {
                 logger.debug("Tesseract is not correctly set up so we won't run OCR. Error is: {}", e.getMessage());
                 logger.debug("Fullstack trace error for Tesseract", e);
                 ocrActivated = false;
-                setPdfOcrStrategy(pdfParser, "no_ocr");
+                setPdfOcrStrategy(pdfParser, PDF_STRATEGY_NO_OCR);
             }
         }
 
@@ -252,7 +265,7 @@ class TikaInstance {
             return OcrConfig.Strategy.AUTO;
         }
         return switch (strategy.toLowerCase(Locale.ROOT)) {
-            case "no_ocr" -> OcrConfig.Strategy.NO_OCR;
+            case PDF_STRATEGY_NO_OCR -> OcrConfig.Strategy.NO_OCR;
             case "ocr_only" -> OcrConfig.Strategy.OCR_ONLY;
             case "ocr_and_text", "ocr_and_text_extraction" -> OcrConfig.Strategy.OCR_AND_TEXT_EXTRACTION;
             default -> OcrConfig.Strategy.AUTO;

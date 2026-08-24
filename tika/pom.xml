@@ -49,6 +49,11 @@
             <artifactId>tika-parsers-standard-package</artifactId>
             <type>pom</type>
         </dependency>
+        <!-- Tika 4 JSON configuration loading (TikaLoader) for fs.tika_config_path -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-serialization</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parser-scientific-module</artifactId>

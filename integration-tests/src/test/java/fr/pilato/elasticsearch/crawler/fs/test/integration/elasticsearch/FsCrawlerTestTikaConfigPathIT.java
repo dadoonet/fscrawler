@@ -39,7 +39,7 @@ class FsCrawlerTestTikaConfigPathIT extends AbstractFsCrawlerITCase {
         fsSettings
                 .getFs()
                 .setTikaConfigPath(
-                        currentTestResourceDir.resolve("config/tikaConfig.xml").toString());
+                        currentTestResourceDir.resolve("config/tikaConfig.json").toString());
         fsSettings.getFs().setExcludes(List.of("/config/*"));
         crawler = startCrawler(fsSettings);
 
