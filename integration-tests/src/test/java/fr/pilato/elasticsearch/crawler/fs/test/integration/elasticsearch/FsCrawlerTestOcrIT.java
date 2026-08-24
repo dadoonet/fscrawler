@@ -59,19 +59,27 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         Path tesseract = tessDirPath.resolve(exec);
         logger.info("Tesseract is installed at [{}]", tesseract);
 
-        // Default behaviour
+        // Default behaviour (pdf_strategy=auto)
         {
             crawler = startCrawler();
 
-            // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(
                     new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
-            // Check that we extracted the content
-            Assertions.assertThat(searchResponse.getHits())
-                    .isNotEmpty()
-                    .allSatisfy(hit -> Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
-                            .contains("words"));
+            Assertions.assertThat(searchResponse.getHits()).as("total hits").hasSize(3);
+            Assertions.assertThat((String) JsonPath.read(
+                            findHitByFilename(searchResponse, "test-ocr.jpg").getSource(), "$.content"))
+                    .as("test-ocr.jpg: image OCR")
+                    .contains("words");
+            Assertions.assertThat((String) JsonPath.read(
+                            findHitByFilename(searchResponse, "test-ocr.png").getSource(), "$.content"))
+                    .as("test-ocr.png: image OCR")
+                    .contains("words");
+            Assertions.assertThat((String) JsonPath.read(
+                            findHitByFilename(searchResponse, "test-ocr.pdf").getSource(), "$.content"))
+                    .as("test-ocr.pdf: auto skips OCR when the text layer has more than 10 characters")
+                    .contains("This file also contains text.")
+                    .doesNotContain("This file contains some words.");
 
             crawler.close();
             crawler = null;

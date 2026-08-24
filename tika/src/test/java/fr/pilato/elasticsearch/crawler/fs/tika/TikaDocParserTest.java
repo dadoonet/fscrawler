@@ -886,20 +886,38 @@ class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
+    @Slow
     void ocr() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
-        // Test with OCR On (default)
+        // Default pdf_strategy is auto: OCR images always, OCR PDF pages only when they have fewer than 10
+        // extracted characters.
         Doc doc = extractFromFile("test-ocr.png");
         Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+
         doc = extractFromFile("test-ocr.pdf");
-        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
-        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent())
+                .as("PDF with more than 10 characters of text must not be OCRed in auto")
+                .contains("This file also contains text.")
+                .doesNotContain("This file contains some words.");
+
+        doc = extractFromFile("test-ocr-oneword.pdf");
+        Assertions.assertThat(doc.getContent())
+                .as("PDF with a single text word must extract that word and OCR the embedded image in auto")
+                .contains("Hello")
+                .contains("This file contains some words.");
+
         doc = extractFromFile("test-ocr.docx");
         Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
         Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+
+        doc = extractFromFile("test-ocr-oneword.docx");
+        Assertions.assertThat(doc.getContent())
+                .as("DOCX is not subject to pdf_strategy so the embedded image is always OCRed")
+                .contains("Hello")
+                .contains("This file contains some words.");
     }
 
     /**
@@ -1022,20 +1040,32 @@ class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
+    @Slow
     void ocrWithPdfStrategyAuto() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
                 .isTrue();
 
-        // Test with OCR On and PDF Strategy set to auto (meaning that PDF will be only OCRed if less than 10 characters
-        // are found)
+        // auto: OCR a PDF page only when fewer than 10 characters of text are found
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().getOcr().setPdfStrategy("auto");
+
         Doc doc = extractFromFile("test-ocr.pdf", fsSettings);
-        Assertions.assertThat(doc.getContent()).doesNotContain("This file contains some words.");
-        Assertions.assertThat(doc.getContent()).contains("This file also contains text.");
+        Assertions.assertThat(doc.getContent())
+                .as("more than 10 characters of text: extract the text layer, skip OCR")
+                .contains("This file also contains text.")
+                .doesNotContain("This file contains some words.");
+
+        doc = extractFromFile("test-ocr-oneword.pdf", fsSettings);
+        Assertions.assertThat(doc.getContent())
+                .as("one word of text plus an embedded image: extract the word and OCR the image")
+                .contains("Hello")
+                .contains("This file contains some words.");
+
         doc = extractFromFile("test-ocr-notext.pdf", fsSettings);
-        Assertions.assertThat(doc.getContent()).contains("This file contains some words.");
+        Assertions.assertThat(doc.getContent())
+                .as("no text layer: OCR the embedded image")
+                .contains("This file contains some words.");
     }
 
     @Test
@@ -1072,6 +1102,7 @@ class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
+    @Slow
     void ocrOutputTypeHocr() throws IOException {
         Assumptions.assumeThat(isOcrAvailable)
                 .as("Tesseract is not installed so we are skipping this test")
@@ -1082,7 +1113,8 @@ class TikaDocParserTest extends DocParserTestCase {
         fsSettings.getFs().getOcr().setOutputType("hocr");
         Doc doc = extractFromFile("test-ocr.png", fsSettings);
         Assertions.assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
-        doc = extractFromFile("test-ocr.pdf", fsSettings);
+        // test-ocr.pdf has more than 10 characters of text so auto skips OCR; use the one-word PDF instead
+        doc = extractFromFile("test-ocr-oneword.pdf", fsSettings);
         Assertions.assertThat(doc.getContent()).contains("This", "file", "contains", "some", "words.");
     }
 

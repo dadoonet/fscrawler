@@ -257,7 +257,11 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
     @DisabledIf(value = "tesseractNotInstalled", disabledReason = "Tesseract is not installed")
     void ocr() throws ElasticsearchClientException {
         runSearch("test-ocr.png", "words");
-        runSearch("test-ocr.pdf", "words");
+        runSearch("test-ocr.pdf", "This file also contains text.");
+        runSearch("test-ocr-oneword.pdf", "Hello");
+        runSearch("test-ocr-oneword.pdf", "words");
+        runSearch("test-ocr-oneword.docx", "Hello");
+        runSearch("test-ocr-oneword.docx", "words");
     }
 
     /**
