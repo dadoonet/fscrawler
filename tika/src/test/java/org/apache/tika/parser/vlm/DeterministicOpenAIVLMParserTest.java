@@ -28,12 +28,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.ForkJoinPoolThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.IntelliJThreadsFilter;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.JdkHttpClientSelectorThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JUnitThreadsFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.KeepAliveTimerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
-import java.util.function.Predicate;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
  * its default temperature, which makes small OCR models hallucinate.
  */
 @DetectThreadLeaks.ExcludeThreads({
-    DeterministicOpenAIVLMParserTest.JdkHttpClientSelectorThreadFilter.class,
+    JdkHttpClientSelectorThreadFilter.class,
     SystemThreadFilter.class,
     ForkJoinPoolThreadFilter.class,
     WindowsSpecificThreadFilter.class,
@@ -54,18 +54,6 @@ import org.junit.jupiter.api.Test;
     KeepAliveTimerThreadFilter.class
 })
 class DeterministicOpenAIVLMParserTest extends AbstractFSCrawlerTestCase {
-
-    /**
-     * Instantiating any {@link AbstractVLMParser} opens a {@code java.net.http.HttpClient}, whose selector thread
-     * ({@code HttpClient-N-SelectorManager}) is typically already TERMINATED when the leak detector runs — the same
-     * false positive class as {@link KeepAliveTimerThreadFilter}.
-     */
-    public static class JdkHttpClientSelectorThreadFilter implements Predicate<Thread> {
-        @Override
-        public boolean test(Thread t) {
-            return t.getName().startsWith("HttpClient-") && t.getName().endsWith("-SelectorManager");
-        }
-    }
 
     @Test
     void temperature_zero_is_forced_on_the_request() throws Exception {
