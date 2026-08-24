@@ -74,6 +74,11 @@ Note:
 Read the [documentation](https://fscrawler.readthedocs.io/) for more details and specifically the 
 [tutorial](https://fscrawler.readthedocs.io/en/latest/user/tutorial.html) page.
 
+Need help writing your job settings? Copy a ready-made prompt from the
+[LLM assistant guide](https://fscrawler.readthedocs.io/en/latest/user/llm-assistant.html)
+into ChatGPT, Claude, or your favorite AI assistant. The repository also includes an
+[`llms.txt`](llms.txt) file for tools that support the [llms.txt](https://llmstxt.org/) standard.
+
 ## Project information
 
 ### Stats

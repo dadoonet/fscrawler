@@ -1,0 +1,47 @@
+# FSCrawler
+
+> FSCrawler is a Java file system crawler that extracts text from binary documents (PDF, MS Office, images with OCR, and more) with Apache Tika and indexes them into Elasticsearch 7.x, 8.x, or 9.x. It supports local filesystem, SSH/FTP, and a REST upload API.
+
+FSCrawler jobs are configured in YAML files (`~/.fscrawler/{job_name}/_settings.yaml`). Each job has a mandatory `name` field. Documents are indexed in Elasticsearch; search uses a job alias named after the job (for example `fscrawler`).
+
+For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the LLM assistant page in the user guide.
+
+## Getting started
+
+- [Installation](https://fscrawler.readthedocs.io/en/latest/installation.html): Docker, ZIP distribution, and Docker Compose.
+- [Getting Started](https://fscrawler.readthedocs.io/en/latest/user/getting_started.html): First run with `--setup`, default paths, and a basic search example.
+- [Tutorial](https://fscrawler.readthedocs.io/en/latest/user/tutorial.html): End-to-end walkthrough with Elastic start-local, Docker, and Kibana ES|QL queries.
+- [LLM assistant](https://fscrawler.readthedocs.io/en/latest/user/llm-assistant.html): Ready-to-copy prompts for configuring FSCrawler with an AI assistant.
+
+## User guide
+
+- [Crawler options](https://fscrawler.readthedocs.io/en/latest/user/options.html): Update rate, `--loop`, and `--restart`.
+- [Supported formats](https://fscrawler.readthedocs.io/en/latest/user/formats.html): Document types handled by Apache Tika.
+- [OCR](https://fscrawler.readthedocs.io/en/latest/user/ocr.html): Optical character recognition settings.
+- [REST API](https://fscrawler.readthedocs.io/en/latest/user/rest.html): Upload binary documents over HTTP.
+- [Tips and tricks](https://fscrawler.readthedocs.io/en/latest/user/tips.html): Docker, multi-machine setups, and common workarounds.
+
+## Configuration reference
+
+- [Local filesystem](https://fscrawler.readthedocs.io/en/latest/admin/fs/local-fs.html): Includes, excludes, checksums, and `.fscrawlerignore`.
+- [SSH](https://fscrawler.readthedocs.io/en/latest/admin/fs/ssh.html): Remote crawling over SSH/SFTP.
+- [FTP](https://fscrawler.readthedocs.io/en/latest/admin/fs/ftp.html): Remote crawling over FTP.
+- [Elasticsearch settings](https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html): URLs, API key, SSL, indices, bulk settings, semantic search.
+- [Password-protected documents](https://fscrawler.readthedocs.io/en/latest/admin/fs/passwords.html): Encrypted PDF and Office files.
+- [Document IDs](https://fscrawler.readthedocs.io/en/latest/admin/fs/document-ids.html): How document identifiers are built.
+- [Tags and metadata](https://fscrawler.readthedocs.io/en/latest/admin/fs/tags.html): Custom fields on indexed documents.
+- [REST server settings](https://fscrawler.readthedocs.io/en/latest/admin/fs/rest.html): Embedded REST API configuration.
+- [CLI options](https://fscrawler.readthedocs.io/en/latest/admin/cli-options.html): Command-line flags and environment variables.
+
+## Common pitfalls
+
+- Use `elasticsearch.urls` (a list), not `nodes`. Unknown keys are silently ignored.
+- With Elastic start-local, use `http://` (not `https://`) for Elasticsearch.
+- Do not set `elasticsearch.index` to the same value as the job `name`; FSCrawler creates an alias with the job name.
+- In Docker, `127.0.0.1` inside the container is not the host; use `host.docker.internal` or the host IP.
+- The job `name` field is mandatory in every `_settings.yaml`.
+
+## Optional
+
+- [GitHub repository](https://github.com/dadoonet/fscrawler): Source code, issues, and releases.
+- [Release notes](https://fscrawler.readthedocs.io/en/latest/release/3.0.html): Changes in FSCrawler 3.0.
