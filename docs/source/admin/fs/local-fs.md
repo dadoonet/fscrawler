@@ -863,15 +863,31 @@ fs:
 ```
 
 An example Tika JSON config file is shown below. It excludes the HTML parser (`jsoup-parser`) from the
-default parser (HTML files are then handled as plain text) and routes XHTML files to the XML parser:
+default parser (HTML files are then handled as plain text), routes XHTML files to the XML parser, and
+keeps the Vision Language Model (VLM) OCR parsers disabled (see {ref}`vlm-ocr`):
 
 ```json
 {
   "parsers": [
-    { "default-parser": { "exclude": ["jsoup-parser"] } },
+    { "default-parser": {
+        "exclude": [
+          "jsoup-parser",
+          "openai-vlm-parser",
+          "openai-vlm-deterministic-parser",
+          "claude-vlm-parser",
+          "gemini-vlm-parser"
+        ]
+      } },
     { "xml-parser": { "_mime-include": ["application/xhtml+xml"] } }
   ]
 }
+```
+
+```{note}
+Since FSCrawler 3.0, the distribution includes Apache Tika's `tika-vlm` module. If your JSON
+configuration uses `default-parser`, add the VLM parser component names to the `exclude` list unless
+you explicitly configure one of them in the `parsers` array. Without these exclusions, Tika may load
+the VLM parsers through SPI and run a startup health check against their configured endpoint.
 ```
 
 The `parsers` array lists the parsers to load, in order. Each entry is either a Tika component name (like

@@ -54,6 +54,11 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-serialization</artifactId>
         </dependency>
+        <!-- Vision Language Model OCR parsers (OpenAI-compatible, Claude, Gemini), self-registered via SPI -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-vlm</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parser-scientific-module</artifactId>
@@ -83,6 +88,11 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
             <scope>test</scope>
         </dependency>
 

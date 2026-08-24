@@ -175,3 +175,96 @@ Set Tesseract to only run a subset of layout analysis and assume a certain form 
 ## OCR Preserve Interword Spacing
 
 Spaces between the words will be deleted.
+
+(vlm-ocr)=
+## Using a Vision Language Model (VLM) for OCR
+
+```{versionadded} 3.0
+```
+
+This is an **optional** alternative to Tesseract. It is never activated unless you set
+`fs.tika_config_path` and configure a VLM parser in the JSON file. Without a custom Tika configuration,
+FSCrawler keeps using Tesseract for OCR (when available).
+
+FSCrawler ships with Apache Tika's `tika-vlm` module, which can send images — including PDF pages
+rendered by the PDF parser — to a Vision Language Model (VLM) instead of Tesseract. The module
+provides parsers for OpenAI-compatible chat completions endpoints (`openai-vlm-parser` and
+`openai-vlm-deterministic-parser`, which work with vLLM, Ollama, OpenRouter, Azure OpenAI,
+LiteLLM…), Anthropic Claude (`claude-vlm-parser`) and Google Gemini (`gemini-vlm-parser`).
+
+### Choosing a parser
+
+| Component | When to use it |
+|---|---|
+| *(none — Tesseract)* | Default FSCrawler behaviour: no `fs.tika_config_path`, or a custom config that does not enable a VLM parser. Tesseract handles OCR when installed. |
+| `openai-vlm-deterministic-parser` | **Recommended** for OCR via an OpenAI-compatible VLM endpoint. Same JSON settings as `openai-vlm-parser`, but forces `temperature: 0` (greedy decoding) to avoid hallucinations on small vision models. |
+| `openai-vlm-parser` | OCR via an OpenAI-compatible endpoint without forcing the sampling temperature. Prefer this only when you explicitly need the server's default sampling behaviour. |
+| `claude-vlm-parser` | OCR delegated to an Anthropic Claude vision endpoint. |
+| `gemini-vlm-parser` | OCR delegated to a Google Gemini vision endpoint. |
+
+The VLM parsers are configured through a custom Tika configuration file (see
+{ref}`local-fs-settings`, `fs.tika_config_path`). The example below routes OCR to a local
+[vLLM](https://docs.vllm.ai) server running an OpenAI-compatible endpoint on
+`http://localhost:8000`:
+
+```json
+{
+  "parsers": [
+    { "default-parser": { "exclude": ["tesseract-ocr-parser"] } },
+    { "pdf-parser": {
+        "ocr": {
+          "strategy": "AUTO",
+          "maxPagesToOcr": 10
+        }
+      } },
+    { "openai-vlm-deterministic-parser": {
+        "baseUrl": "http://localhost:8000",
+        "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+        "maxTokens": 4096,
+        "timeoutSeconds": 300
+      } }
+  ]
+}
+```
+
+```yaml
+name: "test"
+fs:
+  tika_config_path: '/path/to/tikaConfig.json'
+```
+
+Some notes about this configuration:
+
+* A VLM parser must be listed **explicitly** in the JSON configuration to be used for OCR.
+* If your configuration uses `default-parser`, exclude the VLM parser components you do not need (see the
+  example in {ref}`local-fs-settings`). Otherwise Tika may load them through SPI when `tika-vlm` is on
+  the classpath.
+* Without a custom Tika configuration, FSCrawler's built-in parser chain keeps the VLM parsers disabled
+  and continues to use Tesseract.
+* `default-parser` with `exclude` removes Tesseract from the parser chain, so OCR-able images are
+  claimed by the VLM parser instead. If you leave Tesseract in, it takes precedence when installed.
+* The PDF parser renders pages according to the `ocr.strategy` and hands them to the OCR parser —
+  the VLM in this setup. Always set `maxPagesToOcr` explicitly: every OCR'ed page is one VLM
+  request, so an unbounded value can be slow and expensive on large documents.
+* `apiKey` can be set for hosted endpoints; for a local vLLM server it can usually be omitted.
+* Extracted metadata includes the model used and token usage (`vlm:model`,
+  `vlm:prompt_tokens`, `vlm:completion_tokens`) in the raw metadata.
+
+### Deterministic decoding (`openai-vlm-deterministic-parser`)
+
+Tika's `openai-vlm-parser` does not send a `temperature` field, so the server decides the sampling
+temperature (vLLM typically defaults to `1.0`). Small OCR-oriented vision models hallucinate
+heavily under sampling — measured against a local PaddleOCR-VL-1.6-0.9B, the very same request
+returned the actual page text with `temperature: 0` and Chinese hallucinations with
+`<|LOC_*|>` layout tokens without it. FSCrawler therefore ships
+`openai-vlm-deterministic-parser`, a drop-in variant of `openai-vlm-parser` that forces
+`"temperature": 0` (greedy decoding) on every request. It accepts exactly the same configuration
+keys; simply use it in place of `openai-vlm-parser` in the custom Tika configuration.
+
+```{warning}
+The VLM parser performs a **single health check** (`GET {baseUrl}/v1/models`) when it is
+initialized, at crawler startup. If the VLM server is not reachable at that moment, the parser
+marks itself unavailable and silently skips OCR **for the whole lifetime of the crawler** — no
+per-document retry is attempted. Make sure the VLM server is up before starting FSCrawler, and
+restart FSCrawler if the server was down when it started.
+```
