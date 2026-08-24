@@ -302,7 +302,9 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("meta:page-count", "2")
                 .containsEntry("meta:paragraph-count", "2")
                 .containsEntry("meta:word-count", "19")
-                .containsEntry("tk:content-type-magic-detected", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                .containsEntry(
+                        "tk:content-type-magic-detected",
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .containsEntry("tk:parsed-by", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("tk:parsed-by-full-set", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("tk:resource-name", "test.docx")
@@ -340,7 +342,9 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("html:Titre", "Test Tika title")
                 .containsEntry("tk:content-type-magic-detected", "text/html")
                 .containsEntry("tk:detected-encoding", "UTF-8")
-                .containsEntry("tk:encoding-detection-trace", "HtmlEncodingDetector->x-MacRoman[DECLARATIVE], MojibusterEncodingDetector->UTF-8[STRUCTURAL] [junk-filter-prefer-structural]")
+                .containsEntry(
+                        "tk:encoding-detection-trace",
+                        "HtmlEncodingDetector->x-MacRoman[DECLARATIVE], MojibusterEncodingDetector->UTF-8[STRUCTURAL] [junk-filter-prefer-structural]")
                 .containsEntry("tk:encoding-detector", "MojibusterEncodingDetector")
                 .containsEntry("tk:parsed-by", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("tk:parsed-by-full-set", "org.apache.tika.parser.DefaultParser")
@@ -670,7 +674,8 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("Content-Type", "text/plain; charset=windows-1252")
                 .containsEntry("tk:content-type-magic-detected", "text/plain")
                 .containsEntry("tk:detected-encoding", "windows-1252")
-                .containsEntry("tk:encoding-detection-trace", "MojibusterEncodingDetector->windows-1252[STATISTICAL](0.10)")
+                .containsEntry(
+                        "tk:encoding-detection-trace", "MojibusterEncodingDetector->windows-1252[STATISTICAL](0.10)")
                 .containsEntry("tk:encoding-detector", "MojibusterEncodingDetector")
                 .containsEntry("tk:parsed-by", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("tk:parsed-by-full-set", "org.apache.tika.parser.DefaultParser")
