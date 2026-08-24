@@ -1256,6 +1256,7 @@ class TikaDocParserTest extends DocParserTestCase {
 
     /** Test protected document */
     @Test
+    @Slow
     void protectedDocument() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         Doc doc = extractFromFile("test-protected.docx", fsSettings);
