@@ -59,19 +59,27 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         Path tesseract = tessDirPath.resolve(exec);
         logger.info("Tesseract is installed at [{}]", tesseract);
 
-        // Default behaviour
+        // Default behaviour (pdf_strategy=auto)
         {
             crawler = startCrawler();
 
-            // We expect to have one file
             ESSearchResponse searchResponse = countTestHelper(
                     new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
 
-            // Check that we extracted the content
-            Assertions.assertThat(searchResponse.getHits())
-                    .isNotEmpty()
-                    .allSatisfy(hit -> Assertions.assertThat((String) JsonPath.read(hit.getSource(), "$.content"))
-                            .contains("words"));
+            Assertions.assertThat(searchResponse.getHits()).as("total hits").hasSize(3);
+            Assertions.assertThat((String) JsonPath.read(
+                            findHitByFilename(searchResponse, "test-ocr.jpg").getSource(), "$.content"))
+                    .as("test-ocr.jpg: image OCR")
+                    .contains("words");
+            Assertions.assertThat((String) JsonPath.read(
+                            findHitByFilename(searchResponse, "test-ocr.png").getSource(), "$.content"))
+                    .as("test-ocr.png: image OCR")
+                    .contains("words");
+            Assertions.assertThat((String) JsonPath.read(
+                            findHitByFilename(searchResponse, "test-ocr.pdf").getSource(), "$.content"))
+                    .as("test-ocr.pdf: auto skips OCR when the text layer has more than 10 characters")
+                    .contains("This file also contains text.")
+                    .doesNotContain("This file contains some words.");
 
             crawler.close();
             crawler = null;
@@ -147,63 +155,63 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         Map<String, String> raw = JsonPath.read(jpgHitSource, "$.meta.raw");
         Assertions.assertThat(raw)
                 .as("test-ocr.jpg: raw metadata")
-                .hasSize(64)
-                .containsKey("Component 1")
-                .containsKey("Component 2")
-                .containsKey("Component 3")
-                .containsEntry("Compression Type", "Baseline")
+                .hasSize(66)
                 .containsEntry("Content-Type", "image/jpeg")
-                .containsEntry("Data Precision", "8 bits")
-                .containsEntry("Exif IFD0:Orientation", "Top, left side (Horizontal / normal)")
-                .containsEntry("Exif IFD0:Resolution Unit", "Inch")
-                .containsKey("Exif IFD0:X Resolution")
-                .containsKey("Exif IFD0:Y Resolution")
-                .containsEntry("Exif IFD0:YCbCr Positioning", "Center of pixel array")
-                .containsEntry("Exif SubIFD:Color Space", "sRGB")
-                .containsEntry("Exif SubIFD:Components Configuration", "YCbCr")
-                .containsEntry("Exif SubIFD:Exif Image Height", "622 pixels")
-                .containsEntry("Exif SubIFD:Exif Image Width", "982 pixels")
-                .containsEntry("Exif SubIFD:Exif Version", "2.21")
-                .containsEntry("Exif SubIFD:FlashPix Version", "1.00")
-                .containsEntry("Exif SubIFD:Scene Capture Type", "Standard")
-                .containsKey("File Modified Date")
+                .containsEntry("tk:content-type-magic-detected", "image/jpeg")
+                .containsKey("icc:Apple Multi-language Profile Name")
+                .containsKey("icc:Blue Colorant")
+                .containsKey("icc:Blue Parametric TRC")
+                .containsKey("icc:Blue TRC")
+                .containsKey("icc:Chromatic Adaptation")
+                .containsEntry("icc:Class", "Display Device")
+                .containsEntry("icc:CMM Type", "appl")
+                .containsEntry("icc:Color space", "RGB")
+                .containsEntry("icc:Device manufacturer", "APPL")
+                .containsKey("icc:Green Colorant")
+                .containsKey("icc:Green Parametric TRC")
+                .containsKey("icc:Green TRC")
+                .containsKey("icc:Make And Model")
+                .containsKey("icc:Media White Point")
+                .containsKey("icc:Native Display Information")
+                .containsEntry("icc:Primary Platform", "Apple Computer, Inc.")
+                .containsEntry("icc:Profile Connection Space", "XYZ")
+                .containsEntry("icc:Profile Copyright", "Copyright Apple Inc., 2017")
+                .containsKey("icc:Profile Date/Time")
+                .containsEntry("icc:Profile Description", "Display")
+                .containsEntry("icc:Profile Size", "3888")
+                .containsKey("icc:Red Colorant")
+                .containsKey("icc:Red Parametric TRC")
+                .containsKey("icc:Red TRC")
+                .containsEntry("icc:Signature", "acsp")
+                .containsEntry("icc:Tag Count", "17")
+                .containsKey("icc:Version")
+                .containsKey("icc:Video Card Gamma")
+                .containsKey("icc:XYZ values")
+                .containsKey("img:Component 1")
+                .containsKey("img:Component 2")
+                .containsKey("img:Component 3")
+                .containsEntry("img:Compression Type", "Baseline")
+                .containsEntry("img:Data Precision", "8 bits")
+                .containsEntry("img:Exif IFD0:Orientation", "Top, left side (Horizontal / normal)")
+                .containsEntry("img:Exif IFD0:Resolution Unit", "Inch")
+                .containsKey("img:Exif IFD0:X Resolution")
+                .containsKey("img:Exif IFD0:Y Resolution")
+                .containsEntry("img:Exif IFD0:YCbCr Positioning", "Center of pixel array")
+                .containsEntry("img:Exif SubIFD:Color Space", "sRGB")
+                .containsEntry("img:Exif SubIFD:Components Configuration", "YCbCr")
+                .containsEntry("img:Exif SubIFD:Exif Image Height", "622 pixels")
+                .containsEntry("img:Exif SubIFD:Exif Image Width", "982 pixels")
+                .containsEntry("img:Exif SubIFD:Exif Version", "2.21")
+                .containsEntry("img:Exif SubIFD:FlashPix Version", "1.00")
+                .containsEntry("img:Exif SubIFD:Scene Capture Type", "Standard")
+                .containsKey("img:File Modified Date")
                 .hasEntrySatisfying(
-                        "File Name", value -> Assertions.assertThat(value).startsWith("apache-tika-"))
-                .containsEntry("File Size", "41426 bytes")
-                .containsKey("ICC:Apple Multi-language Profile Name")
-                .containsKey("ICC:Blue Colorant")
-                .containsKey("ICC:Blue Parametric TRC")
-                .containsKey("ICC:Blue TRC")
-                .containsKey("ICC:Chromatic Adaptation")
-                .containsEntry("ICC:Class", "Display Device")
-                .containsEntry("ICC:CMM Type", "appl")
-                .containsEntry("ICC:Color space", "RGB")
-                .containsEntry("ICC:Device manufacturer", "APPL")
-                .containsKey("ICC:Green Colorant")
-                .containsKey("ICC:Green Parametric TRC")
-                .containsKey("ICC:Green TRC")
-                .containsKey("ICC:Make And Model")
-                .containsKey("ICC:Media White Point")
-                .containsKey("ICC:Native Display Information")
-                .containsEntry("ICC:Primary Platform", "Apple Computer, Inc.")
-                .containsEntry("ICC:Profile Connection Space", "XYZ")
-                .containsEntry("ICC:Profile Copyright", "Copyright Apple Inc., 2017")
-                .containsKey("ICC:Profile Date/Time")
-                .containsEntry("ICC:Profile Description", "Display")
-                .containsEntry("ICC:Profile Size", "3888")
-                .containsKey("ICC:Red Colorant")
-                .containsKey("ICC:Red Parametric TRC")
-                .containsKey("ICC:Red TRC")
-                .containsEntry("ICC:Signature", "acsp")
-                .containsEntry("ICC:Tag Count", "17")
-                .containsKey("ICC:Version")
-                .containsKey("ICC:Video Card Gamma")
-                .containsKey("ICC:XYZ values")
-                .containsEntry("Image Height", "622 pixels")
-                .containsEntry("Image Width", "982 pixels")
-                .containsEntry("Number of Components", "3")
-                .containsEntry("Number of Tables", "4 Huffman tables")
-                .containsEntry("resourceName", "test-ocr.jpg")
+                        "img:File Name", value -> Assertions.assertThat(value).startsWith("apache-tika-"))
+                .containsEntry("img:File Size", "41426 bytes")
+                .containsEntry("img:Image Height", "622 pixels")
+                .containsEntry("img:Image Width", "982 pixels")
+                .containsEntry("img:Number of Components", "3")
+                .containsEntry("img:Number of Tables", "4 Huffman tables")
                 .containsEntry("tiff:BitsPerSample", "8")
                 .containsEntry("tiff:ImageLength", "622")
                 .containsEntry("tiff:ImageWidth", "982")
@@ -211,8 +219,9 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                 .containsEntry("tiff:ResolutionUnit", "Inch")
                 .containsEntry("tiff:XResolution", "144.0")
                 .containsEntry("tiff:YResolution", "144.0")
-                .containsKey("X-TIKA:Parsed-By")
-                .containsKey("X-TIKA:Parsed-By-Full-Set");
+                .containsKey("tk:parsed-by")
+                .containsKey("tk:parsed-by-full-set")
+                .containsEntry("tk:resource-name", "test-ocr.jpg");
 
         // test-ocr.png: OCR disabled → no content
         String pngHitSource = findHitByFilename(searchResponse, "test-ocr.png").getSource();

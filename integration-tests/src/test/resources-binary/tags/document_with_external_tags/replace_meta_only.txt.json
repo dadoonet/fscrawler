@@ -1,7 +1,7 @@
 {
   "meta":{
     "raw":{
-      "resourceName":"another-file-name.txt"
+      "tk:resource-name":"another-file-name.txt"
     }
   }
 }
