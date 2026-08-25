@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.client;
 
 import com.carrotsearch.randomizedtesting.jupiter.DetectThreadLeaks;
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import com.carrotsearch.randomizedtesting.jupiter.SystemThreadFilter;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -557,7 +558,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                     .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")))
                     .withMessageContaining("Retries exhausted")
                     .withMessageContaining("503");
-            Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1000);
+            Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(2500);
         }
     }
 
@@ -578,7 +579,41 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                     .hasMessageContaining("Retries exhausted")
                     .hasMessageContaining("404");
         }
-        Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1000);
+        Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(2500);
+        WireMock.verify(WireMock.moreThan(1), WireMock.getRequestedFor(WireMock.urlEqualTo("/")));
+    }
+
+    /**
+     * A slow first attempt must not skip retries: {@code retry_max_duration} is a budget, not a reason to give up after
+     * a single retryable error (this is what failed on CI when GET / took longer than 300ms).
+     */
+    @Test
+    void testRetryableErrorRetriesAtLeastOnceWhenFirstCallConsumesTheBudget() throws IOException {
+        int budgetMs = RandomizedTest.randomIntInRange(randomizedRandomForTests, 150, 250);
+        int delayMs = budgetMs + RandomizedTest.randomIntInRange(randomizedRandomForTests, 50, 150);
+
+        wireMockServer.resetAll();
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(404)
+                        .withFixedDelay(delayMs)
+                        .withBody("{\"ok\":false,\"message\":\"Unknown deployment.\"}")));
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName("test-retry-min-attempts");
+        fsSettings.getElasticsearch().setUrls(List.of("http://localhost:" + wireMockServer.port()));
+        fsSettings.getElasticsearch().setSslVerification(false);
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+        fsSettings.getElasticsearch().setRetryMaxDuration(TimeValue.timeValueMillis(budgetMs));
+        fsSettings.getElasticsearch().setRetryInitialDelay(TimeValue.timeValueMillis(10));
+        fsSettings.getElasticsearch().setRetryMaxDelay(TimeValue.timeValueMillis(50));
+
+        try (ElasticsearchClient client = new ElasticsearchClient(fsSettings)) {
+            Assertions.assertThatThrownBy(client::start)
+                    .isInstanceOf(ElasticsearchClientException.class)
+                    .hasMessageContaining("Retries exhausted")
+                    .hasMessageContaining("404");
+        }
         WireMock.verify(WireMock.moreThan(1), WireMock.getRequestedFor(WireMock.urlEqualTo("/")));
     }
 

@@ -1580,7 +1580,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
      * (defaults: 500ms–30s backoff, max 5m).
      *
      * <p>Uses a single-threaded loop rather than Awaitility so the retry window does not interrupt an in-flight HTTP
-     * call (which would replace a real 5xx/429/404 with {@code InterruptedIOException}).
+     * call. A retryable error is always retried at least once, even if the first attempt already consumed
+     * {@code maxDuration}.
      *
      * @param method HTTP method (GET, HEAD, or idempotent POST)
      * @param path the path to call
@@ -1609,8 +1610,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
         Duration nextDelay = initialDelay;
         Throwable lastError = null;
         String lastErrorDetail = null;
+        int attempts = 0;
 
         while (true) {
+            attempts++;
             try {
                 return httpCall(method, path, data, params);
             } catch (WebApplicationException e) {
@@ -1650,17 +1653,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
             long remainingNanos = deadlineNanos - System.nanoTime();
             if (remainingNanos <= 0) {
-                String detail = lastErrorDetail != null ? lastErrorDetail : formatLastRetryError(lastError);
-                logger.error(
-                        "Retries exhausted for {} {} after {}. Last error: {}",
-                        method,
-                        path == null ? "" : path,
-                        maxDuration,
-                        detail);
-                throw new ElasticsearchClientException(
-                        "Retries exhausted for " + method + " " + (path == null ? "" : path) + ". Last error: "
-                                + detail,
-                        lastError);
+                if (attempts >= 2) {
+                    throw retriesExhausted(method, path, maxDuration, lastError, lastErrorDetail);
+                }
+                // First call consumed the whole budget (slow node / CI). Still retry once immediately.
+                continue;
             }
 
             long sleepNanos = Math.min(nextDelay.toNanos(), remainingNanos);
@@ -1676,6 +1673,20 @@ public class ElasticsearchClient implements IElasticsearchClient {
             Duration doubled = nextDelay.multipliedBy(2);
             nextDelay = doubled.compareTo(maxDelay) > 0 ? maxDelay : doubled;
         }
+    }
+
+    private ElasticsearchClientException retriesExhausted(
+            String method, String path, Duration maxDuration, Throwable lastError, String lastErrorDetail) {
+        String detail = lastErrorDetail != null ? lastErrorDetail : formatLastRetryError(lastError);
+        logger.error(
+                "Retries exhausted for {} {} after {}. Last error: {}",
+                method,
+                path == null ? "" : path,
+                maxDuration,
+                detail);
+        return new ElasticsearchClientException(
+                "Retries exhausted for " + method + " " + (path == null ? "" : path) + ". Last error: " + detail,
+                lastError);
     }
 
     /**
