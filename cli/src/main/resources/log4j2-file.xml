@@ -62,6 +62,10 @@
       <Logger name="org.apache.tika.parser.ocr.TesseractOCRParser" level="error" additivity="false">
          <AppenderRef ref="RollingFile" />
       </Logger>
+      <!-- PDFBox warns on missing ToUnicode CMaps (subset fonts); extraction continues -->
+      <Logger name="org.apache.pdfbox" level="error" additivity="false">
+         <AppenderRef ref="RollingFile" />
+      </Logger>
       <Logger name="com.gargoylesoftware" level="error" additivity="false">
          <AppenderRef ref="RollingFile"/>
       </Logger>
