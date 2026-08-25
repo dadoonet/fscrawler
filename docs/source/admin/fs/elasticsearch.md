@@ -291,11 +291,11 @@ Idempotent HTTP calls (including `_search` and `_bulk`) retry on `5xx` and `429`
 backoff. The same budget is used for a cold-start `404` on `GET /` (Elastic Cloud hosted deployments
 can answer `404` while the cluster is still waking up). Defaults allow up to **5 minutes** of retries:
 
-| Setting | Default | Purpose |
-|---------|---------|---------|
-| `retry_max_duration` | `5m` | Wall-clock budget for retries |
-| `retry_initial_delay` | `500ms` | First backoff delay |
-| `retry_max_delay` | `30s` | Cap for the exponential backoff delay |
+| Setting               | Default | Purpose                               |
+|-----------------------|---------|---------------------------------------|
+| `retry_max_duration`  | `5m`    | Wall-clock budget for retries         |
+| `retry_initial_delay` | `500ms` | First backoff delay                   |
+| `retry_max_delay`     | `30s`   | Cap for the exponential backoff delay |
 
 ```yaml
 name: "test"
