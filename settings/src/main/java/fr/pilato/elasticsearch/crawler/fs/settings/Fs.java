@@ -42,7 +42,7 @@ public class Fs {
     @Nullable
     private List<String> includes;
 
-    @Config(defaultVal = "*/~*")
+    @Config(defaultVal = "*/~*,*/.ds_store")
     private List<String> excludes;
 
     @Config

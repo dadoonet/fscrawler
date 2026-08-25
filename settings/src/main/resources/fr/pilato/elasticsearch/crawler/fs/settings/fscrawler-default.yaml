@@ -7,7 +7,7 @@ fs:
   #url: "/tmp/es"
   # optional: scan every 15 minutes for changes in url defined above
   #update_rate: "15m"
-  # optional: define includes and excludes, "~" files are excluded by default if not defined below
+  # optional: define includes and excludes; "~" and ".DS_Store" files are excluded by default if not defined below
   #includes:
   #  - "*.doc"
   #  - "*.xls"

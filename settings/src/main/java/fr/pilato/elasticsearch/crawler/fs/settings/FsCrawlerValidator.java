@@ -32,8 +32,9 @@ public class FsCrawlerValidator {
     @SuppressWarnings("java:S2068")
     private static final String SIDECAR_SUFFIX = "password";
 
-    private static final List<String> DOCUMENT_SIDECAR_EXCLUDES =
-            List.of("*." + SIDECAR_SUFFIX, "*/." + SIDECAR_SUFFIX);
+    /** Patterns always merged into {@code fs.excludes} during validation when missing. */
+    private static final List<String> BUILTIN_EXCLUDES =
+            List.of("*." + SIDECAR_SUFFIX, "*/." + SIDECAR_SUFFIX, "*/.ds_store");
 
     private FsCrawlerValidator() {
         // Utility class, do not instantiate
@@ -47,7 +48,7 @@ public class FsCrawlerValidator {
      * @return true if we found fatal errors and should prevent from starting
      */
     public static boolean validateSettings(Logger logger, FsSettings settings) {
-        ensurePasswordSidecarExcludes(settings);
+        ensureBuiltinExcludes(settings);
 
         if (settings.getElasticsearch().getUsername() != null
                 || settings.getElasticsearch().getPassword() != null) {
@@ -92,24 +93,23 @@ public class FsCrawlerValidator {
     }
 
     /**
-     * Ensure password sidecar files are never crawled as documents.
+     * Ensure built-in exclude patterns are present.
      *
-     * <p>The disk password provider stores secrets next to documents as {@code <file>.password} or directory
-     * {@code .password} files. Those must stay out of the index, so this method merges the built-in sidecar exclude
-     * patterns ({@link #DOCUMENT_SIDECAR_EXCLUDES}) into {@code fs.excludes} when missing. Existing excludes are
-     * preserved; the list is rewritten only when something is added (including when {@code fs.excludes} was
-     * {@code null}).
+     * <p>Merges password sidecar patterns ({@code *.password}, directory {@code .password} files) and the macOS Finder
+     * metadata pattern for {@code .DS_Store} files (matched case-insensitively) into {@code fs.excludes} when missing.
+     * Existing excludes are preserved; the list is rewritten only when something is added (including when
+     * {@code fs.excludes} was {@code null}).
      *
      * @param settings settings mutated in place during validation
      */
-    private static void ensurePasswordSidecarExcludes(FsSettings settings) {
+    private static void ensureBuiltinExcludes(FsSettings settings) {
         List<String> excludes = settings.getFs().getExcludes();
         List<String> mergedExcludes = excludes == null ? new ArrayList<>() : new ArrayList<>(excludes);
         boolean updated = excludes == null;
 
-        for (String passwordSidecarExclude : DOCUMENT_SIDECAR_EXCLUDES) {
-            if (!mergedExcludes.contains(passwordSidecarExclude)) {
-                mergedExcludes.add(passwordSidecarExclude);
+        for (String builtinExclude : BUILTIN_EXCLUDES) {
+            if (!mergedExcludes.contains(builtinExclude)) {
+                mergedExcludes.add(builtinExclude);
                 updated = true;
             }
         }

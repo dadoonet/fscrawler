@@ -38,5 +38,20 @@ class FsMatchFilesTest extends AbstractFSCrawlerTestCase {
                 .isTrue();
         Assertions.assertThat(FsCrawlerUtil.isIndexable(false, "/mydoc~", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
                 .isTrue();
+
+        // macOS Finder metadata — matching is case-insensitive, pattern is lowercase
+        Assertions.assertThat(Defaults.DEFAULT_EXCLUDED).contains("*/.ds_store");
+        Assertions.assertThat(
+                        FsCrawlerUtil.isIndexable(false, "/.DS_Store", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isFalse();
+        Assertions.assertThat(FsCrawlerUtil.isIndexable(
+                        false, "/subdir/.DS_Store", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isFalse();
+        Assertions.assertThat(FsCrawlerUtil.isIndexable(
+                        false, "/subdir/.ds_store", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isFalse();
+        Assertions.assertThat(
+                        FsCrawlerUtil.isIndexable(false, "/DS_Store", new ArrayList<>(), Defaults.DEFAULT_EXCLUDED))
+                .isTrue();
     }
 }

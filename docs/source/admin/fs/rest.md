@@ -65,7 +65,7 @@ It will give you a response similar to:
       "add_filesize" : true,
       "attributes_support" : false,
       "continue_on_error" : false,
-      "excludes" : [ "*/~*" ],
+      "excludes" : [ "*/~*", "*/.ds_store" ],
       "filename_as_id" : false,
       "follow_symlinks" : false,
       "index_content" : true,
