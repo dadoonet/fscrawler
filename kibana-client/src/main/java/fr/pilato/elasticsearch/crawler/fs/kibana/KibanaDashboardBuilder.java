@@ -20,9 +20,14 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.kibana;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +45,7 @@ public final class KibanaDashboardBuilder {
     public static final String DEFAULT_TIME_FIELD = "file.indexing_date";
 
     private static final String DOCS_URL = "https://fscrawler.readthedocs.io/en/latest/admin/fs/kibana.html";
+    private static final String PROJECT_URL = "https://fscrawler.readthedocs.io/";
 
     private static final String KEY_TITLE = "title";
     private static final String KEY_TYPE = "type";
@@ -57,6 +63,18 @@ public final class KibanaDashboardBuilder {
     private static final String TYPE_VIS = "vis";
     private static final String TYPE_XY = "xy";
     private static final String TYPE_PRIMARY = "primary";
+    private static final String FIELD_PATH_VIRTUAL_TREE = "path.virtual.tree";
+    private static final String FIELD_FILE_FILESIZE = "file.filesize";
+
+    private static final List<String> DISCOVER_COLUMNS = List.of(
+            "file.filename",
+            "path.virtual",
+            "file.extension",
+            "file.content_type",
+            "file.filesize",
+            "file.indexing_date",
+            "meta.title",
+            "meta.author");
 
     private KibanaDashboardBuilder() {}
 
@@ -91,26 +109,28 @@ public final class KibanaDashboardBuilder {
     public static String buildDefaultDashboardPayload(FsSettings settings) {
         String jobName = settings.getName();
         String indexPattern = settings.getElasticsearch().getIndex();
+        String rootUrl = settings.getFs() != null ? settings.getFs().getUrl() : null;
 
         List<Map<String, Object>> panels = new ArrayList<>();
 
-        // Intro markdown
-        panels.add(markdownPanel(0, 0, 48, 5, sampleDashboardMarkdown()));
+        // Intro + runtime markdown side by side
+        panels.add(markdownPanel(0, 0, 28, 7, sampleDashboardMarkdown(rootUrl)));
+        panels.add(markdownPanel(28, 0, 20, 7, runtimeMarkdown(jobName)));
 
         // Metric row
         panels.add(metricPanel(
-                0, 5, 16, 6, "Indexed documents", indexPattern, primaryMetric(OPERATION_COUNT, null, null)));
+                0, 7, 16, 6, "Indexed documents", indexPattern, primaryMetric(OPERATION_COUNT, null, null)));
         panels.add(metricPanel(
                 16,
-                5,
+                7,
                 16,
                 6,
                 "Total size",
                 indexPattern,
-                primaryMetric("sum", "file.filesize", Map.of(KEY_TYPE, "bytes", "decimals", 1))));
+                primaryMetric("sum", FIELD_FILE_FILESIZE, Map.of(KEY_TYPE, "bytes", "decimals", 1))));
         panels.add(metricPanel(
                 32,
-                5,
+                7,
                 16,
                 6,
                 "Unique extensions",
@@ -121,39 +141,80 @@ public final class KibanaDashboardBuilder {
         panels.add(section(
                 "Overview",
                 false,
-                11,
+                13,
                 List.of(
                         piePanel(0, 0, 24, 12, "Documents by extension", indexPattern, "file.extension", 10),
                         horizontalBarPanel(
                                 24, 0, 24, 12, "Top content types", indexPattern, "file.content_type", 10))));
 
+        // Directories (expanded) — path.virtual.tree treemaps with Discover drill-down
+        panels.add(section(
+                "Directories",
+                false,
+                26,
+                List.of(
+                        treemapPanel(
+                                0,
+                                0,
+                                24,
+                                14,
+                                "Directories by file count",
+                                indexPattern,
+                                FIELD_PATH_VIRTUAL_TREE,
+                                Map.of(KEY_OPERATION, OPERATION_COUNT),
+                                20),
+                        treemapPanel(
+                                24,
+                                0,
+                                24,
+                                14,
+                                "Directories by size",
+                                indexPattern,
+                                FIELD_PATH_VIRTUAL_TREE,
+                                Map.of(
+                                        KEY_OPERATION,
+                                        "sum",
+                                        KEY_FIELD,
+                                        FIELD_FILE_FILESIZE,
+                                        "format",
+                                        Map.of(KEY_TYPE, "bytes", "decimals", 1)),
+                                20))));
+
         // Timeline (expanded)
         panels.add(section(
                 "Timeline",
                 false,
-                24,
+                41,
                 List.of(dateHistogramPanel(
                         0, 0, 48, 12, "Indexing activity over time", indexPattern, DEFAULT_TIME_FIELD, "area"))));
+
+        // Discover session with principal fields
+        panels.add(section(
+                "Documents",
+                false,
+                54,
+                List.of(discoverSessionPanel(0, 0, 48, 16, "Indexed documents", indexPattern, DISCOVER_COLUMNS))));
 
         // File dates (collapsed)
         panels.add(section(
                 "File dates",
                 true,
-                37,
+                71,
                 List.of(
                         dateHistogramPanel(0, 0, 16, 10, "Created", indexPattern, "file.created", "line"),
                         dateHistogramPanel(16, 0, 16, 10, "Last modified", indexPattern, "file.last_modified", "line"),
                         dateHistogramPanel(
                                 32, 0, 16, 10, "Last accessed", indexPattern, "file.last_accessed", "line"))));
 
-        // Document metadata (collapsed)
+        // Document metadata (collapsed) — only keyword fields for terms aggs
         panels.add(section(
                 "Document metadata",
                 true,
-                40,
+                74,
                 List.of(
                         piePanel(0, 0, 24, 12, "Documents by language", indexPattern, "meta.language", 10),
-                        horizontalBarPanel(24, 0, 24, 12, "Top authors", indexPattern, "meta.author", 10))));
+                        horizontalBarPanel(
+                                24, 0, 24, 12, "Top creator tools", indexPattern, "meta.creator_tool", 10))));
 
         Map<String, Object> dashboard = new LinkedHashMap<>();
         // Do not put "id" in the body: POST rejects it; PUT takes the id from the path.
@@ -163,13 +224,58 @@ public final class KibanaDashboardBuilder {
         return JsonUtil.serialize(dashboard);
     }
 
-    static String sampleDashboardMarkdown() {
-        return "# Sample FSCrawler Dashboard\n\n"
-                + "Feel free to copy and edit this dashboard as you need to.\n"
-                + "It's provided as default one by FSCrawler. If you want to disable\n"
-                + "the automatic creation, set `kibana.push_dashboard` to `false` in your job settings.\n\n"
-                + "See [Doc](" + DOCS_URL + ") for more information.\n"
-                + "Created by FSCrawler v" + Version.getVersion();
+    static String sampleDashboardMarkdown(String rootUrl) {
+        StringBuilder md = new StringBuilder();
+        md.append("# Sample FSCrawler Dashboard\n\n");
+        md.append("Feel free to copy and edit this dashboard as you need to.\n");
+        md.append("It's provided as default one by FSCrawler. If you want to disable\n");
+        md.append("the automatic creation, set `kibana.push_dashboard` to `false` in your job settings.\n\n");
+        if (rootUrl != null && !rootUrl.isBlank()) {
+            md.append("**Root (`fs.url`):** `").append(rootUrl).append("`\n\n");
+        }
+        md.append("See [Doc](").append(DOCS_URL).append(") for more information.\n");
+        md.append("Created by [FSCrawler **v")
+                .append(Version.getVersion())
+                .append("**](")
+                .append(PROJECT_URL)
+                .append(")");
+        return md.toString();
+    }
+
+    static String runtimeMarkdown(String jobName) {
+        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+        RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+        MemoryMXBean memory = ManagementFactory.getMemoryMXBean();
+        long heapUsed = memory.getHeapMemoryUsage().getUsed();
+        long heapMax = memory.getHeapMemoryUsage().getMax();
+
+        StringBuilder md = new StringBuilder();
+        md.append("## FSCrawler runtime\n\n");
+        md.append("- **Job:** `").append(jobName).append("`\n");
+        md.append("- **OS:** ")
+                .append(System.getProperty("os.name", "unknown"))
+                .append(" / ")
+                .append(System.getProperty("os.arch", "unknown"))
+                .append(" / ")
+                .append(System.getProperty("os.version", "unknown"))
+                .append('\n');
+        md.append("- **Java:** ")
+                .append(System.getProperty("java.version", "unknown"))
+                .append(" (")
+                .append(System.getProperty("java.vendor", "unknown"))
+                .append(")\n");
+        md.append("- **Heap:** ")
+                .append(new ByteSizeValue(Math.max(heapUsed, 0)).toString())
+                .append(" / ");
+        if (heapMax > 0) {
+            md.append(new ByteSizeValue(heapMax).toString());
+        } else {
+            md.append("unlimited");
+        }
+        md.append('\n');
+        md.append("- **Processors:** ").append(os.getAvailableProcessors()).append('\n');
+        md.append("- **JVM:** `").append(runtime.getVmName()).append("`");
+        return md.toString();
     }
 
     private static Map<String, Object> markdownPanel(int x, int y, int w, int h, String content) {
@@ -243,6 +349,34 @@ public final class KibanaDashboardBuilder {
         return visPanel(x, y, w, h, config);
     }
 
+    private static Map<String, Object> treemapPanel(
+            int x,
+            int y,
+            int w,
+            int h,
+            String title,
+            String indexPattern,
+            String groupByField,
+            Map<String, Object> metric,
+            int limit) {
+        Map<String, Object> groupBy = new LinkedHashMap<>();
+        groupBy.put(KEY_OPERATION, OPERATION_TERMS);
+        groupBy.put(KEY_FIELDS, List.of(groupByField));
+        groupBy.put("limit", limit);
+
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put(KEY_TYPE, "treemap");
+        config.put(KEY_TITLE, title);
+        config.put(KEY_DATA_SOURCE, dataViewSpec(indexPattern));
+        config.put(KEY_METRICS, List.of(metric));
+        config.put("group_by", List.of(groupBy));
+        config.put(
+                "drilldowns",
+                List.of(Map.of(
+                        KEY_TYPE, "discover_drilldown", "label", "Open in Discover", "trigger", "on_apply_filter")));
+        return visPanel(x, y, w, h, config);
+    }
+
     private static Map<String, Object> dateHistogramPanel(
             int x, int y, int w, int h, String title, String indexPattern, String dateField, String layerType) {
         Map<String, Object> xAxis = new LinkedHashMap<>();
@@ -265,6 +399,25 @@ public final class KibanaDashboardBuilder {
         config.put(KEY_LAYERS, List.of(layer));
         config.put("axis", Map.of("x", axisX));
         return visPanel(x, y, w, h, config);
+    }
+
+    private static Map<String, Object> discoverSessionPanel(
+            int x, int y, int w, int h, String title, String indexPattern, List<String> columns) {
+        Map<String, Object> tab = new LinkedHashMap<>();
+        tab.put(KEY_DATA_SOURCE, dataViewSpec(indexPattern));
+        tab.put("column_order", columns);
+        tab.put("sort", List.of(Map.of("name", DEFAULT_TIME_FIELD, "direction", "desc")));
+        tab.put("view_mode", "documents");
+
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put(KEY_TITLE, title);
+        config.put("tabs", List.of(tab));
+
+        Map<String, Object> panel = new LinkedHashMap<>();
+        panel.put(KEY_TYPE, "discover_session");
+        panel.put(KEY_GRID, grid(x, y, w, h));
+        panel.put(KEY_CONFIG, config);
+        return panel;
     }
 
     private static Map<String, Object> section(
