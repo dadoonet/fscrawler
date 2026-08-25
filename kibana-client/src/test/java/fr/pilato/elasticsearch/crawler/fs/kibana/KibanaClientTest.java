@@ -237,7 +237,8 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
                 .contains("## FSCrawler runtime")
                 .contains("**OS:**")
                 .contains("**Java:**")
-                .contains("**Heap:**")
+                .contains("**Heap max:**")
+                .doesNotContain("**Heap:**")
                 .contains("**Job:** `" + jobName + "`");
 
         Assertions.assertThat((String) JsonPath.read(payload, "$.panels[2].config.type"))
@@ -260,9 +261,13 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat((Boolean) JsonPath.read(payload, "$.panels[5].collapsed"))
                 .isFalse();
         Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[0].config.type"))
-                .isEqualTo("pie");
-        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[0].config.styling.donut_hole"))
-                .isEqualTo("m");
+                .isEqualTo("tag_cloud");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[0].config.title"))
+                .isEqualTo("Documents by extension");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[0].config.tag_by.fields[0]"))
+                .isEqualTo("file.extension");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[0].config.metric.operation"))
+                .isEqualTo("count");
         Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[1].config.type"))
                 .isEqualTo("xy");
         Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[1].config.layers[0].x.fields[0]"))
@@ -329,6 +334,21 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
                 .isEqualTo("File dates");
         Assertions.assertThat((Boolean) JsonPath.read(payload, "$.panels[9].collapsed"))
                 .isTrue();
+        Assertions.assertThat((Boolean)
+                        JsonPath.read(payload, "$.panels[9].panels[0].config.layers[0].ignore_global_filters"))
+                .isTrue();
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[9].panels[0].config.layers[0].x.field"))
+                .isEqualTo("file.created");
+        Assertions.assertThat((Boolean)
+                        JsonPath.read(payload, "$.panels[9].panels[1].config.layers[0].ignore_global_filters"))
+                .isTrue();
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[9].panels[1].config.layers[0].x.field"))
+                .isEqualTo("file.last_modified");
+        Assertions.assertThat((Boolean)
+                        JsonPath.read(payload, "$.panels[9].panels[2].config.layers[0].ignore_global_filters"))
+                .isTrue();
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[9].panels[2].config.layers[0].x.field"))
+                .isEqualTo("file.last_accessed");
         Assertions.assertThat((String) JsonPath.read(payload, "$.panels[10].title"))
                 .isEqualTo("Document metadata");
         Assertions.assertThat((Boolean) JsonPath.read(payload, "$.panels[10].collapsed"))

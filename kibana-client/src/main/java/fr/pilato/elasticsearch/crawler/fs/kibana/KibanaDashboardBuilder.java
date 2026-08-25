@@ -143,7 +143,7 @@ public final class KibanaDashboardBuilder {
                 false,
                 16,
                 List.of(
-                        piePanel(0, 0, 24, 12, "Documents by extension", indexPattern, "file.extension", 10),
+                        tagCloudPanel(0, 0, 24, 12, "Documents by extension", indexPattern, "file.extension", 10),
                         horizontalBarPanel(
                                 24, 0, 24, 12, "Top content types", indexPattern, "file.content_type", 10))));
 
@@ -195,16 +195,17 @@ public final class KibanaDashboardBuilder {
                 57,
                 List.of(discoverSessionPanel(0, 0, 48, 16, "Indexed documents", indexPattern, DISCOVER_COLUMNS))));
 
-        // File dates (collapsed)
+        // File dates (collapsed) — ignore dashboard time picker (file.* dates ≠ indexing_date)
         panels.add(section(
                 "File dates",
                 true,
                 74,
                 List.of(
-                        dateHistogramPanel(0, 0, 16, 10, "Created", indexPattern, "file.created", "line"),
-                        dateHistogramPanel(16, 0, 16, 10, "Last modified", indexPattern, "file.last_modified", "line"),
+                        dateHistogramPanel(0, 0, 16, 10, "Created", indexPattern, "file.created", "line", true),
                         dateHistogramPanel(
-                                32, 0, 16, 10, "Last accessed", indexPattern, "file.last_accessed", "line"))));
+                                16, 0, 16, 10, "Last modified", indexPattern, "file.last_modified", "line", true),
+                        dateHistogramPanel(
+                                32, 0, 16, 10, "Last accessed", indexPattern, "file.last_accessed", "line", true))));
 
         // Document metadata (collapsed) — only keyword fields for terms aggs
         panels.add(section(
@@ -246,7 +247,6 @@ public final class KibanaDashboardBuilder {
         OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
         RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
         MemoryMXBean memory = ManagementFactory.getMemoryMXBean();
-        long heapUsed = memory.getHeapMemoryUsage().getUsed();
         long heapMax = memory.getHeapMemoryUsage().getMax();
 
         StringBuilder md = new StringBuilder();
@@ -264,9 +264,7 @@ public final class KibanaDashboardBuilder {
                 .append(" (")
                 .append(System.getProperty("java.vendor", "unknown"))
                 .append(")\n");
-        md.append("- **Heap:** ")
-                .append(new ByteSizeValue(Math.max(heapUsed, 0)).toString())
-                .append(" / ");
+        md.append("- **Heap max:** ");
         if (heapMax > 0) {
             md.append(new ByteSizeValue(heapMax).toString());
         } else {
@@ -329,6 +327,22 @@ public final class KibanaDashboardBuilder {
         return visPanel(x, y, w, h, config);
     }
 
+    private static Map<String, Object> tagCloudPanel(
+            int x, int y, int w, int h, String title, String indexPattern, String termsField, int limit) {
+        Map<String, Object> tagBy = new LinkedHashMap<>();
+        tagBy.put(KEY_OPERATION, OPERATION_TERMS);
+        tagBy.put(KEY_FIELDS, List.of(termsField));
+        tagBy.put("limit", limit);
+
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put(KEY_TYPE, "tag_cloud");
+        config.put(KEY_TITLE, title);
+        config.put(KEY_DATA_SOURCE, dataViewSpec(indexPattern));
+        config.put("tag_by", tagBy);
+        config.put("metric", Map.of(KEY_OPERATION, OPERATION_COUNT));
+        return visPanel(x, y, w, h, config);
+    }
+
     private static Map<String, Object> horizontalBarPanel(
             int x, int y, int w, int h, String title, String indexPattern, String termsField, int limit) {
         Map<String, Object> xAxis = new LinkedHashMap<>();
@@ -379,6 +393,19 @@ public final class KibanaDashboardBuilder {
 
     private static Map<String, Object> dateHistogramPanel(
             int x, int y, int w, int h, String title, String indexPattern, String dateField, String layerType) {
+        return dateHistogramPanel(x, y, w, h, title, indexPattern, dateField, layerType, false);
+    }
+
+    private static Map<String, Object> dateHistogramPanel(
+            int x,
+            int y,
+            int w,
+            int h,
+            String title,
+            String indexPattern,
+            String dateField,
+            String layerType,
+            boolean ignoreGlobalFilters) {
         Map<String, Object> xAxis = new LinkedHashMap<>();
         xAxis.put(KEY_OPERATION, "date_histogram");
         xAxis.put(KEY_FIELD, dateField);
@@ -386,6 +413,9 @@ public final class KibanaDashboardBuilder {
         Map<String, Object> layer = new LinkedHashMap<>();
         layer.put(KEY_TYPE, layerType);
         layer.put(KEY_DATA_SOURCE, dataViewSpec(indexPattern));
+        if (ignoreGlobalFilters) {
+            layer.put("ignore_global_filters", true);
+        }
         layer.put("x", xAxis);
         layer.put("y", List.of(Map.of(KEY_OPERATION, OPERATION_COUNT)));
 

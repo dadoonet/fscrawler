@@ -50,16 +50,18 @@ When `kibana.push_dashboard` is `true` (the default), FSCrawler creates on start
 
    * an introductory Markdown panel (FSCrawler version link, docs link, and the job
      ``fs.url`` root)
-   * a runtime Markdown panel (OS, Java, heap, processors)
+   * a runtime Markdown panel (OS, Java, heap max, processors)
    * metrics for document count, total ``file.filesize``, and unique ``file.extension`` values
-   * an **Overview** section (documents by extension, top content types)
+   * an **Overview** section (tag cloud of extensions, top content types)
    * a **Directories** section (treemaps on ``path.virtual.tree`` by file count and by size,
      with Discover drill-down)
    * a **Timeline** section (indexing activity over ``file.indexing_date``)
    * a **Documents** Discover session (filename, virtual path, extension, content type,
      filesize, indexing date, title, author)
-   * collapsed **File dates** and **Document metadata** sections
-     (language and creator tool — keyword fields only for terms aggregations)
+   * a collapsed **File dates** section (created / last modified / last accessed; ignores the
+     dashboard time picker so the view is global)
+   * a collapsed **Document metadata** section (language and creator tool — keyword fields only
+     for terms aggregations)
 
 By default, if the dashboard already exists, FSCrawler skips creation (same behaviour as
 {ref}`mappings` with `push_templates`). To overwrite an existing dashboard — for example after
