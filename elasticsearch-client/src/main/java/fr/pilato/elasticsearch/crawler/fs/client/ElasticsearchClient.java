@@ -24,6 +24,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
@@ -354,9 +355,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             super.afterBulk(executionId, request, response);
             if (response.getException() != null) {
                 logger.error(
-                        "Bulk request failed after retries ({} actions): {}",
+                        "Bulk request failed after retries ({} actions): {}. See {} for action details.",
                         request.numberOfActions(),
                         response.getException().getMessage(),
+                        FSCrawlerLogger.BULK_FAILURES_LOG_FILE,
                         response.getException());
                 recordFatalBulkFailure(response.getException());
             }
@@ -366,16 +368,33 @@ public class ElasticsearchClient implements IElasticsearchClient {
         public void afterBulk(long executionId, ElasticsearchBulkRequest request, Throwable failure) {
             super.afterBulk(executionId, request, failure);
             logger.error(
-                    "Bulk request failed ({} actions): {}",
+                    "Bulk request failed ({} actions): {}. See {} for action details.",
                     request.numberOfActions(),
                     failure.getMessage() != null
                             ? failure.getMessage()
                             : failure.getClass().getName(),
+                    FSCrawlerLogger.BULK_FAILURES_LOG_FILE,
                     failure);
             Exception asException = failure instanceof Exception e
                     ? e
                     : new ElasticsearchClientException("Bulk request failed", failure);
             recordFatalBulkFailure(asException);
+        }
+
+        @Override
+        protected void logOperationPayloadTrace(String reason, long executionId, ElasticsearchOperation operation) {
+            if (operation instanceof ElasticsearchInsertOperation insert) {
+                FSCrawlerLogger.bulkFailureTrace(
+                        reason,
+                        "executionId={} {} {}/{} payload={}",
+                        executionId,
+                        insert.getOperation(),
+                        insert.getIndex(),
+                        insert.getId(),
+                        FSCrawlerLogger.truncateForBulkFailureLog(insert.getJson()));
+            } else {
+                super.logOperationPayloadTrace(reason, executionId, operation);
+            }
         }
     }
 

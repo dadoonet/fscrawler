@@ -31,6 +31,11 @@ Two log files are generated:
   rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 days.
 * One is used to trace all information about documents, named `documents.log`. It's automatically
   rotated every day or after 20mb of logs and gzipped. Logs are removed after 7 days.
+* One is used when bulk indexing fails, named `bulk-failures.log`. Each line starts with the
+  failure reason in brackets (for example `[Read timed out]`), then the bulk `executionId` and
+  the affected actions (`_index` / `_id`). Enable TRACE on logger `fscrawler.bulk.failure` to also
+  dump truncated document payloads (8 KiB max per document). Console / `fscrawler.log` WARNs point
+  to this file.
 
 You can change this strategy by modifying the `config/log4j2.xml` file.
 Please read [Log4J2 documentation](https://logging.apache.org/log4j/2.x/manual/index.html) on how to configure Log4J.
@@ -39,6 +44,14 @@ By default, noisy third-party warnings that do not stop indexing are dialed down
 `org.apache.pdfbox` is set to `error` so messages like `No Unicode mapping for CID+…` (subset fonts
 missing a ToUnicode CMap) do not flood the logs. Raise that logger if you need to diagnose PDF
 extraction issues.
+
+To dump failed bulk payloads:
+
+```xml
+<Logger name="fscrawler.bulk.failure" level="trace" additivity="false">
+   <AppenderRef ref="BulkFailures" />
+</Logger>
+```
 
 ```{note}
 

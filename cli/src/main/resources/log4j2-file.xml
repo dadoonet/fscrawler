@@ -33,6 +33,17 @@
          </Policies>
          <DefaultRolloverStrategy max="7"/>
       </RollingFile>
+
+      <RollingFile name="BulkFailures" fileName="${sys:LOG_DIR}/bulk-failures.log"
+                   filePattern="${sys:LOG_DIR}/bulk-failures-%d{yyyy-MM-dd}-%i.log.gz">
+         <PatternLayout pattern="%d{ABSOLUTE} %-5p %m%n"/>
+         <Policies>
+            <OnStartupTriggeringPolicy />
+            <SizeBasedTriggeringPolicy size="20 MB" />
+            <TimeBasedTriggeringPolicy />
+         </Policies>
+         <DefaultRolloverStrategy max="7"/>
+      </RollingFile>
    </Appenders>
    <Loggers>
       <!-- This logger is used for the console -->
@@ -44,6 +55,10 @@
       <!-- This logger is used to trace all information about documents -->
       <Logger name="fscrawler.document" level="${sys:DOC_LEVEL}" additivity="false">
          <AppenderRef ref="Documents" />
+      </Logger>
+      <!-- Failed bulk actions (IDs / truncated payloads at TRACE) -->
+      <Logger name="fscrawler.bulk.failure" level="warn" additivity="false">
+         <AppenderRef ref="BulkFailures" />
       </Logger>
 
       <!-- This logger is used to log FSCrawler code execution -->

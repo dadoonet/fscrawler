@@ -17,6 +17,7 @@ The directory layout of the project is as follows:
  ├── external
  ├── lib
  └── logs
+     ├── bulk-failures.log
      ├── documents.log
      └── fscrawler.log
 ```
