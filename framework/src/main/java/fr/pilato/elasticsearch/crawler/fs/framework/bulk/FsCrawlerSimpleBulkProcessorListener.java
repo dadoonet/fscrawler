@@ -41,11 +41,12 @@ public class FsCrawlerSimpleBulkProcessorListener<
         logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
         if (response.hasFailures()) {
             Throwable failure = response.buildFailureMessage();
-            String reason = shortReason(failure);
+            String failureMessage = messageOf(failure);
+            String reason = shortReason(failureMessage);
             logger.warn(
                     "There were failures while executing bulk of {} actions: {}. See {} for action details.",
                     request.numberOfActions(),
-                    failure.getMessage(),
+                    failureMessage,
                     FSCrawlerLogger.BULK_FAILURES_LOG_FILE,
                     failure);
             FSCrawlerLogger.bulkFailureWarn(
@@ -69,13 +70,12 @@ public class FsCrawlerSimpleBulkProcessorListener<
 
     @Override
     public void afterBulk(long executionId, Q request, Throwable failure) {
-        String reason = shortReason(failure);
+        String failureMessage = messageOf(failure);
+        String reason = shortReason(failureMessage);
         logger.warn(
                 "Error executing bulk of {} actions: {}. See {} for action details.",
                 request.numberOfActions(),
-                failure.getMessage() != null
-                        ? failure.getMessage()
-                        : failure.getClass().getName(),
+                failureMessage,
                 FSCrawlerLogger.BULK_FAILURES_LOG_FILE,
                 failure);
         FSCrawlerLogger.bulkFailureWarn(
@@ -105,14 +105,14 @@ public class FsCrawlerSimpleBulkProcessorListener<
         FSCrawlerLogger.bulkFailureTrace(reason, "executionId={} operation detail: {}", executionId, operation);
     }
 
-    static String shortReason(Throwable failure) {
+    static String messageOf(Throwable failure) {
         if (failure == null) {
             return "unknown";
         }
-        return shortReason(
-                failure.getMessage() != null
-                        ? failure.getMessage()
-                        : failure.getClass().getSimpleName());
+        String message = failure.getMessage();
+        return message != null && !message.isBlank()
+                ? message
+                : failure.getClass().getName();
     }
 
     static String shortReason(String message) {
