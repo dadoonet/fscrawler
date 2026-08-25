@@ -93,22 +93,43 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
     }
 
     private ElasticsearchClient createClient() {
+        return newClient(false);
+    }
+
+    /** Same as {@link #createClient()} but with a 300ms budget — exhaustion tests wait the full window. */
+    private ElasticsearchClient createClientForExhaustion() {
+        return newClient(true);
+    }
+
+    private ElasticsearchClient newClient(boolean exhaustion) {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.setName("test-retry");
         fsSettings.getElasticsearch().setUrls(List.of("http://localhost:" + wireMockServer.port()));
         fsSettings.getElasticsearch().setSslVerification(false);
         // Disable semantic search to avoid calling getLicense() during start()
         fsSettings.getElasticsearch().setSemanticSearch(false);
-        // Production defaults are minutes; tests use a few hundred milliseconds.
-        applyShortRetryWindows(fsSettings);
+        applyRetryWindows(fsSettings, exhaustion);
         return new ElasticsearchClient(fsSettings);
     }
 
-    /** Sub-second budget: enough for a couple of WireMock round-trips, not a wall-clock wait per exhaustion case. */
-    private static void applyShortRetryWindows(FsSettings fsSettings) {
-        fsSettings.getElasticsearch().setRetryMaxDuration(TimeValue.timeValueMillis(250));
+    /**
+     * Success-path tests return as soon as WireMock answers 200, so a 2s cap is free. Exhaustion tests wait the whole
+     * budget — keep that at 300ms instead of seconds.
+     */
+    private static void applyRetryWindows(FsSettings fsSettings, boolean exhaustion) {
+        fsSettings
+                .getElasticsearch()
+                .setRetryMaxDuration(exhaustion ? TimeValue.timeValueMillis(300) : TimeValue.timeValueSeconds(2));
         fsSettings.getElasticsearch().setRetryInitialDelay(TimeValue.timeValueMillis(10));
         fsSettings.getElasticsearch().setRetryMaxDelay(TimeValue.timeValueMillis(50));
+    }
+
+    private static void applyShortRetryWindows(FsSettings fsSettings) {
+        applyRetryWindows(fsSettings, false);
+    }
+
+    private static void applyExhaustionRetryWindows(FsSettings fsSettings) {
+        applyRetryWindows(fsSettings, true);
     }
 
     /**
@@ -162,7 +183,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
                 .willReturn(WireMock.aResponse().withStatus(503).withBody("{\"error\": \"Service Unavailable\"}")));
 
-        try (ElasticsearchClient client = createClient()) {
+        try (ElasticsearchClient client = createClientForExhaustion()) {
             // start() calls getVersion() which should fail after retries are exhausted
             Assertions.assertThatThrownBy(client::start)
                     .isInstanceOf(ElasticsearchClientException.class)
@@ -487,7 +508,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                                 {"error":{"type":"no_shard_available_action_exception","status":503}}
                                 """)));
 
-        try (ElasticsearchClient client = createClient()) {
+        try (ElasticsearchClient client = createClientForExhaustion()) {
             client.start();
             wireMockServer.resetRequests();
 
@@ -527,7 +548,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setUrls(List.of("http://localhost:" + wireMockServer.port()));
         fsSettings.getElasticsearch().setSslVerification(false);
         fsSettings.getElasticsearch().setSemanticSearch(false);
-        applyShortRetryWindows(fsSettings);
+        applyExhaustionRetryWindows(fsSettings);
 
         try (ElasticsearchClient client = new ElasticsearchClient(fsSettings)) {
             client.start();
@@ -536,7 +557,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                     .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")))
                     .withMessageContaining("Retries exhausted")
                     .withMessageContaining("503");
-            Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1500);
+            Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1000);
         }
     }
 
@@ -551,13 +572,13 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                         .withBody("{\"ok\":false,\"message\":\"Unknown deployment.\"}")));
 
         long start = System.currentTimeMillis();
-        try (ElasticsearchClient client = createClient()) {
+        try (ElasticsearchClient client = createClientForExhaustion()) {
             Assertions.assertThatThrownBy(client::start)
                     .isInstanceOf(ElasticsearchClientException.class)
                     .hasMessageContaining("Retries exhausted")
                     .hasMessageContaining("404");
         }
-        Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1500);
+        Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1000);
         WireMock.verify(WireMock.moreThan(1), WireMock.getRequestedFor(WireMock.urlEqualTo("/")));
     }
 
@@ -577,7 +598,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                                 {"error":{"type":"no_shard_available_action_exception","reason":"no shard available","status":503}}
                                 """)));
 
-        try (ElasticsearchClient client = createClient()) {
+        try (ElasticsearchClient client = createClientForExhaustion()) {
             client.start();
             wireMockServer.resetRequests();
 
@@ -706,7 +727,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                                 {"error":{"type":"no_shard_available_action_exception","status":503}}
                                 """)));
 
-        try (ElasticsearchClient client = createClient()) {
+        try (ElasticsearchClient client = createClientForExhaustion()) {
             client.start();
             wireMockServer.resetRequests();
 

@@ -1574,13 +1574,13 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return httpCall("DELETE", path, data);
     }
 
-    // Marker to indicate a successful call with null response (e.g., HEAD requests)
-    private static final String SUCCESS_MARKER = "__SUCCESS__";
-
     /**
      * Execute an HTTP call with retry logic for idempotent requests (GET, HEAD, and read-only POST such as
      * {@code _search}). Retries on 5xx, 429, and a cold-start 404 on {@code GET /} using {@code elasticsearch.retry_*}
      * (defaults: 500ms–30s backoff, max 5m).
+     *
+     * <p>Uses a single-threaded loop rather than Awaitility so the retry window does not interrupt an in-flight HTTP
+     * call (which would replace a real 5xx/429/404 with {@code InterruptedIOException}).
      *
      * @param method HTTP method (GET, HEAD, or idempotent POST)
      * @param path the path to call
@@ -1605,104 +1605,76 @@ public class ElasticsearchClient implements IElasticsearchClient {
             Duration maxDelay,
             Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
-        AtomicReference<Throwable> lastError = new AtomicReference<>();
-        AtomicReference<String> lastErrorDetail = new AtomicReference<>();
+        long deadlineNanos = System.nanoTime() + maxDuration.toNanos();
+        Duration nextDelay = initialDelay;
+        Throwable lastError = null;
+        String lastErrorDetail = null;
 
-        try {
-            String result = Awaitility.await()
-                    .atMost(maxDuration)
-                    .pollDelay(Duration.ZERO)
-                    .pollInterval(ExponentialBackoffPollInterval.exponential(initialDelay, maxDelay))
-                    .until(
-                            () -> {
-                                try {
-                                    String response = httpCall(method, path, data, params);
-                                    // HEAD requests return null on success, use marker to distinguish from retry signal
-                                    return response == null ? SUCCESS_MARKER : response;
-                                } catch (WebApplicationException e) {
-                                    int status = e.getResponse().getStatus();
-                                    boolean isServerError =
-                                            e.getResponse().getStatusInfo().getFamily()
-                                                    == Response.Status.Family.SERVER_ERROR;
-                                    boolean isTooManyRequests =
-                                            status == Response.Status.TOO_MANY_REQUESTS.getStatusCode();
-                                    boolean isRootNotFound = status == Response.Status.NOT_FOUND.getStatusCode()
-                                            && (path == null || path.isEmpty());
+        while (true) {
+            try {
+                return httpCall(method, path, data, params);
+            } catch (WebApplicationException e) {
+                int status = e.getResponse().getStatus();
+                boolean isServerError =
+                        e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR;
+                boolean isTooManyRequests = status == Response.Status.TOO_MANY_REQUESTS.getStatusCode();
+                boolean isRootNotFound =
+                        status == Response.Status.NOT_FOUND.getStatusCode() && (path == null || path.isEmpty());
 
-                                    if (isServerError || isTooManyRequests || isRootNotFound) {
-                                        String detail = describeHttpError(e);
-                                        if (isRootNotFound) {
-                                            logger.warn("Root endpoint answered 404. The cluster might still be cold."
-                                                    + " Retrying...");
-                                        } else if (isTooManyRequests) {
-                                            logger.warn(
-                                                    "Rate limited (429) on {} {}. {}. Retrying in up to {}...",
-                                                    method,
-                                                    path == null ? "" : path,
-                                                    detail,
-                                                    maxDelay);
-                                        } else {
-                                            logger.warn(
-                                                    "Server error on {} {}. {}. Retrying...",
-                                                    method,
-                                                    path == null ? "" : path,
-                                                    detail);
-                                        }
-                                        lastError.set(e);
-                                        lastErrorDetail.set(detail);
-                                        return null;
-                                    }
+                if (!(isServerError || isTooManyRequests || isRootNotFound)) {
+                    throw e;
+                }
 
-                                    // Other client errors (4xx) should not be retried
-                                    throw new RuntimeException(e);
-                                } catch (ElasticsearchClientException e) {
-                                    // Connection errors should not be retried (httpCall already handles node failover).
-                                    // Awaitility interrupts in-flight polls when the retry window ends — keep a prior
-                                    // 5xx/429/404 detail instead of replacing it with InterruptedIOException.
-                                    if (isCausedByInterruption(e)) {
-                                        Thread.interrupted();
-                                        if (lastError.get() == null) {
-                                            lastError.set(e);
-                                            lastErrorDetail.set(
-                                                    e.getMessage() != null
-                                                            ? e.getMessage()
-                                                            : e.getClass().getName());
-                                        }
-                                        return null;
-                                    }
-                                    lastError.set(e);
-                                    lastErrorDetail.set(
-                                            e.getMessage() != null
-                                                    ? e.getMessage()
-                                                    : e.getClass().getName());
-                                    throw new RuntimeException(e);
-                                }
-                            },
-                            Objects::nonNull);
-            // Convert marker back to null for HEAD requests
-            return SUCCESS_MARKER.equals(result) ? null : result;
-        } catch (ConditionTimeoutException e) {
-            String detail =
-                    lastErrorDetail.get() != null ? lastErrorDetail.get() : formatLastRetryError(lastError.get());
-            logger.error(
-                    "Retries exhausted for {} {} after {}. Last error: {}",
-                    method,
-                    path == null ? "" : path,
-                    maxDuration,
-                    detail);
-            Throwable cause = lastError.get() != null ? lastError.get() : e;
-            throw new ElasticsearchClientException(
-                    "Retries exhausted for " + method + " " + (path == null ? "" : path) + ". Last error: " + detail,
-                    cause);
-        } catch (RuntimeException e) {
-            // Unwrap non-retryable exceptions
-            if (e.getCause() instanceof WebApplicationException wae) {
-                throw wae;
+                lastError = e;
+                lastErrorDetail = describeHttpError(e);
+                if (isRootNotFound) {
+                    logger.warn("Root endpoint answered 404. The cluster might still be cold." + " Retrying...");
+                } else if (isTooManyRequests) {
+                    logger.warn(
+                            "Rate limited (429) on {} {}. {}. Retrying in up to {}...",
+                            method,
+                            path == null ? "" : path,
+                            lastErrorDetail,
+                            maxDelay);
+                } else {
+                    logger.warn(
+                            "Server error on {} {}. {}. Retrying...",
+                            method,
+                            path == null ? "" : path,
+                            lastErrorDetail);
+                }
+            } catch (ElasticsearchClientException e) {
+                // Connection errors should not be retried (httpCall already handles node failover).
+                throw e;
             }
-            if (e.getCause() instanceof ElasticsearchClientException ece) {
-                throw ece;
+
+            long remainingNanos = deadlineNanos - System.nanoTime();
+            if (remainingNanos <= 0) {
+                String detail = lastErrorDetail != null ? lastErrorDetail : formatLastRetryError(lastError);
+                logger.error(
+                        "Retries exhausted for {} {} after {}. Last error: {}",
+                        method,
+                        path == null ? "" : path,
+                        maxDuration,
+                        detail);
+                throw new ElasticsearchClientException(
+                        "Retries exhausted for " + method + " " + (path == null ? "" : path) + ". Last error: "
+                                + detail,
+                        lastError);
             }
-            throw e;
+
+            long sleepNanos = Math.min(nextDelay.toNanos(), remainingNanos);
+            if (sleepNanos > 0) {
+                try {
+                    TimeUnit.NANOSECONDS.sleep(sleepNanos);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new ElasticsearchClientException(
+                            "Retries interrupted for " + method + " " + (path == null ? "" : path), ie);
+                }
+            }
+            Duration doubled = nextDelay.multipliedBy(2);
+            nextDelay = doubled.compareTo(maxDelay) > 0 ? maxDelay : doubled;
         }
     }
 
@@ -1749,15 +1721,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return message;
         }
         return lastError.getClass().getName();
-    }
-
-    private static boolean isCausedByInterruption(Throwable throwable) {
-        for (Throwable t = throwable; t != null; t = t.getCause()) {
-            if (t instanceof InterruptedException || t instanceof java.io.InterruptedIOException) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static String readResponseBodySafely(Response response) {
