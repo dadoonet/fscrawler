@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,14 +41,28 @@ public class FsCrawlerSimpleBulkProcessorListener<
         logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
         if (response.hasFailures()) {
             Throwable failure = response.buildFailureMessage();
+            String failureMessage = messageOf(failure);
+            String reason = shortReason(failureMessage);
             logger.warn(
-                    "There were failures while executing bulk of {} actions: {}",
+                    "There were failures while executing bulk of {} actions: {}. See {} for action details.",
                     request.numberOfActions(),
-                    failure.getMessage(),
+                    failureMessage,
+                    FSCrawlerLogger.BULK_FAILURES_LOG_FILE,
                     failure);
+            FSCrawlerLogger.bulkFailureWarn(
+                    reason,
+                    "Bulk executionId={} item failures for {} actions. Request may have been partially applied.",
+                    executionId,
+                    request.numberOfActions());
             for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
                 if (item.isFailed()) {
+                    String itemReason = shortReason(item.getFailureMessage());
                     logger.warn("Bulk item failure for [{}]: {}", item.getOperation(), item.getFailureMessage());
+                    FSCrawlerLogger.bulkFailureWarn(
+                            itemReason, "executionId={} failed item: {}", executionId, item.getOperation());
+                    FSCrawlerLogger.bulkFailureTrace(
+                            itemReason, "executionId={} failed item detail: {}", executionId, item.getFailureMessage());
+                    logOperationPayloadTrace(itemReason, executionId, item.getOperation());
                 }
             }
         }
@@ -55,17 +70,64 @@ public class FsCrawlerSimpleBulkProcessorListener<
 
     @Override
     public void afterBulk(long executionId, Q request, Throwable failure) {
+        String failureMessage = messageOf(failure);
+        String reason = shortReason(failureMessage);
         logger.warn(
-                "Error executing bulk of {} actions: {}",
+                "Error executing bulk of {} actions: {}. See {} for action details.",
                 request.numberOfActions(),
-                failure.getMessage() != null
-                        ? failure.getMessage()
-                        : failure.getClass().getName(),
+                failureMessage,
+                FSCrawlerLogger.BULK_FAILURES_LOG_FILE,
                 failure);
+        FSCrawlerLogger.bulkFailureWarn(
+                reason,
+                "Bulk executionId={} failed for {} actions (whole request; may have been partially applied).",
+                executionId,
+                request.numberOfActions());
+        int i = 0;
+        for (O operation : request.getOperations()) {
+            i++;
+            FSCrawlerLogger.bulkFailureWarn(
+                    reason, "executionId={} action {}/{}: {}", executionId, i, request.numberOfActions(), operation);
+            logOperationPayloadTrace(reason, executionId, operation);
+        }
     }
 
     @Override
     public void setBulkProcessor(FsCrawlerBulkProcessor<O, Q, S> bulkProcessor) {
         this.bulkProcessor = bulkProcessor;
+    }
+
+    /**
+     * Optional TRACE dump of an operation payload. Overridden where the concrete operation type carries a document body
+     * (e.g. Elasticsearch insert).
+     */
+    protected void logOperationPayloadTrace(String reason, long executionId, O operation) {
+        FSCrawlerLogger.bulkFailureTrace(reason, "executionId={} operation detail: {}", executionId, operation);
+    }
+
+    static String messageOf(Throwable failure) {
+        if (failure == null) {
+            return "unknown";
+        }
+        String message = failure.getMessage();
+        return message != null && !message.isBlank()
+                ? message
+                : failure.getClass().getName();
+    }
+
+    static String shortReason(String message) {
+        if (message == null || message.isBlank()) {
+            return "unknown";
+        }
+        String trimmed = message.strip();
+        // Keep a single-line, greppable prefix (HTTP timeouts often end with "Read timed out")
+        int newline = trimmed.indexOf('\n');
+        if (newline > 0) {
+            trimmed = trimmed.substring(0, newline).strip();
+        }
+        if (trimmed.length() > 200) {
+            trimmed = trimmed.substring(0, 200) + "…";
+        }
+        return trimmed;
     }
 }
