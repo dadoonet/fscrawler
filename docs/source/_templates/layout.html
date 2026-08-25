@@ -1,0 +1,17 @@
+{% extends "!layout.html" %}
+
+{#
+  llms.txt v2 discoverability (https://llmstxt.org/):
+  - rel="alternate" type="text/markdown" → clean markdown of this page (page.html.md)
+  - rel="describedby" → llms.txt covering this documentation tree
+
+  Note: pathto(pagename) returns "#" for the current page, so build relative hrefs
+  from pagename depth instead.
+#}
+{% block extrahead %}
+{{ super() }}
+{%- set md_href = pagename.split('/')[-1] ~ '.html.md' -%}
+{%- set llms_href = '../' * pagename.count('/') ~ 'llms.txt' -%}
+<link rel="alternate" type="text/markdown" title="Markdown" href="{{ md_href }}"/>
+<link rel="describedby" href="{{ llms_href }}"/>
+{% endblock %}

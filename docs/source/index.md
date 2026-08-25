@@ -43,6 +43,7 @@ installation
 
 user/getting_started
 user/tutorial
+user/llm-assistant
 user/options
 user/ocr
 user/rest

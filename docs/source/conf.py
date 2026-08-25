@@ -79,6 +79,19 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx_substitution_extensions',
     'myst_parser',
+    # Generate page.html.md, llms.txt, and llms-full.txt (llms.txt v2 / https://llmstxt.org/)
+    'sphinx_llm.txt',
+]
+
+# Curated sitemap (docs/source/llms-txt.md) replaces the auto-generated llms.txt index.
+# Per-page Markdown (*.html.md) and llms-full.txt are still produced by the extension.
+llms_txt_override_source = 'llms-txt'
+llms_txt_description = (
+    'FSCrawler indexes binary documents (PDF, Office, images with OCR, …) into Elasticsearch.'
+)
+# Older release notes are optional; keep the dump smaller for agents.
+llms_txt_exclude = [
+    'release/2.*',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
