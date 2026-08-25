@@ -114,15 +114,15 @@ public final class KibanaDashboardBuilder {
         List<Map<String, Object>> panels = new ArrayList<>();
 
         // Intro + runtime markdown side by side
-        panels.add(markdownPanel(0, 0, 28, 7, sampleDashboardMarkdown(rootUrl)));
-        panels.add(markdownPanel(28, 0, 20, 7, runtimeMarkdown(jobName)));
+        panels.add(markdownPanel(0, 0, 28, 10, sampleDashboardMarkdown(rootUrl)));
+        panels.add(markdownPanel(28, 0, 20, 10, runtimeMarkdown(jobName)));
 
         // Metric row
         panels.add(metricPanel(
-                0, 7, 16, 6, "Indexed documents", indexPattern, primaryMetric(OPERATION_COUNT, null, null)));
+                0, 10, 16, 6, "Indexed documents", indexPattern, primaryMetric(OPERATION_COUNT, null, null)));
         panels.add(metricPanel(
                 16,
-                7,
+                10,
                 16,
                 6,
                 "Total size",
@@ -130,7 +130,7 @@ public final class KibanaDashboardBuilder {
                 primaryMetric("sum", FIELD_FILE_FILESIZE, Map.of(KEY_TYPE, "bytes", "decimals", 1))));
         panels.add(metricPanel(
                 32,
-                7,
+                10,
                 16,
                 6,
                 "Unique extensions",
@@ -141,7 +141,7 @@ public final class KibanaDashboardBuilder {
         panels.add(section(
                 "Overview",
                 false,
-                13,
+                16,
                 List.of(
                         piePanel(0, 0, 24, 12, "Documents by extension", indexPattern, "file.extension", 10),
                         horizontalBarPanel(
@@ -151,7 +151,7 @@ public final class KibanaDashboardBuilder {
         panels.add(section(
                 "Directories",
                 false,
-                26,
+                29,
                 List.of(
                         treemapPanel(
                                 0,
@@ -184,7 +184,7 @@ public final class KibanaDashboardBuilder {
         panels.add(section(
                 "Timeline",
                 false,
-                41,
+                44,
                 List.of(dateHistogramPanel(
                         0, 0, 48, 12, "Indexing activity over time", indexPattern, DEFAULT_TIME_FIELD, "area"))));
 
@@ -192,14 +192,14 @@ public final class KibanaDashboardBuilder {
         panels.add(section(
                 "Documents",
                 false,
-                54,
+                57,
                 List.of(discoverSessionPanel(0, 0, 48, 16, "Indexed documents", indexPattern, DISCOVER_COLUMNS))));
 
         // File dates (collapsed)
         panels.add(section(
                 "File dates",
                 true,
-                71,
+                74,
                 List.of(
                         dateHistogramPanel(0, 0, 16, 10, "Created", indexPattern, "file.created", "line"),
                         dateHistogramPanel(16, 0, 16, 10, "Last modified", indexPattern, "file.last_modified", "line"),
@@ -210,7 +210,7 @@ public final class KibanaDashboardBuilder {
         panels.add(section(
                 "Document metadata",
                 true,
-                74,
+                77,
                 List.of(
                         piePanel(0, 0, 24, 12, "Documents by language", indexPattern, "meta.language", 10),
                         horizontalBarPanel(
