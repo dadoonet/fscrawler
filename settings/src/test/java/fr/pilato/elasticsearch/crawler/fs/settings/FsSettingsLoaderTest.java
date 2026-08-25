@@ -181,6 +181,9 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         expected.getElasticsearch().setBulkSize(1000);
         expected.getElasticsearch().setBulkOperation(BulkOperation.CREATE);
         expected.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(5));
+        expected.getElasticsearch().setRetryMaxDuration(TimeValue.timeValueMinutes(2));
+        expected.getElasticsearch().setRetryInitialDelay(TimeValue.timeValueMillis(250));
+        expected.getElasticsearch().setRetryMaxDelay(TimeValue.timeValueSeconds(10));
         expected.getElasticsearch().setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));
         expected.getElasticsearch().setApiKey("VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw==");
         expected.getElasticsearch().setUsername("elastic");
@@ -254,6 +257,9 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         es.setBulkSize(100);
         es.setBulkOperation(BulkOperation.INDEX);
         es.setFlushInterval(TimeValue.timeValueSeconds(5));
+        es.setRetryMaxDuration(TimeValue.timeValueMinutes(5));
+        es.setRetryInitialDelay(TimeValue.timeValueMillis(500));
+        es.setRetryMaxDelay(TimeValue.timeValueSeconds(30));
         es.setByteSize(new ByteSizeValue(10, ByteSizeUnit.MB));
         es.setSslVerification(true);
         es.setPushTemplates(true);

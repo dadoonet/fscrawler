@@ -184,23 +184,26 @@ public class TimeValue {
         }
         try {
             String lowerSValue = sValue.toLowerCase(Locale.ROOT).trim();
-            long duration = Long.parseLong(lowerSValue.substring(0, lowerSValue.length() - 1));
+            // Check two-character units first: "500ms".endsWith("s") is also true.
+            long duration;
             TimeUnit unit;
             if (lowerSValue.endsWith("ms")) {
-                // Well, with ms, we need to substring 2 chars
                 duration = Long.parseLong(lowerSValue.substring(0, lowerSValue.length() - 2));
                 unit = TimeUnit.MILLISECONDS;
-            } else if (lowerSValue.endsWith("s")) {
-                unit = TimeUnit.SECONDS;
-            } else if (lowerSValue.endsWith("m")) {
-                unit = TimeUnit.MINUTES;
-            } else if (lowerSValue.endsWith("h")) {
-                unit = TimeUnit.HOURS;
-            } else if (lowerSValue.endsWith("d")) {
-                unit = TimeUnit.DAYS;
             } else {
-                throw new IllegalArgumentException(
-                        "Failed to parse timevalue [" + sValue + "]: unit is missing or unrecognized");
+                duration = Long.parseLong(lowerSValue.substring(0, lowerSValue.length() - 1));
+                if (lowerSValue.endsWith("s")) {
+                    unit = TimeUnit.SECONDS;
+                } else if (lowerSValue.endsWith("m")) {
+                    unit = TimeUnit.MINUTES;
+                } else if (lowerSValue.endsWith("h")) {
+                    unit = TimeUnit.HOURS;
+                } else if (lowerSValue.endsWith("d")) {
+                    unit = TimeUnit.DAYS;
+                } else {
+                    throw new IllegalArgumentException(
+                            "Failed to parse timevalue [" + sValue + "]: unit is missing or unrecognized");
+                }
             }
             return new TimeValue(duration, unit);
         } catch (NumberFormatException e) {

@@ -26,6 +26,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
@@ -131,26 +132,20 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     public static final int CHECK_NODES_EVERY = 10;
 
-    // Retry configuration for server errors (5xx)
-    private static final Duration RETRY_MAX_DURATION = Duration.ofSeconds(10);
-    private static final Duration RETRY_INITIAL_DELAY = Duration.ofMillis(500);
-    private static final Duration RETRY_MAX_DELAY = Duration.ofSeconds(5);
-
-    // Retry configuration for rate limiting (429) - longer delays to let the server recover
-    private static final Duration RETRY_429_MAX_DURATION = Duration.ofMinutes(5);
-    private static final Duration RETRY_429_INITIAL_DELAY = Duration.ofSeconds(1);
-    private static final Duration RETRY_429_MAX_DELAY = Duration.ofSeconds(30);
-
-    // Retry configuration for the root endpoint during bootstrap. On Elastic Cloud hosted deployments, the Cloud proxy
-    // can answer 404 on GET / while the cluster is still "cold" (waking up, rolling restart, resize...) and no backing
-    // node is routable yet. A healthy Elasticsearch always answers 200 on the root, so this 404 is transient.
-    private static final Duration BOOTSTRAP_RETRY_MAX_DURATION = Duration.ofMinutes(1);
-    private static final Duration BOOTSTRAP_RETRY_INITIAL_DELAY = Duration.ofSeconds(1);
-    private static final Duration BOOTSTRAP_RETRY_MAX_DELAY = Duration.ofSeconds(10);
+    private static final Duration DEFAULT_RETRY_MAX_DURATION = Duration.ofMinutes(5);
+    private static final Duration DEFAULT_RETRY_INITIAL_DELAY = Duration.ofMillis(500);
+    private static final Duration DEFAULT_RETRY_MAX_DELAY = Duration.ofSeconds(30);
 
     private final FsSettings settings;
     /** Factory for document writes, resolved once from {@code elasticsearch.bulk_operation}. */
     private final InsertOperationFactory insertOperationFactory;
+
+    /** From {@code elasticsearch.retry_max_duration} — wall-clock budget for 5xx/429 and cold-start 404 on GET /. */
+    private final Duration retryMaxDuration;
+    /** From {@code elasticsearch.retry_initial_delay}. */
+    private final Duration retryInitialDelay;
+    /** From {@code elasticsearch.retry_max_delay}. */
+    private final Duration retryMaxDelay;
 
     private Client client = null;
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
@@ -184,6 +179,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
         this.settings = settings;
         this.insertOperationFactory =
                 insertOperationFactory(settings.getElasticsearch().getBulkOperation());
+        this.retryMaxDuration =
+                durationOf(settings.getElasticsearch().getRetryMaxDuration(), DEFAULT_RETRY_MAX_DURATION);
+        this.retryInitialDelay =
+                durationOf(settings.getElasticsearch().getRetryInitialDelay(), DEFAULT_RETRY_INITIAL_DELAY);
+        this.retryMaxDelay = durationOf(settings.getElasticsearch().getRetryMaxDelay(), DEFAULT_RETRY_MAX_DELAY);
         this.hosts = new ArrayList<>(settings.getElasticsearch().getUrls().size());
         this.initialHosts =
                 new ArrayList<>(settings.getElasticsearch().getUrls().size());
@@ -196,6 +196,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
             currentNode = 0;
         }
         semanticSearch = settings.getElasticsearch().isSemanticSearch();
+    }
+
+    private static Duration durationOf(TimeValue timeValue, Duration fallback) {
+        return timeValue == null ? fallback : Duration.ofMillis(timeValue.millis());
     }
 
     @FunctionalInterface
@@ -413,31 +417,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (version != null) {
             return version;
         }
-
-        // On Elastic Cloud hosted deployments, the Cloud proxy may answer 404 on the root endpoint while the cluster
-        // is still "cold" (waking up, rolling restart, resize...). A healthy Elasticsearch always answers 200 on the
-        // root, so we retry on NotFoundException here, mirroring getLicense(). This is scoped to the root endpoint:
-        // 404 on regular endpoints stays non-retryable (see executeWithRetry and testNoRetryOn4xxErrors).
-        try {
-            return Awaitility.await()
-                    .atMost(BOOTSTRAP_RETRY_MAX_DURATION)
-                    .pollInterval(ExponentialBackoffPollInterval.exponential(
-                            BOOTSTRAP_RETRY_INITIAL_DELAY, BOOTSTRAP_RETRY_MAX_DELAY))
-                    .until(
-                            () -> {
-                                try {
-                                    return getVersionInternal();
-                                } catch (NotFoundException e) {
-                                    logger.warn(
-                                            "Root endpoint answered 404. The cluster might still be cold. Retrying...");
-                                    return null;
-                                }
-                            },
-                            Objects::nonNull);
-        } catch (ConditionTimeoutException e) {
-            throw new ElasticsearchClientException(
-                    "Root endpoint is still not ready (404) after " + BOOTSTRAP_RETRY_MAX_DURATION);
-        }
+        return getVersionInternal();
     }
 
     private String getVersionInternal() throws ElasticsearchClientException {
@@ -1482,7 +1462,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public String bulk(String index, String ndjson) throws ElasticsearchClientException {
         String path = index == null ? "_bulk" : index + PATH_DELIMITER + "_bulk";
         logger.debug("bulk a ndjson of {} characters to [{}]", ndjson.length(), path);
-        // Same retry policy as _search: 5xx short backoff, 429 longer. Safe because FSCrawler always sets _id.
+        // Same retry policy as _search: 5xx/429 with elasticsearch.retry_*. Safe because FSCrawler always sets _id.
         return httpPostWithRetry(path, ndjson);
     }
 
@@ -1574,8 +1554,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     /**
-     * Execute an idempotent POST request with retry logic (e.g. {@code _search}). Retries on 5xx and 429 with the same
-     * policy as {@link #httpCallWithRetry}.
+     * Execute an idempotent POST request with retry logic (e.g. {@code _search}, {@code _bulk}). Retries on 5xx and 429
+     * with the same policy as {@link #httpCallWithRetry}.
      */
     @SafeVarargs
     final String httpPostWithRetry(String path, Object data, Map.Entry<String, Object>... params)
@@ -1599,11 +1579,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
     /**
      * Execute an HTTP call with retry logic for idempotent requests (GET, HEAD, and read-only POST such as
-     * {@code _search}). This method will retry the call with exponential backoff when a 5xx server error or a 429 (Too
-     * Many Requests) rate limiting error is received.
-     *
-     * <p>For 5xx errors, uses short retry intervals (500ms to 5s, max 10s total). For 429 errors, uses longer retry
-     * intervals (1s to 30s, max 5 minutes total) to allow server recovery.
+     * {@code _search}). Retries on 5xx, 429, and a cold-start 404 on {@code GET /} using {@code elasticsearch.retry_*}
+     * (defaults: 500ms–30s backoff, max 5m).
      *
      * @param method HTTP method (GET, HEAD, or idempotent POST)
      * @param path the path to call
@@ -1615,35 +1592,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @SafeVarargs
     private String httpCallWithRetry(String method, String path, Object data, Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
-        // First try with standard retry config (handles 5xx errors)
-        // If we get a 429, we switch to longer retry intervals
-        try {
-            return executeWithRetry(
-                    method, path, data, RETRY_MAX_DURATION, RETRY_INITIAL_DELAY, RETRY_MAX_DELAY, false, params);
-        } catch (RateLimitedException e) {
-            // Got 429 on first attempt, switch to longer retry config
-            logger.info(
-                    "Rate limited (429) on {} {}. Switching to longer retry intervals (up to {})...",
-                    method,
-                    path == null ? "" : path,
-                    RETRY_429_MAX_DURATION);
-            return executeWithRetry(
-                    method,
-                    path,
-                    data,
-                    RETRY_429_MAX_DURATION,
-                    RETRY_429_INITIAL_DELAY,
-                    RETRY_429_MAX_DELAY,
-                    true,
-                    params);
-        }
-    }
-
-    /** Internal exception to signal rate limiting (429) so we can switch retry configuration. */
-    private static class RateLimitedException extends RuntimeException {
-        RateLimitedException(WebApplicationException cause) {
-            super(cause);
-        }
+        return executeWithRetry(method, path, data, retryMaxDuration, retryInitialDelay, retryMaxDelay, params);
     }
 
     @SafeVarargs
@@ -1654,7 +1603,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
             Duration maxDuration,
             Duration initialDelay,
             Duration maxDelay,
-            boolean handle429,
             Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
         AtomicReference<Throwable> lastError = new AtomicReference<>();
@@ -1663,6 +1611,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         try {
             String result = Awaitility.await()
                     .atMost(maxDuration)
+                    .pollDelay(Duration.ZERO)
                     .pollInterval(ExponentialBackoffPollInterval.exponential(initialDelay, maxDelay))
                     .until(
                             () -> {
@@ -1677,44 +1626,50 @@ public class ElasticsearchClient implements IElasticsearchClient {
                                                     == Response.Status.Family.SERVER_ERROR;
                                     boolean isTooManyRequests =
                                             status == Response.Status.TOO_MANY_REQUESTS.getStatusCode();
+                                    boolean isRootNotFound = status == Response.Status.NOT_FOUND.getStatusCode()
+                                            && (path == null || path.isEmpty());
 
-                                    // Handle server errors (5xx) - always retry
-                                    if (isServerError) {
+                                    if (isServerError || isTooManyRequests || isRootNotFound) {
                                         String detail = describeHttpError(e);
-                                        logger.warn(
-                                                "Server error on {} {}. {}. Retrying...",
-                                                method,
-                                                path == null ? "" : path,
-                                                detail);
-                                        lastError.set(e);
-                                        lastErrorDetail.set(detail);
-                                        return null;
-                                    }
-
-                                    // Handle rate limiting (429)
-                                    if (isTooManyRequests) {
-                                        if (handle429) {
-                                            // We're already in 429 retry mode, continue retrying
-                                            String detail = describeHttpError(e);
+                                        if (isRootNotFound) {
+                                            logger.warn("Root endpoint answered 404. The cluster might still be cold."
+                                                    + " Retrying...");
+                                        } else if (isTooManyRequests) {
                                             logger.warn(
                                                     "Rate limited (429) on {} {}. {}. Retrying in up to {}...",
                                                     method,
                                                     path == null ? "" : path,
                                                     detail,
                                                     maxDelay);
-                                            lastError.set(e);
-                                            lastErrorDetail.set(detail);
-                                            return null;
                                         } else {
-                                            // Signal to switch to 429 retry mode
-                                            throw new RateLimitedException(e);
+                                            logger.warn(
+                                                    "Server error on {} {}. {}. Retrying...",
+                                                    method,
+                                                    path == null ? "" : path,
+                                                    detail);
                                         }
+                                        lastError.set(e);
+                                        lastErrorDetail.set(detail);
+                                        return null;
                                     }
 
                                     // Other client errors (4xx) should not be retried
                                     throw new RuntimeException(e);
                                 } catch (ElasticsearchClientException e) {
-                                    // Connection errors should not be retried (httpCall already handles node failover)
+                                    // Connection errors should not be retried (httpCall already handles node failover).
+                                    // Awaitility interrupts in-flight polls when the retry window ends — keep a prior
+                                    // 5xx/429/404 detail instead of replacing it with InterruptedIOException.
+                                    if (isCausedByInterruption(e)) {
+                                        Thread.interrupted();
+                                        if (lastError.get() == null) {
+                                            lastError.set(e);
+                                            lastErrorDetail.set(
+                                                    e.getMessage() != null
+                                                            ? e.getMessage()
+                                                            : e.getClass().getName());
+                                        }
+                                        return null;
+                                    }
                                     lastError.set(e);
                                     lastErrorDetail.set(
                                             e.getMessage() != null
@@ -1739,9 +1694,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
             throw new ElasticsearchClientException(
                     "Retries exhausted for " + method + " " + (path == null ? "" : path) + ". Last error: " + detail,
                     cause);
-        } catch (RateLimitedException e) {
-            // Propagate to switch retry configuration
-            throw e;
         } catch (RuntimeException e) {
             // Unwrap non-retryable exceptions
             if (e.getCause() instanceof WebApplicationException wae) {
@@ -1797,6 +1749,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return message;
         }
         return lastError.getClass().getName();
+    }
+
+    private static boolean isCausedByInterruption(Throwable throwable) {
+        for (Throwable t = throwable; t != null; t = t.getCause()) {
+            if (t instanceof InterruptedException || t instanceof java.io.InterruptedIOException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String readResponseBodySafely(Response response) {

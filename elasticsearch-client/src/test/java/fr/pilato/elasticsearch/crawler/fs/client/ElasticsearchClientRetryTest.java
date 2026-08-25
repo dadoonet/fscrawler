@@ -26,13 +26,13 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.IntelliJThreadsFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JNACleanerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.JUnitThreadsFilter;
-import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
@@ -99,7 +99,16 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setSslVerification(false);
         // Disable semantic search to avoid calling getLicense() during start()
         fsSettings.getElasticsearch().setSemanticSearch(false);
+        // Production defaults are minutes; tests use a few hundred milliseconds.
+        applyShortRetryWindows(fsSettings);
         return new ElasticsearchClient(fsSettings);
+    }
+
+    /** Sub-second budget: enough for a couple of WireMock round-trips, not a wall-clock wait per exhaustion case. */
+    private static void applyShortRetryWindows(FsSettings fsSettings) {
+        fsSettings.getElasticsearch().setRetryMaxDuration(TimeValue.timeValueMillis(250));
+        fsSettings.getElasticsearch().setRetryInitialDelay(TimeValue.timeValueMillis(10));
+        fsSettings.getElasticsearch().setRetryMaxDelay(TimeValue.timeValueMillis(50));
     }
 
     /**
@@ -146,7 +155,6 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
     /** Test that the client throws an exception after all retries are exhausted. */
     @Test
-    @Slow
     void testRetryExhausted() throws IOException {
         // Setup: All calls return 503
         wireMockServer.resetAll();
@@ -465,7 +473,6 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
     /** Test that search throws a clear error when retries are exhausted on 503. */
     @Test
-    @Slow
     void testSearchRetriesExhaustedOnServerError() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
@@ -496,9 +503,66 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         logger.info("Test passed: search retries exhausted and exception propagated");
     }
 
+    /**
+     * {@code elasticsearch.retry_max_duration} is the wall-clock budget for 5xx retries. Production defaults to 5
+     * minutes; tests use a few hundred milliseconds.
+     */
+    @Test
+    void testConfiguredRetryMaxDurationBoundsExhaustion() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_search"))
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"no_shard_available_action_exception","status":503}}
+                                """)));
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.setName("test-retry-budget");
+        fsSettings.getElasticsearch().setUrls(List.of("http://localhost:" + wireMockServer.port()));
+        fsSettings.getElasticsearch().setSslVerification(false);
+        fsSettings.getElasticsearch().setSemanticSearch(false);
+        applyShortRetryWindows(fsSettings);
+
+        try (ElasticsearchClient client = new ElasticsearchClient(fsSettings)) {
+            client.start();
+            long start = System.currentTimeMillis();
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")))
+                    .withMessageContaining("Retries exhausted")
+                    .withMessageContaining("503");
+            Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1500);
+        }
+    }
+
+    /** Cold-start 404 on {@code GET /} uses the same retry settings, not a separate 1-minute bootstrap budget. */
+    @Test
+    void testRootNotFoundExhaustedUsesRetrySettings() throws IOException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(404)
+                        .withBody("{\"ok\":false,\"message\":\"Unknown deployment.\"}")));
+
+        long start = System.currentTimeMillis();
+        try (ElasticsearchClient client = createClient()) {
+            Assertions.assertThatThrownBy(client::start)
+                    .isInstanceOf(ElasticsearchClientException.class)
+                    .hasMessageContaining("Retries exhausted")
+                    .hasMessageContaining("404");
+        }
+        Assertions.assertThat(System.currentTimeMillis() - start).isLessThan(1500);
+        WireMock.verify(WireMock.moreThan(1), WireMock.getRequestedFor(WireMock.urlEqualTo("/")));
+    }
+
     /** Direct {@code bulk()} call exposes status and response body when retries are exhausted. */
     @Test
-    @Slow
     void testBulkRetriesExhaustedExposesServerErrorDetail() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
@@ -582,7 +646,6 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
     /** Test that {@code _bulk} retries on 429 and eventually succeeds. */
     @Test
-    @Slow
     void testBulkRetryOn429TooManyRequests() throws IOException, ElasticsearchClientException {
         wireMockServer.resetAll();
 
@@ -629,7 +692,6 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
      * {@link ElasticsearchClient#ensureBulkSucceeded()} fails the caller so the crawl/run can be marked as ERROR.
      */
     @Test
-    @Slow
     void testBulkRetriesExhaustedAreRecordedAsFatal() throws Exception {
         wireMockServer.resetAll();
 
@@ -682,7 +744,6 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
      * interval/size-triggered flushes).
      */
     @Test
-    @Slow
     void testEmptyFlushDoesNotRecordFatalBulkFailure() throws Exception {
         wireMockServer.resetAll();
 
@@ -721,6 +782,7 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setUrls(List.of("http://localhost:1")); // Port 1 should refuse connections
         fsSettings.getElasticsearch().setSslVerification(false);
         fsSettings.getElasticsearch().setSemanticSearch(false);
+        applyShortRetryWindows(fsSettings);
 
         try (ElasticsearchClient client = new ElasticsearchClient(fsSettings)) {
             long startTime = System.currentTimeMillis();
@@ -729,8 +791,8 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
                     .hasMessageContaining("Can not execute GET");
             long duration = System.currentTimeMillis() - startTime;
 
-            // Should fail quickly (not wait for retry timeout of 10s)
-            Assertions.assertThat(duration).isLessThan(5000);
+            // Connection errors must not wait for the full retry window
+            Assertions.assertThat(duration).isLessThan(1500);
             logger.info("Test passed: connection error propagated immediately in {}ms", duration);
         }
     }
