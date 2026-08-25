@@ -147,6 +147,17 @@ mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=
  ```
 
  You can use both Elasticsearch service and Serverless projects.
+
+ To also run the Kibana dashboard integration test (`FsCrawlerTestKibanaDashboardIT`), set
+ `tests.kibana.url`. This IT is skipped unless that property is set (CI enables it only on Cloud and
+ Serverless jobs to avoid starting Kibana in the default TestContainers matrix):
+
+ ```shell
+ mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+     -Dtests.cluster.apiKey=APIKEYHERE \
+     -Dtests.cluster.url=https://ALIAS.es.REGION.CLOUD_PROVIDER.elastic.cloud \
+     -Dtests.kibana.url=https://ALIAS.kb.REGION.CLOUD_PROVIDER.elastic.cloud
+ ```
 ````
 
 ### Changing the REST port

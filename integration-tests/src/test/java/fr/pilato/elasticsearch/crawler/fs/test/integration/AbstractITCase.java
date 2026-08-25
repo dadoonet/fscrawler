@@ -634,6 +634,11 @@ abstract class AbstractITCase extends AbstractFSCrawlerTestCase {
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         // We explicitly set semantic search to false because IT takes too long time
         fsSettings.getElasticsearch().setSemanticSearch(false);
+        // Disable Kibana dashboard provisioning by default; enable it only in dedicated Kibana ITs
+        // when -Dtests.kibana.url=... is provided (Cloud / Serverless CI).
+        if (fsSettings.getKibana() != null) {
+            fsSettings.getKibana().setPushDashboard(false);
+        }
         return fsSettings;
     }
 

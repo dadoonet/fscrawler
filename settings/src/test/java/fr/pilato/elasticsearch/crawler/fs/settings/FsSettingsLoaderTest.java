@@ -215,6 +215,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
                 .as("Checking Elasticsearch")
                 .isEqualTo(expected.getElasticsearch());
         Assertions.assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        Assertions.assertThat(settings.getKibana()).as("Checking Kibana").isEqualTo(expected.getKibana());
         Assertions.assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
@@ -269,6 +270,12 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         rest.setUrl("http://127.0.0.1:8080");
         rest.setEnableCors(false);
         expected.setRest(rest);
+
+        Kibana kibana = new Kibana();
+        kibana.setUrl("http://127.0.0.1:5601");
+        kibana.setPushDashboard(true);
+        kibana.setForcePushDashboard(false);
+        expected.setKibana(kibana);
 
         return expected;
     }

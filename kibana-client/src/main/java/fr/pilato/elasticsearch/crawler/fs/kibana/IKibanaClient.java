@@ -26,12 +26,26 @@ import java.io.IOException;
 
 public interface IKibanaClient extends Closeable {
 
+    /** Kibana Dashboards API became generally available in 9.5. */
+    int MIN_DASHBOARDS_API_MAJOR_VERSION = 9;
+
+    int MIN_DASHBOARDS_API_MINOR_VERSION = 5;
+
     /** Whether Kibana dashboard provisioning is enabled for these settings. */
     static boolean isEnabled(FsSettings settings) {
         return settings.getKibana() != null && settings.getKibana().isPushDashboard();
     }
 
     void start() throws KibanaClientException;
+
+    /** Kibana version reported by {@code GET /api/status}, or {@code null} before {@link #start()}. */
+    String getVersion();
+
+    /**
+     * Whether dashboard provisioning is still active after {@link #start()}. Becomes {@code false} when Kibana is older
+     * than 9.5.
+     */
+    boolean isDashboardProvisioningEnabled();
 
     /** Returns {@code true} when Kibana responds to {@code GET /api/status}. */
     boolean isAvailable() throws KibanaClientException;
@@ -53,6 +67,16 @@ public interface IKibanaClient extends Closeable {
      * @return the dashboard id returned by Kibana
      */
     String createDashboard(String dashboardPayload) throws KibanaClientException;
+
+    /**
+     * Updates an existing dashboard using the Kibana Dashboards API ({@code PUT /api/dashboards/{id}}).
+     *
+     * @return the dashboard id returned by Kibana
+     */
+    String updateDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException;
+
+    /** Deletes a dashboard by id when it exists. */
+    void deleteDashboard(String dashboardId) throws KibanaClientException;
 
     @Override
     void close() throws IOException;

@@ -54,6 +54,11 @@ public class FsCrawlerKibanaServiceImpl implements FsCrawlerKibanaService {
 
     @Override
     public void setupDashboard() throws KibanaClientException {
+        if (!client.isDashboardProvisioningEnabled()) {
+            logger.debug("Kibana dashboard provisioning is disabled, skipping");
+            return;
+        }
+
         String jobName = settings.getName();
         String indexPattern = settings.getElasticsearch().getIndex();
         String dataViewId = KibanaDashboardBuilder.dataViewIdForJob(jobName);
@@ -61,12 +66,25 @@ public class FsCrawlerKibanaServiceImpl implements FsCrawlerKibanaService {
 
         client.createDataViewIfMissing(dataViewId, indexPattern, KibanaDashboardBuilder.DEFAULT_TIME_FIELD);
 
+        String payload = KibanaDashboardBuilder.buildDefaultDashboardPayload(settings);
+        boolean forcePush = settings.getKibana().isForcePushDashboard();
+
         if (client.dashboardExists(dashboardId)) {
-            logger.info("Kibana dashboard [{}] already exists, skipping creation", dashboardId);
+            if (!forcePush) {
+                logger.info(
+                        "Kibana dashboard [{}] already exists. Skipping. "
+                                + "Use kibana.force_push_dashboard: true to override.",
+                        dashboardId);
+                return;
+            }
+            String updatedId = client.updateDashboard(dashboardId, payload);
+            logger.info(
+                    "Updated Kibana dashboard [{}] at {}",
+                    updatedId,
+                    settings.getKibana().getUrl());
             return;
         }
 
-        String payload = KibanaDashboardBuilder.buildDefaultDashboardPayload(settings);
         String createdId = client.createDashboard(payload);
         logger.info(
                 "Created Kibana dashboard [{}] at {}",

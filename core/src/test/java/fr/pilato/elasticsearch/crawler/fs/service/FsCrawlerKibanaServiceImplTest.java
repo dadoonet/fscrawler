@@ -32,9 +32,23 @@ import org.mockito.Mockito;
 class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
 
     @Test
+    void setupDashboard_skipsWhenProvisioningDisabled() throws Exception {
+        FsSettings settings = settingsWithKibana("demo");
+        IKibanaClient client = Mockito.mock(IKibanaClient.class);
+        Mockito.when(client.isDashboardProvisioningEnabled()).thenReturn(false);
+
+        new FsCrawlerKibanaServiceImpl(settings, client).setupDashboard();
+
+        Mockito.verify(client, Mockito.never())
+                .createDataViewIfMissing(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString());
+    }
+
+    @Test
     void setupDashboard_createsDataViewAndDashboardWhenMissing() throws Exception {
         FsSettings settings = settingsWithKibana("demo");
         IKibanaClient client = Mockito.mock(IKibanaClient.class);
+        Mockito.when(client.isDashboardProvisioningEnabled()).thenReturn(true);
         Mockito.when(client.createDataViewIfMissing(
                         KibanaDashboardBuilder.dataViewIdForJob("demo"),
                         "demo_docs",
@@ -59,6 +73,7 @@ class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
     void setupDashboard_skipsDashboardCreationWhenAlreadyPresent() throws Exception {
         FsSettings settings = settingsWithKibana("demo");
         IKibanaClient client = Mockito.mock(IKibanaClient.class);
+        Mockito.when(client.isDashboardProvisioningEnabled()).thenReturn(true);
         Mockito.when(client.createDataViewIfMissing(
                         KibanaDashboardBuilder.dataViewIdForJob("demo"),
                         "demo_docs",
@@ -69,6 +84,29 @@ class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
 
         new FsCrawlerKibanaServiceImpl(settings, client).setupDashboard();
 
+        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString());
+        Mockito.verify(client, Mockito.never()).updateDashboard(Mockito.anyString(), Mockito.anyString());
+    }
+
+    @Test
+    void setupDashboard_updatesDashboardWhenForcePushEnabled() throws Exception {
+        FsSettings settings = settingsWithKibana("demo");
+        settings.getKibana().setForcePushDashboard(true);
+        IKibanaClient client = Mockito.mock(IKibanaClient.class);
+        Mockito.when(client.isDashboardProvisioningEnabled()).thenReturn(true);
+        Mockito.when(client.createDataViewIfMissing(
+                        KibanaDashboardBuilder.dataViewIdForJob("demo"),
+                        "demo_docs",
+                        KibanaDashboardBuilder.DEFAULT_TIME_FIELD))
+                .thenReturn(false);
+        Mockito.when(client.dashboardExists(KibanaDashboardBuilder.dashboardIdForJob("demo")))
+                .thenReturn(true);
+        Mockito.when(client.updateDashboard(Mockito.eq("fscrawler-demo"), Mockito.anyString()))
+                .thenReturn("fscrawler-demo");
+
+        new FsCrawlerKibanaServiceImpl(settings, client).setupDashboard();
+
+        Mockito.verify(client).updateDashboard(Mockito.eq("fscrawler-demo"), Mockito.anyString());
         Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString());
     }
 

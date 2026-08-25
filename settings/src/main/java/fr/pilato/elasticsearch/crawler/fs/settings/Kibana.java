@@ -31,8 +31,15 @@ public class Kibana {
     private String url;
 
     /** When {@code true}, FSCrawler creates or updates a default Kibana dashboard for this job on startup. */
-    @Config(defaultVal = "false")
+    @Config(defaultVal = "true")
     private boolean pushDashboard;
+
+    /**
+     * When {@code true}, overwrite an existing FSCrawler dashboard on startup. When {@code false} (default), skip
+     * creation if the dashboard already exists — same pattern as {@code elasticsearch.force_push_templates}.
+     */
+    @Config(defaultVal = "false")
+    private boolean forcePushDashboard;
 
     /** Optional Kibana space id. When unset, the default space is used. */
     @Config
@@ -61,6 +68,14 @@ public class Kibana {
         this.pushDashboard = pushDashboard;
     }
 
+    public boolean isForcePushDashboard() {
+        return forcePushDashboard;
+    }
+
+    public void setForcePushDashboard(boolean forcePushDashboard) {
+        this.forcePushDashboard = forcePushDashboard;
+    }
+
     @Nullable
     public String getSpace() {
         return space;
@@ -87,6 +102,7 @@ public class Kibana {
         Kibana kibana = (Kibana) o;
 
         if (pushDashboard != kibana.pushDashboard) return false;
+        if (forcePushDashboard != kibana.forcePushDashboard) return false;
         if (!Objects.equals(url, kibana.url)) return false;
         if (!Objects.equals(space, kibana.space)) return false;
         return Objects.equals(apiKey, kibana.apiKey);
@@ -96,6 +112,7 @@ public class Kibana {
     public int hashCode() {
         int result = url != null ? url.hashCode() : 0;
         result = 31 * result + (pushDashboard ? 1 : 0);
+        result = 31 * result + (forcePushDashboard ? 1 : 0);
         result = 31 * result + (space != null ? space.hashCode() : 0);
         result = 31 * result + (apiKey != null ? apiKey.hashCode() : 0);
         return result;
@@ -103,7 +120,11 @@ public class Kibana {
 
     @Override
     public String toString() {
-        return "Kibana{" + "url='" + url + '\'' + ", pushDashboard=" + pushDashboard + ", space='" + space + '\''
-                + ", apiKey='" + apiKey + '\'' + '}';
+        return "Kibana{" + "url='"
+                + url + '\'' + ", pushDashboard="
+                + pushDashboard + ", forcePushDashboard="
+                + forcePushDashboard + ", space='"
+                + space + '\'' + ", apiKey='"
+                + apiKey + '\'' + '}';
     }
 }

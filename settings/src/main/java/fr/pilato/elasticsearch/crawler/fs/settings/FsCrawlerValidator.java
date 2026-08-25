@@ -173,16 +173,19 @@ public class FsCrawlerValidator {
             return false;
         }
         if (FsCrawlerUtil.isNullOrEmpty(kibana.getUrl())) {
-            logger.error("kibana.url must be set when kibana.push_dashboard is true. Disabling crawler");
-            return true;
+            logger.warn("kibana.push_dashboard is enabled but kibana.url is not set. "
+                    + "Disabling dashboard provisioning.");
+            kibana.setPushDashboard(false);
+            return false;
         }
         Elasticsearch elasticsearch = settings.getElasticsearch();
         if (FsCrawlerUtil.isNullOrEmpty(kibana.getApiKey())
                 && FsCrawlerUtil.isNullOrEmpty(elasticsearch.getApiKey())
                 && FsCrawlerUtil.isNullOrEmpty(elasticsearch.getUsername())) {
-            logger.error("kibana.push_dashboard is enabled but no credentials were found. "
-                    + "Set elasticsearch.api_key or kibana.api_key. Disabling crawler");
-            return true;
+            logger.warn("kibana.push_dashboard is enabled but no credentials were found. "
+                    + "Set elasticsearch.api_key or kibana.api_key. Disabling dashboard provisioning.");
+            kibana.setPushDashboard(false);
+            return false;
         }
         return false;
     }

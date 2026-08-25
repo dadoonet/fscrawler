@@ -82,6 +82,39 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void supportsDashboardsApi_requiresKibana95() {
+        Assertions.assertThat(KibanaClient.supportsDashboardsApi("9.5.0")).isTrue();
+        Assertions.assertThat(KibanaClient.supportsDashboardsApi("9.5.2")).isTrue();
+        Assertions.assertThat(KibanaClient.supportsDashboardsApi("10.0.0")).isTrue();
+        Assertions.assertThat(KibanaClient.supportsDashboardsApi("9.4.3")).isFalse();
+        Assertions.assertThat(KibanaClient.supportsDashboardsApi("8.19.5")).isFalse();
+    }
+
+    @Test
+    void start_disablesProvisioningWhenKibanaVersionBelow95() throws Exception {
+        stubStatus("8.19.5");
+
+        KibanaClient client = new KibanaClient(settingsForWireMock());
+        client.start();
+
+        Assertions.assertThat(client.isDashboardProvisioningEnabled()).isFalse();
+        Assertions.assertThat(client.getVersion()).isEqualTo("8.19.5");
+        client.close();
+    }
+
+    @Test
+    void start_keepsProvisioningEnabledWhenKibanaVersionIs95OrHigher() throws Exception {
+        stubStatus("9.5.2");
+
+        KibanaClient client = new KibanaClient(settingsForWireMock());
+        client.start();
+
+        Assertions.assertThat(client.isDashboardProvisioningEnabled()).isTrue();
+        Assertions.assertThat(client.getVersion()).isEqualTo("9.5.2");
+        client.close();
+    }
+
+    @Test
     void createDashboard_sendsKbnXsrfHeader() throws Exception {
         String dashboardId = "fscrawler-" + UUID.randomUUID();
         String payload = "{\"id\":\"" + dashboardId + "\",\"title\":\"Test dashboard\",\"panels\":[]}";
@@ -94,10 +127,7 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"id\":\"" + dashboardId + "\"}")));
 
-        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/api/status"))
-                .willReturn(WireMock.aResponse()
-                        .withStatus(200)
-                        .withBody("{\"status\":{\"overall\":{\"level\":\"available\"}}}")));
+        stubStatus("9.5.2");
 
         KibanaClient client = new KibanaClient(settingsForWireMock());
         client.start();
@@ -112,8 +142,7 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
     void createDataViewIfMissing_createsOnlyWhenAbsent() throws Exception {
         String dataViewId = "fscrawler-data-view-" + UUID.randomUUID();
 
-        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/api/status"))
-                .willReturn(WireMock.aResponse().withStatus(200).withBody("{\"status\":{}}")));
+        stubStatus("9.5.2");
 
         WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/api/data_views/data_view/" + dataViewId))
                 .inScenario("data-view")
@@ -160,6 +189,15 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat((String) JsonPath.read(payload, "$.id")).isEqualTo("fscrawler-myjob");
         Assertions.assertThat((String) JsonPath.read(payload, "$.title")).isEqualTo("FSCrawler - myjob");
         Assertions.assertThat((List<?>) JsonPath.read(payload, "$.panels")).hasSize(2);
+    }
+
+    private void stubStatus(String version) {
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/api/status"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\":{\"number\":\"" + version
+                                + "\"},\"status\":{\"overall\":{\"level\":\"available\"}}}")));
     }
 
     private FsSettings settingsForWireMock() {

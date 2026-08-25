@@ -73,10 +73,21 @@ public class KibanaClient implements IKibanaClient {
 
     private Client client;
     private String authorizationHeader;
+    private String version;
+    private boolean dashboardProvisioningEnabled;
 
     public KibanaClient(FsSettings settings) {
         this.settings = settings;
         this.kibanaSettings = settings.getKibana();
+        this.dashboardProvisioningEnabled = kibanaSettings != null && kibanaSettings.isPushDashboard();
+    }
+
+    /** Returns {@code true} when the Kibana Dashboards API is generally available (9.5+). */
+    public static boolean supportsDashboardsApi(String kibanaVersion) {
+        int major = FsCrawlerUtil.extractMajorVersion(kibanaVersion);
+        int minor = FsCrawlerUtil.extractMinorVersion(kibanaVersion);
+        return major > MIN_DASHBOARDS_API_MAJOR_VERSION
+                || (major == MIN_DASHBOARDS_API_MAJOR_VERSION && minor >= MIN_DASHBOARDS_API_MINOR_VERSION);
     }
 
     @Override
@@ -108,16 +119,35 @@ public class KibanaClient implements IKibanaClient {
         client = clientBuilder.build();
 
         try {
-            if (!isAvailable()) {
-                throw new KibanaClientException("Kibana is not available at " + kibanaSettings.getUrl());
+            String statusResponse = httpGet("api/status");
+            version = JsonPath.read(statusResponse, "$.version.number");
+            logger.debug("Kibana client connected to {} running version {}", kibanaSettings.getUrl(), version);
+
+            if (!supportsDashboardsApi(version)) {
+                logger.warn(
+                        "Kibana Dashboards API requires version {}.{}, but this cluster runs {}. "
+                                + "Disabling dashboard provisioning.",
+                        MIN_DASHBOARDS_API_MAJOR_VERSION,
+                        MIN_DASHBOARDS_API_MINOR_VERSION,
+                        version);
+                dashboardProvisioningEnabled = false;
             }
-            logger.debug("Kibana client connected to {}", kibanaSettings.getUrl());
         } catch (KibanaClientException e) {
             throw e;
         } catch (Exception e) {
             throw new KibanaClientException(
                     "Failed to create Kibana client on " + kibanaSettings.getUrl() + ": " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public String getVersion() {
+        return version;
+    }
+
+    @Override
+    public boolean isDashboardProvisioningEnabled() {
+        return dashboardProvisioningEnabled;
     }
 
     @Override
@@ -166,6 +196,22 @@ public class KibanaClient implements IKibanaClient {
     public String createDashboard(String dashboardPayload) throws KibanaClientException {
         String response = httpPost("api/dashboards", dashboardPayload);
         return JsonPath.read(response, "$.id");
+    }
+
+    @Override
+    public String updateDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException {
+        String response = httpPut("api/dashboards/" + dashboardId, dashboardPayload);
+        return JsonPath.read(response, "$.id");
+    }
+
+    @Override
+    public void deleteDashboard(String dashboardId) throws KibanaClientException {
+        try {
+            httpCall("DELETE", "api/dashboards/" + dashboardId, null, true);
+            logger.info("Deleted Kibana dashboard [{}]", dashboardId);
+        } catch (NotFoundException e) {
+            logger.debug("Kibana dashboard [{}] was already absent", dashboardId);
+        }
     }
 
     @Override
@@ -247,6 +293,10 @@ public class KibanaClient implements IKibanaClient {
 
     private String httpPost(String path, String payload) throws KibanaClientException {
         return httpCall("POST", path, payload, true);
+    }
+
+    private String httpPut(String path, String payload) throws KibanaClientException {
+        return httpCall("PUT", path, payload, true);
     }
 
     private String httpCall(String method, String path, String payload, boolean writeOperation)

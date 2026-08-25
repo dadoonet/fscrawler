@@ -69,6 +69,7 @@ admin/fs/tags
 admin/fs/ssh
 admin/fs/ftp
 admin/fs/elasticsearch
+admin/fs/kibana
 admin/fs/rest
 admin/status
 ```

@@ -112,6 +112,7 @@
         <tests.cluster.url/>
         <tests.cluster.apiKey/>
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
+        <tests.kibana.url/>
         <tests.index.prefix/>
         <tests.rest.port>0</tests.rest.port>
         <testcontainers.version>2.0.5</testcontainers.version>
@@ -900,6 +901,7 @@
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
                             <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
                             <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
+                            <tests.kibana.url>${tests.kibana.url}</tests.kibana.url>
                             <tests.index.prefix>${tests.index.prefix}</tests.index.prefix>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                             <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>
