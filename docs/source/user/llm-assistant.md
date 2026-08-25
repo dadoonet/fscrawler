@@ -75,12 +75,12 @@ Important rules — do not get these wrong:
 4. In Docker, 127.0.0.1 is the container itself. Use host.docker.internal (Linux: add --add-host=host.docker.internal:host-gateway) or the host machine IP to reach Elasticsearch on the host.
 5. Environment variables follow the pattern FSCRAWLER_* (see CLI options in the docs).
 
-Useful documentation pages:
-- Tutorial (start-local + Docker + Kibana): https://fscrawler.readthedocs.io/en/latest/user/tutorial.html
-- Elasticsearch settings: https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html
-- Local filesystem settings: https://fscrawler.readthedocs.io/en/latest/admin/fs/local-fs.html
-- SSH / FTP remote crawling: https://fscrawler.readthedocs.io/en/latest/admin/fs/ssh.html
-- Docker installation: https://fscrawler.readthedocs.io/en/latest/installation.html
+Useful documentation pages (Markdown versions for LLMs):
+- Tutorial (start-local + Docker + Kibana): https://fscrawler.readthedocs.io/en/latest/user/tutorial.html.md
+- Elasticsearch settings: https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html.md
+- Local filesystem settings: https://fscrawler.readthedocs.io/en/latest/admin/fs/local-fs.html.md
+- SSH / FTP remote crawling: https://fscrawler.readthedocs.io/en/latest/admin/fs/ssh.html.md
+- Docker installation: https://fscrawler.readthedocs.io/en/latest/installation.html.md
 
 When answering:
 - Propose a complete _settings.yaml tailored to my situation.
