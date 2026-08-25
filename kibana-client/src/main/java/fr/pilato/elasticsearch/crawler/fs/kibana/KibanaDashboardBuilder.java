@@ -37,6 +37,14 @@ public final class KibanaDashboardBuilder {
     public static final String DATA_VIEW_ID_PREFIX = "fscrawler-data-view-";
     public static final String DEFAULT_TIME_FIELD = "file.indexing_date";
 
+    private static final String KEY_TITLE = "title";
+    private static final String KEY_TYPE = "type";
+    private static final String KEY_OPERATION = "operation";
+    private static final String KEY_DATA_SOURCE = "data_source";
+    private static final String KEY_METRICS = "metrics";
+    private static final String KEY_CONFIG = "config";
+    private static final String OPERATION_COUNT = "count";
+
     private KibanaDashboardBuilder() {}
 
     public static String dashboardIdForJob(String jobName) {
@@ -58,7 +66,7 @@ public final class KibanaDashboardBuilder {
     public static String buildDataViewPayload(String dataViewId, String indexPattern, String timeField) {
         Map<String, Object> dataView = new LinkedHashMap<>();
         dataView.put("id", dataViewId);
-        dataView.put("title", indexPattern);
+        dataView.put(KEY_TITLE, indexPattern);
         dataView.put("name", dataViewTitleForPattern(indexPattern));
         dataView.put("timeFieldName", timeField);
 
@@ -74,44 +82,44 @@ public final class KibanaDashboardBuilder {
         Map<String, Object> metricDataSource = dataViewSpec(indexPattern);
 
         Map<String, Object> metric = new LinkedHashMap<>();
-        metric.put("type", "primary");
-        metric.put("operation", "count");
+        metric.put(KEY_TYPE, "primary");
+        metric.put(KEY_OPERATION, OPERATION_COUNT);
 
         Map<String, Object> metricPanelConfig = new LinkedHashMap<>();
-        metricPanelConfig.put("type", "metric");
-        metricPanelConfig.put("title", "Indexed documents");
-        metricPanelConfig.put("data_source", metricDataSource);
-        metricPanelConfig.put("metrics", List.of(metric));
+        metricPanelConfig.put(KEY_TYPE, "metric");
+        metricPanelConfig.put(KEY_TITLE, "Indexed documents");
+        metricPanelConfig.put(KEY_DATA_SOURCE, metricDataSource);
+        metricPanelConfig.put(KEY_METRICS, List.of(metric));
 
         Map<String, Object> metricPanel = new LinkedHashMap<>();
-        metricPanel.put("type", "vis");
+        metricPanel.put(KEY_TYPE, "vis");
         metricPanel.put("grid", grid(0, 0, 24, 8));
-        metricPanel.put("config", metricPanelConfig);
+        metricPanel.put(KEY_CONFIG, metricPanelConfig);
 
         Map<String, Object> extensionGroupBy = new LinkedHashMap<>();
-        extensionGroupBy.put("operation", "terms");
+        extensionGroupBy.put(KEY_OPERATION, "terms");
         extensionGroupBy.put("fields", List.of("file.extension"));
         extensionGroupBy.put("limit", 10);
 
         Map<String, Object> extensionMetric = new LinkedHashMap<>();
-        extensionMetric.put("operation", "count");
+        extensionMetric.put(KEY_OPERATION, OPERATION_COUNT);
 
         Map<String, Object> extensionPanelConfig = new LinkedHashMap<>();
-        extensionPanelConfig.put("type", "pie");
-        extensionPanelConfig.put("title", "Documents by extension");
-        extensionPanelConfig.put("data_source", dataViewSpec(indexPattern));
-        extensionPanelConfig.put("metrics", List.of(extensionMetric));
+        extensionPanelConfig.put(KEY_TYPE, "pie");
+        extensionPanelConfig.put(KEY_TITLE, "Documents by extension");
+        extensionPanelConfig.put(KEY_DATA_SOURCE, dataViewSpec(indexPattern));
+        extensionPanelConfig.put(KEY_METRICS, List.of(extensionMetric));
         extensionPanelConfig.put("group_by", List.of(extensionGroupBy));
         extensionPanelConfig.put("styling", Map.of("donut_hole", "m"));
 
         Map<String, Object> extensionPanel = new LinkedHashMap<>();
-        extensionPanel.put("type", "vis");
+        extensionPanel.put(KEY_TYPE, "vis");
         extensionPanel.put("grid", grid(0, 8, 24, 12));
-        extensionPanel.put("config", extensionPanelConfig);
+        extensionPanel.put(KEY_CONFIG, extensionPanelConfig);
 
         Map<String, Object> dashboard = new LinkedHashMap<>();
         // Do not put "id" in the body: POST rejects it; PUT takes the id from the path.
-        dashboard.put("title", dashboardTitleForJob(jobName));
+        dashboard.put(KEY_TITLE, dashboardTitleForJob(jobName));
         dashboard.put("panels", List.of(metricPanel, extensionPanel));
         dashboard.put("time_range", Map.of("from", "now-30d", "to", "now"));
         return JsonUtil.serialize(dashboard);
@@ -120,7 +128,7 @@ public final class KibanaDashboardBuilder {
     private static Map<String, Object> dataViewSpec(String indexPattern) {
         // data_view_spec has additionalProperties:false — only type/index_pattern/time_field/…
         Map<String, Object> dataSource = new LinkedHashMap<>();
-        dataSource.put("type", "data_view_spec");
+        dataSource.put(KEY_TYPE, "data_view_spec");
         dataSource.put("index_pattern", indexPattern);
         dataSource.put("time_field", DEFAULT_TIME_FIELD);
         return dataSource;

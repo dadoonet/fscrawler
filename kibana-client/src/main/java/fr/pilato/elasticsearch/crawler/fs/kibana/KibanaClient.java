@@ -67,6 +67,7 @@ public class KibanaClient implements IKibanaClient {
     private static final String KBN_XSRF_HEADER = "kbn-xsrf";
     private static final String KBN_XSRF_VALUE = "true";
     private static final String USER_AGENT = "fscrawler-kibana-client";
+    private static final String DASHBOARDS_API_PATH = "api/dashboards/";
 
     private final FsSettings settings;
     private final Kibana kibanaSettings;
@@ -186,7 +187,7 @@ public class KibanaClient implements IKibanaClient {
     @Override
     public boolean dashboardExists(String dashboardId) throws KibanaClientException {
         try {
-            httpGet("api/dashboards/" + dashboardId);
+            httpGet(DASHBOARDS_API_PATH + dashboardId);
             return true;
         } catch (NotFoundException e) {
             return false;
@@ -196,20 +197,19 @@ public class KibanaClient implements IKibanaClient {
     @Override
     public String createDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException {
         // POST /api/dashboards does not accept an id in the body. Use PUT upsert for stable ids.
-        String response = httpPut("api/dashboards/" + dashboardId, dashboardPayload);
-        return JsonPath.read(response, "$.id");
+        return updateDashboard(dashboardId, dashboardPayload);
     }
 
     @Override
     public String updateDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException {
-        String response = httpPut("api/dashboards/" + dashboardId, dashboardPayload);
+        String response = httpPut(DASHBOARDS_API_PATH + dashboardId, dashboardPayload);
         return JsonPath.read(response, "$.id");
     }
 
     @Override
     public void deleteDashboard(String dashboardId) throws KibanaClientException {
         try {
-            httpCall("DELETE", "api/dashboards/" + dashboardId, null, true);
+            httpCall("DELETE", DASHBOARDS_API_PATH + dashboardId, null, true);
             logger.info("Deleted Kibana dashboard [{}]", dashboardId);
         } catch (NotFoundException e) {
             logger.debug("Kibana dashboard [{}] was already absent", dashboardId);
@@ -367,20 +367,29 @@ public class KibanaClient implements IKibanaClient {
         return "s/" + space + "/" + path;
     }
 
-    private static final TrustManager[] trustAllCerts = new TrustManager[] {
-        new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[0];
-            }
+    /**
+     * Trust-all manager used only when {@code elasticsearch.ssl_verification} is false (tests / local clusters with
+     * self-signed certs). Production deployments should keep verification enabled.
+     */
+    @SuppressWarnings("java:S4830")
+    private static final class TrustAllX509TrustManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+            // Intentionally empty: certificate validation is opted out via ssl_verification=false
         }
-    };
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+            // Intentionally empty: certificate validation is opted out via ssl_verification=false
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+    }
+
+    private static final TrustManager[] trustAllCerts = new TrustManager[] {new TrustAllX509TrustManager()};
 
     public static class NullHostNameVerifier implements HostnameVerifier {
         @Override

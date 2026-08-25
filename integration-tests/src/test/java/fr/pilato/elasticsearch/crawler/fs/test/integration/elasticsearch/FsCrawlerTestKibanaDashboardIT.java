@@ -28,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
@@ -60,6 +61,15 @@ class FsCrawlerTestKibanaDashboardIT extends AbstractFsCrawlerITCase {
     void createsDefaultDashboardOnStartup() throws Exception {
         FsSettings settings = createKibanaSettings();
         dashboardId = KibanaDashboardBuilder.dashboardIdForJob(settings.getName());
+
+        // Probe Kibana version first: Cloud deployments may still be on 9.4 where the Dashboards
+        // API is only experimental / soft-disabled by FSCrawler.
+        try (KibanaClient probe = new KibanaClient(settings)) {
+            probe.start();
+            Assumptions.assumeTrue(
+                    KibanaClient.supportsDashboardsApi(probe.getVersion()),
+                    () -> "Kibana Dashboards API requires 9.5+; cluster reports " + probe.getVersion());
+        }
 
         startCrawler(settings);
 
