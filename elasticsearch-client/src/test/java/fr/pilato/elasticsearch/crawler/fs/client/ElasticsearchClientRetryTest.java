@@ -36,7 +36,6 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.TestContainerThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WindowsSpecificThreadFilter;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.WireMockThreadFilter;
-import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.client.Client;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -157,7 +156,10 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
 
         try (ElasticsearchClient client = createClient()) {
             // start() calls getVersion() which should fail after retries are exhausted
-            Assertions.assertThatThrownBy(client::start).isInstanceOf(ServiceUnavailableException.class);
+            Assertions.assertThatThrownBy(client::start)
+                    .isInstanceOf(ElasticsearchClientException.class)
+                    .hasMessageContaining("Retries exhausted")
+                    .hasMessageContaining("503");
         }
 
         // Verify that multiple retry attempts were made
@@ -482,13 +484,49 @@ class ElasticsearchClientRetryTest extends AbstractFSCrawlerTestCase {
             client.start();
             wireMockServer.resetRequests();
 
-            Assertions.assertThatExceptionOfType(ServiceUnavailableException.class)
-                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")));
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(() -> client.search(new ESSearchRequest().withIndex("test-index")))
+                    .withMessageContaining("Retries exhausted")
+                    .withMessageContaining("503")
+                    .withMessageContaining("no_shard_available_action_exception");
         }
 
         WireMock.verify(
                 WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_search")));
         logger.info("Test passed: search retries exhausted and exception propagated");
+    }
+
+    /** Direct {@code bulk()} call exposes status and response body when retries are exhausted. */
+    @Test
+    @Slow
+    void testBulkRetriesExhaustedExposesServerErrorDetail() throws IOException, ElasticsearchClientException {
+        wireMockServer.resetAll();
+
+        WireMock.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"version\": {\"number\": \"" + elasticsearchVersion + "\"}}")));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/test-index/_bulk"))
+                .willReturn(WireMock.aResponse().withStatus(503).withBody("""
+                                {"error":{"type":"no_shard_available_action_exception","reason":"no shard available","status":503}}
+                                """)));
+
+        try (ElasticsearchClient client = createClient()) {
+            client.start();
+            wireMockServer.resetRequests();
+
+            Assertions.assertThatExceptionOfType(ElasticsearchClientException.class)
+                    .isThrownBy(() -> client.bulk("test-index", "{}\n{}\n"))
+                    .withMessageContaining("Retries exhausted")
+                    .withMessageContaining("503")
+                    .withMessageContaining("no_shard_available_action_exception")
+                    .withMessageNotContaining("unknown");
+        }
+
+        WireMock.verify(WireMock.moreThan(1), WireMock.postRequestedFor(WireMock.urlPathEqualTo("/test-index/_bulk")));
+        logger.info("Test passed: bulk retries exhausted with clear server error detail");
     }
 
     /** Test that {@code _bulk} retries on 503 and eventually succeeds. */
