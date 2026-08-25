@@ -39,26 +39,29 @@ public class FsCrawlerSimpleBulkProcessorListener<
     public void afterBulk(long executionId, Q request, S response) {
         logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
         if (response.hasFailures()) {
-            if (logger.isDebugEnabled()) {
-                logger.warn("There was failures while executing bulk.", response.buildFailureMessage());
-                for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
-                    if (item.isFailed()) {
-                        logger.warn("Error for [{}]: {}", item.getOperation(), item.getFailureMessage());
-                    }
+            Throwable failure = response.buildFailureMessage();
+            logger.warn(
+                    "There were failures while executing bulk of {} actions: {}",
+                    request.numberOfActions(),
+                    failure.getMessage(),
+                    failure);
+            for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
+                if (item.isFailed()) {
+                    logger.warn("Bulk item failure for [{}]: {}", item.getOperation(), item.getFailureMessage());
                 }
-            } else {
-                logger.warn(
-                        "There was failures while executing bulk. If you want to see the details, "
-                                + "please activate DEBUG mode with FS_JAVA_OPTS=\"-DLOG_LEVEL=debug\". "
-                                + "See https://fscrawler.readthedocs.io/en/latest/admin/logger.html for more details.",
-                        response.buildFailureMessage());
             }
         }
     }
 
     @Override
     public void afterBulk(long executionId, Q request, Throwable failure) {
-        logger.warn("Error executing bulk", failure);
+        logger.warn(
+                "Error executing bulk of {} actions: {}",
+                request.numberOfActions(),
+                failure.getMessage() != null
+                        ? failure.getMessage()
+                        : failure.getClass().getName(),
+                failure);
     }
 
     @Override

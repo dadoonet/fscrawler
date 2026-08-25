@@ -22,13 +22,9 @@ package fr.pilato.elasticsearch.crawler.fs.framework.bulk;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 @SuppressWarnings("CanBeFinal")
 public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
-
-    private static final Logger logger = LogManager.getLogger();
 
     protected boolean errors;
     protected List<BulkItemResponse<O>> items = new ArrayList<>();
@@ -57,20 +53,18 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
         int failures = 0;
         for (BulkItemResponse<O> item : items) {
             if (item.failed) {
-                if (logger.isTraceEnabled()) {
-                    sbf.append(item.getOperation());
-                    sbf.append(":")
-                            .append(item.getOperation().toString())
-                            .append(":")
-                            .append(item.getFailureMessage());
+                if (failures > 0) {
+                    sbf.append("; ");
                 }
+                sbf.append(item.getOperation()).append(": ").append(item.getFailureMessage());
                 failures++;
             }
         }
-        if (logger.isTraceEnabled()) {
-            sbf.append("\n");
+        if (failures == 0) {
+            sbf.append("unknown failures");
+        } else {
+            sbf.insert(0, failures + " failure(s): ");
         }
-        sbf.append(failures).append(" failures");
         return new RuntimeException(sbf.toString());
     }
 

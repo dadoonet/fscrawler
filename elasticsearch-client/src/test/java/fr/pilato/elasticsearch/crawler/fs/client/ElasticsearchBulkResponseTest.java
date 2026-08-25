@@ -90,6 +90,9 @@ class ElasticsearchBulkResponseTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(bulkResponse.getItems().get(0).isFailed()).isTrue();
         Assertions.assertThat(bulkResponse.getItems().get(0).getFailureMessage())
                 .contains("failed to parse field");
+        Assertions.assertThat(bulkResponse.buildFailureMessage().getMessage())
+                .contains("failed to parse field")
+                .contains("1 failure");
     }
 
     @Test

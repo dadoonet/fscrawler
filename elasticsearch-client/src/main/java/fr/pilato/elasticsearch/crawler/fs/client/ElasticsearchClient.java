@@ -34,7 +34,6 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -353,7 +352,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 logger.error(
                         "Bulk request failed after retries ({} actions): {}",
                         request.numberOfActions(),
-                        response.getException().getMessage());
+                        response.getException().getMessage(),
+                        response.getException());
                 recordFatalBulkFailure(response.getException());
             }
         }
@@ -366,7 +366,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                     request.numberOfActions(),
                     failure.getMessage() != null
                             ? failure.getMessage()
-                            : failure.getClass().getName());
+                            : failure.getClass().getName(),
+                    failure);
             Exception asException = failure instanceof Exception e
                     ? e
                     : new ElasticsearchClientException("Bulk request failed", failure);
@@ -1238,11 +1239,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         } catch (NotFoundException e) {
             logger.debug("index {} does not exist.", request.getIndex());
             throw new ElasticsearchIndexNotFoundException(request.getIndex());
-        } catch (ServiceUnavailableException e) {
-            logger.warn(
-                    "search on index [{}] still unavailable after retries ({}). Shards may not be allocated yet.",
-                    request.getIndex(),
-                    e.getResponse().getStatus());
+        } catch (ElasticsearchClientException e) {
+            logger.warn("search on index [{}] failed after retries: {}", request.getIndex(), e.getMessage());
             throw e;
         }
     }
@@ -1659,7 +1657,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
             boolean handle429,
             Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
-        AtomicReference<WebApplicationException> lastServerError = new AtomicReference<>();
+        AtomicReference<Throwable> lastError = new AtomicReference<>();
+        AtomicReference<String> lastErrorDetail = new AtomicReference<>();
 
         try {
             String result = Awaitility.await()
@@ -1681,12 +1680,14 @@ public class ElasticsearchClient implements IElasticsearchClient {
 
                                     // Handle server errors (5xx) - always retry
                                     if (isServerError) {
+                                        String detail = describeHttpError(e);
                                         logger.warn(
-                                                "Server error {} on {} {}. Retrying...",
-                                                status,
+                                                "Server error on {} {}. {}. Retrying...",
                                                 method,
-                                                path == null ? "" : path);
-                                        lastServerError.set(e);
+                                                path == null ? "" : path,
+                                                detail);
+                                        lastError.set(e);
+                                        lastErrorDetail.set(detail);
                                         return null;
                                     }
 
@@ -1694,12 +1695,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
                                     if (isTooManyRequests) {
                                         if (handle429) {
                                             // We're already in 429 retry mode, continue retrying
+                                            String detail = describeHttpError(e);
                                             logger.warn(
-                                                    "Rate limited (429) on {} {}. Retrying in up to {}...",
+                                                    "Rate limited (429) on {} {}. {}. Retrying in up to {}...",
                                                     method,
                                                     path == null ? "" : path,
+                                                    detail,
                                                     maxDelay);
-                                            lastServerError.set(e);
+                                            lastError.set(e);
+                                            lastErrorDetail.set(detail);
                                             return null;
                                         } else {
                                             // Signal to switch to 429 retry mode
@@ -1711,6 +1715,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
                                     throw new RuntimeException(e);
                                 } catch (ElasticsearchClientException e) {
                                     // Connection errors should not be retried (httpCall already handles node failover)
+                                    lastError.set(e);
+                                    lastErrorDetail.set(
+                                            e.getMessage() != null
+                                                    ? e.getMessage()
+                                                    : e.getClass().getName());
                                     throw new RuntimeException(e);
                                 }
                             },
@@ -1718,17 +1727,18 @@ public class ElasticsearchClient implements IElasticsearchClient {
             // Convert marker back to null for HEAD requests
             return SUCCESS_MARKER.equals(result) ? null : result;
         } catch (ConditionTimeoutException e) {
+            String detail =
+                    lastErrorDetail.get() != null ? lastErrorDetail.get() : formatLastRetryError(lastError.get());
             logger.error(
                     "Retries exhausted for {} {} after {}. Last error: {}",
                     method,
                     path == null ? "" : path,
                     maxDuration,
-                    lastServerError.get() != null ? lastServerError.get().getMessage() : "unknown");
-            if (lastServerError.get() != null) {
-                throw lastServerError.get();
-            }
+                    detail);
+            Throwable cause = lastError.get() != null ? lastError.get() : e;
             throw new ElasticsearchClientException(
-                    "Retries exhausted for " + method + " " + (path == null ? "" : path), e);
+                    "Retries exhausted for " + method + " " + (path == null ? "" : path) + ". Last error: " + detail,
+                    cause);
         } catch (RateLimitedException e) {
             // Propagate to switch retry configuration
             throw e;
@@ -1744,6 +1754,69 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
+    /**
+     * Build a short, user-visible description of an HTTP error (status + reason + response body when available).
+     *
+     * <p>Reads the response entity once; subsequent reads may be empty.
+     */
+    static String describeHttpError(WebApplicationException e) {
+        Response response = e.getResponse();
+        int status = response.getStatus();
+        String reason =
+                response.getStatusInfo() != null ? response.getStatusInfo().getReasonPhrase() : null;
+        String body = readResponseBodySafely(response);
+        if (body != null) {
+            body = body.strip();
+        }
+        StringBuilder detail = new StringBuilder();
+        detail.append("HTTP ").append(status);
+        if (reason != null && !reason.isBlank()) {
+            detail.append(' ').append(reason);
+        }
+        if (body != null && !body.isBlank()) {
+            detail.append(": ").append(truncateForLog(body, 500));
+        }
+        return detail.toString();
+    }
+
+    private static String formatLastRetryError(Throwable lastError) {
+        if (lastError == null) {
+            return "no response received within the retry window (request may still have been in flight)";
+        }
+        if (lastError instanceof WebApplicationException wae) {
+            // Entity may already have been consumed; fall back to message if body is gone.
+            String described = describeHttpError(wae);
+            if (described.contains(": ")) {
+                return described;
+            }
+            String message = wae.getMessage();
+            return message != null && !message.isBlank() ? message : described;
+        }
+        String message = lastError.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        return lastError.getClass().getName();
+    }
+
+    private static String readResponseBodySafely(Response response) {
+        try {
+            if (response != null && response.hasEntity()) {
+                return response.readEntity(String.class);
+            }
+        } catch (Exception e) {
+            // Entity already consumed or not readable — ignore.
+        }
+        return null;
+    }
+
+    private static String truncateForLog(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength) + "...";
+    }
+
     @SafeVarargs
     private String httpCall(String method, String localPath, Object data, Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
@@ -1757,7 +1830,22 @@ public class ElasticsearchClient implements IElasticsearchClient {
             Invocation.Builder callBuilder = prepareHttpCall(node, path, params);
             return invokeHttp(callBuilder, method, node, path, data);
         } catch (WebApplicationException e) {
-            handleWebApplicationError(e, method, node, path);
+            // Don't read the entity here — executeWithRetry / callers need it for error details.
+            if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
+                logger.debug(
+                        "Server-side HTTP error on {} {}/{}: {}",
+                        method,
+                        node,
+                        path == null ? "" : path,
+                        e.getResponse().getStatus());
+            } else {
+                logger.trace(
+                        "Error while running {} {}/{}: HTTP {}",
+                        method,
+                        node,
+                        path == null ? "" : path,
+                        e.getResponse().getStatus());
+            }
             throw e;
         } catch (ProcessingException e) {
             if (e.getCause() instanceof ConnectException && initialHosts.size() > 1) {
@@ -1785,23 +1873,6 @@ public class ElasticsearchClient implements IElasticsearchClient {
         String response = callBuilder.method(method, Entity.json(data), String.class);
         logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
         return response;
-    }
-
-    private void handleWebApplicationError(WebApplicationException e, String method, String node, String path) {
-        if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-            logger.error(
-                    "Error on server side. {} -> {} / {}",
-                    e.getResponse().getStatus(),
-                    e.getResponse().getStatusInfo().getReasonPhrase(),
-                    e.getResponse().readEntity(String.class));
-        } else {
-            logger.trace(
-                    "Error while running {} {}/{}: {}",
-                    method,
-                    node,
-                    path == null ? "" : path,
-                    e.getResponse().readEntity(String.class));
-        }
     }
 
     /**
