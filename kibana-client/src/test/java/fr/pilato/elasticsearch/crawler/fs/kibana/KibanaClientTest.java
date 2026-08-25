@@ -207,26 +207,67 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
         settings.getElasticsearch().setIndex("myjob_docs");
 
         String payload = KibanaDashboardBuilder.buildDefaultDashboardPayload(settings);
+        String version = fr.pilato.elasticsearch.crawler.fs.framework.Version.getVersion();
 
         // POST/PUT body must not include id (id is taken from the URL path on PUT).
         Assertions.assertThatThrownBy(() -> JsonPath.read(payload, "$.id"))
                 .isInstanceOf(com.jayway.jsonpath.PathNotFoundException.class);
         Assertions.assertThat((String) JsonPath.read(payload, "$.title")).isEqualTo("FSCrawler - myjob");
-        Assertions.assertThat((List<?>) JsonPath.read(payload, "$.panels")).hasSize(2);
-        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[0].config.type"))
-                .isEqualTo("metric");
-        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[0].config.data_source.type"))
-                .isEqualTo("data_view_spec");
-        Assertions.assertThatThrownBy(() -> JsonPath.read(payload, "$.panels[0].config.data_source.data_view_id"))
-                .isInstanceOf(com.jayway.jsonpath.PathNotFoundException.class);
+
+        // Top-level: markdown + 3 metrics + 4 sections
+        Assertions.assertThat((List<?>) JsonPath.read(payload, "$.panels")).hasSize(8);
+
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[0].type"))
+                .isEqualTo("markdown");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[0].config.content"))
+                .contains("# Sample FSCrawler Dashboard")
+                .contains("`kibana.push_dashboard`")
+                .contains("https://fscrawler.readthedocs.io/en/latest/admin/fs/kibana.html")
+                .contains("Created by FSCrawler v" + version);
+
         Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.type"))
+                .isEqualTo("metric");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.title"))
+                .isEqualTo("Indexed documents");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[2].config.title"))
+                .isEqualTo("Total size");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[2].config.metrics[0].operation"))
+                .isEqualTo("sum");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[2].config.metrics[0].field"))
+                .isEqualTo("file.filesize");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[3].config.title"))
+                .isEqualTo("Unique extensions");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[3].config.metrics[0].operation"))
+                .isEqualTo("unique_count");
+
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[4].title"))
+                .isEqualTo("Overview");
+        Assertions.assertThat((Boolean) JsonPath.read(payload, "$.panels[4].collapsed"))
+                .isFalse();
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[4].panels[0].config.type"))
                 .isEqualTo("pie");
-        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.styling.donut_hole"))
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[4].panels[0].config.styling.donut_hole"))
                 .isEqualTo("m");
-        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.group_by[0].operation"))
-                .isEqualTo("terms");
-        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.group_by[0].fields[0]"))
-                .isEqualTo("file.extension");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[4].panels[1].config.type"))
+                .isEqualTo("xy");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[4].panels[1].config.layers[0].x.fields[0]"))
+                .isEqualTo("file.content_type");
+
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].title"))
+                .isEqualTo("Timeline");
+        Assertions.assertThat((Boolean) JsonPath.read(payload, "$.panels[5].collapsed"))
+                .isFalse();
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[5].panels[0].config.layers[0].x.field"))
+                .isEqualTo("file.indexing_date");
+
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[6].title"))
+                .isEqualTo("File dates");
+        Assertions.assertThat((Boolean) JsonPath.read(payload, "$.panels[6].collapsed"))
+                .isTrue();
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[7].title"))
+                .isEqualTo("Document metadata");
+        Assertions.assertThat((Boolean) JsonPath.read(payload, "$.panels[7].collapsed"))
+                .isTrue();
     }
 
     private void stubStatus(String version) {

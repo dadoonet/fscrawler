@@ -140,6 +140,7 @@ $ELASTIC_AUTH
 
 kibana:
   url: "$KIBANA_URL"
+  force_push_dashboard: true
 EOF
 echo "Job config: $JOB_DIR/_settings.yaml"
 echo "Config dir: $CONFIG_DIR"
