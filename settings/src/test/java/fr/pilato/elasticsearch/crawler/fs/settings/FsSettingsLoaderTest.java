@@ -215,6 +215,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
                 .as("Checking Elasticsearch")
                 .isEqualTo(expected.getElasticsearch());
         Assertions.assertThat(settings.getRest()).as("Checking Rest").isEqualTo(expected.getRest());
+        Assertions.assertThat(settings.getKibana()).as("Checking Kibana").isEqualTo(expected.getKibana());
         Assertions.assertThat(settings).as("Checking whole settings").isEqualTo(expected);
     }
 
@@ -270,11 +271,27 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         rest.setEnableCors(false);
         expected.setRest(rest);
 
+        Kibana kibana = new Kibana();
+        kibana.setUrl("http://127.0.0.1:5601");
+        kibana.setPushDashboard(true);
+        kibana.setForcePushDashboard(false);
+        expected.setKibana(kibana);
+
         return expected;
     }
 
     // System properties set here (name, fs.url, fs.xml_support) are cleared before and after each test by
     // cleanupSystemProperties(), so no per-test save/restore is needed.
+    @Test
+    void loadYamlKibana() throws IOException {
+        FsSettings settings = new FsSettingsLoader(configPath).read("yaml-kibana");
+        Assertions.assertThat(settings.getKibana()).isNotNull();
+        Assertions.assertThat(settings.getKibana().getUrl()).isEqualTo("http://127.0.0.1:5601");
+        Assertions.assertThat(settings.getKibana().isPushDashboard()).isTrue();
+        Assertions.assertThat(settings.getKibana().getSpace()).isEqualTo("default");
+        Assertions.assertThat(settings.getKibana().getApiKey()).isEqualTo("test-kibana-api-key");
+    }
+
     @Test
     void withDefaultNamesForEnvVariables() throws Exception {
         System.setProperty("name", "foo");

@@ -32,6 +32,7 @@ public class FsSettings {
     private Elasticsearch elasticsearch;
     private Rest rest;
     private Tags tags;
+    private Kibana kibana;
 
     public String getName() {
         return name;
@@ -89,6 +90,14 @@ public class FsSettings {
         this.tags = tags;
     }
 
+    public Kibana getKibana() {
+        return kibana;
+    }
+
+    public void setKibana(Kibana kibana) {
+        this.kibana = kibana;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -102,6 +111,7 @@ public class FsSettings {
         if (!Objects.equals(server, that.server)) return false;
         if (!Objects.equals(rest, that.rest)) return false;
         if (!Objects.equals(tags, that.tags)) return false;
+        if (!Objects.equals(kibana, that.kibana)) return false;
         return Objects.equals(elasticsearch, that.elasticsearch);
     }
 
@@ -113,6 +123,7 @@ public class FsSettings {
         result = 31 * result + (server != null ? server.hashCode() : 0);
         result = 31 * result + (rest != null ? rest.hashCode() : 0);
         result = 31 * result + (tags != null ? tags.hashCode() : 0);
+        result = 31 * result + (kibana != null ? kibana.hashCode() : 0);
         result = 31 * result + (elasticsearch != null ? elasticsearch.hashCode() : 0);
         return result;
     }
@@ -125,6 +136,7 @@ public class FsSettings {
                 + server + ", elasticsearch="
                 + elasticsearch + ", rest="
                 + rest + ", tags="
-                + tags + '}';
+                + tags + ", kibana="
+                + kibana + '}';
     }
 }

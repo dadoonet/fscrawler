@@ -172,6 +172,7 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setTags(gestalt.getConfigOptional("tags", Tags.class).orElse(null));
             settings.setServer(gestalt.getConfigOptional("server", Server.class).orElse(null));
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
+            settings.setKibana(gestalt.getConfigOptional("kibana", Kibana.class).orElse(null));
 
             logger.debug(
                     "Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",

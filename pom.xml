@@ -35,6 +35,7 @@
         <module>beans</module>
         <module>plugin</module>
         <module>elasticsearch-client</module>
+        <module>kibana-client</module>
         <module>core</module>
         <module>plugins</module>
         <module>integration-tests</module>
@@ -111,6 +112,7 @@
         <tests.cluster.url/>
         <tests.cluster.apiKey/>
         <tests.cluster.check_ssl>true</tests.cluster.check_ssl>
+        <tests.kibana.url/>
         <tests.index.prefix/>
         <tests.rest.port>0</tests.rest.port>
         <testcontainers.version>2.0.5</testcontainers.version>
@@ -179,6 +181,11 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client</artifactId>
+                <version>3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.pilato.elasticsearch.crawler</groupId>
+                <artifactId>fscrawler-kibana-client</artifactId>
                 <version>3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -894,6 +901,7 @@
                             <tests.cluster.url>${tests.cluster.url}</tests.cluster.url>
                             <tests.cluster.apiKey>${tests.cluster.apiKey}</tests.cluster.apiKey>
                             <tests.cluster.check_ssl>${tests.cluster.check_ssl}</tests.cluster.check_ssl>
+                            <tests.kibana.url>${tests.kibana.url}</tests.kibana.url>
                             <tests.index.prefix>${tests.index.prefix}</tests.index.prefix>
                             <tests.rest.port>${tests.rest.port}</tests.rest.port>
                             <tests.leaveTemporary>${tests.leaveTemporary}</tests.leaveTemporary>

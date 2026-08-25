@@ -1,0 +1,84 @@
+/*
+ * Licensed to David Pilato (the "Author") under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. Author licenses this
+ * file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
+ * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
+ */
+package fr.pilato.elasticsearch.crawler.fs.kibana;
+
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import java.io.Closeable;
+import java.io.IOException;
+
+public interface IKibanaClient extends Closeable {
+
+    /** Kibana Dashboards API became generally available in 9.5. */
+    int MIN_DASHBOARDS_API_MAJOR_VERSION = 9;
+
+    int MIN_DASHBOARDS_API_MINOR_VERSION = 5;
+
+    /** Whether Kibana dashboard provisioning is enabled for these settings. */
+    static boolean isEnabled(FsSettings settings) {
+        return settings.getKibana() != null && settings.getKibana().isPushDashboard();
+    }
+
+    void start() throws KibanaClientException;
+
+    /** Kibana version reported by {@code GET /api/status}, or {@code null} before {@link #start()}. */
+    String getVersion();
+
+    /**
+     * Whether dashboard provisioning is still active after {@link #start()}. Becomes {@code false} when Kibana is older
+     * than 9.5.
+     */
+    boolean isDashboardProvisioningEnabled();
+
+    /** Returns {@code true} when Kibana responds to {@code GET /api/status}. */
+    boolean isAvailable() throws KibanaClientException;
+
+    /**
+     * Creates a data view for the job alias when it does not exist yet.
+     *
+     * @return {@code true} when a data view was created, {@code false} when it already existed
+     */
+    boolean createDataViewIfMissing(String dataViewId, String indexPattern, String timeField)
+            throws KibanaClientException;
+
+    /** Returns {@code true} when a dashboard with the given id exists. */
+    boolean dashboardExists(String dashboardId) throws KibanaClientException;
+
+    /**
+     * Creates a dashboard with a known id using the Kibana Dashboards API ({@code PUT /api/dashboards/{id}} upsert).
+     * {@code POST /api/dashboards} does not accept an {@code id} in the body, so create-with-stable-id must use PUT.
+     *
+     * @return the dashboard id returned by Kibana
+     */
+    String createDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException;
+
+    /**
+     * Updates an existing dashboard using the Kibana Dashboards API ({@code PUT /api/dashboards/{id}}).
+     *
+     * @return the dashboard id returned by Kibana
+     */
+    String updateDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException;
+
+    /** Deletes a dashboard by id when it exists. */
+    void deleteDashboard(String dashboardId) throws KibanaClientException;
+
+    @Override
+    void close() throws IOException;
+}

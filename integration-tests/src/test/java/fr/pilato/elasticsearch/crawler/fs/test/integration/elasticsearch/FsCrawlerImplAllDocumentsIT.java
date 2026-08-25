@@ -95,6 +95,10 @@ class FsCrawlerImplAllDocumentsIT extends AbstractFsCrawlerITCase {
         fsSettings.getElasticsearch().setBulkSize(5);
         fsSettings.getElasticsearch().setFlushInterval(TimeValue.timeValueSeconds(1));
         fsSettings.getElasticsearch().setSemanticSearch(false);
+        // Defaults load kibana.push_dashboard=true with localhost:5601; disable for this IT suite.
+        if (fsSettings.getKibana() != null) {
+            fsSettings.getKibana().setPushDashboard(false);
+        }
 
         fsSettings.getFs().setRawMetadata(true);
 

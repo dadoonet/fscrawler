@@ -210,6 +210,7 @@ Here is a list of existing top level settings:
 | `tags`                   | {ref}`tags`                   |
 | `passwords`              | {ref}`password-settings`      |
 | `elasticsearch`          | {ref}`elasticsearch-settings` |
+| `kibana`                 | {ref}`kibana-settings`        |
 | `server`                 | {ref}`ssh-settings`           |
 | `rest`                   | {ref}`rest-service`           |
 

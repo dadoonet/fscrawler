@@ -7,10 +7,13 @@ on:
   pull_request:
 
 env:
-  ELASTIC_SERVERLESS_APIKEY: ${{ secrets.ELASTIC_SERVERLESS_APIKEY }}
-  ELASTIC_SERVERLESS_URL: ${{ secrets.ELASTIC_SERVERLESS_URL }}
+  # Credentials stay in secrets; public endpoint URLs live in repository variables.
   ELASTIC_CLOUD_APIKEY: ${{ secrets.ELASTIC_CLOUD_APIKEY }}
-  ELASTIC_CLOUD_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
+  ELASTIC_CLOUD_URL: ${{ vars.ELASTIC_CLOUD_URL }}
+  ELASTIC_CLOUD_KIBANA_URL: ${{ vars.ELASTIC_CLOUD_KIBANA_URL }}
+  ELASTIC_SERVERLESS_APIKEY: ${{ secrets.ELASTIC_SERVERLESS_APIKEY }}
+  ELASTIC_SERVERLESS_URL: ${{ vars.ELASTIC_SERVERLESS_URL }}
+  ELASTIC_SERVERLESS_KIBANA_URL: ${{ vars.ELASTIC_SERVERLESS_KIBANA_URL }}
 
 jobs:
   # Detect non-documentation changes to skip expensive integration tests on docs-only PRs
@@ -119,7 +122,7 @@ jobs:
       - name: Run the integration tests
         run: mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Pes-8x -Dtests.leaveTemporary=false
 
-  # We run integration tests with Elastic Cloud Elasticsearch service (if secrets are set)
+  # We run integration tests with Elastic Cloud Elasticsearch service (if secrets/vars are set)
   it-cloud:
     runs-on: ubuntu-latest
     if: needs.changes.outputs.code == 'true'
@@ -129,36 +132,30 @@ jobs:
       - get-pr-number
     steps:
       - uses: actions/checkout@v7
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL && env.ELASTIC_CLOUD_KIBANA_URL }}
       - name: Fetch base branch for Spotless ratchet
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL && env.ELASTIC_CLOUD_KIBANA_URL }}
         run: git fetch origin main --depth=1
       - name: Warm up Elastic Cloud cluster
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL && env.ELASTIC_CLOUD_KIBANA_URL }}
         env:
-          TESTS_CLUSTER_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
+          TESTS_CLUSTER_URL: ${{ vars.ELASTIC_CLOUD_URL }}
           TESTS_CLUSTER_APIKEY: ${{ secrets.ELASTIC_CLOUD_APIKEY }}
         run: bash .github/scripts/warm-up-elasticsearch.sh
       - name: Set up JDK 21
         uses: actions/setup-java@v5
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL && env.ELASTIC_CLOUD_KIBANA_URL }}
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-      - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.7.0
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
-        with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
-        continue-on-error: true
       - name: Run the integration tests
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL && env.ELASTIC_CLOUD_KIBANA_URL }}
         run: |
           echo "Running integration tests with Elastic Cloud Elasticsearch service with prefix ${{ needs.get-pr-number.outputs.pr_number }}"
-          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
+          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ vars.ELASTIC_CLOUD_URL }} -Dtests.kibana.url=${{ vars.ELASTIC_CLOUD_KIBANA_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
-  # We run integration tests with Elastic Cloud Serverless (if secrets are set)
+  # We run integration tests with Elastic Cloud Serverless (if secrets/vars are set)
   it-serverless:
     runs-on: ubuntu-latest
     if: needs.changes.outputs.code == 'true'
@@ -168,34 +165,28 @@ jobs:
       - get-pr-number
     steps:
       - uses: actions/checkout@v7
-        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL && env.ELASTIC_SERVERLESS_KIBANA_URL }}
       - name: Fetch base branch for Spotless ratchet
-        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL && env.ELASTIC_SERVERLESS_KIBANA_URL }}
         run: git fetch origin main --depth=1
       - name: Warm up Elastic Cloud Serverless cluster
-        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL && env.ELASTIC_SERVERLESS_KIBANA_URL }}
         env:
-          TESTS_CLUSTER_URL: ${{ secrets.ELASTIC_SERVERLESS_URL }}
+          TESTS_CLUSTER_URL: ${{ vars.ELASTIC_SERVERLESS_URL }}
           TESTS_CLUSTER_APIKEY: ${{ secrets.ELASTIC_SERVERLESS_APIKEY }}
         run: bash .github/scripts/warm-up-elasticsearch.sh
       - name: Set up JDK 21
         uses: actions/setup-java@v5
-        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL && env.ELASTIC_SERVERLESS_KIBANA_URL }}
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-      - name: Cache Docker images
-        uses: AndreKurait/docker-cache@0.7.0
-        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
-        with:
-          key: fscrawler-docker-cache-${{ runner.os }}-${{ hashFiles('pom.xml') }}
-        continue-on-error: true
       - name: Run the integration tests
-        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL }}
+        if: ${{ env.ELASTIC_SERVERLESS_APIKEY && env.ELASTIC_SERVERLESS_URL && env.ELASTIC_SERVERLESS_KIBANA_URL }}
         run: |
           echo "Running integration tests with Elastic Cloud Elasticsearch Serverless service with prefix ${{ needs.get-pr-number.outputs.pr_number }}"
-          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_SERVERLESS_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_SERVERLESS_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
+          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_SERVERLESS_APIKEY }} -Dtests.cluster.url=${{ vars.ELASTIC_SERVERLESS_URL }} -Dtests.kibana.url=${{ vars.ELASTIC_SERVERLESS_KIBANA_URL }} -Dtests.index.prefix=${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run integration tests from a Windows machine to Elastic Cloud
   it-windows:
@@ -216,18 +207,18 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Warm up Elastic Cloud cluster
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL && env.ELASTIC_CLOUD_KIBANA_URL }}
         shell: bash
         env:
-          TESTS_CLUSTER_URL: ${{ secrets.ELASTIC_CLOUD_URL }}
+          TESTS_CLUSTER_URL: ${{ vars.ELASTIC_CLOUD_URL }}
           TESTS_CLUSTER_APIKEY: ${{ secrets.ELASTIC_CLOUD_APIKEY }}
         run: bash .github/scripts/warm-up-elasticsearch.sh
       - name: Run the integration tests
-        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL }}
+        if: ${{ env.ELASTIC_CLOUD_APIKEY && env.ELASTIC_CLOUD_URL && env.ELASTIC_CLOUD_KIBANA_URL }}
         shell: bash
         run: |
           echo "Running integration tests from Windows with Elastic Cloud Elasticsearch service with prefix win_${{ needs.get-pr-number.outputs.pr_number }}"
-          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ secrets.ELASTIC_CLOUD_URL }} -Dtests.index.prefix=win_${{ needs.get-pr-number.outputs.pr_number }}
+          mvn --batch-mode verify -Ddocker.skip -Dossindex.skip -DskipUnitTests -Dtests.leaveTemporary=false -Dtests.timeoutSuite=1200 -Dtests.timeout=900 -Dtests.cluster.apiKey=${{ secrets.ELASTIC_CLOUD_APIKEY }} -Dtests.cluster.url=${{ vars.ELASTIC_CLOUD_URL }} -Dtests.kibana.url=${{ vars.ELASTIC_CLOUD_KIBANA_URL }} -Dtests.index.prefix=win_${{ needs.get-pr-number.outputs.pr_number }}
 
   # We run this job in parallel after the build
   build-docker:

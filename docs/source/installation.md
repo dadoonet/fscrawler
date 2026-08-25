@@ -125,6 +125,10 @@ ES_LOCAL_PORT=9200
 ES_LOCAL_DISK_SPACE_REQUIRED=1gb
 ES_LOCAL_JAVA_OPTS="-XX:UseSVE=0 -Xms128m -Xmx2g"
 
+# Kibana
+KIBANA_LOCAL_CONTAINER_NAME=kibana-fscrawler
+KIBANA_LOCAL_PORT=5601
+
 # Project namespace (defaults to the current folder name if not set)
 COMPOSE_PROJECT_NAME=fscrawler
 
@@ -173,6 +177,30 @@ services:
       timeout: 10s
       retries: 30
 
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_LOCAL_VERSION}
+    container_name: ${KIBANA_LOCAL_CONTAINER_NAME}
+    volumes:
+      - dev-kibana:/usr/share/kibana/data
+    ports:
+      - 127.0.0.1:${KIBANA_LOCAL_PORT}:5601
+    environment:
+      - ELASTICSEARCH_HOSTS=http://${ES_LOCAL_CONTAINER_NAME}:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ES_LOCAL_PASSWORD}
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
   # FSCrawler
   fscrawler:
     image: dadoonet/fscrawler:${FSCRAWLER_VERSION}
@@ -183,11 +211,14 @@ services:
       - FSCRAWLER_ELASTICSEARCH_URLS=http://${ES_LOCAL_CONTAINER_NAME}:9200
       - FSCRAWLER_ELASTICSEARCH_USERNAME=elastic
       - FSCRAWLER_ELASTICSEARCH_PASSWORD=${ES_LOCAL_PASSWORD}
+      - FSCRAWLER_KIBANA_URL=http://${KIBANA_LOCAL_CONTAINER_NAME}:5601
       - FSCRAWLER_REST_URL=http://fscrawler:${FSCRAWLER_PORT}
     volumes:
       - ${PWD}/docs:/tmp/es:ro
     depends_on:
       elasticsearch:
+        condition: service_healthy
+      kibana:
         condition: service_healthy
     ports:
       - ${FSCRAWLER_PORT}:8080
@@ -195,6 +226,7 @@ services:
 
 volumes:
   dev-elasticsearch:
+  dev-kibana:
 ```
 
 Copy your pdf/doc files into the `docs` directory and run the full stack, including FSCrawler with:
