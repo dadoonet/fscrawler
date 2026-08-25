@@ -41,7 +41,7 @@ class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
 
         Mockito.verify(client, Mockito.never())
                 .createDataViewIfMissing(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
-        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString());
+        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -56,7 +56,8 @@ class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
                 .thenReturn(true);
         Mockito.when(client.dashboardExists(KibanaDashboardBuilder.dashboardIdForJob("demo")))
                 .thenReturn(false);
-        Mockito.when(client.createDashboard(Mockito.anyString())).thenReturn("fscrawler-demo");
+        Mockito.when(client.createDashboard(Mockito.eq("fscrawler-demo"), Mockito.anyString()))
+                .thenReturn("fscrawler-demo");
 
         FsCrawlerKibanaServiceImpl service = new FsCrawlerKibanaServiceImpl(settings, client);
         service.setupDashboard();
@@ -66,7 +67,7 @@ class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
                         KibanaDashboardBuilder.dataViewIdForJob("demo"),
                         "demo_docs",
                         KibanaDashboardBuilder.DEFAULT_TIME_FIELD);
-        Mockito.verify(client).createDashboard(Mockito.anyString());
+        Mockito.verify(client).createDashboard(Mockito.eq("fscrawler-demo"), Mockito.anyString());
     }
 
     @Test
@@ -84,7 +85,7 @@ class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
 
         new FsCrawlerKibanaServiceImpl(settings, client).setupDashboard();
 
-        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString());
+        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(client, Mockito.never()).updateDashboard(Mockito.anyString(), Mockito.anyString());
     }
 
@@ -107,7 +108,7 @@ class FsCrawlerKibanaServiceImplTest extends AbstractFSCrawlerTestCase {
         new FsCrawlerKibanaServiceImpl(settings, client).setupDashboard();
 
         Mockito.verify(client).updateDashboard(Mockito.eq("fscrawler-demo"), Mockito.anyString());
-        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString());
+        Mockito.verify(client, Mockito.never()).createDashboard(Mockito.anyString(), Mockito.anyString());
     }
 
     private FsSettings settingsWithKibana(String jobName) {

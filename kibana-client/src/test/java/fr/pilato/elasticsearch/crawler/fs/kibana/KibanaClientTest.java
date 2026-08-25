@@ -115,11 +115,12 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void createDashboard_sendsKbnXsrfHeader() throws Exception {
+    void createDashboard_usesPutWithKnownIdAndSendsKbnXsrfHeader() throws Exception {
         String dashboardId = "fscrawler-" + UUID.randomUUID();
-        String payload = "{\"id\":\"" + dashboardId + "\",\"title\":\"Test dashboard\",\"panels\":[]}";
+        String payload = "{\"title\":\"Test dashboard\",\"panels\":[]}";
 
-        WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/api/dashboards"))
+        // POST /api/dashboards does not accept an id; create with a stable id via PUT upsert.
+        WireMock.stubFor(WireMock.put(WireMock.urlEqualTo("/api/dashboards/" + dashboardId))
                 .withHeader("kbn-xsrf", WireMock.equalTo("true"))
                 .withHeader("Authorization", WireMock.equalTo("ApiKey test-api-key"))
                 .willReturn(WireMock.aResponse()
@@ -132,9 +133,30 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
         KibanaClient client = new KibanaClient(settingsForWireMock());
         client.start();
 
-        String createdId = client.createDashboard(payload);
+        String createdId = client.createDashboard(dashboardId, payload);
 
         Assertions.assertThat(createdId).isEqualTo(dashboardId);
+        client.close();
+    }
+
+    @Test
+    void httpCall_wrapsBadRequestAsKibanaClientExceptionWithBody() throws Exception {
+        stubStatus("9.5.2");
+
+        WireMock.stubFor(WireMock.put(WireMock.urlEqualTo("/api/dashboards/fscrawler-bad"))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(400)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"message\":\"id is not allowed\"}")));
+
+        KibanaClient client = new KibanaClient(settingsForWireMock());
+        client.start();
+
+        Assertions.assertThatThrownBy(() -> client.createDashboard("fscrawler-bad", "{\"title\":\"x\",\"panels\":[]}"))
+                .isInstanceOf(KibanaClientException.class)
+                .hasMessageContaining("HTTP 400")
+                .hasMessageContaining("id is not allowed");
+
         client.close();
     }
 
@@ -186,9 +208,25 @@ class KibanaClientTest extends AbstractFSCrawlerTestCase {
 
         String payload = KibanaDashboardBuilder.buildDefaultDashboardPayload(settings);
 
-        Assertions.assertThat((String) JsonPath.read(payload, "$.id")).isEqualTo("fscrawler-myjob");
+        // POST/PUT body must not include id (id is taken from the URL path on PUT).
+        Assertions.assertThatThrownBy(() -> JsonPath.read(payload, "$.id"))
+                .isInstanceOf(com.jayway.jsonpath.PathNotFoundException.class);
         Assertions.assertThat((String) JsonPath.read(payload, "$.title")).isEqualTo("FSCrawler - myjob");
         Assertions.assertThat((List<?>) JsonPath.read(payload, "$.panels")).hasSize(2);
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[0].config.type"))
+                .isEqualTo("metric");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[0].config.data_source.type"))
+                .isEqualTo("data_view_spec");
+        Assertions.assertThatThrownBy(() -> JsonPath.read(payload, "$.panels[0].config.data_source.data_view_id"))
+                .isInstanceOf(com.jayway.jsonpath.PathNotFoundException.class);
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.type"))
+                .isEqualTo("pie");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.styling.donut_hole"))
+                .isEqualTo("m");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.group_by[0].operation"))
+                .isEqualTo("terms");
+        Assertions.assertThat((String) JsonPath.read(payload, "$.panels[1].config.group_by[0].fields[0]"))
+                .isEqualTo("file.extension");
     }
 
     private void stubStatus(String version) {

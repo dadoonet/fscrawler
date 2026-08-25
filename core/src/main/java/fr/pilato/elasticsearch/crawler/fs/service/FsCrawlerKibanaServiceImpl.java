@@ -85,7 +85,7 @@ public class FsCrawlerKibanaServiceImpl implements FsCrawlerKibanaService {
             return;
         }
 
-        String createdId = client.createDashboard(payload);
+        String createdId = client.createDashboard(dashboardId, payload);
         logger.info(
                 "Created Kibana dashboard [{}] at {}",
                 createdId,

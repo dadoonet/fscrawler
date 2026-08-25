@@ -62,11 +62,12 @@ public interface IKibanaClient extends Closeable {
     boolean dashboardExists(String dashboardId) throws KibanaClientException;
 
     /**
-     * Creates a dashboard using the Kibana Dashboards API ({@code POST /api/dashboards}).
+     * Creates a dashboard with a known id using the Kibana Dashboards API ({@code PUT /api/dashboards/{id}} upsert).
+     * {@code POST /api/dashboards} does not accept an {@code id} in the body, so create-with-stable-id must use PUT.
      *
      * @return the dashboard id returned by Kibana
      */
-    String createDashboard(String dashboardPayload) throws KibanaClientException;
+    String createDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException;
 
     /**
      * Updates an existing dashboard using the Kibana Dashboards API ({@code PUT /api/dashboards/{id}}).

@@ -157,14 +157,15 @@ public class KibanaClient implements IKibanaClient {
             return true;
         } catch (NotFoundException e) {
             return false;
-        } catch (WebApplicationException e) {
-            if (e.getResponse().getStatus() >= 500) {
-                throw new KibanaClientException(
-                        "Kibana status check failed with HTTP "
-                                + e.getResponse().getStatus(),
-                        e);
+        } catch (KibanaClientException e) {
+            if (e.getCause() instanceof WebApplicationException wae
+                    && wae.getResponse().getStatus() >= 500) {
+                throw e;
             }
-            return false;
+            if (e.getCause() instanceof WebApplicationException) {
+                return false;
+            }
+            throw e;
         }
     }
 
@@ -193,8 +194,9 @@ public class KibanaClient implements IKibanaClient {
     }
 
     @Override
-    public String createDashboard(String dashboardPayload) throws KibanaClientException {
-        String response = httpPost("api/dashboards", dashboardPayload);
+    public String createDashboard(String dashboardId, String dashboardPayload) throws KibanaClientException {
+        // POST /api/dashboards does not accept an id in the body. Use PUT upsert for stable ids.
+        String response = httpPut("api/dashboards/" + dashboardId, dashboardPayload);
         return JsonPath.read(response, "$.id");
     }
 
@@ -324,8 +326,16 @@ public class KibanaClient implements IKibanaClient {
             }
             logger.trace("{} {}/{} gives {}", method, baseUrl, apiPath, response);
             return response;
-        } catch (WebApplicationException e) {
+        } catch (NotFoundException e) {
             throw e;
+        } catch (WebApplicationException e) {
+            String errorBody = readErrorBody(e);
+            int status = e.getResponse().getStatus();
+            logger.debug("{} {}/{} failed with HTTP {}: {}", method, baseUrl, apiPath, status, errorBody);
+            throw new KibanaClientException(
+                    "Can not execute " + method + " " + baseUrl + "/" + apiPath + " (HTTP " + status + "): "
+                            + errorBody,
+                    e);
         } catch (ProcessingException e) {
             if (e.getCause() instanceof ConnectException) {
                 throw new KibanaClientException(
@@ -336,6 +346,17 @@ public class KibanaClient implements IKibanaClient {
             throw new KibanaClientException(
                     "Can not execute " + method + " " + baseUrl + "/" + apiPath + ": " + e.getMessage(), e);
         }
+    }
+
+    private static String readErrorBody(WebApplicationException e) {
+        try {
+            if (e.getResponse().hasEntity()) {
+                return e.getResponse().readEntity(String.class);
+            }
+        } catch (Exception ignored) {
+            // Fall through to status info when the entity cannot be read.
+        }
+        return e.getMessage() != null ? e.getMessage() : "no response body";
     }
 
     private String buildApiPath(String path) {
