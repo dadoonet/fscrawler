@@ -5,8 +5,17 @@ You can use ChatGPT, Claude, Gemini, or any other AI assistant to help you write
 Copy one of the prompts below into your assistant, then describe your use case.
 
 ```{tip}
-FSCrawler also ships an [`llms.txt`](https://github.com/dadoonet/fscrawler/blob/main/llms.txt) file at the repository root.
-It follows the [llms.txt](https://llmstxt.org/) proposal: a curated index of documentation links that AI tools can fetch automatically.
+FSCrawler follows the [llms.txt](https://llmstxt.org/) v2 proposal:
+
+* Canonical index on the docs site: [llms.txt](https://fscrawler.readthedocs.io/en/latest/llms.txt)
+  (also [mirrored at the repository root](https://github.com/dadoonet/fscrawler/blob/main/llms.txt)).
+* Every HTML page has a clean Markdown twin at the same URL with `.md` appended
+  (for example [tutorial.html.md](https://fscrawler.readthedocs.io/en/latest/user/tutorial.html.md)).
+* HTML pages advertise that twin with `rel="alternate" type="text/markdown"` and point to
+  `llms.txt` with `rel="describedby"`.
+
+Prefer the `.html.md` links (or the alternate link) when giving a page to an LLM — they avoid
+navigation chrome and are much cheaper in tokens.
 ```
 
 ## Before you ask
@@ -26,6 +35,8 @@ Copy everything inside the block below and paste it into your LLM. Then add your
 You are helping me configure FSCrawler, a Java file system crawler that extracts text from binary documents (PDF, MS Office, images, etc.) with Apache Tika and indexes them into Elasticsearch 7.x, 8.x, or 9.x.
 
 Official documentation: https://fscrawler.readthedocs.io/en/latest/
+LLM-friendly index (llms.txt): https://fscrawler.readthedocs.io/en/latest/llms.txt
+Prefer documentation URLs ending in `.html.md` (clean Markdown) over `.html` when fetching pages.
 
 Key concepts:
 - Each FSCrawler "job" has a YAML settings file at ~/.fscrawler/{job_name}/_settings.yaml (or /root/.fscrawler in Docker).

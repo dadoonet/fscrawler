@@ -1,12 +1,14 @@
+---
+orphan: true
+---
+
 # FSCrawler
 
 > FSCrawler is a Java file system crawler that extracts text from binary documents (PDF, MS Office, images with OCR, and more) with Apache Tika and indexes them into Elasticsearch 7.x, 8.x, or 9.x. It supports local filesystem, SSH/FTP, and a REST upload API.
 
 FSCrawler jobs are configured in YAML files (`~/.fscrawler/{job_name}/_settings.yaml`). Each job has a mandatory `name` field. Documents are indexed in Elasticsearch; search uses a job alias named after the job (for example `fscrawler`).
 
-The canonical `llms.txt` for the published documentation is served with the docs site (Read the Docs). Links below point to the clean Markdown version of each page (`*.html.md`), as recommended by the [llms.txt](https://llmstxt.org/) v2 proposal. HTML pages also expose `rel="alternate" type="text/markdown"` and `rel="describedby"`.
-
-Canonical docs index: https://fscrawler.readthedocs.io/en/latest/llms.txt
+Links below point to the clean Markdown version of each page (`*.html.md`), as recommended by the [llms.txt](https://llmstxt.org/) v2 proposal. HTML pages also expose `rel="alternate" type="text/markdown"` and `rel="describedby"` pointing here.
 
 For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the LLM assistant page.
 
