@@ -132,7 +132,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         expected.getFs().setUrl("/path/to/docs");
         expected.getFs().setUpdateRate(TimeValue.timeValueMinutes(5));
         expected.getFs().setIncludes(List.of("*.doc", "*.xls"));
-        expected.getFs().setExcludes(List.of("resume.doc"));
+        expected.getFs().setExcludes(List.of("resume.doc", "*/.ds_store"));
         expected.getFs().setFilters(List.of(".*foo.*", "^4\\d{3}([\\ \\-]?)\\d{4}\\1\\d{4}\\1\\d{4}$"));
         expected.getFs().setJsonSupport(true);
         expected.getFs().setAddAsInnerObject(true);
@@ -222,7 +222,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         Fs fs = new Fs();
         fs.setUrl("/tmp/es");
         fs.setUpdateRate(TimeValue.timeValueMinutes(15));
-        fs.setExcludes(List.of("*/~*"));
+        fs.setExcludes(List.of("*/~*", "*/.ds_store"));
         fs.setRemoveDeleted(true);
         fs.setIndexContent(true);
         fs.setAddFilesize(true);

@@ -94,7 +94,7 @@ fs:
   # scan every 5 minutes for changes in url defined above
   update_rate: "5m"
 
-  # opional: define includes and excludes, "~" files are excluded by default if not defined below
+  # optional: define includes and excludes; "~" and ".DS_Store" files are excluded by default if not defined below
   includes:
   - "*.doc"
   - "*.xls"

@@ -20,12 +20,11 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import java.util.Collections;
 import java.util.List;
 
 public class Defaults {
     public static final String DEFAULT_DIR = "/tmp/es";
-    public static final List<String> DEFAULT_EXCLUDED = Collections.singletonList("*/~*");
+    public static final List<String> DEFAULT_EXCLUDED = List.of("*/~*", "*/.ds_store");
     public static final String ELASTICSEARCH_URL_DEFAULT = "https://127.0.0.1:9200";
     public static final String DEFAULT_META_FILENAME = ".meta.yml";
     public static final String REST_URL_DEFAULT = "http://127.0.0.1:8080/fscrawler";

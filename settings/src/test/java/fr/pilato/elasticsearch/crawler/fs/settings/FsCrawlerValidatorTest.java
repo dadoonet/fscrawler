@@ -38,12 +38,15 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
 
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isFalse();
-        Assertions.assertThat(settings.getFs().getExcludes()).contains("*.password", "*/.password");
+        Assertions.assertThat(settings.getFs().getExcludes()).contains("*.password", "*/.password", "*/.ds_store");
         Assertions.assertThat(FsCrawlerUtil.isExcluded(
                         "foo.txt.password", settings.getFs().getExcludes()))
                 .isTrue();
         Assertions.assertThat(FsCrawlerUtil.isExcluded(
                         "foo/.password", settings.getFs().getExcludes()))
+                .isTrue();
+        Assertions.assertThat(FsCrawlerUtil.isExcluded(
+                        "subdir/.DS_Store", settings.getFs().getExcludes()))
                 .isTrue();
         Assertions.assertThat(
                         FsCrawlerUtil.isExcluded("foo.txt", settings.getFs().getExcludes()))

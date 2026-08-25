@@ -13,7 +13,7 @@ Here is a list of Local FS settings (under `fs.` prefix):
 | `fs.url`                 | `FSCRAWLER_FS_URL`                 | `"/tmp/es"`     | [Root directory](#root-directory)                       |
 | `fs.update_rate`         | `FSCRAWLER_FS_UPDATE_RATE`         | `"15m"`         | [Update Rate](#update-rate)                             |
 | `fs.includes`            | `FSCRAWLER_FS_INCLUDES`            | `null`          | [Includes and excludes](#includes-and-excludes)         |
-| `fs.excludes`            | `FSCRAWLER_FS_EXCLUDES`            | `["*/~*"]`      | [Includes and excludes](#includes-and-excludes)         |
+| `fs.excludes`            | `FSCRAWLER_FS_EXCLUDES`            | `["*/~*", "*/.ds_store"]` | [Includes and excludes](#includes-and-excludes)         |
 | `fs.filters`             | `FSCRAWLER_FS_FILTERS`             | `null`          | [Filter content](#filter-content)                       |
 | `fs.json_support`        | `FSCRAWLER_FS_JSON_SUPPORT`        | `false`         | [Indexing JSON docs](#indexing-json-docs)               |
 | `fs.xml_support`         | `FSCRAWLER_FS_XML_SUPPORT`         | `false`         | [Indexing XML docs](#indexing-xml-docs)                 |
@@ -163,7 +163,8 @@ fs:
   - "*/resume*"
 ```
 
-By default, FSCrawler will exclude files starting with `~`.
+By default, FSCrawler will exclude files starting with `~` and macOS Finder
+metadata files named `.DS_Store` (matched case-insensitively via `*/.ds_store`).
 
 It also applies to directory names. So if you want to ignore `.ignore`
 dir, just add `.ignore` as an excluded name. Note that `includes` and `excludes`
