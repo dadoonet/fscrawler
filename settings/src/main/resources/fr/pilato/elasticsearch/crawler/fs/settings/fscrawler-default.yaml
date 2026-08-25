@@ -158,6 +158,10 @@ fs:
   #bulk_operation: "index"
   # optional: the bulk flush period
   #flush_interval: "5s"
+  # optional: max time to retry idempotent HTTP calls on 5xx/429 and cold-start 404 on GET /
+  #retry_max_duration: "5m"
+  #retry_initial_delay: "500ms"
+  #retry_max_delay: "30s"
   # optional: the bulk size in bytes
   #byte_size: "10mb"
   # api key (username and password are deprecated and should not be used anymore)

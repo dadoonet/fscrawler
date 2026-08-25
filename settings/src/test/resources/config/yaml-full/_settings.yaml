@@ -128,6 +128,10 @@ elasticsearch:
   bulk_operation: "create"
   # optional: the bulk flush period
   flush_interval: "5s"
+  # optional: HTTP retry backoff (5xx, 429, and cold-start 404 on GET /)
+  retry_max_duration: "2m"
+  retry_initial_delay: "250ms"
+  retry_max_delay: "10s"
   # optional: the bulk size in bytes
   byte_size: "10mb"
   # optional: Using Api Key (recommended)

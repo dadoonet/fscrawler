@@ -16,6 +16,9 @@ Here is a list of Elasticsearch settings (under `elasticsearch.` prefix):
 | `elasticsearch.bulk_size`            | `FSCRAWLER_ELASTICSEARCH_BULK_SIZE`            | `100`                    | [Bulk settings](#bulk-settings)                               |
 | `elasticsearch.bulk_operation`       | `FSCRAWLER_ELASTICSEARCH_BULK_OPERATION`       | `"index"`                | [Bulk settings](#bulk-settings)                               |
 | `elasticsearch.flush_interval`       | `FSCRAWLER_ELASTICSEARCH_FLUSH_INTERVAL`       | `"5s"`                   | [Bulk settings](#bulk-settings)                               |
+| `elasticsearch.retry_max_duration`   | `FSCRAWLER_ELASTICSEARCH_RETRY_MAX_DURATION`   | `"5m"`                   | [HTTP retry settings](#http-retry-settings)                   |
+| `elasticsearch.retry_initial_delay`  | `FSCRAWLER_ELASTICSEARCH_RETRY_INITIAL_DELAY`  | `"500ms"`                | [HTTP retry settings](#http-retry-settings)                   |
+| `elasticsearch.retry_max_delay`      | `FSCRAWLER_ELASTICSEARCH_RETRY_MAX_DELAY`      | `"30s"`                  | [HTTP retry settings](#http-retry-settings)                   |
 | `elasticsearch.byte_size`            | `FSCRAWLER_ELASTICSEARCH_BYTE_SIZE`            | `"10mb"`                 | [Bulk settings](#bulk-settings)                               |
 | `elasticsearch.pipeline`             | `FSCRAWLER_ELASTICSEARCH_PIPELINE`             | `null`                   | {ref}`ingest_node`                                            |
 | `elasticsearch.semantic_search`      | `FSCRAWLER_ELASTICSEARCH_SEMANTIC_SEARCH`      | `true`                   | {ref}`semantic_search`                                        |
@@ -280,6 +283,29 @@ crawl run is marked as `ERROR` in the checkpoint (documents are not silently dro
 
 ```{versionadded} 3.0
 ```
+
+(http-retry-settings)=
+### HTTP retry settings
+
+Idempotent HTTP calls (including `_search` and `_bulk`) retry on `5xx` and `429` with exponential
+backoff. The same budget is used for a cold-start `404` on `GET /` (Elastic Cloud hosted deployments
+can answer `404` while the cluster is still waking up). Defaults allow up to **5 minutes** of retries:
+
+| Setting               | Default | Purpose                               |
+|-----------------------|---------|---------------------------------------|
+| `retry_max_duration`  | `5m`    | Wall-clock budget for retries         |
+| `retry_initial_delay` | `500ms` | First backoff delay                   |
+| `retry_max_delay`     | `30s`   | Cap for the exponential backoff delay |
+
+```yaml
+name: "test"
+elasticsearch:
+  retry_max_duration: "2m"
+  retry_initial_delay: "500ms"
+  retry_max_delay: "10s"
+```
+
+404 responses on other endpoints are not retried.
 
 You can also choose the Elasticsearch bulk write operation with `bulk_operation`:
 

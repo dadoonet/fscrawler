@@ -28,6 +28,7 @@ class TimeValueTest extends AbstractFSCrawlerTestCase {
 
     @Test
     void timeValueFromString() {
+        Assertions.assertThat(TimeValue.parseTimeValue("500ms").millis()).isEqualTo(500L);
         Assertions.assertThat(TimeValue.parseTimeValue("1s").millis()).isEqualTo(1000L);
         Assertions.assertThat(TimeValue.parseTimeValue("1s").seconds()).isEqualTo(1L);
         Assertions.assertThat(TimeValue.parseTimeValue("10s").seconds()).isEqualTo(10L);
@@ -44,6 +45,7 @@ class TimeValueTest extends AbstractFSCrawlerTestCase {
     @Test
     void timeValueToString() {
         Assertions.assertThat(TimeValue.parseTimeValue("1s")).hasToString("1s");
+        Assertions.assertThat(TimeValue.parseTimeValue("500ms")).hasToString("500ms");
         Assertions.assertThat(TimeValue.parseTimeValue("10s")).hasToString("10s");
         Assertions.assertThat(TimeValue.parseTimeValue("1m")).hasToString("1m");
         Assertions.assertThat(TimeValue.parseTimeValue("70s")).hasToString("1.1m");
@@ -60,6 +62,7 @@ class TimeValueTest extends AbstractFSCrawlerTestCase {
     void stringConstructorParsesValues() {
         Assertions.assertThat(new TimeValue("15m").minutes()).isEqualTo(15L);
         Assertions.assertThat(new TimeValue("5s").millis()).isEqualTo(5000L);
+        Assertions.assertThat(new TimeValue("500ms").millis()).isEqualTo(500L);
     }
 
     @Test

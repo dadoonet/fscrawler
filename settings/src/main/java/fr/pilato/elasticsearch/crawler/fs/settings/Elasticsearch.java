@@ -59,6 +59,24 @@ public class Elasticsearch {
     @Nullable
     private TimeValue flushInterval;
 
+    /**
+     * Maximum wall-clock time spent retrying idempotent HTTP calls (GET/HEAD/_search/_bulk) on {@code 5xx},
+     * {@code 429}, and a cold-start {@code 404} on {@code GET /}.
+     */
+    @Config(defaultVal = "5m")
+    @Nullable
+    private TimeValue retryMaxDuration;
+
+    /** Initial backoff delay between retries (doubles until {@link #retryMaxDelay}). */
+    @Config(defaultVal = "500ms")
+    @Nullable
+    private TimeValue retryInitialDelay;
+
+    /** Cap for the exponential backoff delay between retries. */
+    @Config(defaultVal = "30s")
+    @Nullable
+    private TimeValue retryMaxDelay;
+
     @Config(defaultVal = "10mb")
     @Nullable
     private ByteSizeValue byteSize;
@@ -168,6 +186,30 @@ public class Elasticsearch {
 
     public void setFlushInterval(@Nullable TimeValue flushInterval) {
         this.flushInterval = flushInterval;
+    }
+
+    public TimeValue getRetryMaxDuration() {
+        return retryMaxDuration;
+    }
+
+    public void setRetryMaxDuration(@Nullable TimeValue retryMaxDuration) {
+        this.retryMaxDuration = retryMaxDuration;
+    }
+
+    public TimeValue getRetryInitialDelay() {
+        return retryInitialDelay;
+    }
+
+    public void setRetryInitialDelay(@Nullable TimeValue retryInitialDelay) {
+        this.retryInitialDelay = retryInitialDelay;
+    }
+
+    public TimeValue getRetryMaxDelay() {
+        return retryMaxDelay;
+    }
+
+    public void setRetryMaxDelay(@Nullable TimeValue retryMaxDelay) {
+        this.retryMaxDelay = retryMaxDelay;
     }
 
     public ByteSizeValue getByteSize() {
@@ -295,6 +337,9 @@ public class Elasticsearch {
         if (!Objects.equals(caCertificate, that.caCertificate)) return false;
         if (!Objects.equals(pushTemplates, that.pushTemplates)) return false;
         if (!Objects.equals(forcePushTemplates, that.forcePushTemplates)) return false;
+        if (!Objects.equals(retryMaxDuration, that.retryMaxDuration)) return false;
+        if (!Objects.equals(retryInitialDelay, that.retryInitialDelay)) return false;
+        if (!Objects.equals(retryMaxDelay, that.retryMaxDelay)) return false;
         return Objects.equals(flushInterval, that.flushInterval);
     }
 
@@ -310,6 +355,9 @@ public class Elasticsearch {
         result = 31 * result + bulkSize;
         result = 31 * result + (bulkOperation != null ? bulkOperation.hashCode() : 0);
         result = 31 * result + (flushInterval != null ? flushInterval.hashCode() : 0);
+        result = 31 * result + (retryMaxDuration != null ? retryMaxDuration.hashCode() : 0);
+        result = 31 * result + (retryInitialDelay != null ? retryInitialDelay.hashCode() : 0);
+        result = 31 * result + (retryMaxDelay != null ? retryMaxDelay.hashCode() : 0);
         result = 31 * result + (caCertificate != null ? caCertificate.hashCode() : 0);
         result = 31 * result + (sslVerification ? 1 : 0);
         result = 31 * result + (pushTemplates ? 1 : 0);
@@ -325,7 +373,10 @@ public class Elasticsearch {
                 + indexFolder + '\'' + ", bulkSize="
                 + bulkSize + ", bulkOperation="
                 + bulkOperation + ", flushInterval="
-                + flushInterval + ", byteSize="
+                + flushInterval + ", retryMaxDuration="
+                + retryMaxDuration + ", retryInitialDelay="
+                + retryInitialDelay + ", retryMaxDelay="
+                + retryMaxDelay + ", byteSize="
                 + byteSize + ", apiKey='"
                 + apiKey + '\'' + ", username='"
                 + username + '\'' + ", pipeline='"
