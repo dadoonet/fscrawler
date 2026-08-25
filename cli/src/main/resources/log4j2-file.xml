@@ -81,6 +81,10 @@
       <Logger name="org.apache.pdfbox" level="error" additivity="false">
          <AppenderRef ref="RollingFile" />
       </Logger>
+      <!-- FontBox warns when PostScript name data is missing; extraction continues -->
+      <Logger name="org.apache.fontbox" level="error" additivity="false">
+         <AppenderRef ref="RollingFile" />
+      </Logger>
       <Logger name="com.gargoylesoftware" level="error" additivity="false">
          <AppenderRef ref="RollingFile"/>
       </Logger>

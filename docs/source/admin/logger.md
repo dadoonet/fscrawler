@@ -40,10 +40,14 @@ Two log files are generated:
 You can change this strategy by modifying the `config/log4j2.xml` file.
 Please read [Log4J2 documentation](https://logging.apache.org/log4j/2.x/manual/index.html) on how to configure Log4J.
 
-By default, noisy third-party warnings that do not stop indexing are dialed down. In particular,
-`org.apache.pdfbox` is set to `error` so messages like `No Unicode mapping for CID+…` (subset fonts
-missing a ToUnicode CMap) do not flood the logs. Raise that logger if you need to diagnose PDF
-extraction issues.
+By default, noisy third-party warnings that do not stop indexing are dialed down. In particular:
+
+* `org.apache.pdfbox` is set to `error` so messages like `No Unicode mapping for CID+…` (subset
+  fonts missing a ToUnicode CMap) do not flood the logs.
+* `org.apache.fontbox` is set to `error` so messages like `No PostScript name data is provided for
+  the font …` do not flood the logs.
+
+Raise those loggers if you need to diagnose PDF / font extraction issues.
 
 To dump failed bulk payloads:
 
