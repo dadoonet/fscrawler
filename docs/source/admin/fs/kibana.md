@@ -46,8 +46,13 @@ In production, expose Kibana over HTTPS (TLS termination or `server.ssl.enabled`
 When `kibana.push_dashboard` is `true` (the default), FSCrawler creates on startup:
 
 1. A **data view** on the job documents index (time field `file.indexing_date`)
-2. A **dashboard** named `FSCrawler - <job-name>` with a document count metric and a
-   breakdown by file extension
+2. A **dashboard** named `FSCrawler - <job-name>` that includes:
+
+   * an introductory Markdown panel (with the running FSCrawler version)
+   * metrics for document count, total ``file.filesize``, and unique ``file.extension`` values
+   * an **Overview** section (documents by extension, top content types)
+   * a **Timeline** section (indexing activity over ``file.indexing_date``)
+   * collapsed **File dates** and **Document metadata** sections
 
 By default, if the dashboard already exists, FSCrawler skips creation (same behaviour as
 {ref}`mappings` with `push_templates`). To overwrite an existing dashboard — for example after
