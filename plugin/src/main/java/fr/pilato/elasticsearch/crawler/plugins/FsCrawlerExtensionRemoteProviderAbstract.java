@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
  *   <li>Common document creation logic
  * </ul>
  */
+@SuppressWarnings("removal")
 public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawlerExtensionFsProviderAbstract {
     private static final Logger logger = LogManager.getLogger();
 
@@ -49,6 +50,7 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     protected int port;
     protected String username;
     protected String password;
+    protected String pemPath;
 
     /**
      * Get the file size of the remote file. Each provider implements this based on how they retrieve file metadata.
@@ -85,23 +87,49 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
 
     @Override
     protected void parseSettings() throws PathNotFoundException {
-        String prefix = getType();
-        remotePath = document.read("$." + prefix + ".path");
+        RemoteConnectionSettings resolved =
+                RemoteConnectionSettings.resolve(getType(), document, fsSettings, defaultPort(), defaultUsername());
+        remotePath = resolved.remotePath();
+        hostname = resolved.hostname();
+        port = resolved.port();
+        username = resolved.username();
+        password = resolved.password();
+        pemPath = resolved.pemPath();
+        for (String warning : resolved.deprecationWarnings()) {
+            logger.warn(warning);
+        }
 
-        // Parse optional server connection details from JSON
-        hostname = readOptionalString("$." + prefix + ".hostname");
-        port = readOptionalInt("$." + prefix + ".port");
-        username = readOptionalString("$." + prefix + ".username");
-        password = readOptionalString("$." + prefix + ".password");
-
-        // Allow subclasses to parse additional settings
         parseProtocolSpecificSettings();
+    }
+
+    /**
+     * Default TCP port when neither REST, {@code fs.<type>.port} nor {@code server.port} is set.
+     *
+     * @return SSH 22 or FTP 21
+     */
+    protected int defaultPort() {
+        return "ftp".equals(getType())
+                ? RemoteConnectionSettings.DEFAULT_FTP_PORT
+                : RemoteConnectionSettings.DEFAULT_SSH_PORT;
+    }
+
+    /**
+     * Default username when none is configured. FTP uses {@code anonymous}.
+     *
+     * @return default username, or {@code null}
+     */
+    protected String defaultUsername() {
+        return "ftp".equals(getType()) ? RemoteConnectionSettings.DEFAULT_FTP_USERNAME : null;
     }
 
     @Override
     protected void validateSettings() throws IOException {
+        // Crawler mode: no REST path. Connection settings are used later in openConnection().
         if (remotePath == null || remotePath.isEmpty()) {
-            throw new IOException(getType() + " path is missing");
+            if (document != null) {
+                throw new IOException(getType() + " path is missing");
+            }
+            return;
         }
 
         // Normalize the path
@@ -238,8 +266,27 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
         if (password != null) {
             return password;
         }
-        Server server = fsSettings.getServer();
+        Server server = fsSettings != null ? fsSettings.getServer() : null;
         return server != null ? server.getPassword() : null;
+    }
+
+    /**
+     * Get the effective PEM path, using JSON settings if available, otherwise falling back to job settings.
+     *
+     * @return the effective PEM path, or null if not configured
+     */
+    protected String getEffectivePemPath() {
+        if (pemPath != null) {
+            return pemPath;
+        }
+        Server server = fsSettings != null ? fsSettings.getServer() : null;
+        return server != null ? server.getPemPath() : null;
+    }
+
+    @Override
+    public String toFileUrl(String fullPath) {
+        String scheme = "ftp".equals(getType()) ? "ftp" : "sftp";
+        return String.format("%s://%s:%d%s", scheme, getEffectiveHostname(), getEffectivePort(), fullPath);
     }
 
     /**
@@ -249,6 +296,9 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
      * @return the value, or null if not found
      */
     protected String readOptionalString(String jsonPath) {
+        if (document == null) {
+            return null;
+        }
         try {
             return document.read(jsonPath);
         } catch (PathNotFoundException e) {
@@ -263,6 +313,9 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
      * @return the value, or 0 if not found
      */
     protected int readOptionalInt(String jsonPath) {
+        if (document == null) {
+            return 0;
+        }
         try {
             return document.read(jsonPath);
         } catch (PathNotFoundException e) {

@@ -25,7 +25,6 @@ import fr.pilato.elasticsearch.crawler.fs.client.ESSearchResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
 import fr.pilato.elasticsearch.crawler.plugins.fs.ssh.SshTestHelper;
 import java.io.IOException;
@@ -34,6 +33,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.sshd.server.SshServer;
@@ -56,6 +57,7 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     private static final String SSH_PASSWORD = "PASSWORD";
 
     private SshServer sshd = null;
+    private Path sshKeyDir;
 
     @BeforeEach
     void setup() throws IOException, NoSuchAlgorithmException {
@@ -74,7 +76,7 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
                 .build();
 
         // Generate the key files for our SSH tests in a dedicated directory outside the crawled path
-        Path sshKeyDir = Files.createDirectories(rootTmpDir.resolve(jobName + "-ssh-keys"));
+        sshKeyDir = Files.createDirectories(rootTmpDir.resolve(jobName + "-ssh-keys"));
         SshTestHelper.generateAndSaveKeyPair(sshKeyDir);
 
         sshd = SshServer.setUpDefaultServer();
@@ -102,13 +104,8 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     @Test
     void ssh() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setUrl("/");
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
-        fsSettings.getServer().setHostname(sshd.getHost());
-        fsSettings.getServer().setPort(sshd.getPort());
-        fsSettings.getServer().setUsername(SSH_USERNAME);
-        fsSettings.getServer().setPassword(SSH_PASSWORD);
-        fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
+        configureSsh(fsSettings, null);
         crawler = startCrawler(fsSettings);
 
         ESSearchResponse response = countTestHelper(
@@ -119,16 +116,8 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
     @Test
     void ssh_with_key() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setUrl("/");
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
-        fsSettings.getServer().setHostname(sshd.getHost());
-        fsSettings.getServer().setPort(sshd.getPort());
-        fsSettings.getServer().setUsername(SSH_USERNAME);
-        fsSettings.getServer().setPassword(SSH_PASSWORD);
-        fsSettings
-                .getServer()
-                .setPemPath(testTmpDir.resolve(".ssh-keys/private.key").toFile().getAbsolutePath());
-        fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
+        configureSsh(fsSettings, sshKeyDir.resolve("private.key").toFile().getAbsolutePath());
         crawler = startCrawler(fsSettings);
 
         ESSearchResponse response = countTestHelper(
@@ -148,16 +137,25 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         Files.move(currentTestResourceDir.resolve("with_space"), dirWithSpace);
 
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setUrl("/");
         fsSettings.getFs().setUpdateRate(TimeValue.timeValueMinutes(1));
-        fsSettings.getServer().setHostname(sshd.getHost());
-        fsSettings.getServer().setPort(sshd.getPort());
-        fsSettings.getServer().setUsername(SSH_USERNAME);
-        fsSettings.getServer().setPassword(SSH_PASSWORD);
-        fsSettings.getServer().setProtocol(Server.PROTOCOL.SSH);
+        configureSsh(fsSettings, null);
         crawler = startCrawler(fsSettings);
         ESSearchResponse response = countTestHelper(
                 new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
         Assertions.assertThat(response.getTotalHits()).isEqualTo(3L);
+    }
+
+    private void configureSsh(FsSettings fsSettings, String pemPath) {
+        fsSettings.getFs().setProvider("ssh");
+        fsSettings.getFs().setUrl("/");
+        Map<String, Object> ssh = new LinkedHashMap<>();
+        ssh.put("hostname", sshd.getHost());
+        ssh.put("port", sshd.getPort());
+        ssh.put("username", SSH_USERNAME);
+        ssh.put("password", SSH_PASSWORD);
+        if (pemPath != null) {
+            ssh.put("pem_path", pemPath);
+        }
+        fsSettings.getFs().setSsh(ssh);
     }
 }

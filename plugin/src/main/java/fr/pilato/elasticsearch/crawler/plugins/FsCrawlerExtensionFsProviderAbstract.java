@@ -42,14 +42,12 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
     public void start(FsSettings fsSettings, String restSettings) {
         this.fsSettings = fsSettings;
 
-        // For batch crawling, restSettings may be null or empty - skip REST settings parsing
-        if (restSettings == null || restSettings.isEmpty() || "{}".equals(restSettings)) {
-            logger.trace("No REST settings provided, skipping parseSettings/validateSettings");
-            return;
+        if (hasRestSettings(restSettings)) {
+            logger.trace("with rest settings {}", restSettings);
+            document = JsonUtil.parseJsonAsDocumentContext(restSettings);
+        } else {
+            logger.trace("No REST settings provided");
         }
-
-        logger.trace("with rest settings {}", restSettings);
-        document = JsonUtil.parseJsonAsDocumentContext(restSettings);
 
         try {
             parseSettings();
@@ -57,6 +55,10 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         } catch (PathNotFoundException | IOException e) {
             throw new FsCrawlerIllegalConfigurationException(e.getMessage(), e);
         }
+    }
+
+    private static boolean hasRestSettings(String restSettings) {
+        return restSettings != null && !restSettings.isEmpty() && !"{}".equals(restSettings);
     }
 
     @Override

@@ -78,11 +78,17 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
+            if (document == null) {
+                return;
+            }
             urlFromJson = document.read("$.http.url");
         }
 
         @Override
         protected void validateSettings() throws PathNotFoundException {
+            if (document == null) {
+                return;
+            }
             if (FsCrawlerUtil.isNullOrEmpty(urlFromJson)) {
                 throw new FsCrawlerIllegalConfigurationException("HTTP URL is missing");
             }

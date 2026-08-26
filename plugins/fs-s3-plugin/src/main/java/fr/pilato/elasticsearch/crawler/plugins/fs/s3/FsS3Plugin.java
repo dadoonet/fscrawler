@@ -63,6 +63,9 @@ public class FsS3Plugin extends FsCrawlerPlugin {
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
+            if (document == null) {
+                return;
+            }
             bucket = document.read("$.s3.bucket");
             object = document.read("$.s3.object");
             url = document.read("$.s3.url");
@@ -72,6 +75,9 @@ public class FsS3Plugin extends FsCrawlerPlugin {
 
         @Override
         protected void validateSettings() throws PathNotFoundException {
+            if (document == null) {
+                return;
+            }
             if (FsCrawlerUtil.isNullOrEmpty(url)) {
                 throw new FsCrawlerIllegalConfigurationException("S3 URL is missing");
             }
@@ -86,6 +92,9 @@ public class FsS3Plugin extends FsCrawlerPlugin {
         @Override
         public void start(FsSettings fsSettings, String restSettings) {
             super.start(fsSettings, restSettings);
+            if (url == null) {
+                return;
+            }
             minioClient = MinioClient.builder()
                     .endpoint(url)
                     .credentials(accesKey, secretKey)

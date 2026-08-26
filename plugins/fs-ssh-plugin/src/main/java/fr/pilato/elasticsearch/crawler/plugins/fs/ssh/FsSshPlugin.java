@@ -20,9 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
-import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
@@ -74,7 +72,6 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         private SftpClient sftpClient;
 
         // SSH-specific fields
-        private String pemPath;
         private SftpClient.Attributes fileAttributes;
 
         @Override
@@ -83,11 +80,6 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         }
 
         // ========== Protocol-specific settings ==========
-
-        @Override
-        protected void parseProtocolSpecificSettings() throws PathNotFoundException {
-            pemPath = readOptionalString("$.ssh.pem_path");
-        }
 
         @Override
         protected long getFilesize() {
@@ -133,29 +125,14 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         public void openConnection() throws FsCrawlerPluginException {
             logger.debug("Opening SSH connection");
 
-            String effectivePemPath = getEffectivePemPath();
-
             sshClient = createSshClient();
             sftpClient = createSftpClient(openSshSession(
                     sshClient,
                     getEffectiveUsername(),
                     getEffectivePassword(),
-                    effectivePemPath,
+                    getEffectivePemPath(),
                     getEffectiveHostname(),
                     getEffectivePort()));
-        }
-
-        /**
-         * Get the effective PEM path, using JSON settings if available, otherwise falling back to job settings.
-         *
-         * @return the effective PEM path, or null if not configured
-         */
-        private String getEffectivePemPath() {
-            if (pemPath != null) {
-                return pemPath;
-            }
-            Server server = fsSettings.getServer();
-            return server != null ? server.getPemPath() : null;
         }
 
         @Override

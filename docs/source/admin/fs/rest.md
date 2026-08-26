@@ -385,11 +385,11 @@ The `ssh` plugin reads a file from an SSH/SFTP server.
 It accepts the following parameters:
 
 * `path` (required): path to the file on the remote server
-* `hostname` (optional): SSH server hostname. If not provided, uses the `server.hostname` from job settings.
-* `port` (optional): SSH server port. If not provided, uses the `server.port` from job settings.
-* `username` (optional): SSH username. If not provided, uses the `server.username` from job settings.
-* `password` (optional): SSH password. If not provided, uses the `server.password` from job settings.
-* `pem_path` (optional): path to the PEM key file for key-based authentication. If not provided, uses the `server.pem_path` from job settings.
+* `hostname` (optional): SSH server hostname. If not provided, uses `fs.ssh.hostname` from job settings (or deprecated `server.hostname`).
+* `port` (optional): SSH server port. If not provided, uses `fs.ssh.port` from job settings (or deprecated `server.port`).
+* `username` (optional): SSH username. If not provided, uses `fs.ssh.username` from job settings (or deprecated `server.username`).
+* `password` (optional): SSH password. If not provided, uses `fs.ssh.password` from job settings (or deprecated `server.password`).
+* `pem_path` (optional): path to the PEM key file for key-based authentication. If not provided, uses `fs.ssh.pem_path` from job settings (or deprecated `server.pem_path`).
 
 For example, we can read the file `document.pdf` from an SSH server with:
 
@@ -410,12 +410,13 @@ If you have already configured the SSH server settings in your job `_settings.ya
 
 ```yaml
  name: "my_job"
- server:
-   hostname: "my-ssh-server.example.com"
-   port: 22
-   username: "myuser"
-   password: "mypassword"
-   protocol: "SSH"
+ fs:
+   provider: "ssh"
+   ssh:
+     hostname: "my-ssh-server.example.com"
+     port: 22
+     username: "myuser"
+     password: "mypassword"
 ```
 
 You can simplify the REST call by only providing the `path`:
@@ -435,10 +436,10 @@ The `ftp` plugin reads a file from an FTP server.
 It accepts the following parameters:
 
 * `path` (required): path to the file on the remote server
-* `hostname` (optional): FTP server hostname. If not provided, uses the `server.hostname` from job settings.
-* `port` (optional): FTP server port. If not provided, uses the `server.port` from job settings.
-* `username` (optional): FTP username. If not provided, uses the `server.username` from job settings.
-* `password` (optional): FTP password. If not provided, uses the `server.password` from job settings.
+* `hostname` (optional): FTP server hostname. If not provided, uses `fs.ftp.hostname` from job settings (or deprecated `server.hostname`).
+* `port` (optional): FTP server port. If not provided, uses `fs.ftp.port` from job settings (or deprecated `server.port`).
+* `username` (optional): FTP username. If not provided, uses `fs.ftp.username` from job settings (or deprecated `server.username`).
+* `password` (optional): FTP password. If not provided, uses `fs.ftp.password` from job settings (or deprecated `server.password`).
 
 For example, we can read the file `document.pdf` from an FTP server with:
 
@@ -459,12 +460,13 @@ If you have already configured the FTP server settings in your job `_settings.ya
 
 ```yaml
  name: "my_job"
- server:
-   hostname: "ftp.example.com"
-   port: 21
-   username: "myuser"
-   password: "mypassword"
-   protocol: "FTP"
+ fs:
+   provider: "ftp"
+   ftp:
+     hostname: "ftp.example.com"
+     port: 21
+     username: "myuser"
+     password: "mypassword"
 ```
 
 You can simplify the REST call by only providing the `path`:

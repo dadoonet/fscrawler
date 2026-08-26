@@ -22,13 +22,16 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import java.util.Objects;
 
-@SuppressWarnings("SameParameterValue")
+@SuppressWarnings({"SameParameterValue", "removal"})
 public class FsSettings {
 
     private String name;
     private Fs fs;
     private Passwords passwords;
+
+    @Deprecated(since = "3.1", forRemoval = true)
     private Server server;
+
     private Elasticsearch elasticsearch;
     private Rest rest;
     private Tags tags;
@@ -58,10 +61,14 @@ public class FsSettings {
         this.passwords = passwords;
     }
 
+    /** @deprecated since 3.1, use {@code fs.ssh} / {@code fs.ftp} instead */
+    @Deprecated(since = "3.1", forRemoval = true)
     public Server getServer() {
         return server;
     }
 
+    /** @deprecated since 3.1, use {@code fs.ssh} / {@code fs.ftp} instead */
+    @Deprecated(since = "3.1", forRemoval = true)
     public void setServer(Server server) {
         this.server = server;
     }

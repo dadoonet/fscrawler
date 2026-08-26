@@ -20,14 +20,18 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("removal")
 class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
@@ -179,5 +183,49 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isFalse();
         Assertions.assertThat(settings.getKibana().isPushDashboard()).isTrue();
+    }
+
+    @Test
+    void sshProviderRequiresUsername() {
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProvider("ssh");
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+
+        settings = FsSettingsLoader.load();
+        settings.getFs().setProvider("ssh");
+        settings.getFs().setSsh(Map.of("hostname", randomHostname(), "username", randomToken()));
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+
+        settings = FsSettingsLoader.load();
+        settings.getFs().setProvider("ssh");
+        settings.getServer().setUsername(randomToken());
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+    }
+
+    @Test
+    void ftpProviderAllowsMissingUsername() {
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProvider("ftp");
+        settings.getFs().setFtp(Map.of("hostname", randomHostname()));
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isFalse();
+
+        settings = FsSettingsLoader.load();
+        settings.getFs().setProvider("ftp");
+        settings.getFs().setFtp(Map.of("hostname", randomHostname(), "username", ""));
+        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
+                .isTrue();
+    }
+
+    private String randomHostname() {
+        return randomToken() + ".example.com";
+    }
+
+    private String randomToken() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
     }
 }

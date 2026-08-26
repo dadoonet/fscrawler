@@ -31,6 +31,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+@SuppressWarnings("removal")
 class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 

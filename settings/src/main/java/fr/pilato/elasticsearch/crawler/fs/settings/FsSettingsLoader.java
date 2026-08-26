@@ -44,6 +44,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 /** Provides utility methods to read and write settings files */
+@SuppressWarnings("removal")
 public class FsSettingsLoader extends MetaFileHandler {
 
     private static final Logger logger = LogManager.getLogger();
@@ -165,7 +166,7 @@ public class FsSettingsLoader extends MetaFileHandler {
             FsSettings settings = new FsSettings();
 
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
-            settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
+            settings.setFs(loadFs(gestalt, configFiles));
             settings.setPasswords(loadPasswords(gestalt, configFiles));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class)
                     .orElse(null));
@@ -185,6 +186,31 @@ public class FsSettingsLoader extends MetaFileHandler {
                     "Can not load settings. " + "Please make sure that your setting file(s) are properly formatted.",
                     e);
         }
+    }
+
+    /**
+     * Load {@code fs} from Gestalt, then attach opaque {@code fs.ssh} / {@code fs.ftp} maps.
+     *
+     * <p>Provider-specific options are loaded from YAML/JSON job files via SnakeYAML (Gestalt cannot decode mixed
+     * nested maps/lists into {@code Map&lt;String, Object&gt;}). Scalar keys such as {@code fs.ssh.hostname} are then
+     * overlaid from Gestalt so environment variables and system properties still work. File values win over
+     * env/sysprops.
+     */
+    private static Fs loadFs(Gestalt gestalt, Path... configFiles) {
+        Fs fs = gestalt.getConfigOptional("fs", Fs.class).orElse(null);
+        if (fs == null) {
+            return null;
+        }
+
+        Map<String, Object> ssh = loadNestedMap(configFiles, "fs", "ssh");
+        overlayGestaltScalars(ssh, gestalt, "fs.ssh", List.of("hostname", "username", "password", "pem_path"), "port");
+        fs.setSsh(ssh.isEmpty() ? null : ssh);
+
+        Map<String, Object> ftp = loadNestedMap(configFiles, "fs", "ftp");
+        overlayGestaltScalars(ftp, gestalt, "fs.ftp", List.of("hostname", "username", "password"), "port");
+        fs.setFtp(ftp.isEmpty() ? null : ftp);
+
+        return fs;
     }
 
     /**
@@ -217,25 +243,78 @@ public class FsSettingsLoader extends MetaFileHandler {
 
         Yaml yaml = new Yaml();
         for (Path configFile : configFiles) {
-            if (configFile == null || Files.notExists(configFile)) {
+            Map<String, Object> root = loadYamlRoot(yaml, configFile);
+            if (root == null) {
                 continue;
             }
-            try (InputStream inputStream = Files.newInputStream(configFile)) {
-                Object loaded = yaml.load(inputStream);
-                if (loaded instanceof Map<?, ?> root) {
-                    Object passwordsNode = root.get("passwords");
-                    if (passwordsNode instanceof Map<?, ?> passwordsMap) {
-                        Object providersNode = passwordsMap.get("providers");
-                        if (providersNode instanceof Map<?, ?> providersMap) {
-                            deepMerge(merged, (Map<String, Object>) providersMap);
-                        }
-                    }
+            Object passwordsNode = root.get("passwords");
+            if (passwordsNode instanceof Map<?, ?> passwordsMap) {
+                Object providersNode = passwordsMap.get("providers");
+                if (providersNode instanceof Map<?, ?> providersMap) {
+                    deepMerge(merged, (Map<String, Object>) providersMap);
                 }
-            } catch (IOException e) {
-                logger.debug("Can not read [{}] while loading passwords.providers: {}", configFile, e.getMessage());
             }
         }
         return merged;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> loadNestedMap(Path[] configFiles, String parentKey, String childKey) {
+        Map<String, Object> merged = new LinkedHashMap<>();
+        if (configFiles == null || configFiles.length == 0) {
+            return merged;
+        }
+
+        Yaml yaml = new Yaml();
+        for (Path configFile : configFiles) {
+            Map<String, Object> root = loadYamlRoot(yaml, configFile);
+            if (root == null) {
+                continue;
+            }
+            Object parentNode = root.get(parentKey);
+            if (parentNode instanceof Map<?, ?> parentMap) {
+                Object childNode = parentMap.get(childKey);
+                if (childNode instanceof Map<?, ?> childMap) {
+                    deepMerge(merged, (Map<String, Object>) childMap);
+                }
+            }
+        }
+        return merged;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> loadYamlRoot(Yaml yaml, Path configFile) {
+        if (configFile == null || Files.notExists(configFile)) {
+            return null;
+        }
+        try (InputStream inputStream = Files.newInputStream(configFile)) {
+            Object loaded = yaml.load(inputStream);
+            if (loaded instanceof Map<?, ?> root) {
+                return (Map<String, Object>) root;
+            }
+        } catch (IOException e) {
+            logger.debug("Can not read [{}] while loading nested settings: {}", configFile, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Overlay scalar keys from Gestalt (env / system properties / files Gestalt can decode). Existing YAML map keys
+     * win: Gestalt is only used to fill keys that the opaque YAML map does not already contain, plus the case where the
+     * YAML block is absent entirely.
+     */
+    private static void overlayGestaltScalars(
+            Map<String, Object> target, Gestalt gestalt, String prefix, List<String> stringKeys, String intKey) {
+        for (String key : stringKeys) {
+            if (target.containsKey(key)) {
+                continue;
+            }
+            gestalt.getConfigOptional(prefix + "." + key, String.class).ifPresent(value -> target.put(key, value));
+        }
+        if (!target.containsKey(intKey)) {
+            gestalt.getConfigOptional(prefix + "." + intKey, Integer.class)
+                    .ifPresent(value -> target.put(intKey, value));
+        }
     }
 
     @SuppressWarnings("unchecked")

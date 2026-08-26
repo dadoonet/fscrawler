@@ -169,4 +169,14 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     default void closeInputStream(InputStream inputStream) throws FsCrawlerPluginException {
         throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
     }
+
+    /**
+     * Build a {@code file.filename} URL for an indexed document.
+     *
+     * @param fullPath the real path of the file
+     * @return a URL such as {@code file://...}, {@code ftp://...} or {@code sftp://...}
+     */
+    default String toFileUrl(String fullPath) {
+        return "file://" + fullPath;
+    }
 }

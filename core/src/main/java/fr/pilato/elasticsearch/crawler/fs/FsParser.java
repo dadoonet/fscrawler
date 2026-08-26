@@ -45,7 +45,6 @@ import fr.pilato.elasticsearch.crawler.fs.framework.tracing.FsCrawlerTracing;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server.PROTOCOL;
 import fr.pilato.elasticsearch.crawler.fs.tika.TikaDocParser;
 import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
@@ -1272,16 +1271,10 @@ public class FsParser implements Runnable, AutoCloseable {
                 doc.getFile().setLastModified(lastModified);
                 doc.getFile().setLastAccessed(lastAccessed);
                 doc.getFile().setIndexingDate(Instant.now());
-                if (fsSettings.getServer() == null
-                        || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol())) {
+                if (crawlerPlugin != null) {
+                    doc.getFile().setUrl(crawlerPlugin.toFileUrl(fullFilename));
+                } else {
                     doc.getFile().setUrl("file://" + fullFilename);
-                } else if (PROTOCOL.FTP.equals(fsSettings.getServer().getProtocol())) {
-                    doc.getFile()
-                            .setUrl(String.format(
-                                    "ftp://%s:%d%s",
-                                    fsSettings.getServer().getHostname(),
-                                    fsSettings.getServer().getPort(),
-                                    fullFilename));
                 }
                 doc.getFile().setExtension(extension);
                 if (fsSettings.getFs().isAddFilesize()) {
@@ -1614,8 +1607,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 FsCrawlerUtil.getLastAccessTime(folderInfo));
 
         if (fsSettings.getFs().isAttributesSupport()
-                && (fsSettings.getServer() == null
-                        || PROTOCOL.LOCAL.equals(fsSettings.getServer().getProtocol()))) {
+                && (crawlerPlugin == null || "local".equals(crawlerPlugin.getType()))) {
             Attributes attributes = new Attributes();
             attributes.setOwner(FsCrawlerUtil.getOwnerName(folderInfo));
             attributes.setGroup(FsCrawlerUtil.getGroupName(folderInfo));

@@ -25,7 +25,9 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.github.gestalt.config.annotations.Config;
@@ -124,6 +126,20 @@ public class Fs {
     @Config
     @Nullable
     private String provider;
+
+    /**
+     * Opaque SSH provider settings ({@code fs.ssh}). Loaded from YAML/JSON by {@link FsSettingsLoader}; Gestalt cannot
+     * decode mixed nested maps into {@code Map&lt;String, Object&gt;}. The SSH plugin parses this section.
+     */
+    @Nullable
+    private Map<String, Object> ssh;
+
+    /**
+     * Opaque FTP provider settings ({@code fs.ftp}). Loaded from YAML/JSON by {@link FsSettingsLoader}. The FTP plugin
+     * parses this section.
+     */
+    @Nullable
+    private Map<String, Object> ftp;
 
     public String getUrl() {
         return url;
@@ -372,6 +388,56 @@ public class Fs {
         this.provider = provider;
     }
 
+    @Nullable
+    public Map<String, Object> getSsh() {
+        return ssh;
+    }
+
+    public void setSsh(@Nullable Map<String, Object> ssh) {
+        this.ssh = ssh;
+    }
+
+    @Nullable
+    public Map<String, Object> getFtp() {
+        return ftp;
+    }
+
+    public void setFtp(@Nullable Map<String, Object> ftp) {
+        this.ftp = ftp;
+    }
+
+    /**
+     * Return the configuration map for one filesystem provider type, or {@code null} when absent.
+     *
+     * @param type provider type key ({@code ssh}, {@code ftp}, …)
+     * @return mutable copy of that section, or {@code null}
+     */
+    @Nullable
+    public Map<String, Object> getProviderConfig(String type) {
+        if (type == null) {
+            return null;
+        }
+        Map<String, Object> section =
+                switch (type) {
+                    case "ssh" -> ssh;
+                    case "ftp" -> ftp;
+                    default -> null;
+                };
+        return copyMap(section);
+    }
+
+    @Nullable
+    private static Map<String, Object> copyMap(@Nullable Map<String, Object> section) {
+        if (section == null) {
+            return null;
+        }
+        Map<String, Object> copy = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : section.entrySet()) {
+            copy.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return copy;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -404,7 +470,9 @@ public class Fs {
                 && Objects.equals(ignoreAbove, fs.ignoreAbove)
                 && Objects.equals(tikaConfigPath, fs.tikaConfigPath)
                 && Objects.equals(tempDir, fs.tempDir)
-                && Objects.equals(provider, fs.provider);
+                && Objects.equals(provider, fs.provider)
+                && Objects.equals(ssh, fs.ssh)
+                && Objects.equals(ftp, fs.ftp);
     }
 
     @Override
@@ -437,7 +505,9 @@ public class Fs {
                 followSymlinks,
                 tikaConfigPath,
                 tempDir,
-                provider);
+                provider,
+                ssh,
+                ftp);
     }
 
     @Override
@@ -469,6 +539,8 @@ public class Fs {
                 + followSymlinks + ", tikaConfigPath='"
                 + tikaConfigPath + '\'' + ", tempDir='"
                 + tempDir + '\'' + ", provider='"
-                + provider + '\'' + '}';
+                + provider + '\'' + ", ssh="
+                + ssh + ", ftp="
+                + ftp + '}';
     }
 }

@@ -34,6 +34,7 @@ same thing. The main ones:
 | Docker command includes `fscrawler` binary | image entrypoint; pass the job name only |
 | Tika XML config | Tika JSON config |
 | `server.protocol` | `fs.provider` (`local`, `ftp`, `ssh`) |
+| `server.hostname` / `server.port` / `server.username` / `server.password` / `server.pem_path` | `fs.ssh.*` or `fs.ftp.*` (same field names) |
 | `fs.ocr.pdf_strategy` default `ocr_and_text` | default `auto` |
 | Basic auth | API keys (basic auth still works, but is deprecated) |
 | One distribution per Elasticsearch version | a single distribution |

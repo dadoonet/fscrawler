@@ -39,6 +39,7 @@ import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.Permissions;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
+@SuppressWarnings("removal")
 class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
     private FakeFtpServer fakeFtpServer;
     private final String user = "user";

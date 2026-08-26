@@ -40,12 +40,14 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 
 /** @author dadoonet (David Pilato) */
+@SuppressWarnings("removal")
 public class FsCrawlerImpl implements AutoCloseable {
 
     private static final Logger logger = LogManager.getLogger();
@@ -177,16 +179,26 @@ public class FsCrawlerImpl implements AutoCloseable {
     private static void validateServerSettings(String provider, FsSettings settings) {
         // Remote providers require server settings
         if ("ftp".equals(provider) || "ssh".equals(provider)) {
-            if (settings.getServer() == null) {
-                throw new FsCrawlerIllegalConfigurationException(
-                        "Provider [" + provider + "] requires server settings (hostname, username, etc.)");
+            if (hasRemoteHostname(provider, settings)) {
+                return;
             }
-            if (settings.getServer().getHostname() == null
-                    || settings.getServer().getHostname().isEmpty()) {
-                throw new FsCrawlerIllegalConfigurationException(
-                        "Provider [" + provider + "] requires server.hostname to be set");
+            throw new FsCrawlerIllegalConfigurationException("Provider [" + provider + "] requires fs." + provider
+                    + ".hostname (or deprecated server.hostname)");
+        }
+    }
+
+    private static boolean hasRemoteHostname(String provider, FsSettings settings) {
+        Map<String, Object> providerConfig =
+                settings.getFs() != null ? settings.getFs().getProviderConfig(provider) : null;
+        if (providerConfig != null) {
+            Object hostname = providerConfig.get("hostname");
+            if (hostname != null && !hostname.toString().isBlank()) {
+                return true;
             }
         }
+        return settings.getServer() != null
+                && settings.getServer().getHostname() != null
+                && !settings.getServer().getHostname().isEmpty();
     }
 
     public FsCrawlerDocumentService getDocumentService() {

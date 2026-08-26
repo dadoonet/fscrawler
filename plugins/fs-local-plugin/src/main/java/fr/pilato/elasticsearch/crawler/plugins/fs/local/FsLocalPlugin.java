@@ -118,11 +118,17 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void parseSettings() throws PathNotFoundException {
+            if (document == null) {
+                return;
+            }
             url = document.read("$.local.url");
         }
 
         @Override
         protected void validateSettings() throws FsCrawlerIllegalConfigurationException {
+            if (document == null) {
+                return;
+            }
             Path rootPath =
                     Path.of(fsSettings.getFs().getUrl()).toAbsolutePath().normalize();
             logger.debug("Reading file {} from {}", url, rootPath);

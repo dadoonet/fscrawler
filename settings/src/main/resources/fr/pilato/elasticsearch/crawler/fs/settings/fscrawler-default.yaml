@@ -44,6 +44,21 @@ fs:
   # New jobs created with --setup use SHA-256.
   hash_algorithm: "SHA-256"
 
+  # SSH (requires fs.provider: ssh). The crawl root remains fs.url.
+  #provider: ssh
+  #ssh:
+  #  hostname: localhost
+  #  port: 22
+  #  username: username
+  #  password: password@{secret}
+  #  pem_path: /path/to/privatekey.pem
+  # FTP (requires fs.provider: ftp)
+  #ftp:
+  #  hostname: localhost
+  #  port: 21
+  #  username: anonymous
+  #  password: password@{secret}
+
   # you may want to store (partial) content of the file (see indexed_chars)
   #index_content: true
 
@@ -126,21 +141,6 @@ fs:
   #meta_filename: "meta_tags.json" # default is ".meta.yml"
   # optional: if defined and found, all documents will have the associated metadata added
   #static_meta_filename: "/path/to/meta_tags.json" # default is null
-
-# optional: only required if you want to SSH to another server to index documents from there
-#server:
-  # optional: hostname, defaults to "localhost"
-  #hostname: "localhost"
-  # optional: port, defaults to 22
-  #port: 22
-  # optional: username
-  #username: "dadoonet"
-  # optional: password
-  #password: "password@{secret}"
-  # optional: protocol, either "ssh" or "local"
-  #protocol: "ssh"
-  # optional: path to the private key
-  #pem_path: "/path/to/pemfile"
 
 # optional: define this if you want to change the default Elasticsearch settings/behavior
 #elasticsearch:
