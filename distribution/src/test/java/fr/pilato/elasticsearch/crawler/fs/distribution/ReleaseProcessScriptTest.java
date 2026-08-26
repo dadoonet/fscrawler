@@ -38,8 +38,8 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
         assertThat(body)
                 .as("the release must run in an isolated git worktree, not checkout -b in the main clone")
                 .contains("worktree add")
-                .doesNotContain("checkout -q -b");
-        assertThat(body).contains("release/worktrees");
+                .doesNotContain("checkout -q -b")
+                .contains("release/worktrees");
     }
 
     @Test
@@ -74,9 +74,10 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 .as("the distribution ZIP must be copied out of target/ before bump_development_version runs mvn clean")
                 .contains("copy_release_zip");
         String copy = functionBody(script, "copy_release_zip");
-        assertThat(copy).contains("fscrawler-distribution-");
-        assertThat(copy).contains("fscrawler-${RELEASE_VERSION}.zip");
-        assertThat(copy).doesNotContain("create_github_release");
+        assertThat(copy)
+                .contains("fscrawler-distribution-")
+                .contains("fscrawler-${RELEASE_VERSION}.zip")
+                .doesNotContain("create_github_release");
     }
 
     @Test
@@ -91,8 +92,7 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
     @Test
     void bumpDevelopmentVersionUpdatesReadmeTable() throws Exception {
         String bump = functionBody(readReleaseScript(), "bump_development_version");
-        assertThat(bump).contains("update_readme_versions.py");
-        assertThat(bump).contains("commit_all");
+        assertThat(bump).contains("update_readme_versions.py").contains("commit_all");
         int updater = bump.indexOf("update_readme_versions.py");
         int commit = bump.indexOf("commit_all");
         assertThat(updater)
@@ -120,16 +120,15 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
         String finalize = functionBody(readReleaseScript(), "finalize_release");
         assertThat(finalize)
                 .as("root clone stays on the original branch; merge there, then drop the worktree")
-                .contains("remove_release_worktree");
-        assertThat(finalize).doesNotContain("checkout -q \"${ORIGINAL_BRANCH}\"");
+                .contains("remove_release_worktree")
+                .doesNotContain("checkout -q \"${ORIGINAL_BRANCH}\"");
     }
 
     @Test
     void announcementHeaderUsesGitHubZipName() throws Exception {
         String header = Files.readString(
                 repoRoot().resolve("scripts").resolve("templates").resolve("release-header.md"));
-        assertThat(header).contains("unzip fscrawler-{VERSION}.zip");
-        assertThat(header).contains("cd fscrawler-distribution-{VERSION}");
+        assertThat(header).contains("unzip fscrawler-{VERSION}.zip").contains("cd fscrawler-distribution-{VERSION}");
         String notes = Files.readString(repoRoot().resolve("scripts").resolve("prepare-release-notes.py"));
         assertThat(notes)
                 .as("announcement wget must point at the GitHub release asset fscrawler-x.y.zip")

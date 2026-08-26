@@ -49,10 +49,11 @@ class UpdateReadmeVersionsTest extends AbstractFSCrawlerTestCase {
         assertThat(start).isGreaterThanOrEqualTo(0);
         assertThat(end).as("end marker must come after start marker").isGreaterThan(start);
         String block = readme.substring(start, end);
-        assertThat(block).contains("| Elasticsearch |");
-        assertThat(block).contains("| FSCrawler");
-        assertThat(block).contains("-SNAPSHOT");
-        assertThat(block).doesNotContain("{VERSION}");
+        assertThat(block)
+                .contains("| Elasticsearch |")
+                .contains("| FSCrawler")
+                .contains("-SNAPSHOT")
+                .doesNotContain("{VERSION}");
     }
 
     @Test
