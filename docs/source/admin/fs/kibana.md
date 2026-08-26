@@ -63,6 +63,8 @@ When `kibana.push_dashboard` is `true` (the default), FSCrawler creates on start
    * a collapsed **Document metadata** section (language and creator tool — keyword fields only
      for terms aggregations)
 
+![](images/fscrawler-kibana-dashboard.png)
+
 By default, if the dashboard already exists, FSCrawler skips creation (same behaviour as
 {ref}`mappings` with `push_templates`). To overwrite an existing dashboard — for example after
 upgrading FSCrawler with new panels — set `force_push_dashboard` to `true`:

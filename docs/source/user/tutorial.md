@@ -10,6 +10,10 @@ The fastest way to follow this tutorial is to run Elasticsearch and Kibana with 
 script, and FSCrawler with Docker. If you prefer a manual install, see
 [Alternative: manual installation](#alternative-manual-installation).
 
+```{note}
+The default Kibana dashboard requires **Kibana 9.5+** (Dashboards API). See {ref}`kibana-settings`.
+```
+
 ## Recommended: Docker and start-local
 
 ### Prerequisites
@@ -74,7 +78,7 @@ fs:
   Leave `elasticsearch.index` unset. FSCrawler will index into `resumes_docs` and create a `resumes` alias.
 
 * Put your resume files in a local folder (for example `~/resumes`), then start FSCrawler.
-  From a Docker container, Elasticsearch on the host is reached via `host.docker.internal`
+  From a Docker container, Elasticsearch and Kibana on the host are reached via `host.docker.internal`
   (not `127.0.0.1`):
 
 ```sh
@@ -85,6 +89,7 @@ docker run -it --rm \
   -v ~/resumes:/tmp/es:ro \
   -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
   -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
+  -e FSCRAWLER_KIBANA_URL=http://host.docker.internal:5601 \
   dadoonet/fscrawler resumes
 ```
 
@@ -94,7 +99,7 @@ published on the host. On Docker Desktop (macOS / Windows), `host.docker.interna
 already; keeping the flag is still fine.
 ```
 
-You can also put the Elasticsearch settings in `_settings.yaml` instead of environment variables:
+You can also put the Elasticsearch and Kibana settings in `_settings.yaml` instead of environment variables:
 
 ```yaml
 ---
@@ -105,13 +110,15 @@ elasticsearch:
   urls:
     - "http://host.docker.internal:9200"
   api_key: "YOUR_ES_LOCAL_API_KEY"
+kibana:
+  url: "http://host.docker.internal:5601"
 ```
 
 Use `http://` (not `https://`) with `start-local`. Copy the API key value from `ES_LOCAL_API_KEY` in
 `elastic-start-local/.env`.
 
 FSCrawler should index all the documents inside your directory. Then continue with
-[Create Index pattern](#create-index-pattern).
+[Open the default dashboard](#open-the-default-dashboard).
 
 ````{note}
 
@@ -125,6 +132,7 @@ FSCrawler should index all the documents inside your directory. Then continue wi
    -v ~/resumes:/tmp/es:ro \
    -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
    -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
+   -e FSCRAWLER_KIBANA_URL=http://host.docker.internal:5601 \
    dadoonet/fscrawler resumes --restart
  ```
 ````
@@ -141,7 +149,7 @@ Use this path if you prefer to download Elasticsearch, Kibana, and FSCrawler you
 ### Install Elastic stack
 
 * Download [Elasticsearch](https://www.elastic.co/downloads/elasticsearch)
-* Download [Kibana](https://www.elastic.co/downloads/kibana)
+* Download [Kibana](https://www.elastic.co/downloads/kibana) **9.5+** (required for the default dashboard)
 * Start Elasticsearch server
 * Start Kibana server
 * Check that Kibana is running by opening <http://localhost:5601>
@@ -192,6 +200,7 @@ cd C:\Users\myuser\.fscrawler\resumes
     url: "c:\\path\\to\\resumes"
   ```
 
+  `kibana.url` defaults to `http://127.0.0.1:5601`, so you can leave it unset when Kibana runs locally.
   If your Elasticsearch cluster requires an API key (recommended), add it under `elasticsearch` as well.
   See {ref}`elasticsearch-settings`.
 
@@ -219,48 +228,39 @@ FSCrawler should index all the documents inside your directory.
  ```
 ````
 
-## Create Index pattern
+## Open the default dashboard
+
+On startup, FSCrawler creates a data view and a dashboard named **FSCrawler - resumes** (when Kibana
+is reachable and `kibana.push_dashboard` is enabled — the default). See {ref}`kibana-settings`.
 
 * Open [Kibana](http://localhost:5601)
-* Create a [Data View](http://localhost:5601/app/management/kibana/dataViews) named `resumes`
-for the `resumes` alias (documents are stored in `resumes_docs` by default). Don't forget to remove the star `*` that is automatically added by default
-by Kibana.
+* Go to **Dashboards** and open **FSCrawler - resumes**
 
-![](images/kibana-step1.jpg)
-
-* Choose the date field you'd like to use if you want to be able to filter documents by date. Use
-  `file.created` field if you want to filter by file creation date, `file.last_modified` to filter
-  by last modification date or `file.indexing_date` if you want to filter by the date when the document
-  has been indexed into elasticsearch. You can also choose not to use the time filter (the last option).
-
-![](images/kibana-step2.jpg)
-
-* Click on "Create index pattern". You should see something like:
-
-![](images/kibana-step3.jpg)
+You should see an overview of your indexed files (counts, extensions, directories, timeline, and a
+document table). Adjust the time picker if panels look empty — the dashboard uses
+`file.indexing_date` by default.
 
 ## Search for the CVs
 
-```{note}
+To search resume content (for example a previous company or a location), use Discover on the data
+view FSCrawler created:
 
- The UI in Kibana changes from time to time. The screenshots below might not be up to date with the current 
- version of Kibana.
+```{note}
+The UI in Kibana changes from time to time. The screenshots below might not be up to date with the
+current version of Kibana.
 ```
 
-* Open [Kibana](http://localhost:5601)
-* Go to the [Discover](http://localhost:5601/app/discover#/) page
-* Depending on the date you selected in the [Create Index pattern](#create-index-pattern) step, you should see something similar to the
-  following image. If you don't see it, you probably have to adjust the time picker to make sure you are looking
-  at the right period of time.
+* Open [Discover](http://localhost:5601/app/discover#/)
+* Select the data view for the `resumes` job (documents live in `resumes_docs` by default)
+* Adjust the time picker if needed so you cover when the files were indexed
 
 ![](images/kibana-step4.jpg)
 
-* You can select the fields you'd like to display in the result page, such as `content`,
-  `file.filename`, `file.extension`, `file.url`, `file.filesize`, etc.
+* Add columns such as `content`, `file.filename`, `file.extension`, `file.url`, or `file.filesize`
 
 ![](images/kibana-step5.jpg)
 
-* Of course, you can search for content, like `collaborateurs` here and see the highlighted content.
+* Search for content, for example `collaborateurs`, and inspect the highlighted matches
 
 ![](images/kibana-step6.jpg)
 
@@ -282,6 +282,6 @@ value. See {ref}`local-fs-update_rate`.
  ```
 ````
 
-Just hit the Kibana refresh button and see the changes.
+Refresh the dashboard or Discover in Kibana to see the changes.
 
 ![](images/kibana-step7.jpg)
