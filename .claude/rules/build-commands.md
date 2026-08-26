@@ -72,14 +72,14 @@ Placeholders are also supported inside settings files (resolved from env vars or
 fs:
   url: "${HOME}/docs"
 elasticsearch:
-  nodes:
-    - url: "${ES_NODE1:=https://127.0.0.1:9200}"
+  urls:
+    - "${ES_NODE1:=https://127.0.0.1:9200}"
   api_key: "${ES_API_KEY}"
 ```
 
 > **Note**: if both a settings file and env vars are defined, the settings file takes precedence.
 
-See also: `docs/source/admin/fs/index.rst`
+See also: `docs/source/admin/fs/index.md`
 
 ## CI/CD
 

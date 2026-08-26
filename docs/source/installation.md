@@ -1,6 +1,16 @@
 (installation)=
+# Installation
+
+Choose one of:
+
+* {ref}`docker` — pull the image from Docker Hub
+* {ref}`docker-compose` — Elasticsearch, Kibana, and FSCrawler together
+* {ref}`local-installation` — ZIP distribution on your machine
+
+Coming from 2.9? There is no in-place upgrade. See {ref}`upgrade-from-2.9`.
+
 (docker)=
-# Using docker
+## Using Docker
 
 Pull the Docker image from [Docker Hub](https://hub.docker.com/r/dadoonet/fscrawler):
 
@@ -21,7 +31,15 @@ docker pull dadoonet/fscrawler
 ````
 
 Let say your documents are located in `~/tmp` dir, and you want to store your FSCrawler jobs in `~/.fscrawler`.
-You can run FSCrawler with:
+On first run, create the job settings:
+
+```sh
+docker run -it --rm \
+     -v ~/.fscrawler:/root/.fscrawler \
+     dadoonet/fscrawler --setup
+```
+
+Then run FSCrawler with:
 
 ```sh
 docker run -it --rm \
@@ -34,7 +52,8 @@ docker run -it --rm \
 
  The configuration file is expected to be stored on your machine in `~/.fscrawler/fscrawler/_settings.yaml`.
  Remember to change the URL of your elasticsearch instance as the container won't be able to see it
- running under the default `127.0.0.1`. You will need to use the actual IP address of the host.
+ running under the default `127.0.0.1`. You will need to use the actual IP address of the host,
+ or `host.docker.internal` on Docker Desktop.
 
  Or use the `FSCRAWLER_ELASTICSEARCH_URLS` environment variable to set the elasticsearch URL.
  See {ref}`cli-options` for more information.
@@ -90,7 +109,7 @@ docker run -it --rm \
 See {ref}`cli-options` for more information.
 
 (docker-compose)=
-# Using docker compose
+## Using Docker Compose
 
 In this section, the following directory layout is assumed:
 
@@ -232,8 +251,13 @@ volumes:
 Copy your pdf/doc files into the `docs` directory and run the full stack, including FSCrawler with:
 
 ```sh
- docker-compose up
+docker-compose up
 ```
+
+This example does not mount `~/.fscrawler`. Job settings come from `FSCRAWLER_*` environment
+variables. The default job name is `fscrawler`, so documents are searchable on the `fscrawler`
+alias. Username and password match the Elastic user created by the stack; API keys are preferred
+in production. See {ref}`credentials`.
 
 When the job has finished indexing, you can check your documents in Elasticsearch with:
 
@@ -245,20 +269,8 @@ curl -u elastic:changeme "http://localhost:9200/fscrawler/_search"
 You will find this example in the `contrib/docker-compose-example-elasticsearch` project directory.
 ```
 
-# Running as a Service on Windows
-
-Create a `fscrawlerRunner.bat` as:
-
-```sh
-set JAVA_HOME=c:\Program Files\Java\jdk17.0.18
-set FS_JAVA_OPTS=-Xmx2g -Xms2g
-/Elastic/fscrawler/bin/fscrawler.bat --config_dir /Elastic/fscrawler data >> /Elastic/logs/fscrawler.log 2>&1
-```
-
-Then use `fscrawlerRunner.bat` to create your Windows service.
-
 (local-installation)=
-# Local installation
+## Local installation (ZIP)
 
 If you prefer to run FSCrawler from a ZIP distribution on your machine instead of Docker:
 
@@ -313,9 +325,23 @@ You can also download a **SNAPSHOT** version from [Sonatype Snapshots](https://c
 After extracting the ZIP, you get a directory with `bin/` (run scripts), `config/` (logging), `lib/` (core and
 dependencies), `external/` (optional JARs), and `logs/`. See {ref}`layout` for the full directory layout.
 
-## Optional libraries (external)
+Then continue with {ref}`getting-started`.
+
+### Optional libraries (external)
 
 You may need to add JARs to the `external` directory for some formats. For example, to support JPEG2000 (JPX/JP2)
 images in PDFs, add the `jai-imageio-jpeg2000` library: download it from
 [Maven Central](https://central.sonatype.com/search?q=g:com.github.jai-imageio) and put
 `jai-imageio-jpeg2000-1.4.0.jar` in the `external` directory.
+
+## Running as a Service on Windows
+
+Create a `fscrawlerRunner.bat` as:
+
+```sh
+set JAVA_HOME=c:\Program Files\Java\jdk17.0.18
+set FS_JAVA_OPTS=-Xmx2g -Xms2g
+/Elastic/fscrawler/bin/fscrawler.bat --config_dir /Elastic/fscrawler data >> /Elastic/logs/fscrawler.log 2>&1
+```
+
+Then use `fscrawlerRunner.bat` to create your Windows service.

@@ -42,6 +42,7 @@ installation
 :maxdepth: 3
 
 user/getting_started
+user/upgrade
 user/tutorial
 user/llm-assistant
 user/options

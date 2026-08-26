@@ -71,7 +71,7 @@ or the Docker image genrated by the build, then start one Elasticsearch instance
 ```bash
 # Elasticsearch 9.x: you cna check the expected version in the main `pom.xml`:
 # <elasticsearch.version>${elasticsearch9.version}</elasticsearch.version>
-docker run -d --name elasticsearch -p 9200:9200 -e "discovery.type=single-node" -e "xpack.security.enabled=false" docker.elastic.co/elasticsearch/elasticsearch:9.3.0
+docker run -d --name elasticsearch -p 9200:9200 -e "discovery.type=single-node" -e "xpack.security.enabled=false" docker.elastic.co/elasticsearch/elasticsearch:9.5.2
 
 # Verify it's running
 curl http://localhost:9200
@@ -167,7 +167,7 @@ Closes #xxxx.
 ## Documentation
 
 - Main docs: https://fscrawler.readthedocs.io/
-- Build docs: `docs/source/dev/build.rst`
+- Build docs: `docs/source/dev/build.md`
 - Contributing: `CONTRIBUTING.md`
 - Local docs build: Check `docs/pom.xml`
 

@@ -10,6 +10,7 @@ docs/build
 .idea
 *.iml
 /IGNORE_ME
+/elastic-start-local
 /logs/
 /venv/
 /contrib/docker-compose-example-elasticsearch/config/idx/_status.json

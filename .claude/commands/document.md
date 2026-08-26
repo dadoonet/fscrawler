@@ -8,19 +8,19 @@ For each commit, identify:
 - What changed (feature, fix, config option, API endpoint, etc.)
 - Which user-facing behaviour is affected
 
-### 2. Update RST documentation
-The user docs live in `docs/source/` (reStructuredText, built by ReadTheDocs — https://fscrawler.readthedocs.io/).
+### 2. Update documentation
+The user docs live in `docs/source/` (MyST Markdown, built by ReadTheDocs — https://fscrawler.readthedocs.io/).
 
 For each user-facing change:
-- Locate the relevant `.rst` file in `docs/source/`
+- Locate the relevant `.md` file in `docs/source/`
 - Add or update the description, examples, and configuration options
-- Follow the existing RST style (headings, code blocks, notes)
+- Follow the existing MyST style (headings, code blocks, notes)
 
 Key doc files:
 - `docs/source/admin/fs/` — filesystem crawler settings
-- `docs/source/admin/elasticsearch/` — Elasticsearch settings
-- `docs/source/admin/rest/` — REST API reference
-- `docs/source/installation.rst` — installation guide
+- `docs/source/admin/fs/elasticsearch.md` — Elasticsearch settings
+- `docs/source/admin/fs/rest.md` — REST API reference
+- `docs/source/installation.md` — installation guide
 - `docs/source/dev/` — developer documentation
 
 ### 3. Generate changelog summary

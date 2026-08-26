@@ -30,5 +30,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Documentation
 
 - User docs: https://fscrawler.readthedocs.io/
-- Source: `docs/source/` (reStructuredText, built by ReadTheDocs)
-- Build guide: `docs/source/dev/build.rst`
+- Source: `docs/source/` (MyST Markdown, built by ReadTheDocs)
+- Build guide: `docs/source/dev/build.md`
