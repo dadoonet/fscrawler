@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.pilato.elasticsearch.crawler</groupId>
     <artifactId>fscrawler-parent</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0</version>
     <packaging>pom</packaging>
     <name>FSCrawler</name>
     <description>FS Crawler offers a simple way to index binary files into elasticsearch.</description>
@@ -152,17 +152,17 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-framework</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-test-framework</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-test-documents</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -172,22 +172,22 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-core</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-settings</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-elasticsearch-client</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-kibana-client</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -202,12 +202,12 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-cli</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-beans</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
@@ -217,74 +217,74 @@
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-tika</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-rest</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
 
             <!-- FSCrawler plugins -->
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-plugins</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-welcome-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-fs-local-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-password-noop-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-password-disk-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-password-static-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-password-chained-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-fs-ftp-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-fs-ssh-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-fs-s3-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
             <dependency>
                 <groupId>fr.pilato.elasticsearch.crawler</groupId>
                 <artifactId>fscrawler-fs-http-plugin</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.0</version>
             </dependency>
 
             <dependency>
