@@ -8,7 +8,7 @@ Download [FSCrawler {VERSION}]({DOWNLOAD_URL}):
 
 ```sh
 wget {DOWNLOAD_URL}
-unzip fscrawler-distribution-{VERSION}.zip
+unzip fscrawler-{VERSION}.zip
 cd fscrawler-distribution-{VERSION}
 ```
 

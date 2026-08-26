@@ -16,11 +16,13 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
 Current versions are:
 
+<!-- release-versions:start -->
 | Elasticsearch | FSCrawler    | Released   | Docs                                                            |
 |---------------|--------------|------------|-----------------------------------------------------------------|
 | 6.x, 7.x      | 2.9          | 2022-03-08 | [2.9](https://fscrawler.readthedocs.io/en/fscrawler-2.9/)       |
 | 7.x, 8.x, 9.x | 3.0          | 2026-08-26 | [3.0](https://fscrawler.readthedocs.io/en/fscrawler-3.0/)       |
 | 8.x, 9.x      | 3.1-SNAPSHOT |            | [3.1-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)     |
+<!-- release-versions:end -->
 
 ## Quick start
 

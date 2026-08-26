@@ -11,9 +11,10 @@ Run `./release.sh --help` for the full list of options.
 ## Script options
 
 `--local`
-: Full local rehearsal: release branch, Maven build with the `release` profile (javadoc,
-  sources, GPG signing), tag, and release notes generation. Nothing is published remotely
-  (no Maven Central, Docker Hub, `git push`, GitHub release, or production email).
+: Full local rehearsal in an isolated git worktree: release branch, Maven build with
+  the `release` profile (javadoc, sources, GPG signing), tag, and release notes
+  generation. The main clone stays on the branch you started from. Nothing is published
+  remotely (no Maven Central, Docker Hub, `git push`, GitHub release, or production email).
 
 `--skip-tests`
 : Adds `-DskipTests` to Maven build commands (also prefilled in the Extra Maven options
@@ -24,8 +25,9 @@ Run `./release.sh --help` for the full list of options.
 
 `--rollback`
 : Undoes a local or failed release using the `release/.release` state file (under the
-  gitignored `release/` directory). Deletes the local release branch and tag, checks out
-  the original branch, restores leftover filtered files (notably
+  gitignored `release/` directory). Removes the isolated worktree under
+  `release/worktrees/<version>/`, deletes the local release branch and tag, leaves the
+  main checkout on its original branch, restores leftover filtered files (notably
   `distribution/test-scripts/`, which lives outside `target/`), re-filters them against
   the restored SNAPSHOT POMs, and removes `release/.release`.
 
@@ -42,15 +44,21 @@ If the release fails, or you want to discard the local rehearsal:
 $ ./release.sh --rollback
 ```
 
-The `release/.release` file is written as soon as the release branch is created, so `--rollback`
-works even when the build fails midway.
+The `release/.release` file is written as soon as the release worktree is created, so
+`--rollback` works even when the build fails midway.
+
+Do not open `release/worktrees/<version>/` as a second IDE workspace while the release
+is running: Maven and git mutations are already bound to that path.
 
 ## What the script does (production release)
 
-* Create a release branch
+* Create an isolated git worktree at `release/worktrees/<version>/` on branch
+  `release-<version>` (the main clone stays on your integration branch)
 * Replace the SNAPSHOT version by the final version number
 * Commit the change
 * Build the final artifacts using the `release` profile (javadoc, sources, GPG signing)
+* Copy `distribution/target/fscrawler-distribution-<version>.zip` to
+  `release/<version>/fscrawler-<version>.zip` so later `mvn clean` does not delete it
 * Tag the version
 * Prepare release notes from `docs/source/release/{version}.md` and GitHub API
 * Deploy **only** `fscrawler-distribution` to [Maven Central](https://central.sonatype.com/)
@@ -58,14 +66,40 @@ works even when the build fails midway.
   `flatten-maven-plugin` (`flattenMode=oss`) writes a self-contained POM (no parent,
   OSS metadata inlined, dependency versions resolved) so Central can validate the ZIP
   artifact without publishing `fscrawler-parent`.
-* Prepare the next SNAPSHOT version
+* Prepare the next SNAPSHOT version and update the README "Latest versions" table
+  (HTML comment markers `<!-- release-versions:start -->` / `<!-- release-versions:end -->`)
 * Commit the change
-* Merge the release branch into the branch you started from
+* Merge the release branch into the branch you started from (still on the main clone)
+* Remove the isolated worktree and delete the release branch
 * Push the changes and the tag to origin
-* Create a GitHub release with `gh release create`
+* Create a GitHub release with `gh release create`, attaching `fscrawler-<version>.zip`
 * Optionally announce the version on https://discuss.elastic.co/c/annoucements/community-ecosystem
 
+Every `mvn` and mutating `git` command in the worktree aborts if `HEAD` is not
+`release-<version>`, so a checkout of another tag in the main clone cannot hijack the
+release.
+
 You will be guided through all the steps.
+
+## README versions table
+
+The "Latest versions" table in `README.md` is wrapped in HTML comments so it stays
+readable Markdown (no visible `{VERSION}` placeholders):
+
+```
+<!-- release-versions:start -->
+| Elasticsearch | FSCrawler | Released | Docs |
+...
+<!-- release-versions:end -->
+```
+
+On the "prepare for next development iteration" commit, `scripts/update_readme_versions.py`
+turns the SNAPSHOT row into the released version (release date, ReadTheDocs
+`fscrawler-{version}` URL) and appends a new SNAPSHOT row. Historical rows are left
+untouched. The Elasticsearch range is kept from the previous SNAPSHOT row unless you
+pass `--es-versions`.
+
+Maven Central, SNAPSHOT, and Docker badges are already dynamic and are not rewritten.
 
 ## Release notes
 
@@ -116,6 +150,11 @@ with `prepare-release-notes.py`, then run:
 ```
 $ gh release edit fscrawler-{version} --notes-file release/{version}/release-notes.md
 ```
+
+The announcement header (`scripts/templates/release-header.md`) points `wget` at the GitHub
+release asset `fscrawler-{version}.zip`. The ZIP's inner directory remains
+`fscrawler-distribution-{version}` (Maven `artifactId`). Maven Central still publishes
+`fscrawler-distribution-{version}.zip`.
 
 ## Before releasing
 

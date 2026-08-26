@@ -100,8 +100,8 @@ def demote_headings(markdown: str, levels: int = 1) -> str:
 
 def download_url(version: str) -> str:
     return (
-        "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/"
-        f"fscrawler-distribution/{version}/fscrawler-distribution-{version}.zip"
+        "https://github.com/dadoonet/fscrawler/releases/download/"
+        f"fscrawler-{version}/fscrawler-{version}.zip"
     )
 
 
