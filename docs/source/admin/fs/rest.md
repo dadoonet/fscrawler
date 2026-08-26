@@ -138,7 +138,7 @@ It will give you a response similar to:
 {
   "filename" : "test.txt",
   "ok" : true,
-  "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
+  "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_docs/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
 }
 ```
 
@@ -150,15 +150,14 @@ The `url` represents the elasticsearch address of the indexed
 document. If you call:
 
 ```sh
-curl http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534?pretty
+curl http://127.0.0.1:9200/fscrawler-rest-tests_docs/_doc/dd18bf3a8ea2a3e53e2661c7fb53534?pretty
 ```
 
 You will get back your document as it has been stored by elasticsearch:
 
 ```json
 {
-  "_index" : "fscrawler-rest-tests_doc",
-  "_type" : "_doc",
+  "_index" : "fscrawler-rest-tests_docs",
   "_id" : "dd18bf3a8ea2a3e53e2661c7fb53534",
   "_version" : 1,
   "found" : true,
@@ -237,7 +236,7 @@ will give
   },
   "filename" : "test.txt",
   "ok" : true,
-  "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_doc/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
+  "url" : "http://127.0.0.1:9200/fscrawler-rest-tests_docs/_doc/dd18bf3a8ea2a3e53e2661c7fb53534"
 }
 ```
 

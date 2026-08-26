@@ -75,8 +75,8 @@ fs:
   # optional: recommended, but will create another index
   #index_folders: true
 
-  # optional: the optional path to a specific external Tika Configuration file
-  #tika_config_path: "/path/to/tika-config.xml"
+  # optional: the optional path to a specific external Tika JSON configuration file
+  #tika_config_path: "/path/to/tika-config.json"
 
   # optional: the OCR Options
   #ocr:

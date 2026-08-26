@@ -76,85 +76,63 @@ bin/fscrawler test
 
 ## Example job file specification
 
-The job file (`~/.fscrawler/test/_settings.yaml`) for the job name `test` must comply to the following `yaml` specifications:
+`bin/fscrawler --setup` writes a fully commented example to
+`~/.fscrawler/{job}/_settings.yaml`. The job file for the job name `test`
+(`~/.fscrawler/test/_settings.yaml`) looks like:
 
 ```yaml
 # optional: the name of the crawler. Defaults to the job directory name.
 name: "test"
 
-# required
 fs:
-
-  # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container (/tmp/es)
+  # available providers: local (default), ftp, ssh
+  provider: "local"
+  # inside Docker this must be the path INSIDE the container (/tmp/es)
   url: "/path/to/docs"
   follow_symlinks: false
   remove_deleted: true
   continue_on_error: false
+  update_rate: "15m"
 
-  # scan every 5 minutes for changes in url defined above
-  update_rate: "5m"
-
-  # optional: define includes and excludes; "~" and ".DS_Store" files are excluded by default if not defined below
+  # optional: "~" and ".DS_Store" files are excluded by default if not defined
   includes:
-  - "*.doc"
-  - "*.xls"
+    - "*.doc"
+    - "*.xls"
   excludes:
-  - "resume.doc"
+    - "resume.doc"
 
-  # optional: do not send big files to TIKA
   ignore_above: "512mb"
-
-  # special handling of JSON files, should only be used if ALL files are JSON
   json_support: false
   add_as_inner_object: false
-
-  # special handling of XML files, should only be used if ALL files are XML
   xml_support: false
 
-  # use MD5 from filename (instead of filename) if set to false
-  filename_as_id: true
+  # when true, the filename is used as _id (hash_algorithm is ignored)
+  filename_as_id: false
+  # new jobs from --setup use SHA-256; unset keeps MD5 for existing jobs
+  hash_algorithm: "SHA-256"
 
-  # include size ot file in index
   add_filesize: true
-
-  # inlcude user/group of file only if needed
   attributes_support: false
-
-  # collect ACL metadata when available
   acl_support: false
-
-  # do you REALLY want to store every file as a copy in the index ? Then set this to true
   store_source: false
-
-  # you may want to store (partial) content of the file (see indexed_chars)	 
   index_content: true
-
-  # how much data from the content of the file should be indexed (and stored inside the index), set to 0 if you need checksum, but no content at all to be indexed
-  #indexed_chars: "0"
   indexed_chars: "10000.0"
-
-  # usually file metadata will be stored in separate fields, if you want to keep the original set, set this to true
   raw_metadata: false
-
-  # optional: add checksum meta (requires index_content to be set to true)
+  # optional: hash of file content (independent from hash_algorithm)
   checksum: "MD5"
-
-  # recommmended, but will create another index
   index_folders: true
-
   lang_detect: false
 
-  ocr.pdf_strategy: noocr
-  #ocr:
-  #  language: "eng"
-  #  path: "/path/to/tesseract/if/not/available/in/PATH"
-  #  data_path: "/path/to/tesseract/tessdata/if/needed"
+  ocr:
+    enabled: true
+    language: "eng"
+    # default is auto: skip OCR on PDF pages that already contain text
+    pdf_strategy: auto
 
 # optional: add static metadata tags to documents
 tags:
-  metaFilename: "meta_tags.json" # default is ".meta.yml"
-  # optional: add static metadata to all indexed documents
-  staticMetaFilename: "/path/to/static_metadata.json"
+  metaFilename: ".meta.yml"
+  staticMetaFilename: "/path/to/static_metadata.yml"
 
 # optional: configure password lookup for protected documents
 passwords:
@@ -163,11 +141,7 @@ passwords:
     disk:
       url: "/path/to/password-sidecars"
 
-# optional: specify a crawler provider (default is "local")
-# available providers: "local", "ftp", "ssh"
-# provider: "ssh"
-
-# optional: only required if you want to SSH/FTP to another server to index documents from there
+# optional: only required for SSH/FTP
 server:
   hostname: "localhost"
   port: 22
@@ -175,27 +149,27 @@ server:
   password: "password"
   pem_path: "/path/to/pemfile"
 
-# required
 elasticsearch:
   urls:
-  - "https://127.0.0.1:9200"
+    - "https://127.0.0.1:9200"
   bulk_size: 1000
   flush_interval: "5s"
   byte_size: "10mb"
-  # choose one of the 2 following options:
-  # 1 - Using Api Key
   api_key: "VnVhQ2ZHY0JDZGJrUW0tZTVhT3g6dWkybHAyYXhUTm1zeWFrdzl0dk5udw=="
-  # 2 - Using username/password (not recommended / deprecated)
-  username: "elastic"
-  password: "password"
-  # optional, defaults to `name`-property
-  index: "test_docs"
-  # optional, defaults to "test_folders", used when es.index_folders is set to true
-  index_folder: "test_fold"
-  # optional, defaults to "true"
-  push_templates: "true"
-  # optional, defaults to "true", used with Elasticsearch 8.17+ with a trial or enterprise license
-  semantic_search: "true"
+  # username/password is deprecated; prefer api_key
+  # username: "elastic"
+  # password: "password"
+  # optional, defaults to <name>_docs — do not set this to the job name
+  # index: "test_docs"
+  # optional, defaults to <name>_folder
+  # index_folder: "test_folder"
+  push_templates: true
+  semantic_search: true
+
+kibana:
+  url: "http://127.0.0.1:5601"
+  push_dashboard: true
+
 # only used when started with --rest option
 rest:
   url: "http://127.0.0.1:8080"

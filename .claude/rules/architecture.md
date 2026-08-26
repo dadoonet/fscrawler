@@ -124,6 +124,6 @@ FS_JAVA_OPTS="-DLOG_LEVEL=debug" bin/fscrawler job-name
 ```
 
 Common issues:
-1. **ES connection**: Check `elasticsearch.nodes` configuration
+1. **ES connection**: Check `elasticsearch.urls` configuration
 2. **Document parsing**: Check Tika logs for parsing errors
 3. **Memory issues**: `FS_JAVA_OPTS="-Xmx2g"` to increase heap

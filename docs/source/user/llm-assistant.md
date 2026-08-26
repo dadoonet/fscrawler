@@ -72,6 +72,7 @@ Important rules — do not get these wrong:
 1. Use `elasticsearch.urls` (a YAML list). The old `nodes` key is not supported; unknown keys are silently ignored.
 2. With Elastic start-local, use http:// (not https://) — start-local exposes HTTP on localhost only.
 3. Do not set `elasticsearch.index` to the same value as `name`. FSCrawler creates a search alias named after the job; a conflicting index name causes "alias name self-conflicts with index name".
+4. There is no in-place upgrade from FSCrawler 2.9. Recreate jobs with `--setup` and reindex.
 4. In Docker, 127.0.0.1 is the container itself. Use host.docker.internal (Linux: add --add-host=host.docker.internal:host-gateway) or the host machine IP to reach Elasticsearch on the host.
 5. Environment variables follow the pattern FSCRAWLER_* (see CLI options in the docs).
 

@@ -14,15 +14,16 @@ For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the
 
 - [Installation](https://fscrawler.readthedocs.io/en/latest/installation.html.md): Docker, ZIP distribution, and Docker Compose.
 - [Getting Started](https://fscrawler.readthedocs.io/en/latest/user/getting_started.html.md): First run with `--setup`, default paths, and a basic search example.
-- [Tutorial](https://fscrawler.readthedocs.io/en/latest/user/tutorial.html.md): End-to-end walkthrough with Elastic start-local, Docker, and Kibana ES|QL queries.
+- [Upgrading from 2.9](https://fscrawler.readthedocs.io/en/latest/user/upgrade.html.md): 3.0 is a fresh install; there is no in-place upgrade from 2.9.
+- [Tutorial](https://fscrawler.readthedocs.io/en/latest/user/tutorial.html.md): End-to-end walkthrough with Elastic start-local, Docker, and Kibana.
 - [LLM assistant](https://fscrawler.readthedocs.io/en/latest/user/llm-assistant.html.md): Ready-to-copy prompts for configuring FSCrawler with an AI assistant.
 
 ## User guide
 
 - [Crawler options](https://fscrawler.readthedocs.io/en/latest/user/options.html.md): Update rate, `--loop`, and `--restart`.
 - [Supported formats](https://fscrawler.readthedocs.io/en/latest/user/formats.html.md): Document types handled by Apache Tika.
-- [OCR](https://fscrawler.readthedocs.io/en/latest/user/ocr.html.md): Optical character recognition settings.
-- [REST API](https://fscrawler.readthedocs.io/en/latest/user/rest.html.md): Upload binary documents over HTTP.
+- [OCR](https://fscrawler.readthedocs.io/en/latest/user/ocr.html.md): Optical character recognition (Tesseract) and optional VLM OCR.
+- [REST API](https://fscrawler.readthedocs.io/en/latest/user/rest.html.md): Upload binary documents over HTTP; fetch from HTTP or S3.
 - [Tips and tricks](https://fscrawler.readthedocs.io/en/latest/user/tips.html.md): Docker, multi-machine setups, and common workarounds.
 
 ## Configuration reference
@@ -31,6 +32,7 @@ For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the
 - [SSH](https://fscrawler.readthedocs.io/en/latest/admin/fs/ssh.html.md): Remote crawling over SSH/SFTP.
 - [FTP](https://fscrawler.readthedocs.io/en/latest/admin/fs/ftp.html.md): Remote crawling over FTP.
 - [Elasticsearch settings](https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html.md): URLs, API key, SSL, indices, bulk settings, semantic search.
+- [Kibana settings](https://fscrawler.readthedocs.io/en/latest/admin/fs/kibana.html.md): Default dashboard on job startup (Kibana 9.5+).
 - [Password-protected documents](https://fscrawler.readthedocs.io/en/latest/admin/fs/passwords.html.md): Encrypted PDF and Office files.
 - [Document IDs](https://fscrawler.readthedocs.io/en/latest/admin/fs/document-ids.html.md): How document identifiers are built.
 - [Tags and metadata](https://fscrawler.readthedocs.io/en/latest/admin/fs/tags.html.md): Custom fields on indexed documents.
@@ -39,6 +41,7 @@ For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the
 
 ## Common pitfalls
 
+- There is no in-place upgrade from 2.9: install 3.0, recreate jobs with `--setup`, and reindex.
 - Use `elasticsearch.urls` (a list), not `nodes`. Unknown keys are silently ignored.
 - With Elastic start-local, use `http://` (not `https://`) for Elasticsearch.
 - Do not set `elasticsearch.index` to the same value as the job `name`; FSCrawler creates an alias with the job name.

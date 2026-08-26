@@ -1,4 +1,7 @@
+(tutorial)=
 # Tutorial
+
+Coming from 2.9? There is no in-place upgrade. See {ref}`upgrade-from-2.9`.
 
 This tutorial use case is:
 

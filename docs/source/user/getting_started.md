@@ -1,31 +1,58 @@
+(getting-started)=
 # Getting Started
 
-You need to have at least **Java** {{ java_version }} and have properly configured
-`JAVA_HOME` to point to your Java installation directory. For example
-on MacOS if you are using sdkman you can define in your `~/.bash_profile` file:
+The fastest way to try FSCrawler is the {ref}`tutorial`: Elastic
+[start-local](https://www.elastic.co/docs/deploy-manage/deploy/self-managed/local-development-installation-quickstart)
+plus the Docker image.
+
+This page is the local ZIP path.
+
+Coming from 2.9? There is no in-place upgrade. See {ref}`upgrade-from-2.9`.
+
+## Prerequisites
+
+* **Java** {{ java_version }} or later, with `JAVA_HOME` pointing at that JDK. For example on macOS
+  with sdkman, in `~/.bash_profile`:
 
 ```sh
 export JAVA_HOME="~/.sdkman/candidates/java/current"
 ```
 
-## Start FSCrawler
+* Elasticsearch 7.17+, 8.x, or 9.x, reachable from this machine. An **API key** is the recommended
+  way to authenticate. See {ref}`credentials`.
+* The FSCrawler ZIP. See {ref}`local-installation`.
 
-Start FSCrawler with:
+## Create a job
 
-```sh
-bin/fscrawler
-```
-
-FSCrawler will read a local file (default to `~/.fscrawler/fscrawler/_settings.yaml`). If the file does not exist,
-you can ask to create it using the `--setup` command.
+On first run, create the default job configuration:
 
 ```sh
 $ bin/fscrawler --setup
 17:40:33,905 INFO  [f.console] You can edit the settings in [~/.fscrawler/fscrawler/_settings.yaml]. Then, you can run again fscrawler without the --setup option.
 ```
 
-Create a directory named `/tmp/es` or `c:\tmp\es`, add some files
-you want to index in it and start again:
+Edit `~/.fscrawler/fscrawler/_settings.yaml`:
+
+```yaml
+name: "fscrawler"
+fs:
+  url: "/tmp/es"
+elasticsearch:
+  urls:
+    - "https://127.0.0.1:9200"
+  api_key: "YOUR_API_KEY"
+```
+
+Leave `elasticsearch.index` unset. FSCrawler indexes into `fscrawler_docs` and creates a
+`fscrawler` alias.
+
+```{note}
+The default Elasticsearch URL is `https://127.0.0.1:9200`. With Elastic start-local, use
+`http://127.0.0.1:9200` instead. Unknown keys such as `elasticsearch.nodes` are ignored.
+See {ref}`elasticsearch-settings`.
+```
+
+Create `/tmp/es` (or `c:\tmp\es` on Windows), add files to index, then start:
 
 ```sh
 $ bin/fscrawler
@@ -34,7 +61,7 @@ $ bin/fscrawler
 17:41:45,395 INFO  [f.p.e.c.f.FsParser] FS crawler started for [fscrawler] for [/tmp/es] every [15m]
 ```
 
-If you did not create the directory, FSCrawler will complain until you fix it:
+If the directory does not exist, FSCrawler warns until you create it:
 
 ```none
 17:41:45,396 INFO  [f.p.e.c.f.FsParser] Run #1: job [fscrawler]: starting...
@@ -43,20 +70,28 @@ If you did not create the directory, FSCrawler will complain until you fix it:
 
 ## Searching for docs
 
-This is a common use case in elasticsearch, we want to search for something! 😉
+Search on the job alias (`fscrawler` by default), not on a type name:
 
-```json
-// GET docs/doc/_search
+```none
+GET fscrawler/_search
 {
-  "query" : {
-    "query_string": {
-      "query": "I am searching for something!"
+  "query": {
+    "match": {
+      "content": "I am searching for something!"
     }
   }
 }
 ```
 
-See {ref}`search-examples` for more examples.
+In Kibana, you can also use ES|QL:
+
+```sql
+FROM fscrawler
+| WHERE content : "something"
+```
+
+See {ref}`search-examples` for more examples. If Kibana 9.5+ is running, FSCrawler can create a
+default dashboard on startup. See {ref}`kibana-settings`.
 
 ## Ignoring folders
 
