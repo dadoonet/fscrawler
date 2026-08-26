@@ -642,7 +642,7 @@
 - #2174 (ossindex auth) - Vérifier si encore pertinent
 - #1024 (raw metadata doc) - Vérifier si résolu
 - #942 (Alpine docx) - Documenter limitation
-- #262 (Upload interface) - Déjà existant?
+- #262 (Upload interface) - Déjà existent?
 
 ### Quick Wins (2-4 semaines)
 1. #331 - Ajouter test continue_on_error
