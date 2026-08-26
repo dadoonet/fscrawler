@@ -1,5 +1,6 @@
 .DS_Store
 target
+.flattened-pom.xml
 docs/build
 /.settings
 /.classpath
