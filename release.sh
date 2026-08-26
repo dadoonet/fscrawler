@@ -401,6 +401,11 @@ rollback_from_state_file() {
 	info "  release branch:  ${RELEASE_BRANCH}"
 	info "  release tag:     ${RELEASE_TAG}"
 
+	# Discard leftover filtered copies (outside target/) before switching branches.
+	# git checkout keeps uncommitted files when both branches have the same blob,
+	# which is how FSCRAWLER_VERSION=3.0 survived onto the SNAPSHOT branch.
+	restore_filtered_working_tree
+
 	local current_branch
 	current_branch="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
 
@@ -437,9 +442,22 @@ rollback_from_state_file() {
 		info "Release tag ${RELEASE_TAG} not found (already removed)."
 	fi
 
+	# Restore again from the original branch HEAD, then re-filter so
+	# distribution/test-scripts matches the SNAPSHOT POMs.
+	restore_filtered_working_tree
+	if [[ -z "${LOG_FILE}" ]]; then
+		LOG_FILE="/dev/null"
+	fi
+	regenerate_filtered_resources
+
 	disable_release_tracking
 	clear_release_state
 	success "Rollback complete — back on ${ORIGINAL_BRANCH}."
+}
+
+restore_filtered_working_tree() {
+	log "Restoring filtered resources from HEAD (distribution/test-scripts)"
+	git_cmd restore --worktree --source=HEAD -- "distribution/test-scripts" || true
 }
 
 # ---------------------------------------------------------------------------
@@ -604,8 +622,10 @@ set_project_version() {
 }
 
 regenerate_filtered_resources() {
-	log "Regenerating filtered documentation resources"
-	mvn_run clean process-resources
+	log "Regenerating filtered resources (docs, contrib, distribution/test-scripts)"
+	# generate-test-resources is required: distribution/test-scripts is bound to that
+	# phase and lives outside target/, so mvn clean does not remove it.
+	mvn_run clean generate-test-resources
 }
 
 build_release() {

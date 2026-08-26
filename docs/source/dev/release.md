@@ -25,7 +25,9 @@ Run `./release.sh --help` for the full list of options.
 `--rollback`
 : Undoes a local or failed release using the `release/.release` state file (under the
   gitignored `release/` directory). Deletes the local release branch and tag, checks out
-  the original branch, and removes `release/.release`.
+  the original branch, restores leftover filtered files (notably
+  `distribution/test-scripts/`, which lives outside `target/`), re-filters them against
+  the restored SNAPSHOT POMs, and removes `release/.release`.
 
 Typical local rehearsal:
 
@@ -51,7 +53,11 @@ works even when the build fails midway.
 * Build the final artifacts using the `release` profile (javadoc, sources, GPG signing)
 * Tag the version
 * Prepare release notes from `docs/source/release/{version}.md` and GitHub API
-* Deploy to [Maven Central](https://central.sonatype.com/) using the `central-publishing-maven-plugin`
+* Deploy **only** `fscrawler-distribution` to [Maven Central](https://central.sonatype.com/)
+  using the `central-publishing-maven-plugin`. Other modules set `skipPublishing=true`.
+  `flatten-maven-plugin` (`flattenMode=oss`) writes a self-contained POM (no parent,
+  OSS metadata inlined, dependency versions resolved) so Central can validate the ZIP
+  artifact without publishing `fscrawler-parent`.
 * Prepare the next SNAPSHOT version
 * Commit the change
 * Merge the release branch into the branch you started from

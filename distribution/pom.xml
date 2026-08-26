@@ -9,6 +9,12 @@
 
     <artifactId>fscrawler-distribution</artifactId>
     <name>FSCrawler ZIP Distribution</name>
+    <url>https://github.com/dadoonet/fscrawler/</url>
+    <scm>
+        <connection>scm:git:git@github.com:dadoonet/fscrawler.git</connection>
+        <developerConnection>scm:git:git@github.com:dadoonet/fscrawler.git</developerConnection>
+        <url>scm:git:git@github.com:dadoonet/fscrawler.git</url>
+    </scm>
 
     <properties>
         <!-- Global configuration parameters for docker -->
@@ -58,6 +64,11 @@
         <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-elasticsearch-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.pilato.elasticsearch.crawler</groupId>
+            <artifactId>fscrawler-test-framework</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -139,22 +150,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <!-- There is no unit test, so we can skip that execution -->
-                        <id>unit-tests</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
-                        <!-- There is no integration test, so we can skip that execution -->
-                        <id>integration-tests</id>
-                        <phase>none</phase>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
             </plugin>
 
@@ -203,6 +198,33 @@
                             <goal>single</goal>
                         </goals>
                         <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Flatten the POM so Maven Central can validate it without publishing
+                 fscrawler-parent. Only this ZIP artifact is deployed; a thin child POM
+                 fails Central checks (missing OSS metadata and unresolved versions). -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <configuration>
+                    <flattenMode>oss</flattenMode>
+                    <updatePomFile>true</updatePomFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                        <phase>clean</phase>
                     </execution>
                 </executions>
             </plugin>
