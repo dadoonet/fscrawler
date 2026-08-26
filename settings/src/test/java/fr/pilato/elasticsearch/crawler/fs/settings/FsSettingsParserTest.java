@@ -20,11 +20,15 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -95,5 +99,41 @@ class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         fsSettings.getFs().setAttributesSupport(true);
         fsSettings.getFs().setAclSupport(true);
         settingsTester(fsSettings, tempDir);
+    }
+
+    @Test
+    void parseSettingsWithFsSshAndFtp(@TempDir Path tempDir) throws IOException {
+        String sshHost = randomToken() + ".ssh.example.com";
+        String ftpHost = randomToken() + ".ftp.example.com";
+        String username = randomToken();
+        String password = randomToken();
+        int sshPort = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1024, 65535);
+        int ftpPort = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1024, 65535);
+
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setProvider("ssh");
+        fsSettings
+                .getFs()
+                .setSsh(providerConfig(sshHost, sshPort, username, password, "/keys/" + randomToken() + ".pem"));
+        fsSettings.getFs().setFtp(providerConfig(ftpHost, ftpPort, username, password, null));
+        settingsTester(fsSettings, tempDir);
+    }
+
+    private static Map<String, Object> providerConfig(
+            String hostname, int port, String username, String password, String pemPath) {
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put("hostname", hostname);
+        config.put("port", port);
+        config.put("username", username);
+        config.put("password", password);
+        if (pemPath != null) {
+            config.put("pem_path", pemPath);
+        }
+        return config;
+    }
+
+    private String randomToken() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
     }
 }

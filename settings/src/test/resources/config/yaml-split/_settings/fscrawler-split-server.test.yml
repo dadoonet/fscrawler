@@ -1,4 +1,4 @@
-# optional: only required if you want to SSH to another server to index documents from there
+# deprecated: use fs.provider plus fs.ssh / fs.ftp instead of this top-level server block
 server:
   # optional: hostname, defaults to "localhost"
   hostname: "localhost"
