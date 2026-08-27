@@ -44,10 +44,6 @@ public record RemoteConnectionSettings(
         String remotePath,
         List<String> deprecationWarnings) {
 
-    public static final int DEFAULT_SSH_PORT = 22;
-    public static final int DEFAULT_FTP_PORT = 21;
-    public static final String DEFAULT_FTP_USERNAME = "anonymous";
-
     /**
      * Resolve remote connection settings.
      *

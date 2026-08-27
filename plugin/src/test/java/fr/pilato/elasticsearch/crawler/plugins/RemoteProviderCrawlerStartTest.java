@@ -101,15 +101,44 @@ class RemoteProviderCrawlerStartTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void crawlerStartUsesFtpAnonymousWhenUsernameOmitted() {
+    void crawlerStartDoesNotInferSshOrFtpDefaultsFromTypeName() {
+        String hostname = randomToken() + ".example.com";
+        String username = randomToken();
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", hostname, "username", username)));
+
+        RecordingRemoteProvider provider = new RecordingRemoteProvider("ssh");
+        provider.start(settings, "{}");
+
+        Assertions.assertThat(provider.getEffectivePort()).isZero();
+        Assertions.assertThat(provider.getEffectiveUsername()).isEqualTo(username);
+        Assertions.assertThat(provider.toFileUrl("/doc.pdf")).isEqualTo("ssh://" + hostname + ":0/doc.pdf");
+    }
+
+    @Test
+    void crawlerStartDoesNotInferFtpAnonymousFromTypeName() {
         String hostname = randomToken() + ".example.com";
         FsSettings settings = FsSettingsLoader.load();
         settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", hostname)));
 
         RecordingRemoteProvider provider = new RecordingRemoteProvider("ftp");
+
+        Assertions.assertThatThrownBy(() -> provider.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers.ftp.username");
+    }
+
+    @Test
+    void crawlerStartUsesProviderDefaultPortAndUsername() {
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", hostname)));
+
+        RecordingRemoteProvider provider = new RecordingRemoteProvider("ftp", 21, "anonymous");
         provider.start(settings, "{}");
 
-        Assertions.assertThat(provider.getEffectiveUsername()).isEqualTo(RemoteConnectionSettings.DEFAULT_FTP_USERNAME);
+        Assertions.assertThat(provider.getEffectiveUsername()).isEqualTo("anonymous");
+        Assertions.assertThat(provider.getEffectivePort()).isEqualTo(21);
     }
 
     @Test
@@ -133,16 +162,34 @@ class RemoteProviderCrawlerStartTest extends AbstractFSCrawlerTestCase {
 
     private static final class RecordingRemoteProvider extends FsCrawlerExtensionRemoteProviderAbstract {
         private final String type;
+        private final int defaultPort;
+        private final String defaultUsername;
         private final AtomicBoolean validatedFile = new AtomicBoolean();
         private final AtomicBoolean openedConnection = new AtomicBoolean();
 
         private RecordingRemoteProvider(String type) {
+            this(type, 0, null);
+        }
+
+        private RecordingRemoteProvider(String type, int defaultPort, String defaultUsername) {
             this.type = type;
+            this.defaultPort = defaultPort;
+            this.defaultUsername = defaultUsername;
         }
 
         @Override
         public String getType() {
             return type;
+        }
+
+        @Override
+        protected int defaultPort() {
+            return defaultPort;
+        }
+
+        @Override
+        protected String defaultUsername() {
+            return defaultUsername;
         }
 
         @Override

@@ -61,6 +61,11 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
 
     @Extension
     public static class FsCrawlerExtensionFsProviderFtp extends FsCrawlerExtensionRemoteProviderAbstract {
+        /** Default FTP port when {@code fs.providers.ftp.port} is omitted. */
+        public static final int DEFAULT_PORT = 21;
+
+        /** Default FTP username when {@code fs.providers.ftp.username} is omitted. */
+        public static final String DEFAULT_USERNAME = "anonymous";
 
         private static final String ALTERNATIVE_ENCODING = "GBK";
         private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
@@ -84,6 +89,16 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         @Override
         public String getType() {
             return "ftp";
+        }
+
+        @Override
+        protected int defaultPort() {
+            return DEFAULT_PORT;
+        }
+
+        @Override
+        protected String defaultUsername() {
+            return DEFAULT_USERNAME;
         }
 
         // ========== Protocol-specific settings ==========

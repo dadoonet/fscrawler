@@ -56,6 +56,8 @@ public class FsSshPlugin extends FsCrawlerPlugin {
 
     @Extension
     public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionRemoteProviderAbstract {
+        /** Default SFTP port when {@code fs.providers.ssh.port} is omitted. */
+        public static final int DEFAULT_PORT = 22;
 
         private static final Predicate<SftpClient.DirEntry> IS_DOT =
                 file -> !".".equals(file.getFilename()) && !"..".equals(file.getFilename());
@@ -77,6 +79,16 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         @Override
         public String getType() {
             return "ssh";
+        }
+
+        @Override
+        protected int defaultPort() {
+            return DEFAULT_PORT;
+        }
+
+        @Override
+        protected String urlScheme() {
+            return "sftp";
         }
 
         // ========== Protocol-specific settings ==========

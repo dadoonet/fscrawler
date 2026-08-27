@@ -105,21 +105,28 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     /**
      * Default TCP port when neither REST, {@code fs.providers.<type>.port} nor {@code server.port} is set.
      *
-     * @return SSH 22 or FTP 21
+     * @return {@code 0} unless a plugin overrides this
      */
     protected int defaultPort() {
-        return "ftp".equals(getType())
-                ? RemoteConnectionSettings.DEFAULT_FTP_PORT
-                : RemoteConnectionSettings.DEFAULT_SSH_PORT;
+        return 0;
     }
 
     /**
-     * Default username when none is configured. FTP uses {@code anonymous}.
+     * Default username when none is configured.
      *
-     * @return default username, or {@code null}
+     * @return {@code null} unless a plugin overrides this
      */
     protected String defaultUsername() {
-        return "ftp".equals(getType()) ? RemoteConnectionSettings.DEFAULT_FTP_USERNAME : null;
+        return null;
+    }
+
+    /**
+     * URL scheme used by {@link #toFileUrl(String)}. Defaults to {@link #getType()}.
+     *
+     * @return a scheme such as {@code ftp} or {@code sftp}
+     */
+    protected String urlScheme() {
+        return getType();
     }
 
     @Override
@@ -292,8 +299,7 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
 
     @Override
     public String toFileUrl(String fullPath) {
-        String scheme = "ftp".equals(getType()) ? "ftp" : "sftp";
-        return String.format("%s://%s:%d%s", scheme, getEffectiveHostname(), getEffectivePort(), fullPath);
+        return String.format("%s://%s:%d%s", urlScheme(), getEffectiveHostname(), getEffectivePort(), fullPath);
     }
 
     /**

@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
@@ -32,6 +33,8 @@ import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.sshd.server.SshServer;
@@ -227,6 +230,26 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
     void getType() {
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
         Assertions.assertThat(sshPlugin.getType()).isEqualTo("ssh");
+    }
+
+    @Test
+    void crawlerStartDefaultsSftpUrlOnPort22() {
+        String hostname = randomToken() + ".example.com";
+        String username = randomToken();
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", hostname, "username", username)));
+
+        FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
+        sshPlugin.start(settings, "{}");
+
+        Assertions.assertThat(sshPlugin.toFileUrl("/doc.pdf"))
+                .isEqualTo("sftp://" + hostname + ":" + FsSshPlugin.FsCrawlerExtensionFsProviderSsh.DEFAULT_PORT
+                        + "/doc.pdf");
+    }
+
+    private String randomToken() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
     }
 
     private void testFilesInDir(FsCrawlerExtensionFsProvider plugin, String path, Tuple... values) throws Exception {

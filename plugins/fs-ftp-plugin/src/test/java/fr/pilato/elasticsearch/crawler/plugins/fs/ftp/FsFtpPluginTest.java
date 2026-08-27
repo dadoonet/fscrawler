@@ -20,12 +20,15 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
 import java.util.Collection;
+import java.util.Locale;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.AfterEach;
@@ -196,6 +199,25 @@ class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
     void getType() {
         FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
         Assertions.assertThat(ftpPlugin.getType()).isEqualTo("ftp");
+    }
+
+    @Test
+    void crawlerStartDefaultsFtpUrlOnPort21WithoutUsername() {
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", hostname)));
+
+        FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
+        ftpPlugin.start(settings, "{}");
+
+        Assertions.assertThat(ftpPlugin.toFileUrl("/doc.pdf"))
+                .isEqualTo("ftp://" + hostname + ":" + FsFtpPlugin.FsCrawlerExtensionFsProviderFtp.DEFAULT_PORT
+                        + "/doc.pdf");
+    }
+
+    private String randomToken() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
     }
 
     private void testFilesInDir(FsCrawlerExtensionFsProvider plugin, String path, Tuple... values) throws Exception {
