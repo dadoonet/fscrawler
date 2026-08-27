@@ -12,7 +12,7 @@ jobs:
       - name: Fetch origin/main for Spotless ratchet
         run: git fetch origin main --depth=1
       - name: Set up JDK 21 and Maven Central Repository
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
