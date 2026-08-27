@@ -1271,11 +1271,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 doc.getFile().setLastModified(lastModified);
                 doc.getFile().setLastAccessed(lastAccessed);
                 doc.getFile().setIndexingDate(Instant.now());
-                if (crawlerPlugin != null) {
-                    doc.getFile().setUrl(crawlerPlugin.toFileUrl(fullFilename));
-                } else {
-                    doc.getFile().setUrl("file://" + fullFilename);
-                }
+                doc.getFile().setUrl(crawlerPlugin.toFileUrl(fullFilename));
                 doc.getFile().setExtension(extension);
                 if (fsSettings.getFs().isAddFilesize()) {
                     doc.getFile().setFilesize(size);
