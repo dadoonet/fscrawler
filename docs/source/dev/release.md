@@ -14,7 +14,7 @@ Run `./release.sh --help` for the full list of options.
 : Full local rehearsal in an isolated git worktree: release branch, Maven build with
   the `release` profile (javadoc, sources, GPG signing), tag, and release notes
   generation. The main clone stays on the branch you started from. Nothing is published
-  remotely (no Maven Central, Docker Hub, `git push`, GitHub release, or production email).
+  remotely (no Docker Hub, `git push`, GitHub release, or production email).
 
 `--skip-tests`
 : Adds `-DskipTests` to Maven build commands (also prefilled in the Extra Maven options
@@ -61,11 +61,8 @@ is running: Maven and git mutations are already bound to that path.
   `release/<version>/fscrawler-<version>.zip` so later `mvn clean` does not delete it
 * Tag the version
 * Prepare release notes from `docs/source/release/{version}.md` and GitHub API
-* Deploy **only** `fscrawler-distribution` to [Maven Central](https://central.sonatype.com/)
-  using the `central-publishing-maven-plugin`. Other modules set `skipPublishing=true`.
-  `flatten-maven-plugin` (`flattenMode=oss`) writes a self-contained POM (no parent,
-  OSS metadata inlined, dependency versions resolved) so Central can validate the ZIP
-  artifact without publishing `fscrawler-parent`.
+* Push Docker images to [Docker Hub](https://hub.docker.com/r/dadoonet/fscrawler/)
+  (`mvn deploy` with `skipPublishing=true` on every module — nothing is published to Maven Central)
 * Prepare the next SNAPSHOT version, update the README "Latest versions" table
   (HTML comment markers `<!-- release-versions:start -->` / `<!-- release-versions:end -->`),
   and point `.github/dependabot.yml` at the GitHub milestone titled like that SNAPSHOT
@@ -74,7 +71,10 @@ is running: Maven and git mutations are already bound to that path.
 * Merge the release branch into the branch you started from (still on the main clone)
 * Remove the isolated worktree and delete the release branch
 * Push the changes and the tag to origin
-* Create a GitHub release with `gh release create`, attaching `fscrawler-<version>.zip`
+* Create (or promote the Release Drafter draft of) the GitHub release with
+  `gh release create` / `gh release edit --draft=false`, attaching `fscrawler-<version>.zip`
+* Once that GitHub release looks OK, delete the matching SNAPSHOT pre-release
+  (`fscrawler-<version>-SNAPSHOT`) so the next push to `main` publishes the new SNAPSHOT
 * Optionally announce the version on https://discuss.elastic.co/c/annoucements/community-ecosystem
 
 Every `mvn` and mutating `git` command in the worktree aborts if `HEAD` is not
@@ -101,7 +101,7 @@ turns the SNAPSHOT row into the released version (release date, ReadTheDocs
 untouched. The Elasticsearch range is kept from the previous SNAPSHOT row unless you
 pass `--es-versions`.
 
-Maven Central, SNAPSHOT, and Docker badges are already dynamic and are not rewritten.
+GitHub release, SNAPSHOT, and Docker badges are already dynamic and are not rewritten.
 
 ## Dependabot milestone
 
@@ -167,8 +167,25 @@ $ gh release edit fscrawler-{version} --notes-file release/{version}/release-not
 
 The announcement header (`scripts/templates/release-header.md`) points `wget` at the GitHub
 release asset `fscrawler-{version}.zip`. The ZIP's inner directory remains
-`fscrawler-distribution-{version}` (Maven `artifactId`). Maven Central still publishes
-`fscrawler-distribution-{version}.zip`.
+`fscrawler-distribution-{version}` (Maven `artifactId`).
+
+## SNAPSHOT pre-releases
+
+Every push to `main` runs `.github/workflows/maven.yml`, which:
+
+* Pushes Docker images to Docker Hub
+* Publishes (or overwrites) a public GitHub **pre-release** tagged
+  `fscrawler-{version}` (for example `fscrawler-3.1-SNAPSHOT`) with the asset
+  `fscrawler-3.1-SNAPSHOT.zip`
+
+The pre-release is created with `--prerelease --latest=false` so it never becomes GitHub's
+"Latest" release. The ZIP is overwritten (`gh release upload --clobber`) on every subsequent
+push.
+
+When `release.sh` publishes the matching stable GitHub release (`fscrawler-3.1`) and you
+confirm it looks OK, it deletes that SNAPSHOT pre-release
+(`gh release delete fscrawler-3.1-SNAPSHOT --yes --cleanup-tag`). The next push to `main`
+creates `fscrawler-3.2-SNAPSHOT`.
 
 ## Before releasing
 
@@ -184,7 +201,6 @@ Prerequisites:
 * `python3` and the GitHub CLI (`gh auth login`)
 * A clean-ish git working tree on your integration branch
 * GPG signing configured for the Maven `release` profile
-* `~/.m2/settings.xml` with a `central` server entry (Sonatype Central token) for production deploy
 * Docker Hub credentials when pushing images (or pass `-Ddocker.skip`)
 
 ## Environment variables (`.env`)
@@ -202,29 +218,23 @@ See `.env.example` at the repository root:
 | ANNOUNCE_FROM | Sender address (must match `SMTP_USER` for Ionos)                   |
 | ANNOUNCE_TO   | Recipient (personal address for local, Elastic list for production) |
 
-After deployment, check the publishing status on
-[Central Portal](https://central.sonatype.com/publishing/deployments).
-The `central-publishing-maven-plugin` is configured with `autoPublish` enabled, so artifacts
-are published automatically once validation succeeds.
-
-Maven Central **release** coordinates are immutable: answering “no” during the post-deploy
-checks only skips the git merge/push; it does not remove or replace what was published.
-If a release build on Central is wrong, publish a **new** version (for example a patch).
 Docker Hub tags can usually be overwritten by deploying the same tag again.
+The GitHub ZIP can be re-uploaded with `gh release upload --clobber` if the release already exists.
 
 ## Release Drafter
 
 The repository uses [Release Drafter](https://github.com/release-drafter/release-drafter) to
 maintain a **draft** GitHub release on each push to `main`. Tags follow the `fscrawler-{version}`
-convention. The final published release uses the hybrid notes assembled by `release.sh`.
+convention (SNAPSHOT suffix stripped, for example `fscrawler-3.1`). That draft is a different
+tag from the SNAPSHOT pre-release (`fscrawler-3.1-SNAPSHOT`). `release.sh` promotes the draft
+(`gh release edit --draft=false`) or creates the release, then attaches the ZIP.
 
 Logs are written to `release/<release-version>/release.log`. On failure, the script prints the
 last lines of the log and suggests `./release.sh --rollback`.
 
 ```{note}
-Only developers with write rights to the Sonatype Central namespace under `fr.pilato`
-can perform the release.
-
 Only developers with write rights to the [DockerHub repository](https://hub.docker.com/r/dadoonet/fscrawler/)
 can push the Docker images.
+
+GitHub Releases use the repository `GITHUB_TOKEN` (CI) or an authenticated `gh` CLI (release script).
 ```

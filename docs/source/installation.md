@@ -272,53 +272,27 @@ You will find this example in the `contrib/docker-compose-example-elasticsearch`
 (local-installation)=
 ## Local installation (ZIP)
 
-If you prefer to run FSCrawler from a ZIP distribution on your machine instead of Docker:
+If you prefer to run FSCrawler from a ZIP distribution on your machine instead of Docker,
+download [FSCrawler {{ release }}](https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip)
+from [GitHub Releases](https://github.com/dadoonet/fscrawler/releases):
+
+```sh
+wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip
+unzip fscrawler-{{ release }}.zip
+cd fscrawler-distribution-{{ release }}
+```
 
 ````{ifconfig} release.endswith('-SNAPSHOT')
-You can download FSCrawler {{ version }} from [Sonatype snapshots](https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/).
-
-The filename ends with `.zip`.
-
 ```{warning}
-This is a **SNAPSHOT** version.
-You can also download a **stable** version from [Maven Central](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/).
-```
-
-```{note}
-There's an issue with the download links for SNAPSHOT versions.
-
-```{hint}
-Due to a bug with the underlying service we rely on to provide SNAPSHOT hosting,
-we've had to temporarily remove browse access for SNAPSHOT releases. You should
-still be able to publish and consume SNAPSHOT releases as usual, but you cannot
-browse them via the UI.
-```
-
-So you must now download the [maven-metadata.xml](https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/maven-metadata.xml)
-file. Check the `<snapshotVersion>` tag to find the latest SNAPSHOT version of the `zip` file.
-
-```xml
-<snapshotVersion>
-  <extension>zip</extension>
-  <value>3.0-YYYYMMDD.HHMMSS-NN</value>
-  <updated>20250801161301</updated>
-</snapshotVersion>
-```
-
-Note the `value` tag which contains the version you need to download. And use that value in the following URL:
-
-<https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/3.0-SNAPSHOT/fscrawler-distribution-3.0-YYYYMMDD.HHMMSS-NN.zip>
+This is a **SNAPSHOT** build. The ZIP is overwritten on every push to `main`.
+Stable versions are listed on the same [GitHub Releases](https://github.com/dadoonet/fscrawler/releases) page.
 ```
 ````
 
 ````{ifconfig} release == version
-You can download FSCrawler {{ version }} from [Sonatype Maven Central](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/).
-
 ```{tip}
-This is a **stable** version.
-You can choose another version than {{ version }} from [Maven Central](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/).
-
-You can also download a **SNAPSHOT** version from [Sonatype Snapshots](https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/).
+This is a **stable** version. Development SNAPSHOT builds are published as GitHub pre-releases on the same
+[GitHub Releases](https://github.com/dadoonet/fscrawler/releases) page.
 ```
 ````
 

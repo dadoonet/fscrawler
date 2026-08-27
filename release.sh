@@ -2,13 +2,12 @@
 #
 # Interactive release workflow for FSCrawler.
 #
-# Creates an isolated git worktree, builds signed artifacts, publishes to Maven
-# Central (central-publishing-maven-plugin), pushes Docker images, attaches the
-# distribution ZIP to the GitHub release, and optionally sends the announcement.
+# Creates an isolated git worktree, builds signed artifacts, pushes Docker
+# images, publishes the ZIP to GitHub Releases, deletes the SNAPSHOT
+# pre-release, and optionally sends the announcement.
 #
 set -euo pipefail
 
-readonly CENTRAL_DEPLOYMENTS_URL="https://central.sonatype.com/publishing/deployments"
 readonly DOCKERHUB_TAGS_URL="https://hub.docker.com/r/dadoonet/fscrawler/tags"
 readonly TAG_PREFIX="fscrawler"
 readonly SCRIPT_NAME="${0##*/}"
@@ -58,7 +57,7 @@ Options:
   -h, --help       Show this help message and exit
   -n, --dry-run    Simulate the release without mutating git, Maven, or remotes
   -l, --local      Full local rehearsal: branch, build, sign, release notes
-                   (no Maven Central, Docker Hub, git push, or GitHub release)
+                   (no Docker Hub, git push, or GitHub release)
       --rollback   Undo a local or failed release using release/${RELEASE_STATE_FILE_NAME}
       --skip-tests Add -DskipTests to Maven build commands
 
@@ -73,7 +72,7 @@ Local mode:
   - Creates an isolated git worktree under release/worktrees/<version>/
   - Commits, builds with -Prelease, tags, generates notes in that worktree
   - The main clone stays on the branch you started from (other checkouts are safe)
-  - Skips deploy, git push, Docker Hub, GitHub release, and production email
+  - Skips Docker Hub, git push, GitHub release, and production email
   - Optionally sends a test announcement email to ANNOUNCE_TO from .env
   - release/${RELEASE_STATE_FILE_NAME} is saved early so --rollback works after a failure
 
@@ -89,7 +88,7 @@ Prerequisites (default and --local):
   - python3, gh CLI authenticated (gh auth login)
   - Clean-ish git working tree on your integration branch
   - GPG signing configured for the Maven release profile
-  - ~/.m2/settings.xml server id "central" for production deploy only
+  - Docker Hub credentials when pushing images (or pass -Ddocker.skip)
 
 Logs are written to release/<release-version>/release.log
 EOF
@@ -724,7 +723,7 @@ build_release() {
 }
 
 deploy_release() {
-	log "Deploying artifacts to Maven Central"
+	log "Pushing Docker images to Docker Hub"
 	mvn_run deploy -DskipTests -Prelease "${MAVEN_EXTRA_ARGS[@]}"
 }
 
@@ -780,6 +779,21 @@ send_announcement() {
 		--subject "${subject}" >>"${LOG_FILE}" 2>&1
 }
 
+delete_snapshot_prerelease() {
+	local tag="${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT"
+	if is_dry_run || is_local; then
+		info "[local] Would delete GitHub pre-release ${tag}"
+		return 0
+	fi
+	if gh release view "${tag}" >/dev/null 2>&1; then
+		log "Deleting SNAPSHOT pre-release ${tag}"
+		gh release delete "${tag}" --yes --cleanup-tag
+		success "Deleted pre-release ${tag}."
+	else
+		info "No SNAPSHOT pre-release ${tag} to delete."
+	fi
+}
+
 create_github_release() {
 	if is_dry_run || is_local; then
 		info "[local] Skipping GitHub release creation."
@@ -789,6 +803,7 @@ create_github_release() {
 	if ! confirm "Create GitHub release ${RELEASE_TAG}?" y; then
 		info "Create manually when ready:"
 		info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip"
+		info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
 		return
 	fi
 
@@ -796,22 +811,32 @@ create_github_release() {
 
 	local zip="${RELEASE_ZIP:-${ROOT_DIR}/release/${RELEASE_VERSION}/fscrawler-${RELEASE_VERSION}.zip}"
 	local asset="${zip}#fscrawler-${RELEASE_VERSION}.zip"
+	local repo="${GITHUB_REPO:-dadoonet/fscrawler}"
 	if [[ ! -f "${zip}" ]]; then
 		die "Release ZIP not found: ${zip} — copy it after the release build, before mvn clean."
 	fi
 
-	log "Creating GitHub release ${RELEASE_TAG}"
 	if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
 		warn "GitHub release ${RELEASE_TAG} already exists."
 		if confirm "Update release notes and attach ${zip##*/}?" y; then
-			gh release edit "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}"
+			gh release edit "${RELEASE_TAG}" --draft=false --notes-file "${RELEASE_NOTES_FILE}"
 			gh release upload "${RELEASE_TAG}" "${asset}" --clobber
+		else
+			return
 		fi
-		return
+	else
+		log "Creating GitHub release ${RELEASE_TAG}"
+		gh release create "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}" "${asset}"
+		success "GitHub release ${RELEASE_TAG} created (asset fscrawler-${RELEASE_VERSION}.zip)."
 	fi
 
-	gh release create "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}" "${asset}"
-	success "GitHub release ${RELEASE_TAG} created (asset fscrawler-${RELEASE_VERSION}.zip)."
+	open_url "https://github.com/${repo}/releases/tag/${RELEASE_TAG}"
+	if confirm "GitHub release looks OK — delete SNAPSHOT pre-release?" y; then
+		delete_snapshot_prerelease
+	else
+		info "Delete later with:"
+		info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
+	fi
 }
 
 ensure_clean_enough_tree() {
@@ -985,16 +1010,16 @@ review_announcement() {
 
 maybe_deploy() {
 	if is_dry_run || is_local; then
-		info "Skipping deployment (no Maven Central / Docker Hub publish)."
+		info "Skipping deployment (no Docker Hub publish)."
 		return
 	fi
 
-	if confirm "Deploy artifacts now?" y; then
+	if confirm "Push Docker images now?" y; then
 		RELEASE_APPROVED=true
 		RELEASE_DEPLOYED=true
 		deploy_release
 	else
-		info "Skipping deployment."
+		info "Skipping Docker Hub push."
 	fi
 }
 
@@ -1029,18 +1054,9 @@ verify_publications() {
 		return
 	fi
 
-	info "Artifacts may already be published (Maven Central autoPublish / Docker Hub)."
+	info "Docker images may already be published."
 	info "These prompts only decide whether to continue with the git merge and push."
 	info "Answering no does not retract anything already published."
-
-	info "Check Maven Central deployment status"
-	open_url "${CENTRAL_DEPLOYMENTS_URL}"
-	confirm "Maven Central looks OK — continue with git finalize?" y || RELEASE_APPROVED=false
-
-	if [[ "${RELEASE_APPROVED}" != true ]]; then
-		warn "Git finalize cancelled after Maven Central check."
-		return
-	fi
 
 	info "Check Docker Hub tags"
 	open_url "${DOCKERHUB_TAGS_URL}"
@@ -1095,9 +1111,8 @@ finalize_skipped_deploy() {
 
 finalize_failed_verification() {
 	warn "Git finalize cancelled — published artifacts are NOT retracted."
-	warn "Maven Central release versions are immutable: the same version cannot be overwritten."
-	warn "If the Central artifacts are wrong, cut a new version (for example a patch release)."
 	info "Docker Hub tags can usually be overwritten by deploying again with the same tag."
+	info "The GitHub ZIP can be re-uploaded with gh release upload --clobber if the release already exists."
 	save_release_state "verification_failed"
 	disable_release_tracking
 
@@ -1122,8 +1137,9 @@ finalize_awaiting_push() {
 	info "When ready to publish:"
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
 	info "  python3 scripts/prepare-release-notes.py --version ${RELEASE_VERSION} --since-tag ${PREVIOUS_TAG}"
-	info "Then create the GitHub release and send the announcement manually:"
+	info "Then create the GitHub release, delete the SNAPSHOT pre-release, and send the announcement manually:"
 	info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip"
+	info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
 	info "To undo the local merge and clear release state:"
 	info "  ${SCRIPT_NAME} --rollback"
 }

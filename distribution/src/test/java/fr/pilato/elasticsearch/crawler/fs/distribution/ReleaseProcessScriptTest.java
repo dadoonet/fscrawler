@@ -28,7 +28,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 /**
- * Guards the release-process follow-ups: isolated git worktree, HEAD check, GitHub ZIP asset, and README table update.
+ * Guards the release-process follow-ups: isolated git worktree, HEAD check, GitHub ZIP asset, SNAPSHOT pre-release, and
+ * README table update.
  */
 class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
 
@@ -135,6 +136,56 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 .as("root clone stays on the original branch; merge there, then drop the worktree")
                 .contains("remove_release_worktree")
                 .doesNotContain("checkout -q \"${ORIGINAL_BRANCH}\"");
+    }
+
+    @Test
+    void githubReleaseDeletesSnapshotPrereleaseAfterStableIsPublished() throws Exception {
+        String script = readReleaseScript();
+        String create = functionBody(script, "create_github_release");
+        assertThat(create)
+                .as("the SNAPSHOT pre-release is removed only after the stable GitHub release exists")
+                .contains("delete_snapshot_prerelease");
+        int createIdx = create.indexOf("gh release create");
+        int deleteIdx = create.indexOf("delete_snapshot_prerelease");
+        assertThat(createIdx).isGreaterThanOrEqualTo(0);
+        assertThat(deleteIdx).isGreaterThan(createIdx);
+        String helper = functionBody(script, "delete_snapshot_prerelease");
+        assertThat(helper)
+                .contains("gh release delete")
+                .contains("${RELEASE_VERSION}-SNAPSHOT")
+                .contains("--cleanup-tag");
+    }
+
+    @Test
+    void deploySkipsMavenCentral() throws Exception {
+        String deploy = functionBody(readReleaseScript(), "deploy_release");
+        assertThat(deploy)
+                .as("production deploy is Docker Hub only; ZIP distribution is GitHub Releases")
+                .doesNotContain("Maven Central");
+        String verify = functionBody(readReleaseScript(), "verify_publications");
+        assertThat(verify).doesNotContain("CENTRAL_DEPLOYMENTS_URL").doesNotContain("Maven Central");
+    }
+
+    @Test
+    void mainBranchPublishesSnapshotPrerelease() throws Exception {
+        String workflow = Files.readString(
+                repoRoot().resolve(".github").resolve("workflows").resolve("maven.yml"));
+        assertThat(workflow)
+                .as("every push to main must refresh the SNAPSHOT GitHub pre-release")
+                .contains("publish_snapshot_prerelease.py")
+                .contains("contents: write")
+                .doesNotContain("CENTRAL_TOKEN");
+    }
+
+    @Test
+    void installationDocsDownloadFromGitHubReleases() throws Exception {
+        String installation =
+                Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
+        assertThat(installation)
+                .contains("github.com/dadoonet/fscrawler/releases")
+                .contains("fscrawler-{{ release }}.zip")
+                .doesNotContain("repository/maven-snapshots")
+                .doesNotContain("repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution");
     }
 
     @Test
