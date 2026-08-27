@@ -20,10 +20,10 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
-import com.jayway.jsonpath.PathNotFoundException;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import java.io.IOException;
@@ -57,7 +57,9 @@ public class FsSshPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionRemoteProviderAbstract {
+    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionFsProviderAbstract {
+        /** Default SFTP port when {@code fs.providers.ssh.port} is omitted. */
+        public static final int DEFAULT_PORT = 22;
 
         private static final Predicate<SftpClient.DirEntry> IS_DOT =
                 file -> !".".equals(file.getFilename()) && !"..".equals(file.getFilename());
@@ -72,30 +74,61 @@ public class FsSshPlugin extends FsCrawlerPlugin {
 
         private SshClient sshClient;
         private SftpClient sftpClient;
-
-        // SSH-specific fields
-        private String pemPath;
         private SftpClient.Attributes fileAttributes;
+
+        private String remotePath;
+        private String hostname;
+        private int port;
+        private String username;
+        private String password;
+        private String pemPath;
 
         @Override
         public String getType() {
             return "ssh";
         }
 
-        // ========== Protocol-specific settings ==========
-
         @Override
-        protected void parseProtocolSpecificSettings() throws PathNotFoundException {
-            pemPath = readOptionalString("$.ssh.pem_path");
+        public boolean supportsCrawling() {
+            return true;
         }
 
         @Override
-        protected long getFilesize() {
-            return fileAttributes != null ? fileAttributes.getSize() : 0;
+        @SuppressWarnings("removal")
+        protected void parseSettings() {
+            HostConnection connection = parseHostConnection(DEFAULT_PORT, null);
+            hostname = connection.hostname();
+            port = connection.port();
+            username = connection.username();
+            password = connection.password();
+            Server server = fsSettings != null ? fsSettings.getServer() : null;
+            pemPath = connection.lookup().string("pem_path", server != null ? server.getPemPath() : null);
+            remotePath = connection.path();
+            connection.lookup().deprecationWarnings().forEach(logger::warn);
         }
 
         @Override
-        protected void doValidateFile() throws FsCrawlerPluginException {
+        protected void validateSettings() throws IOException {
+            remotePath = requirePathAndConnect(hostname, username, remotePath);
+        }
+
+        @Override
+        public Doc createDocument() {
+            return createFileDocument(remotePath, fileAttributes != null ? fileAttributes.getSize() : 0);
+        }
+
+        @Override
+        public void stop() throws FsCrawlerPluginException {
+            closeConnection();
+        }
+
+        @Override
+        public String toFileUrl(String fullPath) {
+            return "sftp://" + hostname + ":" + port + fullPath;
+        }
+
+        @Override
+        protected void validateFile() throws FsCrawlerPluginException {
             try {
                 // Check if file exists and get its attributes
                 fileAttributes = sftpClient.stat(remotePath);
@@ -133,29 +166,8 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         public void openConnection() throws FsCrawlerPluginException {
             logger.debug("Opening SSH connection");
 
-            String effectivePemPath = getEffectivePemPath();
-
             sshClient = createSshClient();
-            sftpClient = createSftpClient(openSshSession(
-                    sshClient,
-                    getEffectiveUsername(),
-                    getEffectivePassword(),
-                    effectivePemPath,
-                    getEffectiveHostname(),
-                    getEffectivePort()));
-        }
-
-        /**
-         * Get the effective PEM path, using JSON settings if available, otherwise falling back to job settings.
-         *
-         * @return the effective PEM path, or null if not configured
-         */
-        private String getEffectivePemPath() {
-            if (pemPath != null) {
-                return pemPath;
-            }
-            Server server = fsSettings.getServer();
-            return server != null ? server.getPemPath() : null;
+            sftpClient = createSftpClient(openSshSession(sshClient, username, password, pemPath, hostname, port));
         }
 
         @Override

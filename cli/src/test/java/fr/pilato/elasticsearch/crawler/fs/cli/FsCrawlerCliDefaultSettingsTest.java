@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.cli;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
@@ -27,6 +28,7 @@ import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCa
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** We want to test FSCrawler main app */
+@SuppressWarnings("removal")
 class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private Path metadataDir;
@@ -79,5 +82,66 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
         FsSettings settings = fsSettingsLoader.read("modify_settings_server_ssh");
         Assertions.assertThat(settings.getServer().getPort()).isEqualTo(Server.PROTOCOL.SSH_PORT);
         Assertions.assertThat(settings.getServer().getUsername()).isNull();
+    }
+
+    @Test
+    void settingsWithFsFtp() throws IOException {
+        String hostname = randomHostname();
+        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
+        Path jobDir = metadataDir.resolve("modify_settings_fs_ftp");
+        Files.createDirectories(jobDir);
+
+        Files.writeString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML), """
+                name: "modify_settings_fs_ftp"
+                fs:
+                  provider: "ftp"
+                  url: "/pub"
+                  providers:
+                    ftp:
+                      hostname: "%s"
+                """.formatted(hostname));
+        FsSettings settings = fsSettingsLoader.read("modify_settings_fs_ftp");
+        Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ftp");
+        Assertions.assertThat(settings.getFs().getProviderConfig("ftp"))
+                .isNotNull()
+                .containsEntry("hostname", hostname)
+                .doesNotContainKey("username")
+                .doesNotContainKey("port");
+    }
+
+    @Test
+    void settingsWithFsSsh() throws IOException {
+        String hostname = randomHostname();
+        String username = randomToken();
+        FsSettingsLoader fsSettingsLoader = new FsSettingsLoader(metadataDir);
+        Path jobDir = metadataDir.resolve("modify_settings_fs_ssh");
+        Files.createDirectories(jobDir);
+
+        Files.writeString(jobDir.resolve(FsSettingsLoader.SETTINGS_YAML), """
+                name: "modify_settings_fs_ssh"
+                fs:
+                  provider: "ssh"
+                  url: "/docs"
+                  providers:
+                    ssh:
+                      hostname: "%s"
+                      username: "%s"
+                """.formatted(hostname, username));
+        FsSettings settings = fsSettingsLoader.read("modify_settings_fs_ssh");
+        Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ssh");
+        Assertions.assertThat(settings.getFs().getProviderConfig("ssh"))
+                .isNotNull()
+                .containsEntry("hostname", hostname)
+                .containsEntry("username", username)
+                .doesNotContainKey("port");
+    }
+
+    private String randomHostname() {
+        return randomToken() + ".example.com";
+    }
+
+    private String randomToken() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
     }
 }

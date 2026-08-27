@@ -23,8 +23,9 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,11 +70,7 @@ class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     @Test
     void ftp() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setUrl("/");
-        fsSettings.getServer().setHostname(hostname);
-        fsSettings.getServer().setUsername("anonymous");
-        fsSettings.getServer().setProtocol(Server.PROTOCOL.FTP);
-        fsSettings.getServer().setPort(fakeFtpServer.getServerControlPort());
+        configureFtp(fsSettings, "anonymous", null);
         crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
@@ -82,14 +79,22 @@ class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
     @Test
     void ftp_with_user() throws Exception {
         FsSettings fsSettings = createTestSettings();
-        fsSettings.getFs().setUrl("/");
-        fsSettings.getServer().setHostname(hostname);
-        fsSettings.getServer().setUsername(user);
-        fsSettings.getServer().setPassword(pass);
-        fsSettings.getServer().setProtocol(Server.PROTOCOL.FTP);
-        fsSettings.getServer().setPort(fakeFtpServer.getServerControlPort());
+        configureFtp(fsSettings, user, pass);
         crawler = startCrawler(fsSettings);
 
         countTestHelper(new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 1L, null);
+    }
+
+    private void configureFtp(FsSettings fsSettings, String username, String password) {
+        fsSettings.getFs().setProvider("ftp");
+        fsSettings.getFs().setUrl("/");
+        Map<String, Object> ftp = new LinkedHashMap<>();
+        ftp.put("hostname", hostname);
+        ftp.put("port", fakeFtpServer.getServerControlPort());
+        ftp.put("username", username);
+        if (password != null) {
+            ftp.put("password", password);
+        }
+        fsSettings.getFs().setProviders(Map.of("ftp", ftp));
     }
 }

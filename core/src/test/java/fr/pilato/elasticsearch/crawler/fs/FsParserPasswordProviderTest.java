@@ -44,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -190,8 +191,8 @@ class FsParserPasswordProviderTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings fsSettings, String restSettings) {
-            // Recording stub ignores REST settings.
+        public void start(FsSettings fsSettings, Map<String, Object> overlay) {
+            // Recording stub ignores overlay settings.
         }
 
         @Override

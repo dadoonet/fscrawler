@@ -50,6 +50,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -217,15 +218,7 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         when(pluginsManager.findFsProvider(FS_PROVIDER_TYPE)).thenReturn(fsProvider);
 
         UploadResponse response = documentApi.addDocumentFrom3rdParty(
-                null,
-                "true",
-                null,
-                null,
-                null,
-                null,
-                headerPassword,
-                queryPassword,
-                new ByteArrayInputStream(("{\"type\":\"" + FS_PROVIDER_TYPE + "\"}").getBytes(StandardCharsets.UTF_8)));
+                null, "true", null, null, null, null, headerPassword, queryPassword, thirdPartyPayload());
 
         assertThat(response.isOk()).isTrue();
         assertThat(tikaDocParser.reopenGenerateCalls.get()).isEqualTo(1);
@@ -250,15 +243,7 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         when(pluginsManager.findFsProvider(FS_PROVIDER_TYPE)).thenReturn(fsProvider);
 
         UploadResponse response = documentApi.addDocumentFrom3rdParty(
-                null,
-                "true",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                new ByteArrayInputStream(("{\"type\":\"" + FS_PROVIDER_TYPE + "\"}").getBytes(StandardCharsets.UTF_8)));
+                null, "true", null, null, null, null, null, null, thirdPartyPayload());
 
         assertThat(response.isOk()).isTrue();
         assertThat(tikaDocParser.reopenGenerateCalls.get()).isEqualTo(1);
@@ -272,6 +257,51 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         verify(pluginsManager).findPasswordProvider(PASSWORD_PROVIDER_TYPE);
     }
 
+    @Test
+    void thirdPartyUploadPassesTypeOverlayToProvider() {
+        String field = randomToken();
+        String value = randomToken();
+        byte[] content = randomContent();
+        String filename = randomFilename("pdf");
+        RecordingFsProvider fsProvider = new RecordingFsProvider(filename, content);
+        when(pluginsManager.findFsProvider(FS_PROVIDER_TYPE)).thenReturn(fsProvider);
+
+        UploadResponse response = documentApi.addDocumentFrom3rdParty(
+                null,
+                "true",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                thirdPartyPayload("{\"" + field + "\":\"" + value + "\"}"));
+
+        assertThat(response.isOk()).isTrue();
+        assertThat(fsProvider.overlay).containsEntry(field, value).doesNotContainKey("type");
+    }
+
+    @Test
+    void thirdPartyUploadRejectsMissingTypeBlock() {
+        RecordingFsProvider fsProvider = new RecordingFsProvider(randomFilename("pdf"), randomContent());
+        when(pluginsManager.findFsProvider(FS_PROVIDER_TYPE)).thenReturn(fsProvider);
+
+        UploadResponse response = documentApi.addDocumentFrom3rdParty(
+                null,
+                "true",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new ByteArrayInputStream(("{\"type\":\"" + FS_PROVIDER_TYPE + "\"}").getBytes(StandardCharsets.UTF_8)));
+
+        assertThat(response.isOk()).isFalse();
+        assertThat(response.getMessage()).contains("missing").contains(FS_PROVIDER_TYPE);
+        assertThat(fsProvider.overlay).isEmpty();
+    }
+
     private void configurePasswordProvider() {
         Passwords passwords = new Passwords();
         passwords.setProvider(PASSWORD_PROVIDER_TYPE);
@@ -282,6 +312,21 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
                         .toLowerCase(Locale.ROOT)
                 + "." + extension;
+    }
+
+    private InputStream thirdPartyPayload() {
+        return thirdPartyPayload("{\"path\":\"" + randomFilename("bin") + "\"}");
+    }
+
+    private InputStream thirdPartyPayload(String overlayJsonObject) {
+        return new ByteArrayInputStream(
+                ("{\"type\":\"" + FS_PROVIDER_TYPE + "\",\"" + FS_PROVIDER_TYPE + "\":" + overlayJsonObject + "}")
+                        .getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String randomToken() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
     }
 
     private String randomPassword() {
@@ -391,6 +436,7 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         private final String filename;
         private final byte[] content;
         private final AtomicInteger readFileCalls = new AtomicInteger();
+        private Map<String, Object> overlay = Map.of();
 
         private RecordingFsProvider(String filename, byte[] content) {
             this.filename = filename;
@@ -398,8 +444,8 @@ class DocumentApiTest extends AbstractFSCrawlerTestCase {
         }
 
         @Override
-        public void start(FsSettings fsSettings, String restSettings) {
-            // No configuration needed for this test double.
+        public void start(FsSettings fsSettings, Map<String, Object> overlay) {
+            this.overlay = overlay == null ? Map.of() : overlay;
         }
 
         @Override

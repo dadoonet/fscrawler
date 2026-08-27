@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
 @Execution(SAME_THREAD)
+@SuppressWarnings("removal")
 class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
 
     private static final Logger logger = LogManager.getLogger();

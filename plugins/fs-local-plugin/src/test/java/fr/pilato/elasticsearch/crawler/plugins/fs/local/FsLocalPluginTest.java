@@ -20,7 +20,9 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
@@ -31,6 +33,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +47,7 @@ class FsLocalPluginTest extends AbstractFSCrawlerTestCase {
     void setUp() {
         FsSettings fsSettings = FsSettingsLoader.load();
         FsLocalPlugin.FsCrawlerExtensionFsProviderLocal plugin = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal();
-        plugin.start(fsSettings, "{}");
+        plugin.start(fsSettings);
         localPlugin = plugin;
     }
 
@@ -89,5 +93,19 @@ class FsLocalPluginTest extends AbstractFSCrawlerTestCase {
     @Test
     void getType() {
         Assertions.assertThat(localPlugin.getType()).isEqualTo("local");
+    }
+
+    @Test
+    void overlayWithoutUrlFails() {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        FsLocalPlugin.FsCrawlerExtensionFsProviderLocal plugin = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal();
+        String extraField = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
+        String extraValue = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
+
+        Assertions.assertThatThrownBy(() -> plugin.start(fsSettings, Map.of(extraField, extraValue)))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("local url is missing");
     }
 }

@@ -20,9 +20,10 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import java.io.FilterInputStream;
@@ -60,7 +61,12 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderFtp extends FsCrawlerExtensionRemoteProviderAbstract {
+    public static class FsCrawlerExtensionFsProviderFtp extends FsCrawlerExtensionFsProviderAbstract {
+        /** Default FTP port when {@code fs.providers.ftp.port} is omitted. */
+        public static final int DEFAULT_PORT = 21;
+
+        /** Default FTP username when {@code fs.providers.ftp.username} is omitted. */
+        public static final String DEFAULT_USERNAME = "anonymous";
 
         private static final String ALTERNATIVE_ENCODING = "GBK";
         private static final Comparator<FTPFile> FTP_FILE_COMPARATOR = Comparator.comparing(
@@ -72,9 +78,13 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
 
         private FTPClient ftp;
         private boolean isUtf8 = false;
-
-        // FTP-specific fields
         private FTPFile fileInfo;
+
+        private String remotePath;
+        private String hostname;
+        private int port;
+        private String username;
+        private String password;
 
         private final Predicate<FTPFile> isNotSymLink = file -> {
             if (fsSettings != null && fsSettings.getFs().isFollowSymlinks()) return true;
@@ -86,15 +96,44 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
             return "ftp";
         }
 
-        // ========== Protocol-specific settings ==========
-
         @Override
-        protected long getFilesize() {
-            return fileInfo != null ? fileInfo.getSize() : 0;
+        public boolean supportsCrawling() {
+            return true;
         }
 
         @Override
-        protected void doValidateFile() throws FsCrawlerPluginException {
+        protected void parseSettings() {
+            HostConnection connection = parseHostConnection(DEFAULT_PORT, DEFAULT_USERNAME);
+            hostname = connection.hostname();
+            port = connection.port();
+            username = connection.username();
+            password = connection.password();
+            remotePath = connection.path();
+            connection.lookup().deprecationWarnings().forEach(logger::warn);
+        }
+
+        @Override
+        protected void validateSettings() throws IOException {
+            remotePath = requirePathAndConnect(hostname, username, remotePath);
+        }
+
+        @Override
+        public Doc createDocument() {
+            return createFileDocument(remotePath, fileInfo != null ? fileInfo.getSize() : 0);
+        }
+
+        @Override
+        public void stop() throws FsCrawlerPluginException {
+            closeConnection();
+        }
+
+        @Override
+        public String toFileUrl(String fullPath) {
+            return "ftp://" + hostname + ":" + port + fullPath;
+        }
+
+        @Override
+        protected void validateFile() throws FsCrawlerPluginException {
             try {
                 // Get file info to validate it exists
                 // Use mlistFile() which returns info about the path itself (like SSH stat())
@@ -232,25 +271,19 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
                 // Send a safe command (NOOP) over the control connection to reset the router's idle timer
                 ftp.setControlKeepAliveTimeout(Duration.ofSeconds(300));
 
-                String effectiveHostname = getEffectiveHostname();
-                int effectivePort = getEffectivePort();
-                String effectiveUsername = getEffectiveUsername();
-                String effectivePassword = getEffectivePassword();
+                logger.debug("Opening FTP connection to {}@{}", username, hostname);
 
-                logger.debug("Opening FTP connection to {}@{}", effectiveUsername, effectiveHostname);
-
-                ftp.connect(effectiveHostname, effectivePort);
+                ftp.connect(hostname, port);
 
                 // Check FTP client connection
                 int reply = ftp.getReplyCode();
                 if (!FTPReply.isPositiveCompletion(reply)) {
                     ftp.disconnect();
-                    logger.warn("Cannot connect with FTP to {}@{}", effectiveUsername, effectiveHostname);
-                    throw new FsCrawlerPluginException(
-                            "Can not connect to " + effectiveUsername + "@" + effectiveHostname);
+                    logger.warn("Cannot connect with FTP to {}@{}", username, hostname);
+                    throw new FsCrawlerPluginException("Can not connect to " + username + "@" + hostname);
                 }
 
-                if (!ftp.login(effectiveUsername, effectivePassword)) {
+                if (!ftp.login(username, password)) {
                     ftp.disconnect();
                     throw new FsCrawlerPluginException("Please check ftp user or password");
                 }

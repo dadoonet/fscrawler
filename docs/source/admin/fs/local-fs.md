@@ -62,7 +62,9 @@ fs:
 ````{note}
 
 The `fs.provider` setting replaces the deprecated `server.protocol` setting.
-If you are currently using `server.protocol`, you should migrate to `fs.provider`.
+SSH/FTP connection details belong under `fs.providers.ssh` / `fs.providers.ftp`
+(see {ref}`ssh-settings` and {ref}`ftp-settings`). The top-level `server.*` block is
+deprecated and will be removed in a future version.
 
 Old configuration (deprecated):
 
@@ -82,8 +84,9 @@ name: "test"
 fs:
   provider: "ftp"
   url: "/path/to/data/dir"
-server:
-  hostname: "mynode.mydomain.com"
+  providers:
+    ftp:
+      hostname: "mynode.mydomain.com"
 ```
 ````
 

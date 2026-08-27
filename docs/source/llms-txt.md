@@ -53,5 +53,6 @@ For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the
 ## Optional
 
 - [GitHub repository](https://github.com/dadoonet/fscrawler): Source code, issues, and releases.
+- [Release notes (3.1)](https://fscrawler.readthedocs.io/en/latest/release/3.1.html.md): Changes in FSCrawler 3.1.
 - [Release notes (3.0)](https://fscrawler.readthedocs.io/en/latest/release/3.0.html.md): Changes in FSCrawler 3.0.
 - [Full documentation dump](https://fscrawler.readthedocs.io/en/latest/llms-full.txt): Concatenated Markdown of all pages (large).

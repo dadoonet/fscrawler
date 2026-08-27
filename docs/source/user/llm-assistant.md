@@ -73,18 +73,28 @@ Important rules — do not get these wrong:
 2. With Elastic start-local, use http:// (not https://) — start-local exposes HTTP on localhost only.
 3. Do not set `elasticsearch.index` to the same value as `name`. FSCrawler creates a search alias named after the job; a conflicting index name causes "alias name self-conflicts with index name".
 4. There is no in-place upgrade from FSCrawler 2.9. Recreate jobs with `--setup` and reindex.
-4. In Docker, 127.0.0.1 is the container itself. Use host.docker.internal (Linux: add --add-host=host.docker.internal:host-gateway) or the host machine IP to reach Elasticsearch on the host.
-5. Environment variables follow the pattern FSCRAWLER_* (see CLI options in the docs).
+5. From 3.0 to 3.1, existing jobs keep working. Rewrite SSH/FTP connection settings from the top-level `server.*` block to `fs.provider` plus `fs.providers.ssh` / `fs.providers.ftp`. Keep `fs.url` as the crawl root. Do not keep `server.*` in the rewritten file.
+6. In Docker, 127.0.0.1 is the container itself. Use host.docker.internal (Linux: add --add-host=host.docker.internal:host-gateway) or the host machine IP to reach Elasticsearch on the host.
+7. Environment variables follow the pattern FSCRAWLER_* (see CLI options in the docs). SSH/FTP keys are FSCRAWLER_FS_PROVIDERS_SSH_* / FSCRAWLER_FS_PROVIDERS_FTP_*.
+
+3.0 → 3.1 SSH/FTP rewrite (same field names: hostname, port, username, password, pem_path):
+- `server.protocol: ssh` (or ftp) → `fs.provider: ssh` (or ftp). Prefer `fs.provider` if both exist.
+- `server.hostname` / `port` / `username` / `password` / `pem_path` → `fs.providers.<ssh|ftp>.*`
+- Remove the top-level `server:` block after the rewrite.
+- REST `_document` payloads stay `{ "type": "ssh", "ssh": { ... } }` (not `fs.providers`).
 
 Useful documentation pages (Markdown versions for LLMs):
 - Tutorial (start-local + Docker + Kibana): https://fscrawler.readthedocs.io/en/latest/user/tutorial.html.md
 - Elasticsearch settings: https://fscrawler.readthedocs.io/en/latest/admin/fs/elasticsearch.html.md
 - Local filesystem settings: https://fscrawler.readthedocs.io/en/latest/admin/fs/local-fs.html.md
-- SSH / FTP remote crawling: https://fscrawler.readthedocs.io/en/latest/admin/fs/ssh.html.md
+- SSH remote crawling: https://fscrawler.readthedocs.io/en/latest/admin/fs/ssh.html.md
+- FTP remote crawling: https://fscrawler.readthedocs.io/en/latest/admin/fs/ftp.html.md
+- Release notes 3.1: https://fscrawler.readthedocs.io/en/latest/release/3.1.html.md
 - Docker installation: https://fscrawler.readthedocs.io/en/latest/installation.html.md
 
 When answering:
 - Propose a complete _settings.yaml tailored to my situation.
+- If I paste an existing job file, return a complete rewritten `_settings.yaml` for 3.1 and a short list of what changed.
 - Explain each non-obvious setting you add.
 - Warn me about the pitfalls listed above when relevant.
 - If I use Docker, include the docker run command with the right volume mounts and environment variables.
@@ -107,7 +117,19 @@ Help me configure FSCrawler to index PDF and Word files from ~/Documents/resumes
 ### Crawl a remote server over SSH
 
 ````
-Help me configure FSCrawler to crawl documents on a remote Linux server over SSH/SFTP and index them into Elasticsearch 8.x. My Elasticsearch URL is https://my-es.example.com:9200 and I authenticate with an API key. Give me the complete _settings.yaml with fs.url, server, username, and elasticsearch settings. Use elasticsearch.urls (list), not nodes.
+Help me configure FSCrawler to crawl documents on a remote Linux server over SSH/SFTP and index them into Elasticsearch 8.x. My Elasticsearch URL is https://my-es.example.com:9200 and I authenticate with an API key. Give me the complete _settings.yaml with fs.provider: ssh, fs.url, fs.providers.ssh (hostname, port, username, password or pem_path), and elasticsearch settings. Use elasticsearch.urls (list), not nodes. Do not use the deprecated top-level server block.
+````
+
+### Migrate job settings from 3.0 to 3.1
+
+Paste the starter prompt first, then this question with your current `_settings.yaml`:
+
+````
+I am using FSCrawler 3.0 with the following `_settings.yaml`:
+
+[PASTE YOUR CURRENT _settings.yaml HERE]
+
+Can you migrate these settings to FSCrawler 3.1? Move any top-level `server.*` SSH/FTP settings to `fs.provider` and `fs.providers.ssh` or `fs.providers.ftp`, keep `fs.url` as the crawl root, keep `elasticsearch.urls`, and do not set `elasticsearch.index` to the job name. Give me the complete rewritten `_settings.yaml` and a short list of what changed.
 ````
 
 ### Troubleshoot connection errors

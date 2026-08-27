@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("removal")
 class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
 
@@ -85,31 +86,6 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
         settings.getFs().setHashAlgorithm("SHA-256");
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isFalse();
-
-        // Checking protocol
-        settings = FsSettingsLoader.load();
-        settings.getServer().setProtocol("FSCRAWLER");
-        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
-                .isTrue();
-
-        // Checking username / password when SSH
-        settings = FsSettingsLoader.load();
-        settings.getServer().setProtocol(Server.PROTOCOL.SSH);
-        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
-                .isTrue();
-
-        // Checking username when FTP
-        settings = FsSettingsLoader.load();
-        settings.getServer().setProtocol(Server.PROTOCOL.FTP);
-        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
-                .isFalse();
-
-        // Checking username when FTP
-        settings = FsSettingsLoader.load();
-        settings.getServer().setProtocol(Server.PROTOCOL.FTP);
-        settings.getServer().setUsername("");
-        Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
-                .isTrue();
 
         // Checking That we don't try to do both xml and json
         settings = FsSettingsLoader.load();

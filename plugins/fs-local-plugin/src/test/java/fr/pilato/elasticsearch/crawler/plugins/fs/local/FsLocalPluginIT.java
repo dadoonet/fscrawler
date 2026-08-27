@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,13 +63,7 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(testTmpDir.toString());
-            provider.start(fsSettings, """
-                    {
-                      "type": "local",
-                      "local": {
-                        "url": "%s"
-                      }
-                    }""".formatted(fileName.toString().replace("\\", "\\\\")));
+            provider.start(fsSettings, Map.of("url", fileName.toString()));
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Assertions.assertThat(object).isEqualTo(text);
@@ -94,13 +89,7 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(testTmpDir.toString());
-            provider.start(fsSettings, """
-                    {
-                      "type": "local",
-                      "local": {
-                        "url": "foo.txt"
-                      }
-                    }""");
+            provider.start(fsSettings, Map.of("url", "foo.txt"));
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Assertions.assertThat(object).isEqualTo(text);
@@ -131,14 +120,7 @@ class FsLocalPluginIT extends AbstractFSCrawlerTestCase {
         try (FsCrawlerExtensionFsProvider provider = new FsLocalPlugin.FsCrawlerExtensionFsProviderLocal()) {
             FsSettings fsSettings = FsSettingsLoader.load();
             fsSettings.getFs().setUrl(rootDir.toString());
-            Assertions.assertThatThrownBy(() -> provider.start(
-                            fsSettings, """
-                            {
-                              "type": "local",
-                              "local": {
-                                "url": "%s"
-                              }
-                            }""".formatted(fileName.toString().replace("\\", "\\\\"))))
+            Assertions.assertThatThrownBy(() -> provider.start(fsSettings, Map.of("url", fileName.toString())))
                     .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                     .hasMessageContaining("is not within");
         }

@@ -46,6 +46,7 @@ import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 
 /** @author dadoonet (David Pilato) */
+@SuppressWarnings("removal")
 public class FsCrawlerImpl implements AutoCloseable {
 
     private static final Logger logger = LogManager.getLogger();
@@ -103,7 +104,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         FsCrawlerExtensionPasswordProvider passwordProvider = resolvePasswordProvider(pluginsManager, settings);
 
         // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
-        // pass null so we don't resolve/start a provider (e.g. SSH/FTP) that could fail if config is missing.
+        // pass null so we don't resolve/start a provider that could fail if config is missing.
         final FsCrawlerExtensionFsProvider crawlerPlugin;
         if (loop != null && loop == 0) {
             logger.debug("Loop is 0 (REST-only mode): no crawler provider");
@@ -112,7 +113,7 @@ public class FsCrawlerImpl implements AutoCloseable {
             String protocolType = determineProtocolType(settings);
             logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
             crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
-            crawlerPlugin.start(settings, "{}");
+            crawlerPlugin.start(settings);
         }
 
         fsParser = new FsParser(
@@ -135,19 +136,16 @@ public class FsCrawlerImpl implements AutoCloseable {
     /**
      * Determine the provider type from settings.
      *
-     * <p>Uses fs.provider if specified, otherwise falls back to server.protocol (deprecated).
+     * <p>Uses {@code fs.provider} if specified, otherwise falls back to {@code server.protocol} (deprecated). The
+     * selected plugin validates its own settings on {@code start()}.
      *
      * @param settings the FSCrawler settings
-     * @return the provider type string (e.g., "local", "ftp", "ssh")
-     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
+     * @return the provider type string (defaults to {@code local})
      */
     private static String determineProtocolType(FsSettings settings) {
-        // Check if fs.provider is explicitly set (new way)
         String provider = settings.getFs().getProvider();
         if (provider != null && !provider.isEmpty()) {
             logger.debug("Using fs.provider [{}]", provider);
-            // Validate server settings for remote providers
-            validateServerSettings(provider, settings);
             return provider;
         }
 
@@ -163,30 +161,7 @@ public class FsCrawlerImpl implements AutoCloseable {
             }
         }
 
-        // Default to local
         return "local";
-    }
-
-    /**
-     * Validate that server settings are properly configured for remote providers.
-     *
-     * @param provider the provider type
-     * @param settings the FSCrawler settings
-     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
-     */
-    private static void validateServerSettings(String provider, FsSettings settings) {
-        // Remote providers require server settings
-        if ("ftp".equals(provider) || "ssh".equals(provider)) {
-            if (settings.getServer() == null) {
-                throw new FsCrawlerIllegalConfigurationException(
-                        "Provider [" + provider + "] requires server settings (hostname, username, etc.)");
-            }
-            if (settings.getServer().getHostname() == null
-                    || settings.getServer().getHostname().isEmpty()) {
-                throw new FsCrawlerIllegalConfigurationException(
-                        "Provider [" + provider + "] requires server.hostname to be set");
-            }
-        }
     }
 
     public FsCrawlerDocumentService getDocumentService() {

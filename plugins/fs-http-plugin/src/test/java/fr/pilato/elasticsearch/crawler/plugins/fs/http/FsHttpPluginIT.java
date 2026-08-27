@@ -31,6 +31,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,13 +70,7 @@ class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
 
             logger.info("Starting Test");
             try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-                provider.start(FsSettingsLoader.load(), """
-                        {
-                          "type": "http",
-                          "http": {
-                            "url": "%s/foo.txt"
-                          }
-                        }""".formatted(url));
+                provider.start(FsSettingsLoader.load(), Map.of("url", url + "/foo.txt"));
                 InputStream inputStream = provider.readFile();
                 String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 Assertions.assertThat(object).isEqualTo(TEXT);
@@ -90,13 +85,7 @@ class FsHttpPluginIT extends AbstractFSCrawlerTestCase {
     void readTxtFileFromWebsite() throws Exception {
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsHttpPlugin.FsCrawlerExtensionFsProviderHttp()) {
-            provider.start(FsSettingsLoader.load(), """
-                    {
-                      "type": "http",
-                      "http": {
-                        "url": "https://david.pilato.fr/robots.txt"
-                      }
-                    }""");
+            provider.start(FsSettingsLoader.load(), Map.of("url", "https://david.pilato.fr/robots.txt"));
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Assertions.assertThat(object).contains("User-agent: *");

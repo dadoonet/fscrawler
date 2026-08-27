@@ -25,7 +25,9 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import jakarta.annotation.Nullable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.github.gestalt.config.annotations.Config;
@@ -124,6 +126,14 @@ public class Fs {
     @Config
     @Nullable
     private String provider;
+
+    /**
+     * Opaque per-provider configuration ({@code fs.providers.<type>}). Loaded from YAML/JSON by
+     * {@link FsSettingsLoader}; Gestalt cannot decode mixed nested maps into {@code Map&lt;String, Object&gt;}. Each
+     * filesystem plugin parses its own section; this class does not model those shapes.
+     */
+    @Nullable
+    private Map<String, Object> providers;
 
     public String getUrl() {
         return url;
@@ -372,6 +382,51 @@ public class Fs {
         this.provider = provider;
     }
 
+    @Nullable
+    public Map<String, Object> getProviders() {
+        return providers;
+    }
+
+    public void setProviders(@Nullable Map<String, Object> providers) {
+        this.providers = providers;
+    }
+
+    /**
+     * Return the configuration map for one filesystem provider type, or {@code null} when absent.
+     *
+     * @param type provider type key under {@code fs.providers}
+     * @return mutable copy of that section, or {@code null}
+     */
+    @Nullable
+    public Map<String, Object> getProviderConfig(String type) {
+        if (providers == null || type == null) {
+            return null;
+        }
+        Object section = providers.get(type);
+        if (section == null) {
+            return null;
+        }
+        if (!(section instanceof Map<?, ?> map)) {
+            throw new IllegalArgumentException("fs.providers." + type + " must be a map, got "
+                    + section.getClass().getName());
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> typed = (Map<String, Object>) map;
+        return copyMap(typed);
+    }
+
+    @Nullable
+    private static Map<String, Object> copyMap(@Nullable Map<String, Object> section) {
+        if (section == null) {
+            return null;
+        }
+        Map<String, Object> copy = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : section.entrySet()) {
+            copy.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return copy;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -404,7 +459,8 @@ public class Fs {
                 && Objects.equals(ignoreAbove, fs.ignoreAbove)
                 && Objects.equals(tikaConfigPath, fs.tikaConfigPath)
                 && Objects.equals(tempDir, fs.tempDir)
-                && Objects.equals(provider, fs.provider);
+                && Objects.equals(provider, fs.provider)
+                && Objects.equals(providers, fs.providers);
     }
 
     @Override
@@ -437,7 +493,8 @@ public class Fs {
                 followSymlinks,
                 tikaConfigPath,
                 tempDir,
-                provider);
+                provider,
+                providers);
     }
 
     @Override
@@ -469,6 +526,7 @@ public class Fs {
                 + followSymlinks + ", tikaConfigPath='"
                 + tikaConfigPath + '\'' + ", tempDir='"
                 + tempDir + '\'' + ", provider='"
-                + provider + '\'' + '}';
+                + provider + '\'' + ", providers="
+                + providers + '}';
     }
 }

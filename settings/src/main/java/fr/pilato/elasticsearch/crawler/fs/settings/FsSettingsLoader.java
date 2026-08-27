@@ -44,6 +44,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 /** Provides utility methods to read and write settings files */
+@SuppressWarnings("removal")
 public class FsSettingsLoader extends MetaFileHandler {
 
     private static final Logger logger = LogManager.getLogger();
@@ -165,7 +166,7 @@ public class FsSettingsLoader extends MetaFileHandler {
             FsSettings settings = new FsSettings();
 
             settings.setName(gestalt.getConfigOptional("name", String.class).orElse(null));
-            settings.setFs(gestalt.getConfigOptional("fs", Fs.class).orElse(null));
+            settings.setFs(loadFs(gestalt, configFiles));
             settings.setPasswords(loadPasswords(gestalt, configFiles));
             settings.setElasticsearch(gestalt.getConfigOptional("elasticsearch", Elasticsearch.class)
                     .orElse(null));
@@ -184,6 +185,52 @@ public class FsSettingsLoader extends MetaFileHandler {
             throw new FsCrawlerIllegalConfigurationException(
                     "Can not load settings. " + "Please make sure that your setting file(s) are properly formatted.",
                     e);
+        }
+    }
+
+    /**
+     * Load {@code fs} from Gestalt, then attach the opaque {@code fs.providers} map.
+     *
+     * <p>Provider-specific options are loaded from YAML/JSON job files via SnakeYAML (Gestalt cannot decode mixed
+     * nested maps/lists into {@code Map&lt;String, Object&gt;}). Scalar keys such as {@code fs.providers.ssh.hostname}
+     * are then overlaid from Gestalt so environment variables and system properties still work. File values win over
+     * env/sysprops.
+     */
+    private static Fs loadFs(Gestalt gestalt, Path... configFiles) {
+        Fs fs = gestalt.getConfigOptional("fs", Fs.class).orElse(null);
+        if (fs == null) {
+            return null;
+        }
+
+        Map<String, Object> providers = loadNestedMap(configFiles, "fs", "providers");
+        overlayProviderScalars(providers, gestalt, fs.getProvider());
+        fs.setProviders(providers.isEmpty() ? null : providers);
+
+        return fs;
+    }
+
+    /**
+     * Overlay Gestalt scalars onto each {@code fs.providers.<type>} map. YAML keys win. If {@code fs.provider} is a
+     * remote type absent from YAML, a map is created so env/sysprops still apply.
+     */
+    @SuppressWarnings("unchecked")
+    private static void overlayProviderScalars(Map<String, Object> providers, Gestalt gestalt, String activeProvider) {
+        List<String> stringKeys = List.of("hostname", "username", "password", "pem_path");
+        if (activeProvider != null && !activeProvider.isBlank() && !"local".equals(activeProvider)) {
+            providers.computeIfAbsent(activeProvider, key -> new LinkedHashMap<String, Object>());
+        }
+        for (String type : List.copyOf(providers.keySet())) {
+            Object section = providers.get(type);
+            if (!(section instanceof Map<?, ?>)) {
+                continue;
+            }
+            Map<String, Object> typed = new LinkedHashMap<>((Map<String, Object>) section);
+            overlayGestaltScalars(typed, gestalt, "fs.providers." + type, stringKeys, "port");
+            if (typed.isEmpty()) {
+                providers.remove(type);
+            } else {
+                providers.put(type, typed);
+            }
         }
     }
 
@@ -217,25 +264,72 @@ public class FsSettingsLoader extends MetaFileHandler {
 
         Yaml yaml = new Yaml();
         for (Path configFile : configFiles) {
-            if (configFile == null || Files.notExists(configFile)) {
-                continue;
-            }
-            try (InputStream inputStream = Files.newInputStream(configFile)) {
-                Object loaded = yaml.load(inputStream);
-                if (loaded instanceof Map<?, ?> root) {
-                    Object passwordsNode = root.get("passwords");
-                    if (passwordsNode instanceof Map<?, ?> passwordsMap) {
-                        Object providersNode = passwordsMap.get("providers");
-                        if (providersNode instanceof Map<?, ?> providersMap) {
-                            deepMerge(merged, (Map<String, Object>) providersMap);
-                        }
-                    }
+            Map<String, Object> root = loadYamlRoot(yaml, configFile);
+            Object passwordsNode = root.get("passwords");
+            if (passwordsNode instanceof Map<?, ?> passwordsMap) {
+                Object providersNode = passwordsMap.get("providers");
+                if (providersNode instanceof Map<?, ?> providersMap) {
+                    deepMerge(merged, (Map<String, Object>) providersMap);
                 }
-            } catch (IOException e) {
-                logger.debug("Can not read [{}] while loading passwords.providers: {}", configFile, e.getMessage());
             }
         }
         return merged;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> loadNestedMap(Path[] configFiles, String parentKey, String childKey) {
+        Map<String, Object> merged = new LinkedHashMap<>();
+        if (configFiles == null || configFiles.length == 0) {
+            return merged;
+        }
+
+        Yaml yaml = new Yaml();
+        for (Path configFile : configFiles) {
+            Map<String, Object> root = loadYamlRoot(yaml, configFile);
+            Object parentNode = root.get(parentKey);
+            if (parentNode instanceof Map<?, ?> parentMap) {
+                Object childNode = parentMap.get(childKey);
+                if (childNode instanceof Map<?, ?> childMap) {
+                    deepMerge(merged, (Map<String, Object>) childMap);
+                }
+            }
+        }
+        return merged;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> loadYamlRoot(Yaml yaml, Path configFile) {
+        if (configFile == null || Files.notExists(configFile)) {
+            return Map.of();
+        }
+        try (InputStream inputStream = Files.newInputStream(configFile)) {
+            Object loaded = yaml.load(inputStream);
+            if (loaded instanceof Map<?, ?> root) {
+                return (Map<String, Object>) root;
+            }
+        } catch (IOException e) {
+            logger.debug("Can not read [{}] while loading nested settings: {}", configFile, e.getMessage());
+        }
+        return Map.of();
+    }
+
+    /**
+     * Overlay scalar keys from Gestalt (env / system properties / files Gestalt can decode). Existing YAML map keys
+     * win: Gestalt is only used to fill keys that the opaque YAML map does not already contain, plus the case where the
+     * YAML block is absent entirely.
+     */
+    private static void overlayGestaltScalars(
+            Map<String, Object> target, Gestalt gestalt, String prefix, List<String> stringKeys, String intKey) {
+        for (String key : stringKeys) {
+            if (target.containsKey(key)) {
+                continue;
+            }
+            gestalt.getConfigOptional(prefix + "." + key, String.class).ifPresent(value -> target.put(key, value));
+        }
+        if (!target.containsKey(intKey)) {
+            gestalt.getConfigOptional(prefix + "." + intKey, Integer.class)
+                    .ifPresent(value -> target.put(intKey, value));
+        }
     }
 
     @SuppressWarnings("unchecked")

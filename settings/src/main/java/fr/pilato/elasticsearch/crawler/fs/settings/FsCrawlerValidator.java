@@ -55,10 +55,6 @@ public class FsCrawlerValidator {
             logger.warn("username/password is deprecated. Use apiKey instead.");
         }
 
-        if (validateServerSettings(logger, settings)) {
-            return true;
-        }
-
         // Checking bulk_operation (DELETE is internal-only)
         BulkOperation bulkOperation = settings.getElasticsearch().getBulkOperation();
         if (bulkOperation == BulkOperation.DELETE) {
@@ -121,32 +117,6 @@ public class FsCrawlerValidator {
         if (updated) {
             settings.getFs().setExcludes(mergedExcludes);
         }
-    }
-
-    private static boolean validateServerSettings(Logger logger, FsSettings settings) {
-        if (settings.getServer() == null) {
-            return false;
-        }
-        if (!Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())
-                && !Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
-                && !Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
-            logger.error(settings.getServer().getProtocol() + " is not supported yet. Please use "
-                    + Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH + " or " + Server.PROTOCOL.FTP
-                    + ". Disabling crawler");
-            return true;
-        }
-        if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
-                && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
-            logger.error(
-                    "When using SSH, you need to set a username and probably a password or a pem file. Disabling crawler");
-            return true;
-        }
-        if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())
-                && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
-            logger.error("When using FTP, you need to set a username and probably a password. Disabling crawler");
-            return true;
-        }
-        return false;
     }
 
     private static boolean validateDigestSettings(Logger logger, FsSettings settings) {

@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Map;
 import org.pf4j.ExtensionPoint;
 
 /**
@@ -48,12 +49,25 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     // ========== Common methods (required) ==========
 
     /**
-     * Start the provider with the given settings.
+     * Start the provider with the given job settings and an optional overlay.
      *
-     * @param fsSettings the FSCrawler settings
-     * @param restSettings JSON settings from REST API (may be null for batch crawling)
+     * <p>An empty overlay means crawler preparation: do not require or open a single file. A non-empty overlay is a
+     * one-shot file (typically the REST {@code type} block); the provider then requires its own file locator field
+     * ({@code path}, {@code url}, {@code object}, …).
+     *
+     * @param fsSettings the FSCrawler job settings
+     * @param overlay values that win over {@code fs.providers.<type>} (may be empty)
      */
-    void start(FsSettings fsSettings, String restSettings);
+    void start(FsSettings fsSettings, Map<String, Object> overlay);
+
+    /**
+     * Start the provider for crawling (no one-shot overlay).
+     *
+     * @param fsSettings the FSCrawler job settings
+     */
+    default void start(FsSettings fsSettings) {
+        start(fsSettings, Map.of());
+    }
 
     /**
      * Stop the provider and release resources.
@@ -74,7 +88,7 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     /**
      * Read the file content as an input stream. Used by REST API for single file uploads.
      *
-     * <p>REST password retries may call this method more than once after a single {@link #start(FsSettings, String)}.
+     * <p>REST password retries may call this method more than once after a single {@link #start(FsSettings, Map)}.
      *
      * @return an input stream for reading the file
      * @throws FsCrawlerPluginException if an error occurs while reading
@@ -168,5 +182,15 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
      */
     default void closeInputStream(InputStream inputStream) throws FsCrawlerPluginException {
         throw new FsCrawlerPluginException("Crawling not supported by " + getType() + " provider");
+    }
+
+    /**
+     * Build a {@code file.filename} URL for an indexed document.
+     *
+     * @param fullPath the real path of the file
+     * @return a URL such as {@code file://...}, {@code ftp://...} or {@code sftp://...}
+     */
+    default String toFileUrl(String fullPath) {
+        return "file://" + fullPath;
     }
 }

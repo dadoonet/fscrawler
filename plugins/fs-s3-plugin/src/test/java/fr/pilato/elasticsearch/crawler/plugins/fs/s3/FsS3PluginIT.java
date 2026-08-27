@@ -36,6 +36,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,17 +107,19 @@ class FsS3PluginIT extends AbstractFSCrawlerTestCase {
 
         logger.info("Starting Test");
         try (FsCrawlerExtensionFsProvider provider = new FsS3Plugin.FsCrawlerExtensionFsProviderS3()) {
-            provider.start(FsSettingsLoader.load(), """
-                    {
-                      "type": "s3",
-                      "s3": {
-                        "url": "%s",
-                        "bucket": "foo",
-                        "object": "foo.txt",
-                        "access_key": "%s",
-                        "secret_key": "%s"
-                      }
-                    }""".formatted(s3Url, s3Username, s3Password));
+            provider.start(
+                    FsSettingsLoader.load(),
+                    Map.of(
+                            "url",
+                            s3Url,
+                            "bucket",
+                            "foo",
+                            "object",
+                            "foo.txt",
+                            "access_key",
+                            s3Username,
+                            "secret_key",
+                            s3Password));
             InputStream inputStream = provider.readFile();
             String object = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             Assertions.assertThat(object).isEqualTo(text);
