@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
@@ -103,10 +102,11 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
                 """.formatted(hostname));
         FsSettings settings = fsSettingsLoader.read("modify_settings_fs_ftp");
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ftp");
-        Map<String, Object> ftp = settings.getFs().getProviderConfig("ftp");
-        Assertions.assertThat(ftp).isNotNull().containsEntry("hostname", hostname);
-        Assertions.assertThat(ftp).doesNotContainKey("username");
-        Assertions.assertThat(ftp).doesNotContainKey("port");
+        Assertions.assertThat(settings.getFs().getProviderConfig("ftp"))
+                .isNotNull()
+                .containsEntry("hostname", hostname)
+                .doesNotContainKey("username")
+                .doesNotContainKey("port");
     }
 
     @Test
@@ -129,12 +129,11 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
                 """.formatted(hostname, username));
         FsSettings settings = fsSettingsLoader.read("modify_settings_fs_ssh");
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ssh");
-        Map<String, Object> ssh = settings.getFs().getProviderConfig("ssh");
-        Assertions.assertThat(ssh)
+        Assertions.assertThat(settings.getFs().getProviderConfig("ssh"))
                 .isNotNull()
                 .containsEntry("hostname", hostname)
-                .containsEntry("username", username);
-        Assertions.assertThat(ssh).doesNotContainKey("port");
+                .containsEntry("username", username)
+                .doesNotContainKey("port");
     }
 
     private String randomHostname() {

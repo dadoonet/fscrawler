@@ -265,9 +265,6 @@ public class FsSettingsLoader extends MetaFileHandler {
         Yaml yaml = new Yaml();
         for (Path configFile : configFiles) {
             Map<String, Object> root = loadYamlRoot(yaml, configFile);
-            if (root == null) {
-                continue;
-            }
             Object passwordsNode = root.get("passwords");
             if (passwordsNode instanceof Map<?, ?> passwordsMap) {
                 Object providersNode = passwordsMap.get("providers");
@@ -289,9 +286,6 @@ public class FsSettingsLoader extends MetaFileHandler {
         Yaml yaml = new Yaml();
         for (Path configFile : configFiles) {
             Map<String, Object> root = loadYamlRoot(yaml, configFile);
-            if (root == null) {
-                continue;
-            }
             Object parentNode = root.get(parentKey);
             if (parentNode instanceof Map<?, ?> parentMap) {
                 Object childNode = parentMap.get(childKey);
@@ -306,7 +300,7 @@ public class FsSettingsLoader extends MetaFileHandler {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> loadYamlRoot(Yaml yaml, Path configFile) {
         if (configFile == null || Files.notExists(configFile)) {
-            return null;
+            return Map.of();
         }
         try (InputStream inputStream = Files.newInputStream(configFile)) {
             Object loaded = yaml.load(inputStream);
@@ -316,7 +310,7 @@ public class FsSettingsLoader extends MetaFileHandler {
         } catch (IOException e) {
             logger.debug("Can not read [{}] while loading nested settings: {}", configFile, e.getMessage());
         }
-        return null;
+        return Map.of();
     }
 
     /**
