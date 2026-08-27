@@ -40,7 +40,6 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginsManager;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -105,7 +104,7 @@ public class FsCrawlerImpl implements AutoCloseable {
         FsCrawlerExtensionPasswordProvider passwordProvider = resolvePasswordProvider(pluginsManager, settings);
 
         // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
-        // pass null so we don't resolve/start a provider (e.g. SSH/FTP) that could fail if config is missing.
+        // pass null so we don't resolve/start a provider that could fail if config is missing.
         final FsCrawlerExtensionFsProvider crawlerPlugin;
         if (loop != null && loop == 0) {
             logger.debug("Loop is 0 (REST-only mode): no crawler provider");
@@ -137,19 +136,16 @@ public class FsCrawlerImpl implements AutoCloseable {
     /**
      * Determine the provider type from settings.
      *
-     * <p>Uses fs.provider if specified, otherwise falls back to server.protocol (deprecated).
+     * <p>Uses {@code fs.provider} if specified, otherwise falls back to {@code server.protocol} (deprecated). The
+     * selected plugin validates its own settings on {@code start()}.
      *
      * @param settings the FSCrawler settings
-     * @return the provider type string (e.g., "local", "ftp", "ssh")
-     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
+     * @return the provider type string (defaults to {@code local})
      */
     private static String determineProtocolType(FsSettings settings) {
-        // Check if fs.provider is explicitly set (new way)
         String provider = settings.getFs().getProvider();
         if (provider != null && !provider.isEmpty()) {
             logger.debug("Using fs.provider [{}]", provider);
-            // Validate server settings for remote providers
-            validateServerSettings(provider, settings);
             return provider;
         }
 
@@ -165,40 +161,7 @@ public class FsCrawlerImpl implements AutoCloseable {
             }
         }
 
-        // Default to local
         return "local";
-    }
-
-    /**
-     * Validate that server settings are properly configured for remote providers.
-     *
-     * @param provider the provider type
-     * @param settings the FSCrawler settings
-     * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
-     */
-    private static void validateServerSettings(String provider, FsSettings settings) {
-        // Remote providers require a hostname on the job (or deprecated server.hostname)
-        if ("ftp".equals(provider) || "ssh".equals(provider)) {
-            if (hasRemoteHostname(provider, settings)) {
-                return;
-            }
-            throw new FsCrawlerIllegalConfigurationException("Provider [" + provider + "] requires fs.providers."
-                    + provider + ".hostname (or deprecated server.hostname)");
-        }
-    }
-
-    private static boolean hasRemoteHostname(String provider, FsSettings settings) {
-        Map<String, Object> providerConfig =
-                settings.getFs() != null ? settings.getFs().getProviderConfig(provider) : null;
-        if (providerConfig != null) {
-            Object hostname = providerConfig.get("hostname");
-            if (hostname != null && !hostname.toString().isBlank()) {
-                return true;
-            }
-        }
-        return settings.getServer() != null
-                && settings.getServer().getHostname() != null
-                && !settings.getServer().getHostname().isEmpty();
     }
 
     public FsCrawlerDocumentService getDocumentService() {

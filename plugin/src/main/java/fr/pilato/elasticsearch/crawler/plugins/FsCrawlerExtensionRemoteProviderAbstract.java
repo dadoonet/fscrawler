@@ -124,6 +124,11 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
 
     @Override
     protected void validateSettings() throws IOException {
+        if (hostname == null || hostname.isBlank()) {
+            throw new IOException("Provider [" + getType() + "] requires fs.providers." + getType()
+                    + ".hostname (or deprecated server.hostname)");
+        }
+
         // Crawler mode: no REST path. Connection settings are used later in openConnection().
         if (remotePath == null || remotePath.isEmpty()) {
             if (document != null) {

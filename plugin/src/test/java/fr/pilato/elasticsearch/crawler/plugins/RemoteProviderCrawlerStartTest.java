@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.plugins;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -57,6 +58,18 @@ class RemoteProviderCrawlerStartTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(provider.getEffectiveUsername()).isEqualTo(username);
         Assertions.assertThat(provider.validatedFile.get()).isFalse();
         Assertions.assertThat(provider.openedConnection.get()).isFalse();
+    }
+
+    @Test
+    void crawlerStartRequiresHostname() {
+        String type = randomToken();
+        FsSettings settings = FsSettingsLoader.load();
+
+        RecordingRemoteProvider provider = new RecordingRemoteProvider(type);
+
+        Assertions.assertThatThrownBy(() -> provider.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers." + type + ".hostname");
     }
 
     @Test
