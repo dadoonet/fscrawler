@@ -23,10 +23,11 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import fr.pilato.elasticsearch.crawler.plugins.RemoteConnectionSettings;
+import fr.pilato.elasticsearch.crawler.plugins.ProviderSettings;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -103,15 +104,17 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
+        @SuppressWarnings("removal")
         protected void parseSettings() {
-            RemoteConnectionSettings resolved =
-                    RemoteConnectionSettings.resolve(getType(), document, fsSettings, DEFAULT_PORT, DEFAULT_USERNAME);
-            remotePath = resolved.remotePath();
-            hostname = resolved.hostname();
-            port = resolved.port();
-            username = resolved.username();
-            password = resolved.password();
-            resolved.deprecationWarnings().forEach(logger::warn);
+            ProviderSettings settings = ProviderSettings.of(getType(), document, fsSettings);
+            Server server = fsSettings != null ? fsSettings.getServer() : null;
+            hostname = settings.string("hostname", server != null ? server.getHostname() : null);
+            port = settings.integer(
+                    "port", DEFAULT_PORT, server != null && server.getPort() > 0 ? server.getPort() : null);
+            username = settings.string("username", server != null ? server.getUsername() : null, DEFAULT_USERNAME);
+            password = settings.secret("password", server != null ? server.getPassword() : null);
+            remotePath = settings.restString("path");
+            settings.deprecationWarnings().forEach(logger::warn);
         }
 
         @Override
@@ -180,7 +183,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
 
         @Override
         public String toFileUrl(String fullPath) {
-            return String.format("ftp://%s:%d%s", hostname, port, fullPath);
+            return "ftp://" + hostname + ":" + port + fullPath;
         }
 
         private String normalizeRemotePath(String path) throws IOException {

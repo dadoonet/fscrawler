@@ -23,10 +23,11 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import fr.pilato.elasticsearch.crawler.plugins.RemoteConnectionSettings;
+import fr.pilato.elasticsearch.crawler.plugins.ProviderSettings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -95,16 +96,18 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         }
 
         @Override
+        @SuppressWarnings("removal")
         protected void parseSettings() {
-            RemoteConnectionSettings resolved =
-                    RemoteConnectionSettings.resolve(getType(), document, fsSettings, DEFAULT_PORT, null);
-            remotePath = resolved.remotePath();
-            hostname = resolved.hostname();
-            port = resolved.port();
-            username = resolved.username();
-            password = resolved.password();
-            pemPath = resolved.pemPath();
-            resolved.deprecationWarnings().forEach(logger::warn);
+            ProviderSettings settings = ProviderSettings.of(getType(), document, fsSettings);
+            Server server = fsSettings != null ? fsSettings.getServer() : null;
+            hostname = settings.string("hostname", server != null ? server.getHostname() : null);
+            port = settings.integer(
+                    "port", DEFAULT_PORT, server != null && server.getPort() > 0 ? server.getPort() : null);
+            username = settings.string("username", server != null ? server.getUsername() : null);
+            password = settings.secret("password", server != null ? server.getPassword() : null);
+            pemPath = settings.string("pem_path", server != null ? server.getPemPath() : null);
+            remotePath = settings.restString("path");
+            settings.deprecationWarnings().forEach(logger::warn);
         }
 
         @Override
@@ -173,7 +176,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
 
         @Override
         public String toFileUrl(String fullPath) {
-            return String.format("sftp://%s:%d%s", hostname, port, fullPath);
+            return "sftp://" + hostname + ":" + port + fullPath;
         }
 
         private String normalizeRemotePath(String path) throws IOException {
