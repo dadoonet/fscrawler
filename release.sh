@@ -2,13 +2,12 @@
 #
 # Interactive release workflow for FSCrawler.
 #
-# Creates a release branch, builds signed artifacts, publishes to Maven Central
-# (central-publishing-maven-plugin), pushes Docker images, and optionally sends
-# the release announcement email.
+# Creates an isolated git worktree, builds signed artifacts, pushes Docker
+# images, publishes the ZIP to GitHub Releases, deletes the SNAPSHOT
+# pre-release, and optionally sends the announcement.
 #
 set -euo pipefail
 
-readonly CENTRAL_DEPLOYMENTS_URL="https://central.sonatype.com/publishing/deployments"
 readonly DOCKERHUB_TAGS_URL="https://hub.docker.com/r/dadoonet/fscrawler/tags"
 readonly TAG_PREFIX="fscrawler"
 readonly SCRIPT_NAME="${0##*/}"
@@ -16,6 +15,7 @@ readonly RELEASE_STATE_FILE_NAME=".release"
 readonly LOG_TAIL_LINES=50
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="${ROOT_DIR}"
 RELEASE_STATE_FILE="${ROOT_DIR}/release/${RELEASE_STATE_FILE_NAME}"
 START_DIR="$(pwd)"
 
@@ -39,6 +39,9 @@ PREVIOUS_TAG=""
 MAVEN_EXTRA_ARGS=()
 LOG_FILE=""
 RELEASE_NOTES_FILE=""
+WORKTREE_PATH=""
+RELEASE_DATE=""
+RELEASE_ZIP=""
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -54,7 +57,7 @@ Options:
   -h, --help       Show this help message and exit
   -n, --dry-run    Simulate the release without mutating git, Maven, or remotes
   -l, --local      Full local rehearsal: branch, build, sign, release notes
-                   (no Maven Central, Docker Hub, git push, or GitHub release)
+                   (no Docker Hub, git push, or GitHub release)
       --rollback   Undo a local or failed release using release/${RELEASE_STATE_FILE_NAME}
       --skip-tests Add -DskipTests to Maven build commands
 
@@ -62,11 +65,14 @@ Modes:
   default          Interactive production release (deploy/push when confirmed)
   --dry-run        Log commands only; repository stays unchanged
   --local          Execute locally; release/${RELEASE_STATE_FILE_NAME} written as soon as changes start
-  --rollback       Delete local release branch/tag and return to the original branch
+  --rollback       Delete the isolated worktree, local release branch/tag; leave the
+                   main checkout on its original branch
 
 Local mode:
-  - Creates the release branch, commits, builds with -Prelease, tags, generates notes
-  - Skips deploy, git push, Docker Hub, GitHub release, and production email
+  - Creates an isolated git worktree under release/worktrees/<version>/
+  - Commits, builds with -Prelease, tags, generates notes in that worktree
+  - The main clone stays on the branch you started from (other checkouts are safe)
+  - Skips Docker Hub, git push, GitHub release, and production email
   - Optionally sends a test announcement email to ANNOUNCE_TO from .env
   - release/${RELEASE_STATE_FILE_NAME} is saved early so --rollback works after a failure
 
@@ -82,7 +88,7 @@ Prerequisites (default and --local):
   - python3, gh CLI authenticated (gh auth login)
   - Clean-ish git working tree on your integration branch
   - GPG signing configured for the Maven release profile
-  - ~/.m2/settings.xml server id "central" for production deploy only
+  - Docker Hub credentials when pushing images (or pass -Ddocker.skip)
 
 Logs are written to release/<release-version>/release.log
 EOF
@@ -209,8 +215,11 @@ print_failure_recovery_hint() {
 		printf '    Continue manually, for example:\n' >&2
 		printf '      python3 scripts/prepare-release-notes.py --version %s --since-tag %s\n' \
 			"${RELEASE_VERSION:-<version>}" "${PREVIOUS_TAG:-<previous-tag>}" >&2
-		printf '      gh release create %s --notes-file %s\n' \
-			"${RELEASE_TAG:-<tag>}" "${RELEASE_NOTES_FILE:-release/<version>/release-notes.md}" >&2
+		printf '      gh release create %s --notes-file %s %s %s %s\n' \
+			"${RELEASE_TAG:-<tag>}" "${RELEASE_NOTES_FILE:-release/<version>/release-notes.md}" \
+			"${RELEASE_ZIP:-release/<version>/fscrawler-<version>.zip}#fscrawler-<version>.zip" \
+			"${RELEASE_ZIP:-release/<version>/fscrawler-<version>.zip}.asc#fscrawler-<version>.zip.asc" \
+			"${RELEASE_ZIP:-release/<version>/fscrawler-<version>.zip}.sha256#fscrawler-<version>.zip.sha256" >&2
 		printf '      python3 scripts/send-announcement.py %s --subject "FSCrawler %s released"\n' \
 			"${RELEASE_NOTES_FILE:-release/<version>/release-notes.md}" "${RELEASE_VERSION:-<version>}" >&2
 		printf '    Or clear local state only with:\n' >&2
@@ -371,6 +380,9 @@ RELEASE_BRANCH=${RELEASE_BRANCH}
 RELEASE_TAG=${RELEASE_TAG}
 RELEASE_VERSION=${RELEASE_VERSION}
 NEXT_VERSION=${NEXT_VERSION}
+WORKTREE_PATH=${WORKTREE_PATH:-}
+RELEASE_DATE=${RELEASE_DATE:-}
+RELEASE_ZIP=${RELEASE_ZIP:-}
 LOG_FILE=${LOG_FILE}
 MODE=${mode}
 STATUS=${status}
@@ -381,6 +393,14 @@ EOF
 load_release_state() {
 	# shellcheck disable=SC1090
 	source "${RELEASE_STATE_FILE}"
+	if [[ -n "${WORKTREE_PATH:-}" && -d "${WORKTREE_PATH}" ]]; then
+		WORK_DIR="${WORKTREE_PATH}"
+	else
+		WORK_DIR="${ROOT_DIR}"
+	fi
+	if [[ -z "${RELEASE_ZIP:-}" && -n "${RELEASE_VERSION:-}" ]]; then
+		RELEASE_ZIP="${ROOT_DIR}/release/${RELEASE_VERSION}/fscrawler-${RELEASE_VERSION}.zip"
+	fi
 }
 
 clear_release_state() {
@@ -400,6 +420,13 @@ rollback_from_state_file() {
 	info "  original branch: ${ORIGINAL_BRANCH}"
 	info "  release branch:  ${RELEASE_BRANCH}"
 	info "  release tag:     ${RELEASE_TAG}"
+	if [[ -n "${WORKTREE_PATH:-}" ]]; then
+		info "  worktree:        ${WORKTREE_PATH}"
+	fi
+
+	# Drop the isolated worktree first — git cannot delete a branch that is still
+	# checked out in a worktree, and the main clone must stay on ORIGINAL_BRANCH.
+	remove_release_worktree
 
 	# Discard leftover filtered copies (outside target/) before switching branches.
 	# git checkout keeps uncommitted files when both branches have the same blob,
@@ -570,6 +597,87 @@ git_cmd() {
 	git -C "${ROOT_DIR}" "$@"
 }
 
+require_release_head() {
+	is_dry_run && return 0
+	if [[ "${WORK_DIR}" != "${WORKTREE_PATH:-}" || -z "${WORKTREE_PATH:-}" ]]; then
+		return 0
+	fi
+	local head
+	head="$(git -C "${WORK_DIR}" rev-parse --abbrev-ref HEAD)"
+	if [[ "${head}" != "${RELEASE_BRANCH}" ]]; then
+		die "Release worktree HEAD is '${head}', expected '${RELEASE_BRANCH}'. Aborting to avoid mutating another checkout."
+	fi
+}
+
+ensure_root_on_original_branch() {
+	local head
+	head="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD)"
+	if [[ "${head}" != "${ORIGINAL_BRANCH}" ]]; then
+		die "Main checkout is on '${head}', expected '${ORIGINAL_BRANCH}'. Another process moved the root worktree during the release."
+	fi
+}
+
+remove_release_worktree() {
+	if [[ -z "${WORKTREE_PATH:-}" ]]; then
+		WORK_DIR="${ROOT_DIR}"
+		return 0
+	fi
+	if is_dry_run; then
+		log "[dry-run] Would remove worktree ${WORKTREE_PATH}"
+		WORK_DIR="${ROOT_DIR}"
+		return 0
+	fi
+	if git_cmd worktree list --porcelain | grep -Fxq "worktree ${WORKTREE_PATH}"; then
+		log "Removing release worktree ${WORKTREE_PATH}"
+		git_cmd worktree remove --force "${WORKTREE_PATH}"
+	elif [[ -d "${WORKTREE_PATH}" ]]; then
+		warn "Worktree path ${WORKTREE_PATH} exists but is not registered — removing directory."
+		rm -rf "${WORKTREE_PATH}"
+		git_cmd worktree prune
+	fi
+	WORK_DIR="${ROOT_DIR}"
+}
+
+copy_release_zip() {
+	local src dest src_asc dest_asc dest_sha
+	src="${WORK_DIR}/distribution/target/fscrawler-distribution-${RELEASE_VERSION}.zip"
+	dest="${ROOT_DIR}/release/${RELEASE_VERSION}/fscrawler-${RELEASE_VERSION}.zip"
+	src_asc="${src}.asc"
+	dest_asc="${dest}.asc"
+	dest_sha="${dest}.sha256"
+	if is_dry_run; then
+		log "[dry-run] Would copy ${src} -> ${dest}"
+		log "[dry-run] Would copy ${src_asc} -> ${dest_asc}"
+		log "[dry-run] Would write ${dest_sha}"
+		return 0
+	fi
+	if [[ ! -f "${src}" ]]; then
+		die "Release ZIP not found after build: ${src}"
+	fi
+	if [[ ! -f "${src_asc}" ]]; then
+		die "GPG signature not found: ${src_asc} — the release profile must sign the ZIP"
+	fi
+	mkdir -p "$(dirname "${dest}")"
+	cp "${src}" "${dest}"
+	cp "${src_asc}" "${dest_asc}"
+	write_sha256 "${dest}" "${dest_sha}"
+	RELEASE_ZIP="${dest}"
+	log "Copied release ZIP, GPG signature, and SHA-256 to ${dest}"
+}
+
+write_sha256() {
+	local file=$1
+	local out=$2
+	local dir base
+	dir="$(dirname "${file}")"
+	base="$(basename "${file}")"
+	if command -v sha256sum >/dev/null 2>&1; then
+		( cd "${dir}" && sha256sum "${base}" >"$(basename "${out}")" )
+	else
+		( cd "${dir}" && shasum -a 256 "${base}" >"$(basename "${out}")" )
+	fi
+}
+
 git_ref_exists() {
 	git_cmd show-ref --verify --quiet "$1"
 }
@@ -587,27 +695,32 @@ working_tree_clean() {
 }
 
 mvn_run() {
+	require_release_head
 	if is_dry_run; then
-		log "[dry-run] mvn $*"
+		log "[dry-run] mvn $*  (cwd=${WORK_DIR})"
 		printf '[dry-run] mvn %s\n' "$*" >>"${LOG_FILE}"
 		return 0
 	fi
 
-	log "mvn $*"
-	if ! mvn "$@" >>"${LOG_FILE}" 2>&1; then
+	log "mvn $* (cwd=${WORK_DIR})"
+	if ! (
+		cd "${WORK_DIR}"
+		mvn "$@"
+	) >>"${LOG_FILE}" 2>&1; then
 		report_failure "Maven command failed: mvn $*"
 		exit 1
 	fi
 }
 
 git_run() {
+	require_release_head
 	if is_dry_run; then
-		log "[dry-run] git $*"
+		log "[dry-run] git $*  (cwd=${WORK_DIR})"
 		printf '[dry-run] git %s\n' "$*" >>"${LOG_FILE}"
 		return 0
 	fi
 
-	if ! git -C "${ROOT_DIR}" "$@"; then
+	if ! git -C "${WORK_DIR}" "$@"; then
 		report_failure "Git command failed: git $*"
 		exit 1
 	fi
@@ -631,10 +744,11 @@ regenerate_filtered_resources() {
 build_release() {
 	log "Building release artifacts (profile: release)"
 	mvn_run clean install -Prelease "${MAVEN_EXTRA_ARGS[@]}"
+	copy_release_zip
 }
 
 deploy_release() {
-	log "Deploying artifacts to Maven Central"
+	log "Pushing Docker images to Docker Hub"
 	mvn_run deploy -DskipTests -Prelease "${MAVEN_EXTRA_ARGS[@]}"
 }
 
@@ -690,6 +804,21 @@ send_announcement() {
 		--subject "${subject}" >>"${LOG_FILE}" 2>&1
 }
 
+delete_snapshot_prerelease() {
+	local tag="${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT"
+	if is_dry_run || is_local; then
+		info "[local] Would delete GitHub pre-release ${tag}"
+		return 0
+	fi
+	if gh release view "${tag}" >/dev/null 2>&1; then
+		log "Deleting SNAPSHOT pre-release ${tag}"
+		gh release delete "${tag}" --yes --cleanup-tag
+		success "Deleted pre-release ${tag}."
+	else
+		info "No SNAPSHOT pre-release ${tag} to delete."
+	fi
+}
+
 create_github_release() {
 	if is_dry_run || is_local; then
 		info "[local] Skipping GitHub release creation."
@@ -698,23 +827,43 @@ create_github_release() {
 
 	if ! confirm "Create GitHub release ${RELEASE_TAG}?" y; then
 		info "Create manually when ready:"
-		info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE}"
+		info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip ${RELEASE_ZIP}.asc#fscrawler-${RELEASE_VERSION}.zip.asc ${RELEASE_ZIP}.sha256#fscrawler-${RELEASE_VERSION}.zip.sha256"
+		info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
 		return
 	fi
 
 	ensure_release_notes_file
 
-	log "Creating GitHub release ${RELEASE_TAG}"
-	if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-		warn "GitHub release ${RELEASE_TAG} already exists."
-		if confirm "Update release notes with gh release edit?" y; then
-			gh release edit "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}"
-		fi
-		return
+	local zip="${RELEASE_ZIP:-${ROOT_DIR}/release/${RELEASE_VERSION}/fscrawler-${RELEASE_VERSION}.zip}"
+	local zip_asset="${zip}#fscrawler-${RELEASE_VERSION}.zip"
+	local asc_asset="${zip}.asc#fscrawler-${RELEASE_VERSION}.zip.asc"
+	local sha_asset="${zip}.sha256#fscrawler-${RELEASE_VERSION}.zip.sha256"
+	local repo="${GITHUB_REPO:-dadoonet/fscrawler}"
+	if [[ ! -f "${zip}" || ! -f "${zip}.asc" || ! -f "${zip}.sha256" ]]; then
+		die "Release ZIP, .asc, or .sha256 not found next to ${zip} — copy them after the release build, before mvn clean."
 	fi
 
-	gh release create "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}"
-	success "GitHub release ${RELEASE_TAG} created."
+	if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+		warn "GitHub release ${RELEASE_TAG} already exists."
+		if confirm "Update release notes and attach ${zip##*/} plus signature and checksum?" y; then
+			gh release edit "${RELEASE_TAG}" --draft=false --notes-file "${RELEASE_NOTES_FILE}"
+			gh release upload "${RELEASE_TAG}" "${zip_asset}" "${asc_asset}" "${sha_asset}" --clobber
+		else
+			return
+		fi
+	else
+		log "Creating GitHub release ${RELEASE_TAG}"
+		gh release create "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}" "${zip_asset}" "${asc_asset}" "${sha_asset}"
+		success "GitHub release ${RELEASE_TAG} created (ZIP, .asc, and SHA-256)."
+	fi
+
+	open_url "https://github.com/${repo}/releases/tag/${RELEASE_TAG}"
+	if confirm "GitHub release looks OK — delete SNAPSHOT pre-release?" y; then
+		delete_snapshot_prerelease
+	else
+		info "Delete later with:"
+		info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
+	fi
 }
 
 ensure_clean_enough_tree() {
@@ -743,15 +892,26 @@ remove_tag_if_requested() {
 }
 
 create_release_branch() {
-	log "Creating branch ${RELEASE_BRANCH}"
-	if git_branch_exists "${RELEASE_BRANCH}"; then
-		if is_dry_run; then
-			log "[dry-run] Would delete existing branch ${RELEASE_BRANCH} before recreating it."
-		else
-			git_cmd branch -D "${RELEASE_BRANCH}"
-		fi
+	WORKTREE_PATH="${WORKTREE_PATH:-${ROOT_DIR}/release/worktrees/${RELEASE_VERSION}}"
+	log "Creating isolated worktree ${WORKTREE_PATH} on branch ${RELEASE_BRANCH}"
+	if is_dry_run; then
+		log "[dry-run] Would run: git worktree add -b ${RELEASE_BRANCH} ${WORKTREE_PATH}"
+		return
 	fi
-	git_run checkout -q -b "${RELEASE_BRANCH}"
+
+	if git_cmd worktree list --porcelain | grep -Fxq "worktree ${WORKTREE_PATH}"; then
+		die "Stale release worktree at ${WORKTREE_PATH}. Remove it with: git worktree remove --force ${WORKTREE_PATH}"
+	fi
+	if [[ -e "${WORKTREE_PATH}" ]]; then
+		die "Worktree path already exists: ${WORKTREE_PATH}"
+	fi
+	if git_branch_exists "${RELEASE_BRANCH}"; then
+		git_cmd branch -D "${RELEASE_BRANCH}"
+	fi
+	mkdir -p "$(dirname "${WORKTREE_PATH}")"
+	git_cmd worktree add -b "${RELEASE_BRANCH}" "${WORKTREE_PATH}"
+	WORK_DIR="${WORKTREE_PATH}"
+	log "Main checkout stays on ${ORIGINAL_BRANCH}; Maven/git mutations run in the worktree."
 }
 
 commit_all() {
@@ -823,11 +983,15 @@ gather_inputs() {
 	RELEASE_BRANCH="release-${RELEASE_VERSION}"
 	RELEASE_TAG="${TAG_PREFIX}-${RELEASE_VERSION}"
 	RELEASE_WORK_DIR="${ROOT_DIR}/release/${RELEASE_VERSION}"
+	WORKTREE_PATH="${ROOT_DIR}/release/worktrees/${RELEASE_VERSION}"
+	WORK_DIR="${ROOT_DIR}"
+	RELEASE_DATE="$(date -u +%Y-%m-%d)"
+	RELEASE_ZIP="${RELEASE_WORK_DIR}/fscrawler-${RELEASE_VERSION}.zip"
 	LOG_FILE="${RELEASE_WORK_DIR}/release.log"
 	RELEASE_NOTES_FILE="${RELEASE_WORK_DIR}/release-notes.md"
 
 	if [[ "${ORIGINAL_BRANCH}" == "${RELEASE_BRANCH}" ]]; then
-		warn "You are already on ${RELEASE_BRANCH}. Consider switching to your integration branch first."
+		die "You are already on ${RELEASE_BRANCH}. Switch to your integration branch first."
 	fi
 
 	if is_dry_run; then
@@ -840,6 +1004,7 @@ gather_inputs() {
 	: >"${LOG_FILE}"
 	log "Logging to ${LOG_FILE}"
 	info "Release work directory: ${RELEASE_WORK_DIR}"
+	info "Isolated worktree:      ${WORKTREE_PATH}"
 }
 
 prepare_release_branch() {
@@ -872,21 +1037,42 @@ review_announcement() {
 
 maybe_deploy() {
 	if is_dry_run || is_local; then
-		info "Skipping deployment (no Maven Central / Docker Hub publish)."
+		info "Skipping deployment (no Docker Hub publish)."
 		return
 	fi
 
-	if confirm "Deploy artifacts now?" y; then
+	if confirm "Push Docker images now?" y; then
 		RELEASE_APPROVED=true
 		RELEASE_DEPLOYED=true
 		deploy_release
 	else
-		info "Skipping deployment."
+		info "Skipping Docker Hub push."
 	fi
 }
 
 bump_development_version() {
+	local dependabot_flag="--create"
+	if is_local; then
+		dependabot_flag="--allow-missing"
+	fi
+
 	set_project_version "${NEXT_VERSION}"
+	log "Updating README versions table (${RELEASE_VERSION} → ${NEXT_VERSION})"
+	if is_dry_run; then
+		log "[dry-run] python3 scripts/update_readme_versions.py --released ${RELEASE_VERSION} --next ${NEXT_VERSION} --date ${RELEASE_DATE}"
+		log "[dry-run] python3 scripts/update_dependabot_milestone.py --snapshot ${NEXT_VERSION}"
+	else
+		python3 "${ROOT_DIR}/scripts/update_readme_versions.py" \
+			--readme "${WORK_DIR}/README.md" \
+			--released "${RELEASE_VERSION}" \
+			--next "${NEXT_VERSION}" \
+			--date "${RELEASE_DATE:-$(date -u +%Y-%m-%d)}"
+		python3 "${ROOT_DIR}/scripts/update_dependabot_milestone.py" \
+			--file "${WORK_DIR}/.github/dependabot.yml" \
+			--snapshot "${NEXT_VERSION}" \
+			--github-repo "${GITHUB_REPO:-dadoonet/fscrawler}" \
+			"${dependabot_flag}"
+	fi
 	commit_all "prepare for next development iteration"
 }
 
@@ -895,18 +1081,9 @@ verify_publications() {
 		return
 	fi
 
-	info "Artifacts may already be published (Maven Central autoPublish / Docker Hub)."
+	info "Docker images may already be published."
 	info "These prompts only decide whether to continue with the git merge and push."
 	info "Answering no does not retract anything already published."
-
-	info "Check Maven Central deployment status"
-	open_url "${CENTRAL_DEPLOYMENTS_URL}"
-	confirm "Maven Central looks OK — continue with git finalize?" y || RELEASE_APPROVED=false
-
-	if [[ "${RELEASE_APPROVED}" != true ]]; then
-		warn "Git finalize cancelled after Maven Central check."
-		return
-	fi
 
 	info "Check Docker Hub tags"
 	open_url "${DOCKERHUB_TAGS_URL}"
@@ -914,16 +1091,17 @@ verify_publications() {
 }
 
 finalize_local_release() {
-	git_run checkout -q "${ORIGINAL_BRANCH}"
 	save_release_state "completed"
 	maybe_send_local_test_announcement
 	disable_release_tracking
 
 	success "Local release rehearsal complete."
-	info "Release branch: ${RELEASE_BRANCH}"
-	info "Release tag:    ${RELEASE_TAG}"
-	info "Log file:       ${LOG_FILE}"
-	info "Release notes:  ${RELEASE_NOTES_FILE}"
+	info "Main checkout:     ${ORIGINAL_BRANCH} (unchanged)"
+	info "Release worktree:  ${WORKTREE_PATH}"
+	info "Release branch:    ${RELEASE_BRANCH}"
+	info "Release tag:       ${RELEASE_TAG}"
+	info "Log file:          ${LOG_FILE}"
+	info "Release notes:     ${RELEASE_NOTES_FILE}"
 	info "When finished inspecting, rollback with:"
 	info "  ${SCRIPT_NAME} --rollback"
 }
@@ -949,10 +1127,10 @@ finalize_skipped_deploy() {
 
 	info "Release branch: ${RELEASE_BRANCH}"
 	info "Release tag:    ${RELEASE_TAG}"
-	info "Next SNAPSHOT commit is on ${RELEASE_BRANCH}."
-	info "When ready to continue:"
-	info "  git checkout ${ORIGINAL_BRANCH}"
+	info "Next SNAPSHOT commit is on ${RELEASE_BRANCH} (worktree ${WORKTREE_PATH})."
+	info "When ready to continue, from the main checkout (${ORIGINAL_BRANCH}):"
 	info "  git merge ${RELEASE_BRANCH}"
+	info "  git worktree remove ${WORKTREE_PATH}"
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
 	info "Or discard with:"
 	info "  ${SCRIPT_NAME} --rollback"
@@ -960,18 +1138,17 @@ finalize_skipped_deploy() {
 
 finalize_failed_verification() {
 	warn "Git finalize cancelled — published artifacts are NOT retracted."
-	warn "Maven Central release versions are immutable: the same version cannot be overwritten."
-	warn "If the Central artifacts are wrong, cut a new version (for example a patch release)."
 	info "Docker Hub tags can usually be overwritten by deploying again with the same tag."
+	info "The GitHub ZIP can be re-uploaded with gh release upload --clobber if the release already exists."
 	save_release_state "verification_failed"
 	disable_release_tracking
 
 	info "Release branch: ${RELEASE_BRANCH}"
 	info "Release tag:    ${RELEASE_TAG}"
-	info "Next SNAPSHOT commit is on ${RELEASE_BRANCH}."
-	info "If the publications are actually fine, continue manually:"
-	info "  git checkout ${ORIGINAL_BRANCH}"
+	info "Next SNAPSHOT commit is on ${RELEASE_BRANCH} (worktree ${WORKTREE_PATH})."
+	info "If the publications are actually fine, continue from the main checkout (${ORIGINAL_BRANCH}):"
 	info "  git merge ${RELEASE_BRANCH}"
+	info "  git worktree remove ${WORKTREE_PATH}"
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
 	info "To discard local branch/tag only (remote artifacts stay published):"
 	info "  ${SCRIPT_NAME} --rollback"
@@ -987,14 +1164,14 @@ finalize_awaiting_push() {
 	info "When ready to publish:"
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
 	info "  python3 scripts/prepare-release-notes.py --version ${RELEASE_VERSION} --since-tag ${PREVIOUS_TAG}"
-	info "Then create the GitHub release and send the announcement manually."
+	info "Then create the GitHub release, delete the SNAPSHOT pre-release, and send the announcement manually:"
+	info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip ${RELEASE_ZIP}.asc#fscrawler-${RELEASE_VERSION}.zip.asc ${RELEASE_ZIP}.sha256#fscrawler-${RELEASE_VERSION}.zip.sha256"
+	info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
 	info "To undo the local merge and clear release state:"
 	info "  ${SCRIPT_NAME} --rollback"
 }
 
 finalize_release() {
-	git_run checkout -q "${ORIGINAL_BRANCH}"
-
 	if is_local; then
 		finalize_local_release
 		return
@@ -1019,12 +1196,19 @@ finalize_release() {
 		return
 	fi
 
+	if ! is_dry_run; then
+		ensure_root_on_original_branch
+	fi
+
 	log "Merging ${RELEASE_BRANCH} into ${ORIGINAL_BRANCH}"
 	if ! is_dry_run; then
 		ORIGINAL_HEAD="$(git -C "${ROOT_DIR}" rev-parse HEAD)"
+		git_cmd merge -q "${RELEASE_BRANCH}"
+		remove_release_worktree
+		git_cmd branch -q -d "${RELEASE_BRANCH}"
+	else
+		info "[dry-run] Would merge ${RELEASE_BRANCH} into ${ORIGINAL_BRANCH} and remove worktree ${WORKTREE_PATH}"
 	fi
-	git_run merge -q "${RELEASE_BRANCH}"
-	git_run branch -q -d "${RELEASE_BRANCH}"
 
 	# Persist pre-merge HEAD before push so --rollback can undo the merge if push fails.
 	if ! is_dry_run; then
@@ -1076,7 +1260,8 @@ rollback_release() {
 
 	warn "Release was not completed."
 
-	if confirm "Delete branch ${RELEASE_BRANCH} and tag ${RELEASE_TAG}?" y; then
+	if confirm "Delete worktree, branch ${RELEASE_BRANCH} and tag ${RELEASE_TAG}?" y; then
+		remove_release_worktree
 		if git_branch_exists "${RELEASE_BRANCH}"; then
 			git_cmd branch -D "${RELEASE_BRANCH}" 2>/dev/null || true
 		fi

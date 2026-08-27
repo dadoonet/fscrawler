@@ -28,10 +28,7 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
-/**
- * Maven Central validates the deployed distribution POM in isolation. It must not rely on {@code fscrawler-parent}
- * being published.
- */
+/** Guards a self-contained distribution POM (no parent, resolved versions). */
 class FlattenedDistributionPomTest extends AbstractFSCrawlerTestCase {
 
     private static final Pattern CLI_VERSION =
@@ -40,7 +37,7 @@ class FlattenedDistributionPomTest extends AbstractFSCrawlerTestCase {
             "<artifactId>fscrawler-elasticsearch-client</artifactId>\\s*<version>[^<]+</version>", Pattern.DOTALL);
 
     @Test
-    void flattenedPomIsSelfContainedForMavenCentral() throws Exception {
+    void flattenedPomIsSelfContained() throws Exception {
         Path flattenedPom = Path.of(".flattened-pom.xml");
         assertThat(flattenedPom)
                 .as("flatten-maven-plugin must write .flattened-pom.xml during process-resources")

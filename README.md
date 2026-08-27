@@ -16,11 +16,13 @@ This crawler helps to index binary documents such as PDF, Open Office, MS Office
 
 Current versions are:
 
+<!-- release-versions:start -->
 | Elasticsearch | FSCrawler    | Released   | Docs                                                            |
 |---------------|--------------|------------|-----------------------------------------------------------------|
 | 6.x, 7.x      | 2.9          | 2022-03-08 | [2.9](https://fscrawler.readthedocs.io/en/fscrawler-2.9/)       |
 | 7.x, 8.x, 9.x | 3.0          | 2026-08-26 | [3.0](https://fscrawler.readthedocs.io/en/fscrawler-3.0/)       |
 | 8.x, 9.x      | 3.1-SNAPSHOT |            | [3.1-SNAPSHOT](https://fscrawler.readthedocs.io/en/latest/)     |
+<!-- release-versions:end -->
 
 ## Quick start
 
@@ -96,7 +98,7 @@ index ([mirrored in the repo](llms.txt)) and clean Markdown versions of every do
 
 ### Version in preparation
 
-[![Latest SNAPSHOT](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Ffr%2Fpilato%2Felasticsearch%2Fcrawler%2Ffscrawler-distribution%2Fmaven-metadata.xml&label=Latest%20SNAPSHOT)](https://central.sonatype.com/repository/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
+[![Latest SNAPSHOT](https://img.shields.io/github/v/release/dadoonet/fscrawler?include_prereleases&label=Latest%20SNAPSHOT)](https://github.com/dadoonet/fscrawler/releases)
 ![Docker Image Version (latest build)](https://img.shields.io/docker/v/dadoonet/fscrawler?label=latest%20build)
 ![Docker Image Size (latest build)](https://img.shields.io/docker/image-size/dadoonet/fscrawler?label=latest%20build%20size)
 ![GitHub commits since latest release](https://img.shields.io/github/commits-since/dadoonet/fscrawler/latest/main)
@@ -106,7 +108,7 @@ index ([mirrored in the repo](llms.txt)) and clean Markdown versions of every do
 
 ### Latest release
 
-[![Maven Central](https://img.shields.io/maven-central/v/fr.pilato.elasticsearch.crawler/fscrawler-distribution)](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)
+[![GitHub Release](https://img.shields.io/github/v/release/dadoonet/fscrawler?label=Latest%20release)](https://github.com/dadoonet/fscrawler/releases/latest)
 ![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)
 ![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler?sort=semver&label=docker%20image%20version)
 ![Docker Image Size](https://img.shields.io/docker/image-size/dadoonet/fscrawler?sort=semver&label=docker%20image%20size)

@@ -51,10 +51,8 @@ version = read_version(full_version=False)
 # The full version, including alpha/beta/rc tags.
 release = read_version()
 
-downloadUrl = "https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/%s/fscrawler-%s.zip" % (version, version)
-
-if release.endswith('-SNAPSHOT'):
-    downloadUrl = "https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/%s/" % release
+githubReleasesUrl = "https://github.com/dadoonet/fscrawler/releases"
+downloadUrl = "%s/download/fscrawler-%s/fscrawler-%s.zip" % (githubReleasesUrl, release, release)
 
 # Elasticsearch latest version
 es_stack_version=config.get('3rdParty', 'ElasticsearchVersion')
@@ -254,9 +252,8 @@ rst_prolog = rst_prolog + """
 .. |ES_stack_version| replace:: {fmt_es_stack_version}
 .. |FSCrawler_version| replace:: {fmt_fscrawler_version}
 .. |JPEG2000_version| replace:: jai-imageio-jpeg2000:{fmt_jpeg_version}
-.. |Download_URL| replace:: Sonatype
-.. |Maven_Central| replace:: Maven Central
-.. |Sonatype| replace:: Sonatype
+.. |GitHub| replace:: GitHub Releases
+.. |downloadUrl| replace:: {fmt_downloadUrl}
 .. |java_version| replace:: {fmt_java_version}
 
 .. _Tika: https://tika.apache.org/{fmt_tika_version}/
@@ -268,9 +265,7 @@ rst_prolog = rst_prolog + """
 .. _ES_version8: https://www.elastic.co/guide/en/elasticsearch/reference/8.18/index.html
 .. _ES_version9: https://www.elastic.co/docs/solutions/search
 .. _JPEG2000_version: https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{fmt_jpeg_version}/
-.. _Download_URL: {fmt_downloadUrl}
-.. _Maven_Central: https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/
-.. _Sonatype: https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/
+.. _GitHub: {fmt_githubReleasesUrl}
 """.format(
 fmt_tika_version=config.get('3rdParty', 'TikaVersion'),
 fmt_es_version7=config.get('3rdParty', 'ElasticsearchVersion7'),
@@ -278,6 +273,7 @@ fmt_es_version8=config.get('3rdParty', 'ElasticsearchVersion8'),
 fmt_es_version9=config.get('3rdParty', 'ElasticsearchVersion9'),
 fmt_jpeg_version=config.get('3rdParty', 'JpegVersion'),
 fmt_downloadUrl=downloadUrl,
+fmt_githubReleasesUrl=githubReleasesUrl,
 fmt_es_stack_version=es_stack_version,
 fmt_fscrawler_version=release,
 fmt_java_version=java_version
@@ -304,9 +300,8 @@ myst_substitutions = {
     'ES_stack_version': es_stack_version,
     'FSCrawler_version': release,
     'JPEG2000_version': f'[jai-imageio-jpeg2000:{_jpeg_version}](https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{_jpeg_version}/)',
-    'Download_URL': f'[Sonatype]({downloadUrl})',
-    'Maven_Central': '[Maven Central](https://repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)',
-    'Sonatype': '[Sonatype](https://central.sonatype.com/service/rest/repository/browse/maven-snapshots/fr/pilato/elasticsearch/crawler/fscrawler-distribution/)',
+    'GitHub': f'[GitHub Releases]({githubReleasesUrl})',
+    'downloadUrl': downloadUrl,
     'java_version': java_version,
 }
 # End of conf.py
