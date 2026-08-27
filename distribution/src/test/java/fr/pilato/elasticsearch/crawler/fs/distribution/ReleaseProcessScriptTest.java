@@ -188,9 +188,9 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 .contains("skip_github")
                 .contains("SKIP_DOCKER")
                 .contains("SKIP_GITHUB")
-                .contains("pull_request")
-                .contains("test-main-workflow")
-                .doesNotContain("dry_run");
+                .doesNotContain("dry_run")
+                .doesNotContain("pull_request")
+                .doesNotContain("test-main-workflow");
     }
 
     @Test

@@ -13,18 +13,15 @@ on:
         description: Skip GitHub SNAPSHOT pre-release
         type: boolean
         default: false
-  pull_request:
-    types: [labeled]
 
 jobs:
   build-and-deploy:
-    if: github.event_name != 'pull_request' || github.event.label.name == 'test-main-workflow'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
-      SKIP_DOCKER: ${{ github.event_name == 'pull_request' || inputs.skip_docker == 'true' }}
-      SKIP_GITHUB: ${{ github.event_name == 'pull_request' || inputs.skip_github == 'true' }}
+      SKIP_DOCKER: ${{ inputs.skip_docker == 'true' }}
+      SKIP_GITHUB: ${{ inputs.skip_github == 'true' }}
     steps:
       - uses: actions/checkout@v7
       - name: Fetch origin/main for Spotless ratchet

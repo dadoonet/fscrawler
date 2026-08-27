@@ -184,8 +184,10 @@ push.
 
 ### Testing the workflow from a branch
 
+### Testing the workflow from a branch
+
 The Actions **Run workflow** button (`workflow_dispatch`) only appears once this file is on
-`main`. Until then, `gh workflow run maven.yml` cannot target this PR branch either.
+`main`. Until then, `gh workflow run maven.yml` cannot target another branch either.
 
 Inputs (both default to `false`, same as a push to `main`):
 
@@ -206,9 +208,6 @@ gh workflow run maven.yml --ref <branch> -f skip_docker=true -f skip_github=true
 ```
 
 Leaving both at `false` publishes for real (Docker Hub + `fscrawler-{version}` pre-release).
-
-Before this file reaches `main`, add the label `test-main-workflow` on the PR. That forces
-both skips (build the ZIP, publish nothing). Remove and re-add the label to run it again.
 
 When `release.sh` publishes the matching stable GitHub release (`fscrawler-3.1`) and you
 confirm it looks OK, it deletes that SNAPSHOT pre-release
