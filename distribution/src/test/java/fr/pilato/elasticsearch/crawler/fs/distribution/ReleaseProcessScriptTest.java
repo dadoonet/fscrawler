@@ -102,6 +102,19 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void bumpDevelopmentVersionUpdatesDependabotMilestone() throws Exception {
+        String bump = functionBody(readReleaseScript(), "bump_development_version");
+        assertThat(bump)
+                .as("Dependabot milestone must follow the next SNAPSHOT (3.1-SNAPSHOT → milestone titled 3.1)")
+                .contains("update_dependabot_milestone.py")
+                .contains("commit_all");
+        int updater = bump.indexOf("update_dependabot_milestone.py");
+        int commit = bump.indexOf("commit_all");
+        assertThat(updater).isGreaterThanOrEqualTo(0);
+        assertThat(commit).isGreaterThan(updater);
+    }
+
+    @Test
     void rollbackRemovesWorktreeBeforeDeletingBranch() throws Exception {
         String rollback = functionBody(readReleaseScript(), "rollback_from_state_file");
         assertThat(rollback).contains("remove_release_worktree");

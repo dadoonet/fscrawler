@@ -999,16 +999,27 @@ maybe_deploy() {
 }
 
 bump_development_version() {
+	local dependabot_flag="--create"
+	if is_local; then
+		dependabot_flag="--allow-missing"
+	fi
+
 	set_project_version "${NEXT_VERSION}"
 	log "Updating README versions table (${RELEASE_VERSION} → ${NEXT_VERSION})"
 	if is_dry_run; then
 		log "[dry-run] python3 scripts/update_readme_versions.py --released ${RELEASE_VERSION} --next ${NEXT_VERSION} --date ${RELEASE_DATE}"
+		log "[dry-run] python3 scripts/update_dependabot_milestone.py --snapshot ${NEXT_VERSION}"
 	else
 		python3 "${ROOT_DIR}/scripts/update_readme_versions.py" \
 			--readme "${WORK_DIR}/README.md" \
 			--released "${RELEASE_VERSION}" \
 			--next "${NEXT_VERSION}" \
 			--date "${RELEASE_DATE:-$(date -u +%Y-%m-%d)}"
+		python3 "${ROOT_DIR}/scripts/update_dependabot_milestone.py" \
+			--file "${WORK_DIR}/.github/dependabot.yml" \
+			--snapshot "${NEXT_VERSION}" \
+			--github-repo "${GITHUB_REPO:-dadoonet/fscrawler}" \
+			"${dependabot_flag}"
 	fi
 	commit_all "prepare for next development iteration"
 }

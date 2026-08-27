@@ -66,8 +66,10 @@ is running: Maven and git mutations are already bound to that path.
   `flatten-maven-plugin` (`flattenMode=oss`) writes a self-contained POM (no parent,
   OSS metadata inlined, dependency versions resolved) so Central can validate the ZIP
   artifact without publishing `fscrawler-parent`.
-* Prepare the next SNAPSHOT version and update the README "Latest versions" table
-  (HTML comment markers `<!-- release-versions:start -->` / `<!-- release-versions:end -->`)
+* Prepare the next SNAPSHOT version, update the README "Latest versions" table
+  (HTML comment markers `<!-- release-versions:start -->` / `<!-- release-versions:end -->`),
+  and point `.github/dependabot.yml` at the GitHub milestone titled like that SNAPSHOT
+  (`3.1-SNAPSHOT` → milestone **3.1**, written as its numeric id)
 * Commit the change
 * Merge the release branch into the branch you started from (still on the main clone)
 * Remove the isolated worktree and delete the release branch
@@ -100,6 +102,18 @@ untouched. The Elasticsearch range is kept from the previous SNAPSHOT row unless
 pass `--es-versions`.
 
 Maven Central, SNAPSHOT, and Docker badges are already dynamic and are not rewritten.
+
+## Dependabot milestone
+
+`.github/dependabot.yml` assigns every Dependabot PR to a GitHub milestone. The YAML
+field is the **numeric** milestone id (the suffix in
+`https://github.com/dadoonet/fscrawler/milestone/28`), not the title.
+
+On the "prepare for next development iteration" commit,
+`scripts/update_dependabot_milestone.py` looks up the open milestone whose title matches
+the next SNAPSHOT without `-SNAPSHOT` (`3.1-SNAPSHOT` → `3.1` → `28`) and rewrites every
+`milestone:` key. In a production release the script creates that milestone if it does
+not exist yet. `--local` only updates the file when the milestone is already there.
 
 ## Release notes
 
