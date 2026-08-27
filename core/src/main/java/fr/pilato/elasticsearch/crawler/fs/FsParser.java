@@ -1602,8 +1602,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 FsCrawlerUtil.getModificationTime(folderInfo),
                 FsCrawlerUtil.getLastAccessTime(folderInfo));
 
-        if (fsSettings.getFs().isAttributesSupport()
-                && (crawlerPlugin == null || "local".equals(crawlerPlugin.getType()))) {
+        if (fsSettings.getFs().isAttributesSupport() && "local".equals(crawlerPlugin.getType())) {
             Attributes attributes = new Attributes();
             attributes.setOwner(FsCrawlerUtil.getOwnerName(folderInfo));
             attributes.setGroup(FsCrawlerUtil.getGroupName(folderInfo));
