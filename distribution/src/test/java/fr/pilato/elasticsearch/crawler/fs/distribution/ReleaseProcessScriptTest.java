@@ -186,6 +186,12 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 .contains("publish_snapshot_prerelease.py")
                 .contains("contents: write")
                 .doesNotContain("CENTRAL_TOKEN");
+        String publisher = Files.readString(repoRoot().resolve("scripts").resolve("publish_snapshot_prerelease.py"));
+        assertThat(publisher)
+                .as("GitHub download URLs use the file basename, not gh's # display label")
+                .contains("stage_github_zip")
+                .contains("maven_zip_name")
+                .doesNotContain("#{asset_name");
     }
 
     @Test
