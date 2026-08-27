@@ -22,12 +22,15 @@ package fr.pilato.elasticsearch.crawler.plugins;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.PathNotFoundException;
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -89,4 +92,86 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
             return Map.of();
         }
     }
+
+    protected void requireProviderSetting(String field, String value) throws IOException {
+        if (value == null || value.isBlank()) {
+            throw new IOException("Provider [" + getType() + "] requires fs.providers." + getType() + "." + field);
+        }
+    }
+
+    /**
+     * Hostname and username are required. In crawler mode (no REST path) returns {@code null}. In REST mode, returns
+     * the normalized path; the caller must then {@link #connectAndValidateRestFile()}.
+     */
+    protected String requireHostUserAndNormalizeRestPath(String hostname, String username, String remotePath)
+            throws IOException {
+        requireProviderSetting("hostname", hostname);
+        requireProviderSetting("username", username);
+        if (remotePath == null || remotePath.isEmpty()) {
+            if (document != null) {
+                throw new IOException(getType() + " path is missing");
+            }
+            return null;
+        }
+        return normalizeRemotePath(remotePath);
+    }
+
+    protected String normalizeRemotePath(String path) throws IOException {
+        if (path == null) {
+            return null;
+        }
+        if (!path.startsWith("/")) {
+            String rootPath = fsSettings.getFs() != null ? fsSettings.getFs().getUrl() : null;
+            if (rootPath == null || rootPath.isEmpty()) {
+                throw new IOException("Cannot resolve relative path [" + path + "]: fs.url is not configured. "
+                        + "Please use an absolute path starting with '/' or configure fs.url in the job settings.");
+            }
+            return rootPath.endsWith("/") ? rootPath + path : rootPath + "/" + path;
+        }
+        return path;
+    }
+
+    protected Doc createFileDocument(String remotePath, long filesize) {
+        String filename = FilenameUtils.getName(remotePath);
+        logger.debug("Creating document from {} for file {}", getType(), filename);
+
+        Doc doc = new Doc();
+        doc.getFile().setFilename(filename);
+        doc.getFile().setFilesize(filesize);
+
+        String rootUrl = (fsSettings.getFs() != null && fsSettings.getFs().getUrl() != null)
+                ? fsSettings.getFs().getUrl()
+                : "/";
+        doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(rootUrl, remotePath));
+        doc.getPath().setReal(remotePath);
+        return doc;
+    }
+
+    protected void connectAndValidateRestFile() throws IOException {
+        boolean success = false;
+        try {
+            openConnection();
+            validateRestFile();
+            success = true;
+        } catch (FsCrawlerPluginException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new FsCrawlerPluginException(
+                    "Failed to connect to " + getType().toUpperCase() + " server: " + e.getMessage(), e);
+        } finally {
+            if (!success) {
+                try {
+                    closeConnection();
+                } catch (Exception e) {
+                    logger.warn(
+                            "Error closing {} connection after validation failure: {}",
+                            getType().toUpperCase(),
+                            e.getMessage());
+                }
+            }
+        }
+    }
+
+    /** REST-only: verify the remote file after {@link #openConnection()}. */
+    protected void validateRestFile() throws FsCrawlerPluginException {}
 }

@@ -36,6 +36,8 @@ public final class ProviderSettings {
     private final Map<String, Object> overlay;
     private final Map<String, Object> jobConfig;
     private final List<String> warnings = new ArrayList<>();
+    private static final String DEPRECATED_PLEASE_USE =
+            " is deprecated and will be removed in a future version. Please use ";
 
     private ProviderSettings(String type, Map<String, Object> overlay, Map<String, Object> jobConfig) {
         this.type = type;
@@ -136,19 +138,18 @@ public final class ProviderSettings {
         }
         String oldKey = "server." + field;
         String newKey = "fs.providers." + type + "." + field;
+        String prefix = "Setting " + oldKey + DEPRECATED_PLEASE_USE;
         if (newValue != null) {
-            warnings.add("Setting " + oldKey + " is deprecated and will be removed in a future version. Please use "
-                    + newKey + " instead. The value from " + oldKey + " is ignored because " + newKey + " is set.");
+            warnings.add(prefix + newKey + " instead. The value from " + oldKey + " is ignored because " + newKey
+                    + " is set.");
             return;
         }
         if (includeValue) {
             String displayed = quote ? "\"" + serverValue + "\"" : serverValue;
-            warnings.add("Setting " + oldKey + " is deprecated and will be removed in a future version. Please use "
-                    + newKey + ": " + displayed + " instead.");
+            warnings.add(prefix + newKey + ": " + displayed + " instead.");
             return;
         }
-        warnings.add("Setting " + oldKey + " is deprecated and will be removed in a future version. Please use "
-                + newKey + " instead.");
+        warnings.add(prefix + newKey + " instead.");
     }
 
     private static String readMapString(Map<String, Object> map, String field) {

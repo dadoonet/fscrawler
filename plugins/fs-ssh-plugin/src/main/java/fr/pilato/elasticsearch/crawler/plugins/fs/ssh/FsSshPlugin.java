@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.ProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
@@ -112,61 +111,16 @@ public class FsSshPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void validateSettings() throws IOException {
-            if (hostname == null || hostname.isBlank()) {
-                throw new IOException("Provider [" + getType() + "] requires fs.providers." + getType() + ".hostname");
-            }
-            if (username == null || username.isBlank()) {
-                throw new IOException("Provider [" + getType() + "] requires fs.providers." + getType() + ".username");
-            }
-
-            if (remotePath == null || remotePath.isEmpty()) {
-                if (document != null) {
-                    throw new IOException(getType() + " path is missing");
-                }
+            remotePath = requireHostUserAndNormalizeRestPath(hostname, username, remotePath);
+            if (remotePath == null) {
                 return;
             }
-
-            remotePath = normalizeRemotePath(remotePath);
-
-            boolean success = false;
-            try {
-                openConnection();
-                validateRemoteFile();
-                success = true;
-            } catch (FsCrawlerPluginException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new FsCrawlerPluginException(
-                        "Failed to connect to " + getType().toUpperCase() + " server: " + e.getMessage(), e);
-            } finally {
-                if (!success) {
-                    try {
-                        closeConnection();
-                    } catch (Exception e) {
-                        logger.warn(
-                                "Error closing {} connection after validation failure: {}",
-                                getType().toUpperCase(),
-                                e.getMessage());
-                    }
-                }
-            }
+            connectAndValidateRestFile();
         }
 
         @Override
         public Doc createDocument() {
-            String filename = FilenameUtils.getName(remotePath);
-            logger.debug("Creating document from {} for file {}", getType(), filename);
-
-            Doc doc = new Doc();
-            doc.getFile().setFilename(filename);
-            doc.getFile().setFilesize(fileAttributes != null ? fileAttributes.getSize() : 0);
-
-            String rootUrl = (fsSettings.getFs() != null && fsSettings.getFs().getUrl() != null)
-                    ? fsSettings.getFs().getUrl()
-                    : "/";
-            doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(rootUrl, remotePath));
-            doc.getPath().setReal(remotePath);
-            return doc;
+            return createFileDocument(remotePath, fileAttributes != null ? fileAttributes.getSize() : 0);
         }
 
         @Override
@@ -179,23 +133,8 @@ public class FsSshPlugin extends FsCrawlerPlugin {
             return "sftp://" + hostname + ":" + port + fullPath;
         }
 
-        private String normalizeRemotePath(String path) throws IOException {
-            if (path == null) {
-                return null;
-            }
-            if (!path.startsWith("/")) {
-                String rootPath =
-                        fsSettings.getFs() != null ? fsSettings.getFs().getUrl() : null;
-                if (rootPath == null || rootPath.isEmpty()) {
-                    throw new IOException("Cannot resolve relative path [" + path + "]: fs.url is not configured. "
-                            + "Please use an absolute path starting with '/' or configure fs.url in the job settings.");
-                }
-                return rootPath.endsWith("/") ? rootPath + path : rootPath + "/" + path;
-            }
-            return path;
-        }
-
-        private void validateRemoteFile() throws FsCrawlerPluginException {
+        @Override
+        protected void validateRestFile() throws FsCrawlerPluginException {
             try {
                 // Check if file exists and get its attributes
                 fileAttributes = sftpClient.stat(remotePath);
