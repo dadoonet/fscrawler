@@ -145,6 +145,11 @@
         <java.compiler.version>17</java.compiler.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Floating Docker Hub tags. SNAPSHOT builds must not move latest/noocr;
+             -Prelease (see the release profile) switches these to the stable aliases. -->
+        <docker.ocr.alias.tag>snapshot</docker.ocr.alias.tag>
+        <docker.noocr.alias.tag>snapshot-noocr</docker.noocr.alias.tag>
     </properties>
 
     <dependencyManagement>
@@ -1272,8 +1277,9 @@
         <profile>
             <id>release</id>
             <properties>
-                <!-- The ocr version will be the default one for anyone trying docker pull dadoonet/fscrawler -->
-                <docker.ocr.tags.1>latest</docker.ocr.tags.1>
+                <!-- docker pull dadoonet/fscrawler (and :noocr) resolve to this release -->
+                <docker.ocr.alias.tag>latest</docker.ocr.alias.tag>
+                <docker.noocr.alias.tag>noocr</docker.noocr.alias.tag>
             </properties>
             <build>
                 <plugins>

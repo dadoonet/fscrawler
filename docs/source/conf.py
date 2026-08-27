@@ -51,6 +51,9 @@ version = read_version(full_version=False)
 # The full version, including alpha/beta/rc tags.
 release = read_version()
 
+# Docker Hub: untagged / latest is the last stable release. SNAPSHOT docs pin :snapshot.
+docker_image_tag = ':snapshot' if release.endswith('-SNAPSHOT') else ''
+
 githubReleasesUrl = "https://github.com/dadoonet/fscrawler/releases"
 downloadUrl = "%s/download/fscrawler-%s/fscrawler-%s.zip" % (githubReleasesUrl, release, release)
 
@@ -303,5 +306,6 @@ myst_substitutions = {
     'GitHub': f'[GitHub Releases]({githubReleasesUrl})',
     'downloadUrl': downloadUrl,
     'java_version': java_version,
+    'docker_image_tag': docker_image_tag,
 }
 # End of conf.py

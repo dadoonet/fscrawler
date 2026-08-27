@@ -99,8 +99,8 @@ index ([mirrored in the repo](llms.txt)) and clean Markdown versions of every do
 ### Version in preparation
 
 [![Latest SNAPSHOT](https://img.shields.io/github/v/release/dadoonet/fscrawler?include_prereleases&label=Latest%20SNAPSHOT)](https://github.com/dadoonet/fscrawler/releases)
-![Docker Image Version (latest build)](https://img.shields.io/docker/v/dadoonet/fscrawler?label=latest%20build)
-![Docker Image Size (latest build)](https://img.shields.io/docker/image-size/dadoonet/fscrawler?label=latest%20build%20size)
+![Docker Image Version (snapshot)](https://img.shields.io/docker/v/dadoonet/fscrawler/snapshot?label=snapshot)
+![Docker Image Size (snapshot)](https://img.shields.io/docker/image-size/dadoonet/fscrawler/snapshot?label=snapshot%20size)
 ![GitHub commits since latest release](https://img.shields.io/github/commits-since/dadoonet/fscrawler/latest/main)
 ![GitHub last commit](https://img.shields.io/github/last-commit/dadoonet/fscrawler)
 [![Build](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml/badge.svg)](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml)
@@ -110,8 +110,8 @@ index ([mirrored in the repo](llms.txt)) and clean Markdown versions of every do
 
 [![GitHub Release](https://img.shields.io/github/v/release/dadoonet/fscrawler?label=Latest%20release)](https://github.com/dadoonet/fscrawler/releases/latest)
 ![GitHub Release Date](https://img.shields.io/github/release-date/dadoonet/fscrawler)
-![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler?sort=semver&label=docker%20image%20version)
-![Docker Image Size](https://img.shields.io/docker/image-size/dadoonet/fscrawler?sort=semver&label=docker%20image%20size)
+![Docker Image Version](https://img.shields.io/docker/v/dadoonet/fscrawler/latest?label=docker%20latest)
+![Docker Image Size](https://img.shields.io/docker/image-size/dadoonet/fscrawler/latest?label=docker%20latest%20size)
 
 ### Build & quality
 

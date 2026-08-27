@@ -12,18 +12,43 @@ Coming from 2.9? There is no in-place upgrade. See {ref}`upgrade-from-2.9`.
 (docker)=
 ## Using Docker
 
-Pull the Docker image from [Docker Hub](https://hub.docker.com/r/dadoonet/fscrawler):
+Pull the Docker image from [Docker Hub](https://hub.docker.com/r/dadoonet/fscrawler).
+
+`latest` (the default when you omit the tag) is the **last stable release**, with OCR.
+SNAPSHOT builds from `main` use the `snapshot` tag instead, matching GitHub pre-releases
+which are never GitHub's "Latest" release.
+
+| Tag | Image |
+|---|---|
+| `latest` (or untagged) | Last **stable** release, with OCR |
+| `noocr` | Last **stable** release, without OCR |
+| `snapshot` | Current SNAPSHOT (`main`), with OCR |
+| `snapshot-noocr` | Current SNAPSHOT, without OCR |
+| `{{ release }}`, `{{ release }}-noocr` | This documentation version |
+| `3.0`, `3.0-noocr`, `3.1-SNAPSHOT`, … | A specific version |
 
 ```sh
-docker pull dadoonet/fscrawler
+docker pull dadoonet/fscrawler{{ docker_image_tag }}
 ```
+
+````{ifconfig} release.endswith('-SNAPSHOT')
+```{warning}
+These docs describe a **SNAPSHOT** build. `docker pull dadoonet/fscrawler` (no tag) still
+pulls the last **stable** release. To run this SNAPSHOT:
+
+```sh
+docker pull dadoonet/fscrawler:snapshot
+# or: docker pull dadoonet/fscrawler:{{ release }}
+```
+```
+````
 
 ````{note}
 
  This image is very big (500+mb) as it contains [Tesseract](https://tesseract-ocr.github.io/tessdoc/) and
  all the [trained language data](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
  If you don't want to use OCR at all, you can use a smaller image (around 230mb) by pulling instead
- `dadoonet/fscrawler:noocr`:
+ `dadoonet/fscrawler:noocr` (last stable) or `dadoonet/fscrawler:snapshot-noocr` (SNAPSHOT):
 
  ```shell
  docker pull dadoonet/fscrawler:noocr
@@ -36,7 +61,7 @@ On first run, create the job settings:
 ```sh
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
-     dadoonet/fscrawler --setup
+     dadoonet/fscrawler{{ docker_image_tag }} --setup
 ```
 
 Then run FSCrawler with:
@@ -45,7 +70,7 @@ Then run FSCrawler with:
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
-     dadoonet/fscrawler
+     dadoonet/fscrawler{{ docker_image_tag }}
 ```
 
 ```{note}
@@ -67,7 +92,7 @@ docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
      -v "$PWD/external:/usr/share/fscrawler/external" \
-     dadoonet/fscrawler
+     dadoonet/fscrawler{{ docker_image_tag }}
 ```
 
 If you want to use the {ref}`rest-service`, don't forget to also expose the port:
@@ -77,7 +102,7 @@ docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
      -p 8080:8080 \
-     dadoonet/fscrawler
+     dadoonet/fscrawler{{ docker_image_tag }}
 ```
 
 If you want to change the log level for FSCrawler, you can run:
@@ -88,7 +113,7 @@ docker run -it --rm \
      -v ~/tmp:/tmp/es:ro \
      -v ~/logs:/root/logs \
      -e FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug" \
-     dadoonet/fscrawler
+     dadoonet/fscrawler{{ docker_image_tag }}
 ```
 
 And you can read the logs from the `~/logs` directory:
@@ -103,7 +128,7 @@ You can pass all the CLI options to the docker container as well:
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
-     dadoonet/fscrawler job_name --restart --loop 1
+     dadoonet/fscrawler{{ docker_image_tag }} job_name --restart --loop 1
 ```
 
 See {ref}`cli-options` for more information.
