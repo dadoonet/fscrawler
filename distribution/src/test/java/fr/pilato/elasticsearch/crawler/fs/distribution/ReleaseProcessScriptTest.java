@@ -182,13 +182,15 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
         String workflow = Files.readString(
                 repoRoot().resolve(".github").resolve("workflows").resolve("maven.yml"));
         assertThat(workflow)
-                .as("the main deploy workflow must be runnable from a PR branch without publishing")
+                .as("manual runs must be able to skip Docker Hub and GitHub independently")
                 .contains("workflow_dispatch")
-                .contains("dry_run")
-                .contains("--dry-run")
+                .contains("skip_docker")
+                .contains("skip_github")
+                .contains("SKIP_DOCKER")
+                .contains("SKIP_GITHUB")
                 .contains("pull_request")
                 .contains("test-main-workflow")
-                .contains("DRY_RUN");
+                .doesNotContain("dry_run");
     }
 
     @Test

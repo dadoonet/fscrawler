@@ -184,23 +184,31 @@ push.
 
 ### Testing the workflow from a branch
 
-`.github/workflows/maven.yml` also has `workflow_dispatch` (dry-run **on** by default) so a
-branch can run the same job without pushing Docker images or overwriting the SNAPSHOT
-pre-release.
+The Actions **Run workflow** button (`workflow_dispatch`) only appears once this file is on
+`main`. Until then, `gh workflow run maven.yml` cannot target this PR branch either.
 
-From this repository (same-repo PR):
+Inputs (both default to `false`, same as a push to `main`):
 
-* Add the label `test-main-workflow` to the PR. That runs a dry-run: `mvn package -Ddocker.skip`
-  then `python3 scripts/publish_snapshot_prerelease.py --dry-run`. Remove and re-add the label
-  to run it again.
-* After this workflow file is on `main`, you can also pick the branch in the Actions UI, or:
+* `skip_docker` — no Docker Hub login/push; `mvn package -Ddocker.skip` still builds the ZIP
+* `skip_github` — do not create or overwrite the SNAPSHOT GitHub pre-release
+
+Typical checks after the workflow is on `main`:
 
 ```
-gh workflow run maven.yml --ref <branch> -f dry_run=true
+# GitHub ZIP only (no Docker Hub)
+gh workflow run maven.yml --ref <branch> -f skip_docker=true -f skip_github=false
+
+# Docker Hub only
+gh workflow run maven.yml --ref <branch> -f skip_docker=false -f skip_github=true
+
+# Build only
+gh workflow run maven.yml --ref <branch> -f skip_docker=true -f skip_github=true
 ```
 
-Set `dry_run=false` only when you intend to publish for real (Docker Hub + `fscrawler-{version}`
-pre-release). A labeled PR is always dry-run.
+Leaving both at `false` publishes for real (Docker Hub + `fscrawler-{version}` pre-release).
+
+Before this file reaches `main`, add the label `test-main-workflow` on the PR. That forces
+both skips (build the ZIP, publish nothing). Remove and re-add the label to run it again.
 
 When `release.sh` publishes the matching stable GitHub release (`fscrawler-3.1`) and you
 confirm it looks OK, it deletes that SNAPSHOT pre-release
