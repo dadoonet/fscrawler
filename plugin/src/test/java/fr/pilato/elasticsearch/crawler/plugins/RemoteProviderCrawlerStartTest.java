@@ -73,6 +73,46 @@ class RemoteProviderCrawlerStartTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void crawlerStartRequiresUsernameWhenNoDefault() {
+        String type = randomToken();
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of(type, Map.of("hostname", hostname)));
+
+        RecordingRemoteProvider provider = new RecordingRemoteProvider(type);
+
+        Assertions.assertThatThrownBy(() -> provider.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers." + type + ".username");
+    }
+
+    @Test
+    void crawlerStartRejectsBlankUsername() {
+        String type = randomToken();
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of(type, Map.of("hostname", hostname, "username", "")));
+
+        RecordingRemoteProvider provider = new RecordingRemoteProvider(type);
+
+        Assertions.assertThatThrownBy(() -> provider.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers." + type + ".username");
+    }
+
+    @Test
+    void crawlerStartUsesFtpAnonymousWhenUsernameOmitted() {
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", hostname)));
+
+        RecordingRemoteProvider provider = new RecordingRemoteProvider("ftp");
+        provider.start(settings, "{}");
+
+        Assertions.assertThat(provider.getEffectiveUsername()).isEqualTo(RemoteConnectionSettings.DEFAULT_FTP_USERNAME);
+    }
+
+    @Test
     void crawlerStartFallsBackToDeprecatedServer() {
         String hostname = randomToken() + ".example.com";
         FsSettings settings = FsSettingsLoader.load();

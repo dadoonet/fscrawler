@@ -25,10 +25,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.apache.logging.log4j.Logger;
 
-@SuppressWarnings("removal")
 public class FsCrawlerValidator {
     // Filename suffix for document password sidecars (*.password / */.password), not a credential.
     @SuppressWarnings("java:S2068")
@@ -55,10 +53,6 @@ public class FsCrawlerValidator {
         if (settings.getElasticsearch().getUsername() != null
                 || settings.getElasticsearch().getPassword() != null) {
             logger.warn("username/password is deprecated. Use apiKey instead.");
-        }
-
-        if (validateServerSettings(logger, settings)) {
-            return true;
         }
 
         // Checking bulk_operation (DELETE is internal-only)
@@ -123,73 +117,6 @@ public class FsCrawlerValidator {
         if (updated) {
             settings.getFs().setExcludes(mergedExcludes);
         }
-    }
-
-    private static boolean validateServerSettings(Logger logger, FsSettings settings) {
-        if (validateRemoteProviderCredentials(logger, settings)) {
-            return true;
-        }
-        if (settings.getServer() == null) {
-            return false;
-        }
-        if (!Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())
-                && !Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
-                && !Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
-            logger.error(settings.getServer().getProtocol() + " is not supported yet. Please use "
-                    + Server.PROTOCOL.LOCAL + " or " + Server.PROTOCOL.SSH + " or " + Server.PROTOCOL.FTP
-                    + ". Disabling crawler");
-            return true;
-        }
-        // Skip deprecated server.protocol checks when fs.provider already selected the remote plugin.
-        if (isRemoteProvider(settings.getFs() != null ? settings.getFs().getProvider() : null)) {
-            return false;
-        }
-        if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())
-                && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
-            logger.error(
-                    "When using SSH, you need to set a username and probably a password or a pem file. Disabling crawler");
-            return true;
-        }
-        if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())
-                && FsCrawlerUtil.isNullOrEmpty(settings.getServer().getUsername())) {
-            logger.error("When using FTP, you need to set a username and probably a password. Disabling crawler");
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean validateRemoteProviderCredentials(Logger logger, FsSettings settings) {
-        String provider = settings.getFs() != null ? settings.getFs().getProvider() : null;
-        if (!isRemoteProvider(provider)) {
-            return false;
-        }
-        String username = remoteUsername(provider, settings);
-        if ("ssh".equals(provider) && FsCrawlerUtil.isNullOrEmpty(username)) {
-            logger.error(
-                    "When using SSH, you need to set fs.providers.ssh.username (or deprecated server.username) and probably a password or a pem file. Disabling crawler");
-            return true;
-        }
-        if ("ftp".equals(provider) && username != null && username.isEmpty()) {
-            logger.error(
-                    "When using FTP, you need to set fs.providers.ftp.username (or deprecated server.username) and probably a password. Disabling crawler");
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean isRemoteProvider(String provider) {
-        return "ssh".equals(provider) || "ftp".equals(provider);
-    }
-
-    private static String remoteUsername(String provider, FsSettings settings) {
-        Map<String, Object> config = settings.getFs() != null ? settings.getFs().getProviderConfig(provider) : null;
-        if (config != null && config.get("username") != null) {
-            return String.valueOf(config.get("username"));
-        }
-        if (settings.getServer() != null) {
-            return settings.getServer().getUsername();
-        }
-        return null;
     }
 
     private static boolean validateDigestSettings(Logger logger, FsSettings settings) {
