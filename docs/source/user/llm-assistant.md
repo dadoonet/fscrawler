@@ -65,7 +65,7 @@ docker run -it --rm \
   -v /path/to/docs:/tmp/es:ro \
   -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
   -e FSCRAWLER_ELASTICSEARCH_API_KEY="your-api-key" \
-  dadoonet/fscrawler
+  dadoonet/fscrawler{{ docker_image_tag }}
 ```
 
 Important rules — do not get these wrong:

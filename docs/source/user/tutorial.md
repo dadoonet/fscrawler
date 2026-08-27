@@ -54,10 +54,11 @@ echo "$ES_LOCAL_API_KEY"
 
 ### Start FSCrawler with Docker
 
-* Pull the FSCrawler image. See {ref}`docker` for details (including the smaller `noocr` variant):
+* Pull the FSCrawler image. See {ref}`docker` for details (including the smaller `noocr` variant).
+  On SNAPSHOT docs this is `:snapshot`; on a released version it is untagged (`latest`):
 
 ```sh
-docker pull dadoonet/fscrawler
+docker pull dadoonet/fscrawler{{ docker_image_tag }}
 ```
 
 * Create a job named `resumes`:
@@ -65,7 +66,7 @@ docker pull dadoonet/fscrawler
 ```sh
 docker run -it --rm \
   -v ~/.fscrawler:/root/.fscrawler \
-  dadoonet/fscrawler --setup resumes
+  dadoonet/fscrawler{{ docker_image_tag }} --setup resumes
 ```
 
 * Edit `~/.fscrawler/resumes/_settings.yaml` so the crawler reads documents from `/tmp/es` **inside** the
@@ -93,7 +94,7 @@ docker run -it --rm \
   -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
   -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
   -e FSCRAWLER_KIBANA_URL=http://host.docker.internal:5601 \
-  dadoonet/fscrawler resumes
+  dadoonet/fscrawler{{ docker_image_tag }} resumes
 ```
 
 ```{note}
@@ -136,7 +137,7 @@ FSCrawler should index all the documents inside your directory. Then continue wi
    -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
    -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
    -e FSCRAWLER_KIBANA_URL=http://host.docker.internal:5601 \
-   dadoonet/fscrawler resumes --restart
+   dadoonet/fscrawler{{ docker_image_tag }} resumes --restart
  ```
 ````
 

@@ -63,7 +63,10 @@ is running: Maven and git mutations are already bound to that path.
 * Tag the version
 * Prepare release notes from `docs/source/release/{version}.md` and GitHub API
 * Push Docker images to [Docker Hub](https://hub.docker.com/r/dadoonet/fscrawler/)
-  (`mvn deploy` with `skipPublishing=true` on every module — nothing is published to Maven Central)
+  (`mvn deploy` with `skipPublishing=true` on every module — nothing is published to Maven Central).
+  `-Prelease` moves the floating tags `latest` (OCR) and `noocr` onto this version.
+  SNAPSHOT pushes to `main` use `snapshot` / `snapshot-noocr` instead and must not
+  overwrite `latest`.
 * Prepare the next SNAPSHOT version, update the README "Latest versions" table
   (HTML comment markers `<!-- release-versions:start -->` / `<!-- release-versions:end -->`),
   and point `.github/dependabot.yml` at the GitHub milestone titled like that SNAPSHOT

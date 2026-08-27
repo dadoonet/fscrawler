@@ -301,6 +301,30 @@ you can manually use the `docker.skip` option:
 mvn package -Ddocker.skip
 ```
 
+## Docker Hub tags
+
+Each image is published under a version tag (`{{ release }}` / `{{ release }}-ocr` /
+`{{ release }}-noocr`) plus a **floating** alias:
+
+| Build | OCR alias | No-OCR alias |
+|---|---|---|
+| SNAPSHOT (`main`, no extra profile) | `snapshot` | `snapshot-noocr` |
+| Release (`-Prelease`) | `latest` | `noocr` |
+
+`docker pull dadoonet/fscrawler` therefore always means the last **stable** release.
+Do not retag `latest` from a SNAPSHOT push.
+
+To point `latest` at an already published release without rebuilding (multi-arch
+manifest, amd64 + arm64), copy the existing tag:
+
+```shell
+docker buildx imagetools create --tag dadoonet/fscrawler:latest dadoonet/fscrawler:3.0
+docker buildx imagetools create --tag dadoonet/fscrawler:noocr dadoonet/fscrawler:3.0-noocr
+```
+
+`docker tag` + `docker push` on a single machine would drop the other architecture.
+Docker Hub's UI is not a reliable way to copy a multi-platform manifest.
+
 ## DockerHub publication
 
 To publish the latest build to [DockerHub](https://hub.docker.com/r/dadoonet/fscrawler/) you can manually
