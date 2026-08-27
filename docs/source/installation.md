@@ -24,53 +24,62 @@ which are never GitHub's "Latest" release.
 | `noocr` | Last **stable** release, without OCR |
 | `snapshot` | Current SNAPSHOT (`main`), with OCR |
 | `snapshot-noocr` | Current SNAPSHOT, without OCR |
-| `{{ release }}`, `{{ release }}-noocr` | This documentation version |
+| {{ release_docker_tags }} | This documentation version |
 | `3.0`, `3.0-noocr`, `3.1-SNAPSHOT`, … | A specific version |
 
-```sh
-docker pull dadoonet/fscrawler{{ docker_image_tag }}
+```{code-block} sh
+:substitutions:
+
+docker pull |docker_image|
 ```
 
-````{ifconfig} release.endswith('-SNAPSHOT')
-```{warning}
+::::{ifconfig} release.endswith('-SNAPSHOT')
+:::{warning}
 These docs describe a **SNAPSHOT** build. `docker pull dadoonet/fscrawler` (no tag) still
 pulls the last **stable** release. To run this SNAPSHOT:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker pull dadoonet/fscrawler:snapshot
-# or: docker pull dadoonet/fscrawler:{{ release }}
+# or: docker pull dadoonet/fscrawler:|release|
 ```
+:::
+::::
+
+::::{note}
+This image is very big (500+mb) as it contains [Tesseract](https://tesseract-ocr.github.io/tessdoc/) and
+all the [trained language data](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
+If you don't want to use OCR at all, you can use a smaller image (around 230mb) by pulling
+{{ docker_image_noocr_code }} instead:
+
+```{code-block} sh
+:substitutions:
+
+docker pull |docker_image_noocr|
 ```
-````
-
-````{note}
-
- This image is very big (500+mb) as it contains [Tesseract](https://tesseract-ocr.github.io/tessdoc/) and
- all the [trained language data](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
- If you don't want to use OCR at all, you can use a smaller image (around 230mb) by pulling instead
- `dadoonet/fscrawler:noocr` (last stable) or `dadoonet/fscrawler:snapshot-noocr` (SNAPSHOT):
-
- ```shell
- docker pull dadoonet/fscrawler:noocr
- ```
-````
+::::
 
 Let say your documents are located in `~/tmp` dir, and you want to store your FSCrawler jobs in `~/.fscrawler`.
 On first run, create the job settings:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
-     dadoonet/fscrawler{{ docker_image_tag }} --setup
+     |docker_image| --setup
 ```
 
 Then run FSCrawler with:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
-     dadoonet/fscrawler{{ docker_image_tag }}
+     |docker_image|
 ```
 
 ```{note}
@@ -87,33 +96,39 @@ docker run -it --rm \
 If you need to add a 3rd party library (jar) or your Tika custom jar, you can put it in a `external` directory and
 mount it as well:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
      -v "$PWD/external:/usr/share/fscrawler/external" \
-     dadoonet/fscrawler{{ docker_image_tag }}
+     |docker_image|
 ```
 
 If you want to use the {ref}`rest-service`, don't forget to also expose the port:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
      -p 8080:8080 \
-     dadoonet/fscrawler{{ docker_image_tag }}
+     |docker_image|
 ```
 
 If you want to change the log level for FSCrawler, you can run:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
      -v ~/logs:/root/logs \
      -e FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug" \
-     dadoonet/fscrawler{{ docker_image_tag }}
+     |docker_image|
 ```
 
 And you can read the logs from the `~/logs` directory:
@@ -124,11 +139,13 @@ tail -f ~/logs/documents.log
 
 You can pass all the CLI options to the docker container as well:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
-     dadoonet/fscrawler{{ docker_image_tag }} job_name --restart --loop 1
+     |docker_image| job_name --restart --loop 1
 ```
 
 See {ref}`cli-options` for more information.
@@ -298,49 +315,54 @@ You will find this example in the `contrib/docker-compose-example-elasticsearch`
 ## Local installation (ZIP)
 
 If you prefer to run FSCrawler from a ZIP distribution on your machine instead of Docker,
-download [FSCrawler {{ release }}]({{ downloadUrl }})
+download {{ download_link }}
 from {{ GitHub }}:
 
-```sh
-wget {{ downloadUrl }}
-unzip fscrawler-{{ release }}.zip
-cd fscrawler-distribution-{{ release }}
+```{code-block} sh
+:substitutions:
+
+wget |downloadUrl|
+unzip fscrawler-|release|.zip
+cd fscrawler-distribution-|release|
 ```
 
-````{ifconfig} release.endswith('-SNAPSHOT')
-```{warning}
+::::{ifconfig} release.endswith('-SNAPSHOT')
+:::{warning}
 This is a **SNAPSHOT** build. The ZIP is overwritten on every push to `main`.
 SNAPSHOT pre-releases are **not** GPG-signed. Stable versions (with `.asc` and SHA-256)
 are listed on the same {{ GitHub }} page.
-```
-````
+:::
+::::
 
-````{ifconfig} release == version
-```{tip}
+::::{ifconfig} release == version
+:::{tip}
 This is a **stable** version. Development SNAPSHOT builds are published as GitHub pre-releases on the same
 {{ GitHub }} page.
-```
+:::
 
 (verify-zip)=
-### Verify the ZIP
+```{rubric} Verify the ZIP
+```
 
 Stable releases attach a GPG signature and a SHA-256 checksum next to the ZIP.
 
-```sh
-wget {{ downloadUrl }}
-wget {{ downloadUrl }}.asc
-wget {{ downloadUrl }}.sha256
-sha256sum -c fscrawler-{{ release }}.zip.sha256
-# macOS: shasum -a 256 -c fscrawler-{{ release }}.zip.sha256
+```{code-block} sh
+:substitutions:
+
+wget |downloadUrl|
+wget |downloadUrl|.asc
+wget |downloadUrl|.sha256
+sha256sum -c fscrawler-|release|.zip.sha256
+# macOS: shasum -a 256 -c fscrawler-|release|.zip.sha256
 gpg --import KEYS
 # or: gpg --keyserver hkps://keys.openpgp.org --recv-keys EDEC15CE428D7527CF87E998C7E192835B0ABB2E
-gpg --verify fscrawler-{{ release }}.zip.asc fscrawler-{{ release }}.zip
+gpg --verify fscrawler-|release|.zip.asc fscrawler-|release|.zip
 ```
 
 The signing key is **David Pilato** `<david@pilato.fr>`, fingerprint
 `EDEC 15CE 428D 7527 CF87 E998 C7E1 9283 5B0A BB2E`.
 `KEYS` lives at the root of the [git repository](https://github.com/dadoonet/fscrawler/blob/main/KEYS).
-````
+::::
 
 After extracting the ZIP, you get a directory with `bin/` (run scripts), `config/` (logging), `lib/` (core and
 dependencies), `external/` (optional JARs), and `logs/`. See {ref}`layout` for the full directory layout.

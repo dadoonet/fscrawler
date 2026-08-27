@@ -53,6 +53,30 @@ Your note content here.
 ```
 ````
 
+Conditional blocks (`{ifconfig}`) and admonitions that wrap a code sample must use
+[colon fences](https://myst-parser.readthedocs.io/en/latest/syntax/optional.html#code-fences)
+(`::::{ifconfig}` / `:::{warning}`). A backtick-fenced `{ifconfig}` is closed by the first
+nested ` ``` ` of the same length, so the rest of the block leaks into the page.
+Do not put Markdown headings inside `{ifconfig}` (they close the directive); use a
+`{rubric}` if you need a title in the conditional block.
+
+MyST substitutions such as {{ release }} work in prose only. They are **not** expanded inside
+fenced or inline code. For versioned commands, use a Sphinx `{code-block}` with
+`:substitutions:` and RST `|name|` placeholders (see `sphinx-substitution-extensions`):
+
+````
+```{code-block} sh
+:substitutions:
+
+docker pull |docker_image|
+wget |downloadUrl|
+unzip fscrawler-|release|.zip
+```
+````
+
+`|release|` is Sphinx's built-in. `|docker_image|`, `|docker_image_noocr|`, and
+`|downloadUrl|` are defined in `docs/source/conf.py`.
+
 To update the requirements file if you changed the `requirements.in` file, run:
 
 ```
