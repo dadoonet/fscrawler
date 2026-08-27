@@ -10,7 +10,7 @@ reads settings from the configuration directory.
 
 From **3.0 to 3.1**, existing jobs keep working. SSH/FTP connection settings move from the
 top-level `server.*` block to `fs.providers.ssh.*` / `fs.providers.ftp.*`; see
-{ref}`release-notes-3.1`.
+{ref}`release-notes-3.1`. To rewrite a job file with an LLM, see {ref}`llm-assistant`.
 
 From **2.9 to 3.0**, there is no in-place upgrade. Install 3.0, recreate jobs with
 `--setup`, and reindex. See {ref}`upgrade-from-2.9`.
