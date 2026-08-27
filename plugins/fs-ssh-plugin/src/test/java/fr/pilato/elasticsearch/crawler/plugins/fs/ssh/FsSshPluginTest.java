@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -245,6 +246,42 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(sshPlugin.toFileUrl("/doc.pdf"))
                 .isEqualTo("sftp://" + hostname + ":" + FsSshPlugin.FsCrawlerExtensionFsProviderSsh.DEFAULT_PORT
                         + "/doc.pdf");
+    }
+
+    @Test
+    void crawlerStartRequiresHostname() {
+        FsSettings settings = FsSettingsLoader.load();
+        FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
+
+        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers.ssh.hostname");
+    }
+
+    @Test
+    void crawlerStartRequiresUsername() {
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", hostname)));
+
+        FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
+
+        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers.ssh.username");
+    }
+
+    @Test
+    void crawlerStartRejectsBlankUsername() {
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", hostname, "username", "")));
+
+        FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
+
+        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers.ssh.username");
     }
 
     private String randomToken() {

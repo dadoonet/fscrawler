@@ -20,10 +20,13 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionRemoteProviderAbstract;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
+import fr.pilato.elasticsearch.crawler.plugins.RemoteConnectionSettings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -55,7 +58,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
     }
 
     @Extension
-    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionRemoteProviderAbstract {
+    public static class FsCrawlerExtensionFsProviderSsh extends FsCrawlerExtensionFsProviderAbstract {
         /** Default SFTP port when {@code fs.providers.ssh.port} is omitted. */
         public static final int DEFAULT_PORT = 22;
 
@@ -72,9 +75,14 @@ public class FsSshPlugin extends FsCrawlerPlugin {
 
         private SshClient sshClient;
         private SftpClient sftpClient;
-
-        // SSH-specific fields
         private SftpClient.Attributes fileAttributes;
+
+        private String remotePath;
+        private String hostname;
+        private int port;
+        private String username;
+        private String password;
+        private String pemPath;
 
         @Override
         public String getType() {
@@ -82,24 +90,109 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected int defaultPort() {
-            return DEFAULT_PORT;
+        public boolean supportsCrawling() {
+            return true;
         }
 
         @Override
-        protected String urlScheme() {
-            return "sftp";
+        protected void parseSettings() {
+            RemoteConnectionSettings resolved =
+                    RemoteConnectionSettings.resolve(getType(), document, fsSettings, DEFAULT_PORT, null);
+            remotePath = resolved.remotePath();
+            hostname = resolved.hostname();
+            port = resolved.port();
+            username = resolved.username();
+            password = resolved.password();
+            pemPath = resolved.pemPath();
+            resolved.deprecationWarnings().forEach(logger::warn);
         }
 
-        // ========== Protocol-specific settings ==========
-
         @Override
-        protected long getFilesize() {
-            return fileAttributes != null ? fileAttributes.getSize() : 0;
+        protected void validateSettings() throws IOException {
+            if (hostname == null || hostname.isBlank()) {
+                throw new IOException("Provider [" + getType() + "] requires fs.providers." + getType() + ".hostname");
+            }
+            if (username == null || username.isBlank()) {
+                throw new IOException("Provider [" + getType() + "] requires fs.providers." + getType() + ".username");
+            }
+
+            if (remotePath == null || remotePath.isEmpty()) {
+                if (document != null) {
+                    throw new IOException(getType() + " path is missing");
+                }
+                return;
+            }
+
+            remotePath = normalizeRemotePath(remotePath);
+
+            boolean success = false;
+            try {
+                openConnection();
+                validateRemoteFile();
+                success = true;
+            } catch (FsCrawlerPluginException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new FsCrawlerPluginException(
+                        "Failed to connect to " + getType().toUpperCase() + " server: " + e.getMessage(), e);
+            } finally {
+                if (!success) {
+                    try {
+                        closeConnection();
+                    } catch (Exception e) {
+                        logger.warn(
+                                "Error closing {} connection after validation failure: {}",
+                                getType().toUpperCase(),
+                                e.getMessage());
+                    }
+                }
+            }
         }
 
         @Override
-        protected void doValidateFile() throws FsCrawlerPluginException {
+        public Doc createDocument() {
+            String filename = FilenameUtils.getName(remotePath);
+            logger.debug("Creating document from {} for file {}", getType(), filename);
+
+            Doc doc = new Doc();
+            doc.getFile().setFilename(filename);
+            doc.getFile().setFilesize(fileAttributes != null ? fileAttributes.getSize() : 0);
+
+            String rootUrl = (fsSettings.getFs() != null && fsSettings.getFs().getUrl() != null)
+                    ? fsSettings.getFs().getUrl()
+                    : "/";
+            doc.getPath().setVirtual(FsCrawlerUtil.computeVirtualPathName(rootUrl, remotePath));
+            doc.getPath().setReal(remotePath);
+            return doc;
+        }
+
+        @Override
+        public void stop() throws FsCrawlerPluginException {
+            closeConnection();
+        }
+
+        @Override
+        public String toFileUrl(String fullPath) {
+            return String.format("sftp://%s:%d%s", hostname, port, fullPath);
+        }
+
+        private String normalizeRemotePath(String path) throws IOException {
+            if (path == null) {
+                return null;
+            }
+            if (!path.startsWith("/")) {
+                String rootPath =
+                        fsSettings.getFs() != null ? fsSettings.getFs().getUrl() : null;
+                if (rootPath == null || rootPath.isEmpty()) {
+                    throw new IOException("Cannot resolve relative path [" + path + "]: fs.url is not configured. "
+                            + "Please use an absolute path starting with '/' or configure fs.url in the job settings.");
+                }
+                return rootPath.endsWith("/") ? rootPath + path : rootPath + "/" + path;
+            }
+            return path;
+        }
+
+        private void validateRemoteFile() throws FsCrawlerPluginException {
             try {
                 // Check if file exists and get its attributes
                 fileAttributes = sftpClient.stat(remotePath);
@@ -138,13 +231,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
             logger.debug("Opening SSH connection");
 
             sshClient = createSshClient();
-            sftpClient = createSftpClient(openSshSession(
-                    sshClient,
-                    getEffectiveUsername(),
-                    getEffectivePassword(),
-                    getEffectivePemPath(),
-                    getEffectiveHostname(),
-                    getEffectivePort()));
+            sftpClient = createSftpClient(openSshSession(sshClient, username, password, pemPath, hostname, port));
         }
 
         @Override

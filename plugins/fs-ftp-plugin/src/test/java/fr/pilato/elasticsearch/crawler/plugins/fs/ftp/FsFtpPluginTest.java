@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ftp;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -213,6 +214,16 @@ class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(ftpPlugin.toFileUrl("/doc.pdf"))
                 .isEqualTo("ftp://" + hostname + ":" + FsFtpPlugin.FsCrawlerExtensionFsProviderFtp.DEFAULT_PORT
                         + "/doc.pdf");
+    }
+
+    @Test
+    void crawlerStartRequiresHostname() {
+        FsSettings settings = FsSettingsLoader.load();
+        FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
+
+        Assertions.assertThatThrownBy(() -> ftpPlugin.start(settings, "{}"))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("fs.providers.ftp.hostname");
     }
 
     private String randomToken() {
