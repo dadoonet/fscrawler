@@ -1,11 +1,11 @@
 # Welcome to FSCrawler's documentation!
 
-````{ifconfig} release.endswith('-SNAPSHOT')
-```{warning}
+::::{ifconfig} release.endswith('-SNAPSHOT')
+:::{warning}
 This documentation is for the version of FSCrawler currently under development.
 Were you looking for <a href="../fscrawler-2.9/">the documentation of the latest stable version</a>?
-```
-````
+:::
+::::
 
 Welcome to the FS Crawler for {{ ES }}.
 

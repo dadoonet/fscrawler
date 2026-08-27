@@ -52,7 +52,11 @@ version = read_version(full_version=False)
 release = read_version()
 
 # Docker Hub: untagged / latest is the last stable release. SNAPSHOT docs pin :snapshot.
-docker_image_tag = ':snapshot' if release.endswith('-SNAPSHOT') else ''
+_is_snapshot = release.endswith('-SNAPSHOT')
+docker_image = 'dadoonet/fscrawler:snapshot' if _is_snapshot else 'dadoonet/fscrawler'
+docker_image_noocr = (
+    'dadoonet/fscrawler:snapshot-noocr' if _is_snapshot else 'dadoonet/fscrawler:noocr'
+)
 
 githubReleasesUrl = "https://github.com/dadoonet/fscrawler/releases"
 downloadUrl = "%s/download/fscrawler-%s/fscrawler-%s.zip" % (githubReleasesUrl, release, release)
@@ -258,6 +262,8 @@ rst_prolog = rst_prolog + """
 .. |GitHub| replace:: GitHub Releases
 .. |downloadUrl| replace:: {fmt_downloadUrl}
 .. |java_version| replace:: {fmt_java_version}
+.. |docker_image| replace:: {fmt_docker_image}
+.. |docker_image_noocr| replace:: {fmt_docker_image_noocr}
 
 .. _Tika: https://tika.apache.org/{fmt_tika_version}/
 .. _ES: https://www.elastic.co/elasticsearch
@@ -279,7 +285,9 @@ fmt_downloadUrl=downloadUrl,
 fmt_githubReleasesUrl=githubReleasesUrl,
 fmt_es_stack_version=es_stack_version,
 fmt_fscrawler_version=release,
-fmt_java_version=java_version
+fmt_java_version=java_version,
+fmt_docker_image=docker_image,
+fmt_docker_image_noocr=docker_image_noocr,
 )
 
 _tika_version = config.get('3rdParty', 'TikaVersion')
@@ -305,7 +313,12 @@ myst_substitutions = {
     'JPEG2000_version': f'[jai-imageio-jpeg2000:{_jpeg_version}](https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/{_jpeg_version}/)',
     'GitHub': f'[GitHub Releases]({githubReleasesUrl})',
     'downloadUrl': downloadUrl,
+    'download_link': f'[FSCrawler {release}]({downloadUrl})',
     'java_version': java_version,
-    'docker_image_tag': docker_image_tag,
+    'docker_image': docker_image,
+    'docker_image_noocr': docker_image_noocr,
+    'docker_image_noocr_code': f'`{docker_image_noocr}`',
+    'release_docker_tags': f'`{release}`, `{release}-noocr`',
+    'release_image_tags': f'`{release}` / `{release}-ocr` / `{release}-noocr`',
 }
 # End of conf.py

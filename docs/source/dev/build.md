@@ -303,8 +303,7 @@ mvn package -Ddocker.skip
 
 ## Docker Hub tags
 
-Each image is published under a version tag (`{{ release }}` / `{{ release }}-ocr` /
-`{{ release }}-noocr`) plus a **floating** alias:
+Each image is published under a version tag ({{ release_image_tags }}) plus a **floating** alias:
 
 | Build | OCR alias | No-OCR alias |
 |---|---|---|

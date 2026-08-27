@@ -209,9 +209,9 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
         String installation =
                 Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
         assertThat(installation)
-                .contains("{{ downloadUrl }}")
+                .contains("{{ download_link }}")
                 .contains("{{ GitHub }}")
-                .contains("fscrawler-{{ release }}.zip")
+                .contains("fscrawler-|release|.zip")
                 .doesNotContain("{{ Maven_Central }}")
                 .doesNotContain("{{ Sonatype }}")
                 .doesNotContain("{{ Download_URL }}");
@@ -232,8 +232,8 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
         assertThat(installation)
                 .contains("gpg --verify")
-                .contains("{{ downloadUrl }}.asc")
-                .contains("{{ downloadUrl }}.sha256")
+                .contains("|downloadUrl|.asc")
+                .contains("|downloadUrl|.sha256")
                 .contains("sha256sum")
                 .contains("EDEC15CE428D7527CF87E998C7E192835B0ABB2E");
         String keys = Files.readString(repoRoot().resolve("KEYS"));

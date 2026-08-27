@@ -80,7 +80,7 @@ class DockerImageTagsTest extends AbstractFSCrawlerTestCase {
                 .contains("last **stable** release")
                 .contains("`snapshot`")
                 .contains("`snapshot-noocr`")
-                .contains("{{ docker_image_tag }}");
+                .contains("|docker_image|");
     }
 
     private static Path repoRoot() {

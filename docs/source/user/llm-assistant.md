@@ -31,7 +31,9 @@ Include as much context as you can in your follow-up message:
 
 Copy everything inside the block below and paste it into your LLM. Then add your question at the end.
 
-````
+````{code-block} text
+:substitutions:
+
 You are helping me configure FSCrawler, a Java file system crawler that extracts text from binary documents (PDF, MS Office, images, etc.) with Apache Tika and indexes them into Elasticsearch 7.x, 8.x, or 9.x.
 
 Official documentation: https://fscrawler.readthedocs.io/en/latest/
@@ -65,7 +67,7 @@ docker run -it --rm \
   -v /path/to/docs:/tmp/es:ro \
   -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
   -e FSCRAWLER_ELASTICSEARCH_API_KEY="your-api-key" \
-  dadoonet/fscrawler{{ docker_image_tag }}
+  |docker_image|
 ```
 
 Important rules — do not get these wrong:

@@ -57,16 +57,20 @@ echo "$ES_LOCAL_API_KEY"
 * Pull the FSCrawler image. See {ref}`docker` for details (including the smaller `noocr` variant).
   On SNAPSHOT docs this is `:snapshot`; on a released version it is untagged (`latest`):
 
-```sh
-docker pull dadoonet/fscrawler{{ docker_image_tag }}
+```{code-block} sh
+:substitutions:
+
+docker pull |docker_image|
 ```
 
 * Create a job named `resumes`:
 
-```sh
+```{code-block} sh
+:substitutions:
+
 docker run -it --rm \
   -v ~/.fscrawler:/root/.fscrawler \
-  dadoonet/fscrawler{{ docker_image_tag }} --setup resumes
+  |docker_image| --setup resumes
 ```
 
 * Edit `~/.fscrawler/resumes/_settings.yaml` so the crawler reads documents from `/tmp/es` **inside** the
@@ -85,7 +89,9 @@ fs:
   From a Docker container, Elasticsearch and Kibana on the host are reached via `host.docker.internal`
   (not `127.0.0.1`):
 
-```sh
+```{code-block} sh
+:substitutions:
+
 # From the elastic-start-local directory, or after: source elastic-start-local/.env
 docker run -it --rm \
   --add-host=host.docker.internal:host-gateway \
@@ -94,7 +100,7 @@ docker run -it --rm \
   -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
   -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
   -e FSCRAWLER_KIBANA_URL=http://host.docker.internal:5601 \
-  dadoonet/fscrawler{{ docker_image_tag }} resumes
+  |docker_image| resumes
 ```
 
 ```{note}
@@ -124,22 +130,23 @@ Use `http://` (not `https://`) with `start-local`. Copy the API key value from `
 FSCrawler should index all the documents inside your directory. Then continue with
 [Open the default dashboard](#open-the-default-dashboard).
 
-````{note}
+::::{note}
+If you want to start again reindexing from scratch instead of monitoring the changes, stop FSCrawler, restart it
+with the `--restart` option:
 
- If you want to start again reindexing from scratch instead of monitoring the changes, stop FSCrawler, restart it
- with the `--restart` option:
+```{code-block} sh
+:substitutions:
 
- ```bash
- docker run -it --rm \
-   --add-host=host.docker.internal:host-gateway \
-   -v ~/.fscrawler:/root/.fscrawler \
-   -v ~/resumes:/tmp/es:ro \
-   -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
-   -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
-   -e FSCRAWLER_KIBANA_URL=http://host.docker.internal:5601 \
-   dadoonet/fscrawler{{ docker_image_tag }} resumes --restart
- ```
-````
+docker run -it --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -v ~/.fscrawler:/root/.fscrawler \
+  -v ~/resumes:/tmp/es:ro \
+  -e FSCRAWLER_ELASTICSEARCH_URLS=http://host.docker.internal:9200 \
+  -e FSCRAWLER_ELASTICSEARCH_API_KEY="${ES_LOCAL_API_KEY}" \
+  -e FSCRAWLER_KIBANA_URL=http://host.docker.internal:5601 \
+  |docker_image| resumes --restart
+```
+::::
 
 ## Alternative: manual installation
 
