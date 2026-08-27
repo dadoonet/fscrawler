@@ -18,13 +18,9 @@
  *
  * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-package fr.pilato.elasticsearch.crawler.plugins;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
-import com.jayway.jsonpath.DocumentContext;
-import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -35,17 +31,17 @@ import org.junit.jupiter.api.Test;
 class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
 
     @Test
-    void prefersRestOverJobOverDeprecatedServer() {
+    void prefersOverlayOverJobOverDeprecatedServer() {
         String type = randomToken();
         String field = randomToken();
-        String restValue = "rest-" + randomToken();
+        String overlayValue = "overlay-" + randomToken();
         String jobValue = "job-" + randomToken();
         String serverValue = "server-" + randomToken();
 
         FsSettings settings = jobWith(type, field, jobValue);
-        ProviderSettings lookup = ProviderSettings.of(type, restJson(type, field, restValue), settings);
+        ProviderSettings lookup = ProviderSettings.of(type, settings, Map.of(field, overlayValue));
 
-        Assertions.assertThat(lookup.string(field, serverValue)).isEqualTo(restValue);
+        Assertions.assertThat(lookup.string(field, serverValue)).isEqualTo(overlayValue);
         Assertions.assertThat(lookup.deprecationWarnings())
                 .anyMatch(msg -> msg.contains("server." + field)
                         && msg.contains("fs.providers." + type + "." + field)
@@ -59,7 +55,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String field = randomToken();
         String serverValue = randomToken();
 
-        ProviderSettings lookup = ProviderSettings.of(type, null, FsSettingsLoader.load());
+        ProviderSettings lookup = ProviderSettings.of(type, FsSettingsLoader.load());
 
         Assertions.assertThat(lookup.string(field, serverValue)).isEqualTo(serverValue);
         Assertions.assertThat(lookup.deprecationWarnings())
@@ -74,7 +70,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String field = randomToken();
         String serverSecret = randomToken();
 
-        ProviderSettings lookup = ProviderSettings.of(type, null, FsSettingsLoader.load());
+        ProviderSettings lookup = ProviderSettings.of(type, FsSettingsLoader.load());
 
         Assertions.assertThat(lookup.secret(field, serverSecret)).isEqualTo(serverSecret);
         Assertions.assertThat(lookup.deprecationWarnings())
@@ -90,7 +86,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String field = randomToken();
         int defaultValue = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 65535);
 
-        ProviderSettings lookup = ProviderSettings.of(type, null, FsSettingsLoader.load());
+        ProviderSettings lookup = ProviderSettings.of(type, FsSettingsLoader.load());
 
         Assertions.assertThat(lookup.integer(field, defaultValue)).isEqualTo(defaultValue);
         Assertions.assertThat(lookup.deprecationWarnings()).isEmpty();
@@ -105,7 +101,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         int defaultValue = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
 
         FsSettings settings = jobWith(type, field, jobValue);
-        ProviderSettings lookup = ProviderSettings.of(type, null, settings);
+        ProviderSettings lookup = ProviderSettings.of(type, settings);
 
         Assertions.assertThat(lookup.integer(field, defaultValue, serverValue)).isEqualTo(jobValue);
         Assertions.assertThat(lookup.deprecationWarnings())
@@ -121,7 +117,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         int serverValue = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1024, 65535);
         int defaultValue = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 1000);
 
-        ProviderSettings lookup = ProviderSettings.of(type, null, FsSettingsLoader.load());
+        ProviderSettings lookup = ProviderSettings.of(type, FsSettingsLoader.load());
 
         Assertions.assertThat(lookup.integer(field, defaultValue, serverValue)).isEqualTo(serverValue);
         Assertions.assertThat(lookup.deprecationWarnings())
@@ -131,17 +127,17 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void restOnlyIgnoresJobAndServer() {
+    void overlayOnlyIgnoresJobAndServer() {
         String type = randomToken();
         String field = randomToken();
-        String restValue = "rest-" + randomToken();
+        String overlayValue = "overlay-" + randomToken();
         String jobValue = "job-" + randomToken();
 
         FsSettings settings = jobWith(type, field, jobValue);
-        ProviderSettings lookup = ProviderSettings.of(type, restJson(type, field, restValue), settings);
+        ProviderSettings lookup = ProviderSettings.of(type, settings, Map.of(field, overlayValue));
 
-        Assertions.assertThat(lookup.restString(field)).isEqualTo(restValue);
-        Assertions.assertThat(lookup.restString("missing-" + randomToken())).isNull();
+        Assertions.assertThat(lookup.overlayString(field)).isEqualTo(overlayValue);
+        Assertions.assertThat(lookup.overlayString("missing-" + randomToken())).isNull();
         Assertions.assertThat(lookup.deprecationWarnings()).isEmpty();
     }
 
@@ -151,7 +147,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String field = randomToken();
         String defaultValue = randomToken();
 
-        ProviderSettings lookup = ProviderSettings.of(type, null, FsSettingsLoader.load());
+        ProviderSettings lookup = ProviderSettings.of(type, FsSettingsLoader.load());
 
         Assertions.assertThat(lookup.string(field, null, defaultValue)).isEqualTo(defaultValue);
         Assertions.assertThat(lookup.deprecationWarnings()).isEmpty();
@@ -163,7 +159,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String pemPath = "/keys/" + randomToken() + ".pem";
         FsSettings settings = jobWith(type, "pem_path", pemPath);
 
-        ProviderSettings lookup = ProviderSettings.of(type, null, settings);
+        ProviderSettings lookup = ProviderSettings.of(type, settings);
 
         Assertions.assertThat(lookup.string("pem_path")).isEqualTo(pemPath);
         Assertions.assertThat(lookup.deprecationWarnings()).isEmpty();
@@ -176,7 +172,7 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String jobValue = randomToken();
 
         FsSettings settings = jobWith(type, field, jobValue);
-        ProviderSettings lookup = ProviderSettings.of(type, null, settings);
+        ProviderSettings lookup = ProviderSettings.of(type, settings);
 
         Assertions.assertThat(lookup.string(field)).isEqualTo(jobValue);
         Assertions.assertThat(lookup.deprecationWarnings()).isEmpty();
@@ -188,12 +184,6 @@ class ProviderSettingsTest extends AbstractFSCrawlerTestCase {
         config.put(field, value);
         settings.getFs().setProviders(Map.of(type, config));
         return settings;
-    }
-
-    private static DocumentContext restJson(String type, String field, String value) {
-        return JsonUtil.parseJsonAsDocumentContext("""
-                {"type":"%s","%s":{"%s":"%s"}}
-                """.formatted(type, type, field, value));
     }
 
     private String randomToken() {

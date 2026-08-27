@@ -23,11 +23,11 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.settings.ProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
-import fr.pilato.elasticsearch.crawler.plugins.ProviderSettings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -98,7 +98,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         @Override
         @SuppressWarnings("removal")
         protected void parseSettings() {
-            ProviderSettings settings = ProviderSettings.of(getType(), document, fsSettings);
+            ProviderSettings settings = ProviderSettings.of(getType(), fsSettings, restTypeSettings());
             Server server = fsSettings != null ? fsSettings.getServer() : null;
             hostname = settings.string("hostname", server != null ? server.getHostname() : null);
             port = settings.integer(
@@ -106,7 +106,7 @@ public class FsSshPlugin extends FsCrawlerPlugin {
             username = settings.string("username", server != null ? server.getUsername() : null);
             password = settings.secret("password", server != null ? server.getPassword() : null);
             pemPath = settings.string("pem_path", server != null ? server.getPemPath() : null);
-            remotePath = settings.restString("path");
+            remotePath = settings.overlayString("path");
             settings.deprecationWarnings().forEach(logger::warn);
         }
 

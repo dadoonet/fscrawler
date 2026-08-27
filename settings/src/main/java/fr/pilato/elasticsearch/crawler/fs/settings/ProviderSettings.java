@@ -18,11 +18,8 @@
  *
  * Made from 🇫🇷🇪🇺 with ❤️ - 2011-2026
  */
-package fr.pilato.elasticsearch.crawler.plugins;
+package fr.pilato.elasticsearch.crawler.fs.settings;
 
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.PathNotFoundException;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,44 +27,53 @@ import java.util.Map;
 /**
  * Resolves one {@code fs.providers.<type>} field at a time.
  *
- * <p>Order: REST JSON {@code $.<type>.<field>}, then job {@code fs.providers.<type>.<field>}, then an optional
- * deprecated {@code server.<field>} value supplied by the caller. The helper does not know SSH or FTP.
+ * <p>Order: optional overlay (caller-supplied, e.g. REST), then job {@code fs.providers.<type>.<field>}, then an
+ * optional deprecated {@code server.<field>} value supplied by the caller. This class does not know SSH, FTP, or REST
+ * JSON.
  */
 public final class ProviderSettings {
     private final String type;
-    private final DocumentContext restJson;
+    private final Map<String, Object> overlay;
     private final Map<String, Object> jobConfig;
     private final List<String> warnings = new ArrayList<>();
 
-    private ProviderSettings(String type, DocumentContext restJson, Map<String, Object> jobConfig) {
+    private ProviderSettings(String type, Map<String, Object> overlay, Map<String, Object> jobConfig) {
         this.type = type;
-        this.restJson = restJson;
+        this.overlay = overlay;
         this.jobConfig = jobConfig;
     }
 
     /**
      * @param type provider type key under {@code fs.providers}
-     * @param restJson REST payload, or {@code null} for crawler/job-only resolution
      * @param fsSettings job settings
      */
-    public static ProviderSettings of(String type, DocumentContext restJson, FsSettings fsSettings) {
+    public static ProviderSettings of(String type, FsSettings fsSettings) {
+        return of(type, fsSettings, Map.of());
+    }
+
+    /**
+     * @param type provider type key under {@code fs.providers}
+     * @param fsSettings job settings
+     * @param overlay values that win over the job map (e.g. a REST {@code type} block)
+     */
+    public static ProviderSettings of(String type, FsSettings fsSettings, Map<String, Object> overlay) {
         Map<String, Object> jobConfig = fsSettings != null && fsSettings.getFs() != null
                 ? fsSettings.getFs().getProviderConfig(type)
                 : null;
-        return new ProviderSettings(type, restJson, jobConfig);
+        return new ProviderSettings(type, overlay == null ? Map.of() : overlay, jobConfig);
     }
 
-    /** REST, then job, then {@code deprecatedServerValue}. */
+    /** Overlay, then job, then {@code deprecatedServerValue}. */
     public String string(String field) {
         return string(field, null);
     }
 
-    /** REST, then job, then {@code deprecatedServerValue}. */
+    /** Overlay, then job, then {@code deprecatedServerValue}. */
     public String string(String field, String deprecatedServerValue) {
         return resolveString(field, deprecatedServerValue, true);
     }
 
-    /** REST, then job, then {@code deprecatedServerValue}, then {@code defaultValue}. */
+    /** Overlay, then job, then {@code deprecatedServerValue}, then {@code defaultValue}. */
     public String string(String field, String deprecatedServerValue, String defaultValue) {
         String value = string(field, deprecatedServerValue);
         return value != null ? value : defaultValue;
@@ -78,19 +84,19 @@ public final class ProviderSettings {
         return resolveString(field, deprecatedServerValue, false);
     }
 
-    /** REST, then job, then {@code defaultValue}. Values {@code <= 0} are treated as missing. */
+    /** Overlay, then job, then {@code defaultValue}. Values {@code <= 0} are treated as missing. */
     public int integer(String field, int defaultValue) {
         return integer(field, defaultValue, null);
     }
 
     /**
-     * REST, then job, then {@code deprecatedServerValue}, then {@code defaultValue}. Values {@code <= 0} are treated as
-     * missing.
+     * Overlay, then job, then {@code deprecatedServerValue}, then {@code defaultValue}. Values {@code <= 0} are treated
+     * as missing.
      */
     public int integer(String field, int defaultValue, Integer deprecatedServerValue) {
-        Integer restValue = readRestInt(field);
-        Integer jobValue = readJobInt(field);
-        Integer chosen = firstPositive(restValue, jobValue);
+        Integer overlayValue = readMapInt(overlay, field);
+        Integer jobValue = readMapInt(jobConfig, field);
+        Integer chosen = firstPositive(overlayValue, jobValue);
         Integer serverValue = positive(deprecatedServerValue);
         String serverAsString = serverValue != null ? Integer.toString(serverValue) : null;
         maybeWarn(field, serverAsString, chosen != null ? Integer.toString(chosen) : null, true, false);
@@ -101,10 +107,11 @@ public final class ProviderSettings {
     }
 
     /**
-     * REST-only field (e.g. a single-file {@code path}). Does not read job settings or emit {@code server.*} warnings.
+     * Overlay-only field (e.g. a REST single-file {@code path}). Does not read job settings or emit {@code server.*}
+     * warnings.
      */
-    public String restString(String field) {
-        return readRestString(field);
+    public String overlayString(String field) {
+        return readMapString(overlay, field);
     }
 
     public List<String> deprecationWarnings() {
@@ -112,9 +119,9 @@ public final class ProviderSettings {
     }
 
     private String resolveString(String field, String deprecatedServerValue, boolean includeValue) {
-        String restValue = readRestString(field);
-        String jobValue = readJobString(field);
-        String chosen = firstNonBlank(restValue, jobValue);
+        String overlayValue = readMapString(overlay, field);
+        String jobValue = readMapString(jobConfig, field);
+        String chosen = firstNonBlank(overlayValue, jobValue);
         String serverValue = blankToNull(deprecatedServerValue);
         maybeWarn(field, serverValue, chosen, includeValue, true);
         if (chosen != null) {
@@ -144,42 +151,19 @@ public final class ProviderSettings {
                 + newKey + " instead.");
     }
 
-    private String readRestString(String field) {
-        if (restJson == null) {
+    private static String readMapString(Map<String, Object> map, String field) {
+        if (map == null) {
             return null;
         }
-        try {
-            Object value = restJson.read("$." + type + "." + field);
-            return value == null ? null : String.valueOf(value);
-        } catch (PathNotFoundException e) {
-            return null;
-        }
-    }
-
-    private Integer readRestInt(String field) {
-        if (restJson == null) {
-            return null;
-        }
-        try {
-            return toInt(restJson.read("$." + type + "." + field));
-        } catch (PathNotFoundException e) {
-            return null;
-        }
-    }
-
-    private String readJobString(String field) {
-        if (jobConfig == null) {
-            return null;
-        }
-        Object value = jobConfig.get(field);
+        Object value = map.get(field);
         return value == null ? null : String.valueOf(value);
     }
 
-    private Integer readJobInt(String field) {
-        if (jobConfig == null) {
+    private static Integer readMapInt(Map<String, Object> map, String field) {
+        if (map == null) {
             return null;
         }
-        return toInt(jobConfig.get(field));
+        return toInt(map.get(field));
     }
 
     private static Integer firstPositive(Integer first, Integer second) {

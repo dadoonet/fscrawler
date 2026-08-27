@@ -26,6 +26,8 @@ import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfiguratio
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -68,5 +70,23 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
     public void close() throws Exception {
         logger.debug("Closing FsCrawlerExtensionFsProviderAbstract");
         stop();
+    }
+
+    /** REST JSON block for this provider type ({@code $.<type>}), or an empty map when none is present. */
+    protected Map<String, Object> restTypeSettings() {
+        if (document == null) {
+            return Map.of();
+        }
+        try {
+            Object section = document.read("$." + getType());
+            if (section instanceof Map<?, ?> map) {
+                Map<String, Object> copy = new LinkedHashMap<>();
+                map.forEach((key, value) -> copy.put(String.valueOf(key), value));
+                return copy;
+            }
+            return Map.of();
+        } catch (PathNotFoundException e) {
+            return Map.of();
+        }
     }
 }
