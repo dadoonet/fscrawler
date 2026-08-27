@@ -24,6 +24,8 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.ProviderSettings;
+import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -101,6 +103,36 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         }
         return normalizeRemotePath(remotePath);
     }
+
+    /**
+     * Resolve hostname/port/username/password/path for a host-based provider. Does not know SSH vs FTP: callers pass
+     * their own port/username defaults and read extra fields (e.g. {@code pem_path}) from
+     * {@link HostConnection#lookup()} before logging {@link ProviderSettings#deprecationWarnings()}.
+     */
+    @SuppressWarnings("removal")
+    protected HostConnection parseHostConnection(int defaultPort, String defaultUsername) {
+        ProviderSettings lookup = ProviderSettings.of(getType(), fsSettings, overlay);
+        Server server = fsSettings != null ? fsSettings.getServer() : null;
+        String hostname = lookup.string("hostname", server != null ? server.getHostname() : null);
+        int port =
+                lookup.integer("port", defaultPort, server != null && server.getPort() > 0 ? server.getPort() : null);
+        String username = lookup.string("username", server != null ? server.getUsername() : null, defaultUsername);
+        String password = lookup.secret("password", server != null ? server.getPassword() : null);
+        return new HostConnection(hostname, port, username, password, lookup.overlayString("path"), lookup);
+    }
+
+    /** Normalize the overlay path and, when present, open the connection and {@link #validateFile()}. */
+    protected String requirePathAndConnect(String hostname, String username, String remotePath) throws IOException {
+        String normalized = requireHostUserAndNormalizeFilePath(hostname, username, remotePath);
+        if (normalized == null) {
+            return null;
+        }
+        connectAndValidateFile();
+        return normalized;
+    }
+
+    protected record HostConnection(
+            String hostname, int port, String username, String password, String path, ProviderSettings lookup) {}
 
     protected String normalizeRemotePath(String path) throws IOException {
         if (path == null) {

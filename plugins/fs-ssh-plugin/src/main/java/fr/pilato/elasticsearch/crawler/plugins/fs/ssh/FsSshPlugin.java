@@ -22,7 +22,6 @@ package fr.pilato.elasticsearch.crawler.plugins.fs.ssh;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
-import fr.pilato.elasticsearch.crawler.fs.settings.ProviderSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProviderAbstract;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPlugin;
@@ -97,25 +96,20 @@ public class FsSshPlugin extends FsCrawlerPlugin {
         @Override
         @SuppressWarnings("removal")
         protected void parseSettings() {
-            ProviderSettings settings = ProviderSettings.of(getType(), fsSettings, overlay);
+            HostConnection connection = parseHostConnection(DEFAULT_PORT, null);
+            hostname = connection.hostname();
+            port = connection.port();
+            username = connection.username();
+            password = connection.password();
             Server server = fsSettings != null ? fsSettings.getServer() : null;
-            hostname = settings.string("hostname", server != null ? server.getHostname() : null);
-            port = settings.integer(
-                    "port", DEFAULT_PORT, server != null && server.getPort() > 0 ? server.getPort() : null);
-            username = settings.string("username", server != null ? server.getUsername() : null);
-            password = settings.secret("password", server != null ? server.getPassword() : null);
-            pemPath = settings.string("pem_path", server != null ? server.getPemPath() : null);
-            remotePath = settings.overlayString("path");
-            settings.deprecationWarnings().forEach(logger::warn);
+            pemPath = connection.lookup().string("pem_path", server != null ? server.getPemPath() : null);
+            remotePath = connection.path();
+            connection.lookup().deprecationWarnings().forEach(logger::warn);
         }
 
         @Override
         protected void validateSettings() throws IOException {
-            remotePath = requireHostUserAndNormalizeFilePath(hostname, username, remotePath);
-            if (remotePath == null) {
-                return;
-            }
-            connectAndValidateFile();
+            remotePath = requirePathAndConnect(hostname, username, remotePath);
         }
 
         @Override
