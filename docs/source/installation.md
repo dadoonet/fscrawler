@@ -285,7 +285,8 @@ cd fscrawler-distribution-{{ release }}
 ````{ifconfig} release.endswith('-SNAPSHOT')
 ```{warning}
 This is a **SNAPSHOT** build. The ZIP is overwritten on every push to `main`.
-Stable versions are listed on the same [GitHub Releases](https://github.com/dadoonet/fscrawler/releases) page.
+SNAPSHOT pre-releases are **not** GPG-signed. Stable versions (with `.asc` and SHA-256)
+are listed on the same [GitHub Releases](https://github.com/dadoonet/fscrawler/releases) page.
 ```
 ````
 
@@ -294,6 +295,26 @@ Stable versions are listed on the same [GitHub Releases](https://github.com/dado
 This is a **stable** version. Development SNAPSHOT builds are published as GitHub pre-releases on the same
 [GitHub Releases](https://github.com/dadoonet/fscrawler/releases) page.
 ```
+
+(verify-zip)=
+### Verify the ZIP
+
+Stable releases attach a GPG signature and a SHA-256 checksum next to the ZIP.
+
+```sh
+wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip
+wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip.asc
+wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip.sha256
+sha256sum -c fscrawler-{{ release }}.zip.sha256
+# macOS: shasum -a 256 -c fscrawler-{{ release }}.zip.sha256
+gpg --import KEYS
+# or: gpg --keyserver hkps://keys.openpgp.org --recv-keys EDEC15CE428D7527CF87E998C7E192835B0ABB2E
+gpg --verify fscrawler-{{ release }}.zip.asc fscrawler-{{ release }}.zip
+```
+
+The signing key is **David Pilato** `<david@pilato.fr>`, fingerprint
+`EDEC 15CE 428D 7527 CF87 E998 C7E1 9283 5B0A BB2E`.
+`KEYS` lives at the root of the [git repository](https://github.com/dadoonet/fscrawler/blob/main/KEYS).
 ````
 
 After extracting the ZIP, you get a directory with `bin/` (run scripts), `config/` (logging), `lib/` (core and

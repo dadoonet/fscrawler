@@ -57,8 +57,9 @@ is running: Maven and git mutations are already bound to that path.
 * Replace the SNAPSHOT version by the final version number
 * Commit the change
 * Build the final artifacts using the `release` profile (javadoc, sources, GPG signing)
-* Copy `distribution/target/fscrawler-distribution-<version>.zip` to
-  `release/<version>/fscrawler-<version>.zip` so later `mvn clean` does not delete it
+* Copy `distribution/target/fscrawler-distribution-<version>.zip` (and the Maven GPG
+  `.asc`) to `release/<version>/fscrawler-<version>.zip` so later `mvn clean` does not
+  delete them, and write `fscrawler-<version>.zip.sha256`
 * Tag the version
 * Prepare release notes from `docs/source/release/{version}.md` and GitHub API
 * Push Docker images to [Docker Hub](https://hub.docker.com/r/dadoonet/fscrawler/)
@@ -72,7 +73,8 @@ is running: Maven and git mutations are already bound to that path.
 * Remove the isolated worktree and delete the release branch
 * Push the changes and the tag to origin
 * Create (or promote the Release Drafter draft of) the GitHub release with
-  `gh release create` / `gh release edit --draft=false`, attaching `fscrawler-<version>.zip`
+  `gh release create` / `gh release edit --draft=false`, attaching `fscrawler-<version>.zip`,
+  `fscrawler-<version>.zip.asc`, and `fscrawler-<version>.zip.sha256`
 * Once that GitHub release looks OK, delete the matching SNAPSHOT pre-release
   (`fscrawler-<version>-SNAPSHOT`) so the next push to `main` publishes the new SNAPSHOT
 * Optionally announce the version on https://discuss.elastic.co/c/annoucements/community-ecosystem

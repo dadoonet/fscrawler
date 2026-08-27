@@ -78,6 +78,8 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
         assertThat(copy)
                 .contains("fscrawler-distribution-")
                 .contains("fscrawler-${RELEASE_VERSION}.zip")
+                .contains(".asc")
+                .contains("sha256")
                 .doesNotContain("create_github_release");
     }
 
@@ -88,6 +90,15 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 .as("gh release create must attach the ZIP with display name fscrawler-x.y.zip")
                 .contains("gh release create")
                 .contains("#fscrawler-${RELEASE_VERSION}.zip");
+    }
+
+    @Test
+    void githubReleaseAttachesZipSignatureAndChecksum() throws Exception {
+        String body = functionBody(readReleaseScript(), "create_github_release");
+        assertThat(body)
+                .as("stable GitHub releases must attach the GPG signature and SHA-256 next to the ZIP")
+                .contains("#fscrawler-${RELEASE_VERSION}.zip.asc")
+                .contains("#fscrawler-${RELEASE_VERSION}.zip.sha256");
     }
 
     @Test
@@ -202,6 +213,19 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 .contains("fscrawler-{{ release }}.zip")
                 .doesNotContain("repository/maven-snapshots")
                 .doesNotContain("repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution");
+    }
+
+    @Test
+    void installationDocsExplainHowToVerifyStableZip() throws Exception {
+        String installation =
+                Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
+        assertThat(installation)
+                .contains("gpg --verify")
+                .contains("fscrawler-{{ release }}.zip.asc")
+                .contains("sha256sum")
+                .contains("EDEC15CE428D7527CF87E998C7E192835B0ABB2E");
+        String keys = Files.readString(repoRoot().resolve("KEYS"));
+        assertThat(keys).contains("BEGIN PGP PUBLIC KEY BLOCK").contains("david@pilato.fr");
     }
 
     @Test

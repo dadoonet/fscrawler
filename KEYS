@@ -1,0 +1,21 @@
+# This file contains the PGP public keys of FSCrawler release managers.
+# Import with: gpg --import KEYS
+#
+# Current Maven/GitHub ZIP signing key:
+#   David Pilato (David personal id) <david@pilato.fr>
+#   Fingerprint: EDEC 15CE 428D 7527 CF87 E998 C7E1 9283 5B0A BB2E
+#
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEZgFNtxYJKwYBBAHaRw8BAQdADbZrHexRupcppRaTFA62I0GstHkh2aRFmufV
+awYsYrS0MkRhdmlkIFBpbGF0byAoRGF2aWQgcGVyc29uYWwgaWQpIDxkYXZpZEBw
+aWxhdG8uZnI+iJMEExYKADsWIQTt7BXOQo11J8+H6ZjH4ZKDWwq7LgUCZgFNtwIb
+AwULCQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAKCRDH4ZKDWwq7LpH2AQCvI9Gb
+9rpRhzny6mxpStql2IuycREzDVUd1XGCofC3UQD9FOelar9V03qEAyzeerIjFv2y
+Vh4NSQh9N+TR5GijmAy4OARmAU23EgorBgEEAZdVAQUBAQdAhxWzE/J1LQ35CMdx
+9Inb0f6fGW3KXI0MovqCzXqPx1IDAQgHiHgEGBYKACAWIQTt7BXOQo11J8+H6ZjH
+4ZKDWwq7LgUCZgFNtwIbDAAKCRDH4ZKDWwq7Ln/PAQD1kpVc0iIMw5dcwZbIxk+g
+dnAY/xZ6RRXc/PVBrBgJDwD/SrRopfgfvQCeQ1BZoh/eLNYSP+3C7npVn7eeOBLH
+Gwc=
+=w937
+-----END PGP PUBLIC KEY BLOCK-----

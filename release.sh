@@ -215,9 +215,11 @@ print_failure_recovery_hint() {
 		printf '    Continue manually, for example:\n' >&2
 		printf '      python3 scripts/prepare-release-notes.py --version %s --since-tag %s\n' \
 			"${RELEASE_VERSION:-<version>}" "${PREVIOUS_TAG:-<previous-tag>}" >&2
-		printf '      gh release create %s --notes-file %s %s\n' \
+		printf '      gh release create %s --notes-file %s %s %s %s\n' \
 			"${RELEASE_TAG:-<tag>}" "${RELEASE_NOTES_FILE:-release/<version>/release-notes.md}" \
-			"${RELEASE_ZIP:-release/<version>/fscrawler-<version>.zip}#fscrawler-<version>.zip" >&2
+			"${RELEASE_ZIP:-release/<version>/fscrawler-<version>.zip}#fscrawler-<version>.zip" \
+			"${RELEASE_ZIP:-release/<version>/fscrawler-<version>.zip}.asc#fscrawler-<version>.zip.asc" \
+			"${RELEASE_ZIP:-release/<version>/fscrawler-<version>.zip}.sha256#fscrawler-<version>.zip.sha256" >&2
 		printf '      python3 scripts/send-announcement.py %s --subject "FSCrawler %s released"\n' \
 			"${RELEASE_NOTES_FILE:-release/<version>/release-notes.md}" "${RELEASE_VERSION:-<version>}" >&2
 		printf '    Or clear local state only with:\n' >&2
@@ -637,20 +639,43 @@ remove_release_worktree() {
 }
 
 copy_release_zip() {
-	local src dest
+	local src dest src_asc dest_asc dest_sha
 	src="${WORK_DIR}/distribution/target/fscrawler-distribution-${RELEASE_VERSION}.zip"
 	dest="${ROOT_DIR}/release/${RELEASE_VERSION}/fscrawler-${RELEASE_VERSION}.zip"
+	src_asc="${src}.asc"
+	dest_asc="${dest}.asc"
+	dest_sha="${dest}.sha256"
 	if is_dry_run; then
 		log "[dry-run] Would copy ${src} -> ${dest}"
+		log "[dry-run] Would copy ${src_asc} -> ${dest_asc}"
+		log "[dry-run] Would write ${dest_sha}"
 		return 0
 	fi
 	if [[ ! -f "${src}" ]]; then
 		die "Release ZIP not found after build: ${src}"
 	fi
+	if [[ ! -f "${src_asc}" ]]; then
+		die "GPG signature not found: ${src_asc} — the release profile must sign the ZIP"
+	fi
 	mkdir -p "$(dirname "${dest}")"
 	cp "${src}" "${dest}"
+	cp "${src_asc}" "${dest_asc}"
+	write_sha256 "${dest}" "${dest_sha}"
 	RELEASE_ZIP="${dest}"
-	log "Copied release ZIP to ${dest}"
+	log "Copied release ZIP, GPG signature, and SHA-256 to ${dest}"
+}
+
+write_sha256() {
+	local file=$1
+	local out=$2
+	local dir base
+	dir="$(dirname "${file}")"
+	base="$(basename "${file}")"
+	if command -v sha256sum >/dev/null 2>&1; then
+		( cd "${dir}" && sha256sum "${base}" >"$(basename "${out}")" )
+	else
+		( cd "${dir}" && shasum -a 256 "${base}" >"$(basename "${out}")" )
+	fi
 }
 
 git_ref_exists() {
@@ -802,7 +827,7 @@ create_github_release() {
 
 	if ! confirm "Create GitHub release ${RELEASE_TAG}?" y; then
 		info "Create manually when ready:"
-		info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip"
+		info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip ${RELEASE_ZIP}.asc#fscrawler-${RELEASE_VERSION}.zip.asc ${RELEASE_ZIP}.sha256#fscrawler-${RELEASE_VERSION}.zip.sha256"
 		info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
 		return
 	fi
@@ -810,24 +835,26 @@ create_github_release() {
 	ensure_release_notes_file
 
 	local zip="${RELEASE_ZIP:-${ROOT_DIR}/release/${RELEASE_VERSION}/fscrawler-${RELEASE_VERSION}.zip}"
-	local asset="${zip}#fscrawler-${RELEASE_VERSION}.zip"
+	local zip_asset="${zip}#fscrawler-${RELEASE_VERSION}.zip"
+	local asc_asset="${zip}.asc#fscrawler-${RELEASE_VERSION}.zip.asc"
+	local sha_asset="${zip}.sha256#fscrawler-${RELEASE_VERSION}.zip.sha256"
 	local repo="${GITHUB_REPO:-dadoonet/fscrawler}"
-	if [[ ! -f "${zip}" ]]; then
-		die "Release ZIP not found: ${zip} — copy it after the release build, before mvn clean."
+	if [[ ! -f "${zip}" || ! -f "${zip}.asc" || ! -f "${zip}.sha256" ]]; then
+		die "Release ZIP, .asc, or .sha256 not found next to ${zip} — copy them after the release build, before mvn clean."
 	fi
 
 	if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
 		warn "GitHub release ${RELEASE_TAG} already exists."
-		if confirm "Update release notes and attach ${zip##*/}?" y; then
+		if confirm "Update release notes and attach ${zip##*/} plus signature and checksum?" y; then
 			gh release edit "${RELEASE_TAG}" --draft=false --notes-file "${RELEASE_NOTES_FILE}"
-			gh release upload "${RELEASE_TAG}" "${asset}" --clobber
+			gh release upload "${RELEASE_TAG}" "${zip_asset}" "${asc_asset}" "${sha_asset}" --clobber
 		else
 			return
 		fi
 	else
 		log "Creating GitHub release ${RELEASE_TAG}"
-		gh release create "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}" "${asset}"
-		success "GitHub release ${RELEASE_TAG} created (asset fscrawler-${RELEASE_VERSION}.zip)."
+		gh release create "${RELEASE_TAG}" --notes-file "${RELEASE_NOTES_FILE}" "${zip_asset}" "${asc_asset}" "${sha_asset}"
+		success "GitHub release ${RELEASE_TAG} created (ZIP, .asc, and SHA-256)."
 	fi
 
 	open_url "https://github.com/${repo}/releases/tag/${RELEASE_TAG}"
@@ -1138,7 +1165,7 @@ finalize_awaiting_push() {
 	info "  git push origin ${ORIGINAL_BRANCH} ${RELEASE_TAG}"
 	info "  python3 scripts/prepare-release-notes.py --version ${RELEASE_VERSION} --since-tag ${PREVIOUS_TAG}"
 	info "Then create the GitHub release, delete the SNAPSHOT pre-release, and send the announcement manually:"
-	info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip"
+	info "  gh release create ${RELEASE_TAG} --notes-file ${RELEASE_NOTES_FILE} ${RELEASE_ZIP}#fscrawler-${RELEASE_VERSION}.zip ${RELEASE_ZIP}.asc#fscrawler-${RELEASE_VERSION}.zip.asc ${RELEASE_ZIP}.sha256#fscrawler-${RELEASE_VERSION}.zip.sha256"
 	info "  gh release delete ${TAG_PREFIX}-${RELEASE_VERSION}-SNAPSHOT --yes --cleanup-tag"
 	info "To undo the local merge and clear release state:"
 	info "  ${SCRIPT_NAME} --rollback"
