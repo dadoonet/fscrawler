@@ -23,9 +23,8 @@ SUBSTITUTIONS = [
     ("|ES_stack_version|", "{{ ES_stack_version }}"),
     ("|FSCrawler_version|", "{{ FSCrawler_version }}"),
     ("|JPEG2000_version|_", "{{ JPEG2000_version }}"),
-    ("|Download_URL|_", "{{ Download_URL }}"),
-    ("|Maven_Central|_", "{{ Maven_Central }}"),
-    ("|Sonatype|_", "{{ Sonatype }}"),
+    ("|GitHub|_", "{{ GitHub }}"),
+    ("|downloadUrl|", "{{ downloadUrl }}"),
     ("|java_version|", "{{ java_version }}"),
 ]
 

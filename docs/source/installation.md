@@ -273,11 +273,11 @@ You will find this example in the `contrib/docker-compose-example-elasticsearch`
 ## Local installation (ZIP)
 
 If you prefer to run FSCrawler from a ZIP distribution on your machine instead of Docker,
-download [FSCrawler {{ release }}](https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip)
-from [GitHub Releases](https://github.com/dadoonet/fscrawler/releases):
+download [FSCrawler {{ release }}]({{ downloadUrl }})
+from {{ GitHub }}:
 
 ```sh
-wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip
+wget {{ downloadUrl }}
 unzip fscrawler-{{ release }}.zip
 cd fscrawler-distribution-{{ release }}
 ```
@@ -286,14 +286,14 @@ cd fscrawler-distribution-{{ release }}
 ```{warning}
 This is a **SNAPSHOT** build. The ZIP is overwritten on every push to `main`.
 SNAPSHOT pre-releases are **not** GPG-signed. Stable versions (with `.asc` and SHA-256)
-are listed on the same [GitHub Releases](https://github.com/dadoonet/fscrawler/releases) page.
+are listed on the same {{ GitHub }} page.
 ```
 ````
 
 ````{ifconfig} release == version
 ```{tip}
 This is a **stable** version. Development SNAPSHOT builds are published as GitHub pre-releases on the same
-[GitHub Releases](https://github.com/dadoonet/fscrawler/releases) page.
+{{ GitHub }} page.
 ```
 
 (verify-zip)=
@@ -302,9 +302,9 @@ This is a **stable** version. Development SNAPSHOT builds are published as GitHu
 Stable releases attach a GPG signature and a SHA-256 checksum next to the ZIP.
 
 ```sh
-wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip
-wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip.asc
-wget https://github.com/dadoonet/fscrawler/releases/download/fscrawler-{{ release }}/fscrawler-{{ release }}.zip.sha256
+wget {{ downloadUrl }}
+wget {{ downloadUrl }}.asc
+wget {{ downloadUrl }}.sha256
 sha256sum -c fscrawler-{{ release }}.zip.sha256
 # macOS: shasum -a 256 -c fscrawler-{{ release }}.zip.sha256
 gpg --import KEYS

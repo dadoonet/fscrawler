@@ -209,10 +209,21 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
         String installation =
                 Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
         assertThat(installation)
-                .contains("github.com/dadoonet/fscrawler/releases")
+                .contains("{{ downloadUrl }}")
+                .contains("{{ GitHub }}")
                 .contains("fscrawler-{{ release }}.zip")
-                .doesNotContain("repository/maven-snapshots")
-                .doesNotContain("repo1.maven.org/maven2/fr/pilato/elasticsearch/crawler/fscrawler-distribution");
+                .doesNotContain("{{ Maven_Central }}")
+                .doesNotContain("{{ Sonatype }}")
+                .doesNotContain("{{ Download_URL }}");
+        String conf =
+                Files.readString(repoRoot().resolve("docs").resolve("source").resolve("conf.py"));
+        assertThat(conf)
+                .as("docs substitutions must expose GitHub Releases, not Maven Central or Sonatype")
+                .contains("'GitHub'")
+                .contains("downloadUrl")
+                .doesNotContain("Maven_Central")
+                .doesNotContain("Sonatype")
+                .doesNotContain("Download_URL");
     }
 
     @Test
@@ -221,7 +232,8 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
                 Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
         assertThat(installation)
                 .contains("gpg --verify")
-                .contains("fscrawler-{{ release }}.zip.asc")
+                .contains("{{ downloadUrl }}.asc")
+                .contains("{{ downloadUrl }}.sha256")
                 .contains("sha256sum")
                 .contains("EDEC15CE428D7527CF87E998C7E192835B0ABB2E");
         String keys = Files.readString(repoRoot().resolve("KEYS"));
