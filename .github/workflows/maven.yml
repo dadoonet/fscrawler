@@ -53,7 +53,7 @@ jobs:
       - name: Build SNAPSHOT ZIP
         if: env.SKIP_DOCKER == 'true'
         run: mvn --batch-mode package -DskipTests -Dossindex.skip -Ddocker.skip
-      - name: Deploy Docker images
+      - name: Build SNAPSHOT ZIP and deploy Docker images
         if: env.SKIP_DOCKER != 'true'
         run: mvn --batch-mode deploy -DskipTests -Dossindex.skip
       - name: Publish SNAPSHOT ZIP as GitHub pre-release
