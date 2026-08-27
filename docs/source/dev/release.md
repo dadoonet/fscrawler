@@ -180,6 +180,9 @@ Every push to `main` runs `.github/workflows/maven.yml`, which:
   `fscrawler-{version}` (for example `fscrawler-3.1-SNAPSHOT`) with the asset
   `fscrawler-3.1-SNAPSHOT.zip`
 
+SNAPSHOT pre-releases are **not** GPG-signed. Only stable GitHub releases include
+`.asc` and `.sha256`.
+
 The pre-release is created with `--prerelease --latest=false` so it never becomes GitHub's
 "Latest" release. The ZIP is overwritten (`gh release upload --clobber`) on every subsequent
 push.
