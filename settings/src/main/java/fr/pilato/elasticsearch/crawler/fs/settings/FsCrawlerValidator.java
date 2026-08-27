@@ -166,12 +166,12 @@ public class FsCrawlerValidator {
         String username = remoteUsername(provider, settings);
         if ("ssh".equals(provider) && FsCrawlerUtil.isNullOrEmpty(username)) {
             logger.error(
-                    "When using SSH, you need to set fs.ssh.username (or deprecated server.username) and probably a password or a pem file. Disabling crawler");
+                    "When using SSH, you need to set fs.providers.ssh.username (or deprecated server.username) and probably a password or a pem file. Disabling crawler");
             return true;
         }
         if ("ftp".equals(provider) && username != null && username.isEmpty()) {
             logger.error(
-                    "When using FTP, you need to set fs.ftp.username (or deprecated server.username) and probably a password. Disabling crawler");
+                    "When using FTP, you need to set fs.providers.ftp.username (or deprecated server.username) and probably a password. Disabling crawler");
             return true;
         }
         return false;

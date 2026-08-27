@@ -31,7 +31,8 @@ import java.util.Map;
 /**
  * Connection settings for a remote filesystem provider (SSH, FTP).
  *
- * <p>Resolution order: REST JSON {@code type} block, then job {@code fs.<type>}, then deprecated {@code server.*}.
+ * <p>Resolution order: REST JSON {@code type} block, then job {@code fs.providers.<type>}, then deprecated
+ * {@code server.*}.
  */
 @SuppressWarnings("removal")
 public record RemoteConnectionSettings(
@@ -144,7 +145,7 @@ public record RemoteConnectionSettings(
             return;
         }
         String oldKey = "server." + field;
-        String newKey = "fs." + type + "." + field;
+        String newKey = "fs.providers." + type + "." + field;
         if (newValue != null) {
             warnings.add("Setting " + oldKey + " is deprecated and will be removed in a future version. Please use "
                     + newKey + " instead. The value from " + oldKey + " is ignored because " + newKey + " is set.");

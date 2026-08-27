@@ -95,6 +95,6 @@ class FsCrawlerTestFTPIT extends AbstractFsCrawlerITCase {
         if (password != null) {
             ftp.put("password", password);
         }
-        fsSettings.getFs().setFtp(ftp);
+        fsSettings.getFs().setProviders(Map.of("ftp", ftp));
     }
 }

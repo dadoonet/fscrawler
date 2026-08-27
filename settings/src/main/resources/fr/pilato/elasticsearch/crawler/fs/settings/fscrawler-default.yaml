@@ -46,18 +46,19 @@ fs:
 
   # SSH (requires fs.provider: ssh). The crawl root remains fs.url.
   #provider: ssh
-  #ssh:
-  #  hostname: localhost
-  #  port: 22
-  #  username: username
-  #  password: password@{secret}
-  #  pem_path: /path/to/privatekey.pem
+  #providers:
+  #  ssh:
+  #    hostname: localhost
+  #    port: 22
+  #    username: username
+  #    password: password@{secret}
+  #    pem_path: /path/to/privatekey.pem
   # FTP (requires fs.provider: ftp)
-  #ftp:
-  #  hostname: localhost
-  #  port: 21
-  #  username: anonymous
-  #  password: password@{secret}
+  #  ftp:
+  #    hostname: localhost
+  #    port: 21
+  #    username: anonymous
+  #    password: password@{secret}
 
   # you may want to store (partial) content of the file (see indexed_chars)
   #index_content: true

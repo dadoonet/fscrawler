@@ -47,7 +47,7 @@ class RemoteProviderCrawlerStartTest extends AbstractFSCrawlerTestCase {
         ssh.put("hostname", hostname);
         ssh.put("port", port);
         ssh.put("username", username);
-        settings.getFs().setSsh(ssh);
+        settings.getFs().setProviders(Map.of("ssh", ssh));
 
         RecordingRemoteProvider provider = new RecordingRemoteProvider("ssh");
         provider.start(settings, "{}");

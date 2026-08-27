@@ -156,6 +156,6 @@ class FsCrawlerTestSshIT extends AbstractFsCrawlerITCase {
         if (pemPath != null) {
             ssh.put("pem_path", pemPath);
         }
-        fsSettings.getFs().setSsh(ssh);
+        fsSettings.getFs().setProviders(Map.of("ssh", ssh));
     }
 }

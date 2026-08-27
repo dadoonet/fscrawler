@@ -107,7 +107,7 @@ Help me configure FSCrawler to index PDF and Word files from ~/Documents/resumes
 ### Crawl a remote server over SSH
 
 ````
-Help me configure FSCrawler to crawl documents on a remote Linux server over SSH/SFTP and index them into Elasticsearch 8.x. My Elasticsearch URL is https://my-es.example.com:9200 and I authenticate with an API key. Give me the complete _settings.yaml with fs.provider: ssh, fs.url, fs.ssh (hostname, port, username, password or pem_path), and elasticsearch settings. Use elasticsearch.urls (list), not nodes. Do not use the deprecated top-level server block.
+Help me configure FSCrawler to crawl documents on a remote Linux server over SSH/SFTP and index them into Elasticsearch 8.x. My Elasticsearch URL is https://my-es.example.com:9200 and I authenticate with an API key. Give me the complete _settings.yaml with fs.provider: ssh, fs.url, fs.providers.ssh (hostname, port, username, password or pem_path), and elasticsearch settings. Use elasticsearch.urls (list), not nodes. Do not use the deprecated top-level server block.
 ````
 
 ### Troubleshoot connection errors

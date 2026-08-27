@@ -385,11 +385,11 @@ The `ssh` plugin reads a file from an SSH/SFTP server.
 It accepts the following parameters:
 
 * `path` (required): path to the file on the remote server
-* `hostname` (optional): SSH server hostname. If not provided, uses `fs.ssh.hostname` from job settings (or deprecated `server.hostname`).
-* `port` (optional): SSH server port. If not provided, uses `fs.ssh.port` from job settings (or deprecated `server.port`).
-* `username` (optional): SSH username. If not provided, uses `fs.ssh.username` from job settings (or deprecated `server.username`).
-* `password` (optional): SSH password. If not provided, uses `fs.ssh.password` from job settings (or deprecated `server.password`).
-* `pem_path` (optional): path to the PEM key file for key-based authentication. If not provided, uses `fs.ssh.pem_path` from job settings (or deprecated `server.pem_path`).
+* `hostname` (optional): SSH server hostname. If not provided, uses `fs.providers.ssh.hostname` from job settings (or deprecated `server.hostname`).
+* `port` (optional): SSH server port. If not provided, uses `fs.providers.ssh.port` from job settings (or deprecated `server.port`).
+* `username` (optional): SSH username. If not provided, uses `fs.providers.ssh.username` from job settings (or deprecated `server.username`).
+* `password` (optional): SSH password. If not provided, uses `fs.providers.ssh.password` from job settings (or deprecated `server.password`).
+* `pem_path` (optional): path to the PEM key file for key-based authentication. If not provided, uses `fs.providers.ssh.pem_path` from job settings (or deprecated `server.pem_path`).
 
 For example, we can read the file `document.pdf` from an SSH server with:
 
@@ -412,11 +412,12 @@ If you have already configured the SSH server settings in your job `_settings.ya
  name: "my_job"
  fs:
    provider: "ssh"
-   ssh:
-     hostname: "my-ssh-server.example.com"
-     port: 22
-     username: "myuser"
-     password: "mypassword"
+   providers:
+     ssh:
+       hostname: "my-ssh-server.example.com"
+       port: 22
+       username: "myuser"
+       password: "mypassword"
 ```
 
 You can simplify the REST call by only providing the `path`:
@@ -436,10 +437,10 @@ The `ftp` plugin reads a file from an FTP server.
 It accepts the following parameters:
 
 * `path` (required): path to the file on the remote server
-* `hostname` (optional): FTP server hostname. If not provided, uses `fs.ftp.hostname` from job settings (or deprecated `server.hostname`).
-* `port` (optional): FTP server port. If not provided, uses `fs.ftp.port` from job settings (or deprecated `server.port`).
-* `username` (optional): FTP username. If not provided, uses `fs.ftp.username` from job settings (or deprecated `server.username`).
-* `password` (optional): FTP password. If not provided, uses `fs.ftp.password` from job settings (or deprecated `server.password`).
+* `hostname` (optional): FTP server hostname. If not provided, uses `fs.providers.ftp.hostname` from job settings (or deprecated `server.hostname`).
+* `port` (optional): FTP server port. If not provided, uses `fs.providers.ftp.port` from job settings (or deprecated `server.port`).
+* `username` (optional): FTP username. If not provided, uses `fs.providers.ftp.username` from job settings (or deprecated `server.username`).
+* `password` (optional): FTP password. If not provided, uses `fs.providers.ftp.password` from job settings (or deprecated `server.password`).
 
 For example, we can read the file `document.pdf` from an FTP server with:
 
@@ -462,11 +463,12 @@ If you have already configured the FTP server settings in your job `_settings.ya
  name: "my_job"
  fs:
    provider: "ftp"
-   ftp:
-     hostname: "ftp.example.com"
-     port: 21
-     username: "myuser"
-     password: "mypassword"
+   providers:
+     ftp:
+       hostname: "ftp.example.com"
+       port: 21
+       username: "myuser"
+       password: "mypassword"
 ```
 
 You can simplify the REST call by only providing the `path`:

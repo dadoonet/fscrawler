@@ -85,14 +85,15 @@ bin/fscrawler test
 name: "test"
 
 fs:
-  # when using ssh or ftp, set provider and the matching connection block
+  # when using ssh or ftp, set provider and the matching fs.providers block
   # provider: "ssh"
-  # ssh:
-  #   hostname: "localhost"
-  #   port: 22
-  #   username: "dadoonet"
-  #   password: "password"
-  #   pem_path: "/path/to/pemfile"
+  # providers:
+  #   ssh:
+  #     hostname: "localhost"
+  #     port: 22
+  #     username: "dadoonet"
+  #     password: "password"
+  #     pem_path: "/path/to/pemfile"
   # inside Docker this must be the path INSIDE the container (/tmp/es)
   url: "/path/to/docs"
   follow_symlinks: false
@@ -147,7 +148,7 @@ passwords:
     disk:
       url: "/path/to/password-sidecars"
 
-# optional: SSH/FTP connection settings belong under fs.ssh / fs.ftp (see ssh and ftp docs).
+# optional: SSH/FTP connection settings belong under fs.providers.<type> (see ssh and ftp docs).
 # The top-level server block is deprecated and will be removed in a future version.
 
 elasticsearch:

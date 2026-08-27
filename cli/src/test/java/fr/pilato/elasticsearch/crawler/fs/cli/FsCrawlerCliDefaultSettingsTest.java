@@ -97,8 +97,9 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
                 fs:
                   provider: "ftp"
                   url: "/pub"
-                  ftp:
-                    hostname: "%s"
+                  providers:
+                    ftp:
+                      hostname: "%s"
                 """.formatted(hostname));
         FsSettings settings = fsSettingsLoader.read("modify_settings_fs_ftp");
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ftp");
@@ -121,9 +122,10 @@ class FsCrawlerCliDefaultSettingsTest extends AbstractFSCrawlerTestCase {
                 fs:
                   provider: "ssh"
                   url: "/docs"
-                  ssh:
-                    hostname: "%s"
-                    username: "%s"
+                  providers:
+                    ssh:
+                      hostname: "%s"
+                      username: "%s"
                 """.formatted(hostname, username));
         FsSettings settings = fsSettingsLoader.read("modify_settings_fs_ssh");
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ssh");

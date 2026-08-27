@@ -177,13 +177,13 @@ public class FsCrawlerImpl implements AutoCloseable {
      * @throws FsCrawlerIllegalConfigurationException if server settings are required but missing
      */
     private static void validateServerSettings(String provider, FsSettings settings) {
-        // Remote providers require server settings
+        // Remote providers require a hostname on the job (or deprecated server.hostname)
         if ("ftp".equals(provider) || "ssh".equals(provider)) {
             if (hasRemoteHostname(provider, settings)) {
                 return;
             }
-            throw new FsCrawlerIllegalConfigurationException("Provider [" + provider + "] requires fs." + provider
-                    + ".hostname (or deprecated server.hostname)");
+            throw new FsCrawlerIllegalConfigurationException("Provider [" + provider + "] requires fs.providers."
+                    + provider + ".hostname (or deprecated server.hostname)");
         }
     }
 

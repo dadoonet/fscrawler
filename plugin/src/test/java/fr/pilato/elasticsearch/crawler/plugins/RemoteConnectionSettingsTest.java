@@ -46,7 +46,7 @@ class RemoteConnectionSettingsTest extends AbstractFSCrawlerTestCase {
         String pemPath = "/keys/" + randomToken() + ".pem";
 
         FsSettings settings = FsSettingsLoader.load();
-        settings.getFs().setSsh(sshConfig(newHost, newPort, username, password, pemPath));
+        settings.getFs().setProviders(Map.of("ssh", sshConfig(newHost, newPort, username, password, pemPath)));
         settings.getServer().setHostname(oldHost);
         settings.getServer().setPort(oldPort);
         settings.getServer().setUsername("legacy-user");
@@ -61,9 +61,11 @@ class RemoteConnectionSettingsTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(resolved.password()).isEqualTo(password);
         Assertions.assertThat(resolved.pemPath()).isEqualTo(pemPath);
         Assertions.assertThat(resolved.deprecationWarnings())
+                .anyMatch(msg -> msg.contains("server.hostname")
+                        && msg.contains("fs.providers.ssh.hostname")
+                        && msg.contains("ignored"))
                 .anyMatch(msg ->
-                        msg.contains("server.hostname") && msg.contains("fs.ssh.hostname") && msg.contains("ignored"))
-                .anyMatch(msg -> msg.contains("server.port") && msg.contains("fs.ssh.port") && msg.contains("ignored"))
+                        msg.contains("server.port") && msg.contains("fs.providers.ssh.port") && msg.contains("ignored"))
                 .anyMatch(msg -> msg.contains("server.username") && msg.contains("ignored"))
                 .anyMatch(msg ->
                         msg.contains("server.password") && msg.contains("ignored") && !msg.contains("legacy-pass"))
@@ -94,19 +96,19 @@ class RemoteConnectionSettingsTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(resolved.pemPath()).isEqualTo(pemPath);
         Assertions.assertThat(resolved.deprecationWarnings())
                 .anyMatch(msg -> msg.equals(
-                        "Setting server.hostname is deprecated and will be removed in a future version. Please use fs.ssh.hostname: \""
+                        "Setting server.hostname is deprecated and will be removed in a future version. Please use fs.providers.ssh.hostname: \""
                                 + hostname + "\" instead."))
                 .anyMatch(msg -> msg.equals(
-                        "Setting server.port is deprecated and will be removed in a future version. Please use fs.ssh.port: "
+                        "Setting server.port is deprecated and will be removed in a future version. Please use fs.providers.ssh.port: "
                                 + port + " instead."))
                 .anyMatch(msg -> msg.equals(
-                        "Setting server.username is deprecated and will be removed in a future version. Please use fs.ssh.username: \""
+                        "Setting server.username is deprecated and will be removed in a future version. Please use fs.providers.ssh.username: \""
                                 + username + "\" instead."))
                 .anyMatch(
                         msg -> msg.equals(
-                                "Setting server.password is deprecated and will be removed in a future version. Please use fs.ssh.password instead."))
+                                "Setting server.password is deprecated and will be removed in a future version. Please use fs.providers.ssh.password instead."))
                 .anyMatch(msg -> msg.equals(
-                        "Setting server.pem_path is deprecated and will be removed in a future version. Please use fs.ssh.pem_path: \""
+                        "Setting server.pem_path is deprecated and will be removed in a future version. Please use fs.providers.ssh.pem_path: \""
                                 + pemPath + "\" instead."));
     }
 
@@ -117,7 +119,7 @@ class RemoteConnectionSettingsTest extends AbstractFSCrawlerTestCase {
         String path = "/" + randomToken() + ".pdf";
 
         FsSettings settings = FsSettingsLoader.load();
-        settings.getFs().setSsh(sshConfig(jobHost, 22, "job-user", "job-pass", null));
+        settings.getFs().setProviders(Map.of("ssh", sshConfig(jobHost, 22, "job-user", "job-pass", null)));
 
         DocumentContext restJson = JsonUtil.parseJsonAsDocumentContext("""
                 {"type":"ssh","ssh":{"hostname":"%s","path":"%s"}}
@@ -135,7 +137,7 @@ class RemoteConnectionSettingsTest extends AbstractFSCrawlerTestCase {
     void appliesDefaultPortAndFtpAnonymousUsername() {
         String hostname = randomHostname();
         FsSettings settings = FsSettingsLoader.load();
-        settings.getFs().setFtp(Map.of("hostname", hostname));
+        settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", hostname)));
 
         RemoteConnectionSettings resolved = RemoteConnectionSettings.resolve("ftp", null, settings, 21, "anonymous");
 
@@ -149,7 +151,7 @@ class RemoteConnectionSettingsTest extends AbstractFSCrawlerTestCase {
     void doesNotWarnOnDefaultLocalServer() {
         String hostname = randomHostname();
         FsSettings settings = FsSettingsLoader.load();
-        settings.getFs().setSsh(Map.of("hostname", hostname, "username", "user"));
+        settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", hostname, "username", "user")));
 
         RemoteConnectionSettings resolved = RemoteConnectionSettings.resolve("ssh", null, settings, 22, null);
 

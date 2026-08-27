@@ -103,7 +103,7 @@ public abstract class FsCrawlerExtensionRemoteProviderAbstract extends FsCrawler
     }
 
     /**
-     * Default TCP port when neither REST, {@code fs.<type>.port} nor {@code server.port} is set.
+     * Default TCP port when neither REST, {@code fs.providers.<type>.port} nor {@code server.port} is set.
      *
      * @return SSH 22 or FTP 21
      */

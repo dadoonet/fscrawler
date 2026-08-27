@@ -112,10 +112,10 @@ class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
 
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setProvider("ssh");
-        fsSettings
-                .getFs()
-                .setSsh(providerConfig(sshHost, sshPort, username, password, "/keys/" + randomToken() + ".pem"));
-        fsSettings.getFs().setFtp(providerConfig(ftpHost, ftpPort, username, password, null));
+        Map<String, Object> providers = new LinkedHashMap<>();
+        providers.put("ssh", providerConfig(sshHost, sshPort, username, password, "/keys/" + randomToken() + ".pem"));
+        providers.put("ftp", providerConfig(ftpHost, ftpPort, username, password, null));
+        fsSettings.getFs().setProviders(providers);
         settingsTester(fsSettings, tempDir);
     }
 

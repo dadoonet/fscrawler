@@ -61,13 +61,13 @@ public class FsSettings {
         this.passwords = passwords;
     }
 
-    /** @deprecated since 3.1, use {@code fs.ssh} / {@code fs.ftp} instead */
+    /** @deprecated since 3.1, use {@code fs.providers.ssh} / {@code fs.providers.ftp} instead */
     @Deprecated(since = "3.1", forRemoval = true)
     public Server getServer() {
         return server;
     }
 
-    /** @deprecated since 3.1, use {@code fs.ssh} / {@code fs.ftp} instead */
+    /** @deprecated since 3.1, use {@code fs.providers.ssh} / {@code fs.providers.ftp} instead */
     @Deprecated(since = "3.1", forRemoval = true)
     public void setServer(Server server) {
         this.server = server;

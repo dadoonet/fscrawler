@@ -128,18 +128,12 @@ public class Fs {
     private String provider;
 
     /**
-     * Opaque SSH provider settings ({@code fs.ssh}). Loaded from YAML/JSON by {@link FsSettingsLoader}; Gestalt cannot
-     * decode mixed nested maps into {@code Map&lt;String, Object&gt;}. The SSH plugin parses this section.
+     * Opaque per-provider configuration ({@code fs.providers.<type>}). Loaded from YAML/JSON by
+     * {@link FsSettingsLoader}; Gestalt cannot decode mixed nested maps into {@code Map&lt;String, Object&gt;}. Each
+     * filesystem plugin parses its own section; this class does not model those shapes.
      */
     @Nullable
-    private Map<String, Object> ssh;
-
-    /**
-     * Opaque FTP provider settings ({@code fs.ftp}). Loaded from YAML/JSON by {@link FsSettingsLoader}. The FTP plugin
-     * parses this section.
-     */
-    @Nullable
-    private Map<String, Object> ftp;
+    private Map<String, Object> providers;
 
     public String getUrl() {
         return url;
@@ -389,41 +383,36 @@ public class Fs {
     }
 
     @Nullable
-    public Map<String, Object> getSsh() {
-        return ssh;
+    public Map<String, Object> getProviders() {
+        return providers;
     }
 
-    public void setSsh(@Nullable Map<String, Object> ssh) {
-        this.ssh = ssh;
-    }
-
-    @Nullable
-    public Map<String, Object> getFtp() {
-        return ftp;
-    }
-
-    public void setFtp(@Nullable Map<String, Object> ftp) {
-        this.ftp = ftp;
+    public void setProviders(@Nullable Map<String, Object> providers) {
+        this.providers = providers;
     }
 
     /**
      * Return the configuration map for one filesystem provider type, or {@code null} when absent.
      *
-     * @param type provider type key ({@code ssh}, {@code ftp}, …)
+     * @param type provider type key under {@code fs.providers}
      * @return mutable copy of that section, or {@code null}
      */
     @Nullable
     public Map<String, Object> getProviderConfig(String type) {
-        if (type == null) {
+        if (providers == null || type == null) {
             return null;
         }
-        Map<String, Object> section =
-                switch (type) {
-                    case "ssh" -> ssh;
-                    case "ftp" -> ftp;
-                    default -> null;
-                };
-        return copyMap(section);
+        Object section = providers.get(type);
+        if (section == null) {
+            return null;
+        }
+        if (!(section instanceof Map<?, ?> map)) {
+            throw new IllegalArgumentException("fs.providers." + type + " must be a map, got "
+                    + section.getClass().getName());
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> typed = (Map<String, Object>) map;
+        return copyMap(typed);
     }
 
     @Nullable
@@ -471,8 +460,7 @@ public class Fs {
                 && Objects.equals(tikaConfigPath, fs.tikaConfigPath)
                 && Objects.equals(tempDir, fs.tempDir)
                 && Objects.equals(provider, fs.provider)
-                && Objects.equals(ssh, fs.ssh)
-                && Objects.equals(ftp, fs.ftp);
+                && Objects.equals(providers, fs.providers);
     }
 
     @Override
@@ -506,8 +494,7 @@ public class Fs {
                 tikaConfigPath,
                 tempDir,
                 provider,
-                ssh,
-                ftp);
+                providers);
     }
 
     @Override
@@ -539,8 +526,7 @@ public class Fs {
                 + followSymlinks + ", tikaConfigPath='"
                 + tikaConfigPath + '\'' + ", tempDir='"
                 + tempDir + '\'' + ", provider='"
-                + provider + '\'' + ", ssh="
-                + ssh + ", ftp="
-                + ftp + '}';
+                + provider + '\'' + ", providers="
+                + providers + '}';
     }
 }

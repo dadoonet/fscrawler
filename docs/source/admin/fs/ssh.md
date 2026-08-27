@@ -9,26 +9,26 @@ You can index files remotely using SSH/SFTP.
 
 Here is a list of SSH settings:
 
-| Name               | Environment Variable         | Default value   | Documentation                      |
-|--------------------|------------------------------|-----------------|------------------------------------|
-| `fs.provider`      | `FSCRAWLER_FS_PROVIDER`      | `"local"`       | Set it to `"ssh"` for SSH crawling |
-| `fs.ssh.hostname`  | `FSCRAWLER_FS_SSH_HOSTNAME`  | `null`          | Hostname                           |
-| `fs.ssh.port`      | `FSCRAWLER_FS_SSH_PORT`      | `22`            | Port                               |
-| `fs.ssh.username`  | `FSCRAWLER_FS_SSH_USERNAME`  | `null`          | {ref}`ssh_login`                   |
-| `fs.ssh.password`  | `FSCRAWLER_FS_SSH_PASSWORD`  | `null`          | {ref}`ssh_login`                   |
-| `fs.ssh.pem_path`  | `FSCRAWLER_FS_SSH_PEM_PATH`  | `null`          | {ref}`ssh_pem`                     |
+| Name                            | Environment Variable                    | Default value   | Documentation                      |
+|---------------------------------|-----------------------------------------|-----------------|------------------------------------|
+| `fs.provider`                   | `FSCRAWLER_FS_PROVIDER`                 | `"local"`       | Set it to `"ssh"` for SSH crawling |
+| `fs.providers.ssh.hostname`     | `FSCRAWLER_FS_PROVIDERS_SSH_HOSTNAME`   | `null`          | Hostname                           |
+| `fs.providers.ssh.port`         | `FSCRAWLER_FS_PROVIDERS_SSH_PORT`       | `22`            | Port                               |
+| `fs.providers.ssh.username`     | `FSCRAWLER_FS_PROVIDERS_SSH_USERNAME`   | `null`          | {ref}`ssh_login`                   |
+| `fs.providers.ssh.password`     | `FSCRAWLER_FS_PROVIDERS_SSH_PASSWORD`   | `null`          | {ref}`ssh_login`                   |
+| `fs.providers.ssh.pem_path`     | `FSCRAWLER_FS_PROVIDERS_SSH_PEM_PATH`   | `null`          | {ref}`ssh_pem`                     |
 
 
 ```{deprecated} 3.1
 
 The top-level `server.*` settings (`server.hostname`, `server.port`, `server.username`,
 `server.password`, `server.pem_path`, `server.protocol`) are deprecated and will be removed
-in a future version. Use `fs.provider: "ssh"` and `fs.ssh.*` instead.
+in a future version. Use `fs.provider: "ssh"` and `fs.providers.ssh.*` instead.
 
 When a deprecated `server.*` field is used, FSCrawler logs a WARN that shows the replacement
 key, for example:
 
-`Setting server.hostname is deprecated and will be removed in a future version. Please use fs.ssh.hostname: "mynode.mydomain.com" instead.`
+`Setting server.hostname is deprecated and will be removed in a future version. Please use fs.providers.ssh.hostname: "mynode.mydomain.com" instead.`
 ```
 
 (ssh_login)=
@@ -48,11 +48,12 @@ name: "test"
 fs:
   provider: "ssh"
   url: "/path/to/data/dir/on/server"
-  ssh:
-    hostname: "mynode.mydomain.com"
-    port: 22
-    username: "username"
-    password: "password"
+  providers:
+    ssh:
+      hostname: "mynode.mydomain.com"
+      port: 22
+      username: "username"
+      password: "password"
 ```
 
 (ssh_pem)=
@@ -72,11 +73,12 @@ name: "test"
 fs:
   provider: "ssh"
   url: "/path/to/data/dir/on/server"
-  ssh:
-    hostname: "mynode.mydomain.com"
-    port: 22
-    username: "username"
-    pem_path: "/path/to/private_key.pem"
+  providers:
+    ssh:
+      hostname: "mynode.mydomain.com"
+      port: 22
+      username: "username"
+      pem_path: "/path/to/private_key.pem"
 ```
 
 ## Windows drives
@@ -89,9 +91,10 @@ name: "test"
 fs:
   provider: "ssh"
   url: "/D:/path/to/data/dir/on/server"
-  ssh:
-    hostname: "mynode.mydomain.com"
-    port: 22
-    username: "username"
-    password: "password"
+  providers:
+    ssh:
+      hostname: "mynode.mydomain.com"
+      port: 22
+      username: "username"
+      password: "password"
 ```

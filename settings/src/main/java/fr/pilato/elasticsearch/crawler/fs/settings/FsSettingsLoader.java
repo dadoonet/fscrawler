@@ -189,11 +189,11 @@ public class FsSettingsLoader extends MetaFileHandler {
     }
 
     /**
-     * Load {@code fs} from Gestalt, then attach opaque {@code fs.ssh} / {@code fs.ftp} maps.
+     * Load {@code fs} from Gestalt, then attach the opaque {@code fs.providers} map.
      *
      * <p>Provider-specific options are loaded from YAML/JSON job files via SnakeYAML (Gestalt cannot decode mixed
-     * nested maps/lists into {@code Map&lt;String, Object&gt;}). Scalar keys such as {@code fs.ssh.hostname} are then
-     * overlaid from Gestalt so environment variables and system properties still work. File values win over
+     * nested maps/lists into {@code Map&lt;String, Object&gt;}). Scalar keys such as {@code fs.providers.ssh.hostname}
+     * are then overlaid from Gestalt so environment variables and system properties still work. File values win over
      * env/sysprops.
      */
     private static Fs loadFs(Gestalt gestalt, Path... configFiles) {
@@ -202,15 +202,36 @@ public class FsSettingsLoader extends MetaFileHandler {
             return null;
         }
 
-        Map<String, Object> ssh = loadNestedMap(configFiles, "fs", "ssh");
-        overlayGestaltScalars(ssh, gestalt, "fs.ssh", List.of("hostname", "username", "password", "pem_path"), "port");
-        fs.setSsh(ssh.isEmpty() ? null : ssh);
-
-        Map<String, Object> ftp = loadNestedMap(configFiles, "fs", "ftp");
-        overlayGestaltScalars(ftp, gestalt, "fs.ftp", List.of("hostname", "username", "password"), "port");
-        fs.setFtp(ftp.isEmpty() ? null : ftp);
+        Map<String, Object> providers = loadNestedMap(configFiles, "fs", "providers");
+        overlayProviderScalars(providers, gestalt, fs.getProvider());
+        fs.setProviders(providers.isEmpty() ? null : providers);
 
         return fs;
+    }
+
+    /**
+     * Overlay Gestalt scalars onto each {@code fs.providers.<type>} map. YAML keys win. If {@code fs.provider} is a
+     * remote type absent from YAML, a map is created so env/sysprops still apply.
+     */
+    @SuppressWarnings("unchecked")
+    private static void overlayProviderScalars(Map<String, Object> providers, Gestalt gestalt, String activeProvider) {
+        List<String> stringKeys = List.of("hostname", "username", "password", "pem_path");
+        if (activeProvider != null && !activeProvider.isBlank() && !"local".equals(activeProvider)) {
+            providers.computeIfAbsent(activeProvider, key -> new LinkedHashMap<String, Object>());
+        }
+        for (String type : List.copyOf(providers.keySet())) {
+            Object section = providers.get(type);
+            if (!(section instanceof Map<?, ?>)) {
+                continue;
+            }
+            Map<String, Object> typed = new LinkedHashMap<>((Map<String, Object>) section);
+            overlayGestaltScalars(typed, gestalt, "fs.providers." + type, stringKeys, "port");
+            if (typed.isEmpty()) {
+                providers.remove(type);
+            } else {
+                providers.put(type, typed);
+            }
+        }
     }
 
     /**

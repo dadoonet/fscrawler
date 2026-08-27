@@ -194,7 +194,7 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
 
         settings = FsSettingsLoader.load();
         settings.getFs().setProvider("ssh");
-        settings.getFs().setSsh(Map.of("hostname", randomHostname(), "username", randomToken()));
+        settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", randomHostname(), "username", randomToken())));
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isFalse();
 
@@ -209,13 +209,13 @@ class FsCrawlerValidatorTest extends AbstractFSCrawlerTestCase {
     void ftpProviderAllowsMissingUsername() {
         FsSettings settings = FsSettingsLoader.load();
         settings.getFs().setProvider("ftp");
-        settings.getFs().setFtp(Map.of("hostname", randomHostname()));
+        settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", randomHostname())));
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isFalse();
 
         settings = FsSettingsLoader.load();
         settings.getFs().setProvider("ftp");
-        settings.getFs().setFtp(Map.of("hostname", randomHostname(), "username", ""));
+        settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", randomHostname(), "username", "")));
         Assertions.assertThat(FsCrawlerValidator.validateSettings(logger, settings))
                 .isTrue();
     }

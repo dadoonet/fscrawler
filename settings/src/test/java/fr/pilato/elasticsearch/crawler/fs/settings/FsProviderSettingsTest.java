@@ -34,13 +34,13 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
 
     @AfterEach
     void cleanupSystemProperties() {
-        System.clearProperty("fs.ssh.hostname");
-        System.clearProperty("fs.ssh.port");
-        System.clearProperty("fs.ftp.username");
+        System.clearProperty("fs.providers.ssh.hostname");
+        System.clearProperty("fs.providers.ssh.port");
+        System.clearProperty("fs.providers.ftp.username");
     }
 
     @Test
-    void loadsSshProviderConfigFromFsBlock() throws Exception {
+    void loadsSshProviderConfigFromFsProviders() throws Exception {
         String hostname = randomHostname();
         int port = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1024, 65535);
         String username = randomToken();
@@ -52,12 +52,13 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
                 fs:
                   provider: "ssh"
                   url: "/docs"
-                  ssh:
-                    hostname: "%s"
-                    port: %d
-                    username: "%s"
-                    password: "%s"
-                    pem_path: "/keys/%s"
+                  providers:
+                    ssh:
+                      hostname: "%s"
+                      port: %d
+                      username: "%s"
+                      password: "%s"
+                      pem_path: "/keys/%s"
                 """.formatted(jobName, hostname, port, username, password, pemName));
 
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ssh");
@@ -73,7 +74,7 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void loadsFtpProviderConfigFromFsBlock() throws Exception {
+    void loadsFtpProviderConfigFromFsProviders() throws Exception {
         String hostname = randomHostname();
         int port = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1024, 65535);
         String username = randomToken();
@@ -84,11 +85,12 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
                 fs:
                   provider: "ftp"
                   url: "/pub"
-                  ftp:
-                    hostname: "%s"
-                    port: %d
-                    username: "%s"
-                    password: "%s"
+                  providers:
+                    ftp:
+                      hostname: "%s"
+                      port: %d
+                      username: "%s"
+                      password: "%s"
                 """.formatted(jobName, hostname, port, username, password));
 
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ftp");
@@ -103,17 +105,38 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void loadsUnknownProviderTypeWithoutSpecialCasingInFs() throws Exception {
+        String type = randomToken();
+        String bucket = randomToken();
+
+        FsSettings settings = loadJobYaml("""
+                name: "%s"
+                fs:
+                  providers:
+                    %s:
+                      bucket: "%s"
+                """.formatted(jobName, type, bucket));
+
+        Assertions.assertThat(settings.getFs().getProviderConfig(type))
+                .isNotNull()
+                .containsEntry("bucket", bucket);
+        Assertions.assertThat(settings.getFs().getProviderConfig("ssh")).isNull();
+        Assertions.assertThat(settings.getFs().getProviderConfig("ftp")).isNull();
+    }
+
+    @Test
     void overlaysSshHostnameFromSystemPropertyWhenYamlOmitsIt() throws Exception {
         String hostname = randomHostname();
-        System.setProperty("fs.ssh.hostname", hostname);
+        System.setProperty("fs.providers.ssh.hostname", hostname);
 
         FsSettings settings = loadJobYaml("""
                 name: "%s"
                 fs:
                   provider: "ssh"
                   url: "/docs"
-                  ssh:
-                    username: "jobuser"
+                  providers:
+                    ssh:
+                      username: "jobuser"
                 """.formatted(jobName));
 
         Map<String, Object> ssh = settings.getFs().getProviderConfig("ssh");
@@ -126,14 +149,15 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
     @Test
     void yamlSshHostnameWinsOverSystemProperty() throws Exception {
         String yamlHostname = randomHostname();
-        System.setProperty("fs.ssh.hostname", "ignored-" + randomHostname());
+        System.setProperty("fs.providers.ssh.hostname", "ignored-" + randomHostname());
 
         FsSettings settings = loadJobYaml("""
                 name: "%s"
                 fs:
                   provider: "ssh"
-                  ssh:
-                    hostname: "%s"
+                  providers:
+                    ssh:
+                      hostname: "%s"
                 """.formatted(jobName, yamlHostname));
 
         Assertions.assertThat(settings.getFs().getProviderConfig("ssh")).containsEntry("hostname", yamlHostname);

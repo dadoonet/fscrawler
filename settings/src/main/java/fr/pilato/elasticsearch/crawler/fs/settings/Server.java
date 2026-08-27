@@ -29,8 +29,8 @@ import org.github.gestalt.config.annotations.Config;
 /**
  * Deprecated remote server settings for SSH/FTP crawls.
  *
- * @deprecated since 3.1, use {@code fs.provider} plus {@code fs.ssh} / {@code fs.ftp} instead. This class will be
- *     removed in a future version.
+ * @deprecated since 3.1, use {@code fs.provider} plus {@code fs.providers.ssh} / {@code fs.providers.ftp} instead. This
+ *     class will be removed in a future version.
  */
 @Deprecated(since = "3.1", forRemoval = true)
 public class Server {
