@@ -181,7 +181,12 @@ Every push to `main` runs `.github/workflows/maven.yml`, which:
 * Pushes Docker images to Docker Hub
 * Publishes (or overwrites) a public GitHub **pre-release** tagged
   `fscrawler-{version}` (for example `fscrawler-3.1-SNAPSHOT`) with the asset
-  `fscrawler-3.1-SNAPSHOT.zip`
+  `fscrawler-3.1-SNAPSHOT.zip`. Maven still builds
+  `distribution/target/fscrawler-distribution-{version}.zip`; the publisher
+  copies it to that friendly name before `gh release upload`, because GitHub
+  download URLs use the file basename (`gh`'s `file#label` syntax only sets a
+  display label). A leftover `fscrawler-distribution-{version}.zip` asset is
+  deleted on refresh.
 
 SNAPSHOT pre-releases are **not** GPG-signed. Only stable GitHub releases include
 `.asc` and `.sha256`.
