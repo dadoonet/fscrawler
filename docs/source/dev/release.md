@@ -182,6 +182,26 @@ The pre-release is created with `--prerelease --latest=false` so it never become
 "Latest" release. The ZIP is overwritten (`gh release upload --clobber`) on every subsequent
 push.
 
+### Testing the workflow from a branch
+
+`.github/workflows/maven.yml` also has `workflow_dispatch` (dry-run **on** by default) so a
+branch can run the same job without pushing Docker images or overwriting the SNAPSHOT
+pre-release.
+
+From this repository (same-repo PR):
+
+* Add the label `test-main-workflow` to the PR. That runs a dry-run: `mvn package -Ddocker.skip`
+  then `python3 scripts/publish_snapshot_prerelease.py --dry-run`. Remove and re-add the label
+  to run it again.
+* After this workflow file is on `main`, you can also pick the branch in the Actions UI, or:
+
+```
+gh workflow run maven.yml --ref <branch> -f dry_run=true
+```
+
+Set `dry_run=false` only when you intend to publish for real (Docker Hub + `fscrawler-{version}`
+pre-release). A labeled PR is always dry-run.
+
 When `release.sh` publishes the matching stable GitHub release (`fscrawler-3.1`) and you
 confirm it looks OK, it deletes that SNAPSHOT pre-release
 (`gh release delete fscrawler-3.1-SNAPSHOT --yes --cleanup-tag`). The next push to `main`

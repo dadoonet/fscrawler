@@ -178,6 +178,20 @@ class ReleaseProcessScriptTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    void mainWorkflowCanBeDispatchedManually() throws Exception {
+        String workflow = Files.readString(
+                repoRoot().resolve(".github").resolve("workflows").resolve("maven.yml"));
+        assertThat(workflow)
+                .as("the main deploy workflow must be runnable from a PR branch without publishing")
+                .contains("workflow_dispatch")
+                .contains("dry_run")
+                .contains("--dry-run")
+                .contains("pull_request")
+                .contains("test-main-workflow")
+                .contains("DRY_RUN");
+    }
+
+    @Test
     void installationDocsDownloadFromGitHubReleases() throws Exception {
         String installation =
                 Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
