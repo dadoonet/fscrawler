@@ -20,7 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.local;
 
-import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.FileAbstractModel;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
@@ -117,17 +116,17 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void parseSettings() throws PathNotFoundException {
-            if (document == null) {
-                return;
-            }
-            url = document.read("$.local.url");
+        protected void parseSettings() {
+            url = overlayString("url");
         }
 
         @Override
         protected void validateSettings() throws FsCrawlerIllegalConfigurationException {
-            if (document == null) {
+            if (!hasOverlay()) {
                 return;
+            }
+            if (FsCrawlerUtil.isNullOrEmpty(url)) {
+                throw new FsCrawlerIllegalConfigurationException("local url is missing");
             }
             Path rootPath =
                     Path.of(fsSettings.getFs().getUrl()).toAbsolutePath().normalize();

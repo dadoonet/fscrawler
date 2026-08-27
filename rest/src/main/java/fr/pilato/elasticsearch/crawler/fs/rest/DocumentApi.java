@@ -24,6 +24,7 @@ import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.beans.DocUtils;
 import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -54,6 +55,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -160,7 +163,7 @@ public class DocumentApi implements RestApi {
 
         try (FsCrawlerExtensionFsProvider provider = pluginsManager.findFsProvider(type)) {
             logger.trace("Plugin [{}] found", provider.getType());
-            provider.start(settings, document.jsonString());
+            provider.start(settings, readProviderOverlay(document, provider.getType()));
             Doc doc = provider.createDocument();
             doc = enrichDoc(doc, null, provider::readFile, password, resolvePasswordProvider(password));
             return uploadToDocumentService(debug, simulate, id, index, doc);
@@ -176,6 +179,32 @@ public class DocumentApi implements RestApi {
                     "Failed to add document from [" + type + "] 3rd-party: ["
                             + e.getClass().getSimpleName() + "] - [" + e.getMessage() + "]");
         }
+    }
+
+    /**
+     * Extract the provider type block ({@code $.<type>}) as an overlay map. REST one-shot uploads must include a
+     * non-empty object; an empty overlay means crawler preparation, which is not a REST document.
+     */
+    private static Map<String, Object> readProviderOverlay(DocumentContext document, String type) {
+        Object root = document.read("$");
+        if (!(root instanceof Map<?, ?> payload)) {
+            throw new FsCrawlerIllegalConfigurationException("Third-party payload must be a JSON object");
+        }
+        Object section = payload.get(type);
+        if (section == null) {
+            throw new FsCrawlerIllegalConfigurationException("Third-party payload is missing [" + type + "] settings");
+        }
+        if (!(section instanceof Map<?, ?> map)) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Third-party payload [" + type + "] settings must be an object");
+        }
+        Map<String, Object> overlay = new LinkedHashMap<>();
+        map.forEach((key, value) -> overlay.put(String.valueOf(key), value));
+        if (overlay.isEmpty()) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Third-party payload [" + type + "] settings must not be empty");
+        }
+        return overlay;
     }
 
     @DELETE

@@ -20,7 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.s3;
 
-import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -34,6 +33,7 @@ import io.minio.MinioClient;
 import io.minio.errors.MinioException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pf4j.Extension;
@@ -62,20 +62,17 @@ public class FsS3Plugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void parseSettings() throws PathNotFoundException {
-            if (document == null) {
-                return;
-            }
-            bucket = document.read("$.s3.bucket");
-            object = document.read("$.s3.object");
-            url = document.read("$.s3.url");
-            accesKey = document.read("$.s3.access_key");
-            secretKey = document.read("$.s3.secret_key");
+        protected void parseSettings() {
+            bucket = overlayString("bucket");
+            object = overlayString("object");
+            url = overlayString("url");
+            accesKey = overlayString("access_key");
+            secretKey = overlayString("secret_key");
         }
 
         @Override
-        protected void validateSettings() throws PathNotFoundException {
-            if (document == null) {
+        protected void validateSettings() {
+            if (!hasOverlay()) {
                 return;
             }
             if (FsCrawlerUtil.isNullOrEmpty(url)) {
@@ -90,8 +87,8 @@ public class FsS3Plugin extends FsCrawlerPlugin {
         }
 
         @Override
-        public void start(FsSettings fsSettings, String restSettings) {
-            super.start(fsSettings, restSettings);
+        public void start(FsSettings fsSettings, Map<String, Object> overlay) {
+            super.start(fsSettings, overlay);
             if (url == null) {
                 return;
             }

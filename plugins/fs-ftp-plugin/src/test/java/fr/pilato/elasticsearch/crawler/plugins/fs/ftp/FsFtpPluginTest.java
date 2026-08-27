@@ -118,7 +118,7 @@ class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
         fsSettings.getServer().setPort(port);
 
         FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
-        ftpPlugin.start(fsSettings, "{}");
+        ftpPlugin.start(fsSettings);
 
         try {
             ftpPlugin.openConnection();
@@ -209,7 +209,7 @@ class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
         settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", hostname)));
 
         FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
-        ftpPlugin.start(settings, "{}");
+        ftpPlugin.start(settings);
 
         Assertions.assertThat(ftpPlugin.toFileUrl("/doc.pdf"))
                 .isEqualTo("ftp://" + hostname + ":" + FsFtpPlugin.FsCrawlerExtensionFsProviderFtp.DEFAULT_PORT
@@ -221,9 +221,22 @@ class FsFtpPluginTest extends AbstractFSCrawlerTestCase {
         FsSettings settings = FsSettingsLoader.load();
         FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
 
-        Assertions.assertThatThrownBy(() -> ftpPlugin.start(settings, "{}"))
+        Assertions.assertThatThrownBy(() -> ftpPlugin.start(settings))
                 .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                 .hasMessageContaining("fs.providers.ftp.hostname");
+    }
+
+    @Test
+    void overlayWithoutPathFails() {
+        String hostname = randomToken() + ".example.com";
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ftp", Map.of("hostname", hostname)));
+
+        FsFtpPlugin.FsCrawlerExtensionFsProviderFtp ftpPlugin = new FsFtpPlugin.FsCrawlerExtensionFsProviderFtp();
+
+        Assertions.assertThatThrownBy(() -> ftpPlugin.start(settings, Map.of("hostname", hostname)))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("ftp path is missing");
     }
 
     private String randomToken() {

@@ -20,14 +20,12 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins;
 
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
@@ -36,34 +34,30 @@ import org.apache.logging.log4j.Logger;
 
 public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerExtensionFsProvider {
     private static final Logger logger = LogManager.getLogger();
-    protected DocumentContext document;
     protected FsSettings fsSettings;
+    protected Map<String, Object> overlay = Map.of();
 
-    protected abstract void parseSettings() throws PathNotFoundException, IOException;
+    protected abstract void parseSettings() throws IOException;
 
-    protected abstract void validateSettings() throws PathNotFoundException, IOException;
+    protected abstract void validateSettings() throws IOException;
 
     @Override
-    public void start(FsSettings fsSettings, String restSettings) {
+    public void start(FsSettings fsSettings, Map<String, Object> overlay) {
         this.fsSettings = fsSettings;
+        this.overlay = copyOverlay(overlay);
 
-        if (hasRestSettings(restSettings)) {
-            logger.trace("with rest settings {}", restSettings);
-            document = JsonUtil.parseJsonAsDocumentContext(restSettings);
+        if (hasOverlay()) {
+            logger.trace("with overlay keys {}", this.overlay.keySet());
         } else {
-            logger.trace("No REST settings provided");
+            logger.trace("No overlay provided");
         }
 
         try {
             parseSettings();
             validateSettings();
-        } catch (PathNotFoundException | IOException e) {
+        } catch (IOException e) {
             throw new FsCrawlerIllegalConfigurationException(e.getMessage(), e);
         }
-    }
-
-    private static boolean hasRestSettings(String restSettings) {
-        return restSettings != null && !restSettings.isEmpty() && !"{}".equals(restSettings);
     }
 
     @Override
@@ -75,22 +69,13 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         stop();
     }
 
-    /** REST JSON block for this provider type ({@code $.<type>}), or an empty map when none is present. */
-    protected Map<String, Object> restTypeSettings() {
-        if (document == null) {
-            return Map.of();
-        }
-        try {
-            Object section = document.read("$." + getType());
-            if (section instanceof Map<?, ?> map) {
-                Map<String, Object> copy = new LinkedHashMap<>();
-                map.forEach((key, value) -> copy.put(String.valueOf(key), value));
-                return copy;
-            }
-            return Map.of();
-        } catch (PathNotFoundException e) {
-            return Map.of();
-        }
+    protected boolean hasOverlay() {
+        return !overlay.isEmpty();
+    }
+
+    protected String overlayString(String field) {
+        Object value = overlay.get(field);
+        return value == null ? null : String.valueOf(value);
     }
 
     protected void requireProviderSetting(String field, String value) throws IOException {
@@ -100,15 +85,16 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
     }
 
     /**
-     * Hostname and username are required. In crawler mode (no REST path) returns {@code null}. In REST mode, returns
-     * the normalized path; the caller must then {@link #connectAndValidateRestFile()}.
+     * Hostname and username are required. With an empty overlay (crawler mode) returns {@code null} when no file path
+     * is set. With a non-empty overlay (one-shot file), returns the normalized path; the caller must then
+     * {@link #connectAndValidateFile()}.
      */
-    protected String requireHostUserAndNormalizeRestPath(String hostname, String username, String remotePath)
+    protected String requireHostUserAndNormalizeFilePath(String hostname, String username, String remotePath)
             throws IOException {
         requireProviderSetting("hostname", hostname);
         requireProviderSetting("username", username);
         if (remotePath == null || remotePath.isEmpty()) {
-            if (document != null) {
+            if (hasOverlay()) {
                 throw new IOException(getType() + " path is missing");
             }
             return null;
@@ -147,11 +133,11 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         return doc;
     }
 
-    protected void connectAndValidateRestFile() throws IOException {
+    protected void connectAndValidateFile() throws IOException {
         boolean success = false;
         try {
             openConnection();
-            validateRestFile();
+            validateFile();
             success = true;
         } catch (FsCrawlerPluginException e) {
             throw e;
@@ -172,6 +158,15 @@ public abstract class FsCrawlerExtensionFsProviderAbstract implements FsCrawlerE
         }
     }
 
-    /** REST-only: verify the remote file after {@link #openConnection()}. */
-    protected void validateRestFile() throws FsCrawlerPluginException {}
+    /** One-shot file: verify the remote file after {@link #openConnection()}. */
+    protected void validateFile() throws FsCrawlerPluginException {}
+
+    private static Map<String, Object> copyOverlay(Map<String, Object> overlay) {
+        if (overlay == null || overlay.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Object> copy = new LinkedHashMap<>();
+        overlay.forEach((key, value) -> copy.put(String.valueOf(key), value));
+        return Collections.unmodifiableMap(copy);
+    }
 }

@@ -20,7 +20,6 @@
  */
 package fr.pilato.elasticsearch.crawler.plugins.fs.http;
 
-import com.jayway.jsonpath.PathNotFoundException;
 import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
@@ -77,16 +76,13 @@ public class FsHttpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void parseSettings() throws PathNotFoundException {
-            if (document == null) {
-                return;
-            }
-            urlFromJson = document.read("$.http.url");
+        protected void parseSettings() {
+            urlFromJson = overlayString("url");
         }
 
         @Override
-        protected void validateSettings() throws PathNotFoundException {
-            if (document == null) {
+        protected void validateSettings() {
+            if (!hasOverlay()) {
                 return;
             }
             if (FsCrawlerUtil.isNullOrEmpty(urlFromJson)) {

@@ -106,7 +106,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         @Override
         @SuppressWarnings("removal")
         protected void parseSettings() {
-            ProviderSettings settings = ProviderSettings.of(getType(), fsSettings, restTypeSettings());
+            ProviderSettings settings = ProviderSettings.of(getType(), fsSettings, overlay);
             Server server = fsSettings != null ? fsSettings.getServer() : null;
             hostname = settings.string("hostname", server != null ? server.getHostname() : null);
             port = settings.integer(
@@ -119,11 +119,11 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
 
         @Override
         protected void validateSettings() throws IOException {
-            remotePath = requireHostUserAndNormalizeRestPath(hostname, username, remotePath);
+            remotePath = requireHostUserAndNormalizeFilePath(hostname, username, remotePath);
             if (remotePath == null) {
                 return;
             }
-            connectAndValidateRestFile();
+            connectAndValidateFile();
         }
 
         @Override
@@ -142,7 +142,7 @@ public class FsFtpPlugin extends FsCrawlerPlugin {
         }
 
         @Override
-        protected void validateRestFile() throws FsCrawlerPluginException {
+        protected void validateFile() throws FsCrawlerPluginException {
             try {
                 // Get file info to validate it exists
                 // Use mlistFile() which returns info about the path itself (like SSH stat())

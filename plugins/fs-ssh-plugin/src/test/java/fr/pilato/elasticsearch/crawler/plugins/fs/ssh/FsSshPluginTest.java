@@ -159,7 +159,7 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         fsSettings.getServer().setPassword(SSH_PASSWORD);
 
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
-        sshPlugin.start(fsSettings, "{}");
+        sshPlugin.start(fsSettings);
 
         try {
             sshPlugin.openConnection();
@@ -241,7 +241,7 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", hostname, "username", username)));
 
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
-        sshPlugin.start(settings, "{}");
+        sshPlugin.start(settings);
 
         Assertions.assertThat(sshPlugin.toFileUrl("/doc.pdf"))
                 .isEqualTo("sftp://" + hostname + ":" + FsSshPlugin.FsCrawlerExtensionFsProviderSsh.DEFAULT_PORT
@@ -253,7 +253,7 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
         FsSettings settings = FsSettingsLoader.load();
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
 
-        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings, "{}"))
+        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings))
                 .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                 .hasMessageContaining("fs.providers.ssh.hostname");
     }
@@ -266,7 +266,7 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
 
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
 
-        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings, "{}"))
+        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings))
                 .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                 .hasMessageContaining("fs.providers.ssh.username");
     }
@@ -279,9 +279,24 @@ class FsSshPluginTest extends AbstractFSCrawlerTestCase {
 
         FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
 
-        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings, "{}"))
+        Assertions.assertThatThrownBy(() -> sshPlugin.start(settings))
                 .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                 .hasMessageContaining("fs.providers.ssh.username");
+    }
+
+    @Test
+    void overlayWithoutPathFails() {
+        String hostname = randomToken() + ".example.com";
+        String username = randomToken();
+        FsSettings settings = FsSettingsLoader.load();
+        settings.getFs().setProviders(Map.of("ssh", Map.of("hostname", hostname, "username", username)));
+
+        FsSshPlugin.FsCrawlerExtensionFsProviderSsh sshPlugin = new FsSshPlugin.FsCrawlerExtensionFsProviderSsh();
+
+        Assertions.assertThatThrownBy(
+                        () -> sshPlugin.start(settings, Map.of("hostname", hostname, "username", username)))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .hasMessageContaining("ssh path is missing");
     }
 
     private String randomToken() {

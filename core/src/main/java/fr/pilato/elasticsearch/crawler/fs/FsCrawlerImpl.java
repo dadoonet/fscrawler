@@ -113,7 +113,7 @@ public class FsCrawlerImpl implements AutoCloseable {
             String protocolType = determineProtocolType(settings);
             logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
             crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
-            crawlerPlugin.start(settings, "{}");
+            crawlerPlugin.start(settings);
         }
 
         fsParser = new FsParser(
