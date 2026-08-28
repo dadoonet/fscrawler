@@ -36,14 +36,12 @@ details and how to add libraries such as `jai-imageio-jpeg2000`.
 
 As this directory is empty by default, you can also mount it when using Docker images:
 
-```{code-block} sh
-:substitutions:
-
+```sh
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
      -v "$PWD/external:/usr/share/fscrawler/external" \
-     |docker_image|
+     dadoonet/fscrawler
 ```
 
 See also {ref}`docker`, {ref}`docker-compose` and {ref}`local-installation`.

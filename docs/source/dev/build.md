@@ -313,9 +313,6 @@ Each image is published under a version tag ({{ release_image_tags }}) plus a **
 `docker pull dadoonet/fscrawler` therefore always means the last **stable** release.
 Do not retag `latest` from a SNAPSHOT push.
 
-Docker Compose examples use `FSCRAWLER_VERSION` from `.env`. SNAPSHOT builds set that to
-`snapshot` (`docker.compose.tag`); `-Prelease` pins it to `${project.version}`.
-
 To point `latest` at an already published release without rebuilding (multi-arch
 manifest, amd64 + arm64), copy the existing tag:
 

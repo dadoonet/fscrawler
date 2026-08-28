@@ -65,15 +65,13 @@ To dump failed bulk payloads:
 
 In the Docker context, you can modify the logs level by setting the `FS_JAVA_OPTS` environment variable:
 
-```{code-block} sh
-:substitutions:
-
+```sh
 docker run -it --rm \
      -v ~/.fscrawler:/root/.fscrawler \
      -v ~/tmp:/tmp/es:ro \
      -v ~/logs:/root/logs \
      -e FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug" \
-     |docker_image| job_name
+     dadoonet/fscrawler job_name
 ```
 
 Then the logs will be readable from the `~/logs` directory.
@@ -82,12 +80,11 @@ Read {ref}`docker` for more information.
 
 Same for Docker Compose, you can modify your `docker-compose.yml` file:
 
-```{code-block} yaml
-:substitutions:
-
+```yaml
+version: '3'
 services:
   fscrawler:
-    image: |docker_image|
+    image: dadoonet/fscrawler
     volumes:
       - ~/.fscrawler:/root/.fscrawler
       - ~/tmp:/tmp/es:ro

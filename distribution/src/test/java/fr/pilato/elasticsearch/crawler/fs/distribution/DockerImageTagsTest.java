@@ -101,30 +101,13 @@ class DockerImageTagsTest extends AbstractFSCrawlerTestCase {
                 .as("README must tell SNAPSHOT testers to pull dadoonet/fscrawler:snapshot")
                 .contains("dadoonet/fscrawler:snapshot")
                 .contains("FSCRAWLER_VERSION=snapshot");
-    }
 
-    @Test
-    void composeExamplesUseFloatingSnapshotAliasNotProjectVersion() throws Exception {
-        String parentPom = Files.readString(repoRoot().resolve("pom.xml"));
-        String defaultProperties = parentPom.substring(0, parentPom.indexOf("<profiles>"));
-        assertThat(xmlProperty(defaultProperties, "docker.compose.tag"))
-                .as("SNAPSHOT compose examples must pull :snapshot, not :3.1-SNAPSHOT")
-                .isEqualTo("snapshot");
-        assertThat(xmlProperty(releaseProfileXml(parentPom), "docker.compose.tag"))
-                .as("released compose examples pin the version tag")
-                .isEqualTo("${project.version}");
-
-        Path templates =
-                repoRoot().resolve("contrib").resolve("src").resolve("main").resolve("resources");
-        for (String example : new String[] {
-            "docker-compose-example-elasticsearch", "docker-compose-example-fscrawler", "docker-compose-example-edot"
-        }) {
-            String env = Files.readString(templates.resolve(example).resolve(".env"));
-            assertThat(env)
-                    .as("%s/.env must use the compose floating tag", example)
-                    .contains("FSCRAWLER_VERSION=${docker.compose.tag}")
-                    .doesNotContain("FSCRAWLER_VERSION=${project.version}");
-        }
+        String llms =
+                Files.readString(repoRoot().resolve("docs").resolve("source").resolve("llms-txt.md"));
+        assertThat(llms)
+                .as("llms.txt source must tell SNAPSHOT testers to use the snapshot Docker tag")
+                .contains("dadoonet/fscrawler:snapshot")
+                .contains("FSCRAWLER_VERSION=snapshot");
     }
 
     private static Path repoRoot() {
