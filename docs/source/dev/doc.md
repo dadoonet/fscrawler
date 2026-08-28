@@ -74,8 +74,12 @@ unzip fscrawler-|release|.zip
 ```
 ````
 
-`|release|` is Sphinx's built-in. `|docker_image|`, `|docker_image_noocr|`, and
-`|downloadUrl|` are defined in `docs/source/conf.py`.
+`|release|` is Sphinx's built-in. `|docker_image|`, `|docker_image_noocr|`, `|docker_hub_tag|`,
+and `|downloadUrl|` are defined in `docs/source/conf.py`.
+
+On SNAPSHOT docs, `|docker_image|` is `dadoonet/fscrawler:snapshot` and `|docker_hub_tag|`
+is `snapshot` (for Compose `FSCRAWLER_VERSION`). Untagged / `latest` remains the last
+**stable** release.
 
 To update the requirements file if you changed the `requirements.in` file, run:
 

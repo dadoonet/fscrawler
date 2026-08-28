@@ -150,6 +150,8 @@
              -Prelease (see the release profile) switches these to the stable aliases. -->
         <docker.ocr.alias.tag>snapshot</docker.ocr.alias.tag>
         <docker.noocr.alias.tag>snapshot-noocr</docker.noocr.alias.tag>
+        <!-- docker-compose examples: :snapshot on SNAPSHOT, pinned version on -Prelease. -->
+        <docker.compose.tag>snapshot</docker.compose.tag>
     </properties>
 
     <dependencyManagement>
@@ -1280,6 +1282,7 @@
                 <!-- docker pull dadoonet/fscrawler (and :noocr) resolve to this release -->
                 <docker.ocr.alias.tag>latest</docker.ocr.alias.tag>
                 <docker.noocr.alias.tag>noocr</docker.noocr.alias.tag>
+                <docker.compose.tag>${project.version}</docker.compose.tag>
             </properties>
             <build>
                 <plugins>

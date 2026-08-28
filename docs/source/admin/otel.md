@@ -116,10 +116,12 @@ export OTEL_SERVICE_NAME=fscrawler
 A complete `docker-compose` stack (Elasticsearch + Kibana + EDOT Collector + FSCrawler)
 is available under `contrib/docker-compose-example-edot/`.
 
-```yaml
+```{code-block} yaml
+:substitutions:
+
 services:
   fscrawler:
-    image: dadoonet/fscrawler:latest
+    image: |docker_image|
     environment:
       - OTEL_ENABLED=true
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://edot-collector:4318

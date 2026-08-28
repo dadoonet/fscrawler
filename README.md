@@ -106,6 +106,16 @@ index ([mirrored in the repo](llms.txt)) and clean Markdown versions of every do
 [![Build](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml/badge.svg)](https://github.com/dadoonet/fscrawler/actions/workflows/maven.yml)
 [![Documentation Status](https://readthedocs.org/projects/fscrawler/badge/?version=latest)](https://fscrawler.readthedocs.io/en/latest/?badge=latest)
 
+To test this SNAPSHOT with Docker, use the `snapshot` tag. Untagged `dadoonet/fscrawler`
+(or `:latest`) is the last **stable** release:
+
+```sh
+docker pull dadoonet/fscrawler:snapshot
+```
+
+For Docker Compose, set `FSCRAWLER_VERSION=snapshot` in `.env`. Use `snapshot-noocr` if you
+do not need OCR. The ZIP is published as a GitHub pre-release on every push to `main`.
+
 ### Latest release
 
 [![GitHub Release](https://img.shields.io/github/v/release/dadoonet/fscrawler?label=Latest%20release)](https://github.com/dadoonet/fscrawler/releases/latest)

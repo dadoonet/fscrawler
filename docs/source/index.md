@@ -4,6 +4,10 @@
 :::{warning}
 This documentation is for the version of FSCrawler currently under development.
 Were you looking for <a href="../fscrawler-2.9/">the documentation of the latest stable version</a>?
+
+To test this SNAPSHOT with Docker, pull `dadoonet/fscrawler:snapshot` (Compose: set
+`FSCRAWLER_VERSION=snapshot`). Untagged / `latest` is the last **stable** release.
+See {ref}`docker`.
 :::
 ::::
 

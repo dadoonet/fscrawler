@@ -57,6 +57,8 @@ docker_image = 'dadoonet/fscrawler:snapshot' if _is_snapshot else 'dadoonet/fscr
 docker_image_noocr = (
     'dadoonet/fscrawler:snapshot-noocr' if _is_snapshot else 'dadoonet/fscrawler:noocr'
 )
+# docker-compose FSCRAWLER_VERSION: floating snapshot alias, or the released version.
+docker_hub_tag = 'snapshot' if _is_snapshot else release
 
 githubReleasesUrl = "https://github.com/dadoonet/fscrawler/releases"
 downloadUrl = "%s/download/fscrawler-%s/fscrawler-%s.zip" % (githubReleasesUrl, release, release)
@@ -264,6 +266,7 @@ rst_prolog = rst_prolog + """
 .. |java_version| replace:: {fmt_java_version}
 .. |docker_image| replace:: {fmt_docker_image}
 .. |docker_image_noocr| replace:: {fmt_docker_image_noocr}
+.. |docker_hub_tag| replace:: {fmt_docker_hub_tag}
 
 .. _Tika: https://tika.apache.org/{fmt_tika_version}/
 .. _ES: https://www.elastic.co/elasticsearch
@@ -288,6 +291,7 @@ fmt_fscrawler_version=release,
 fmt_java_version=java_version,
 fmt_docker_image=docker_image,
 fmt_docker_image_noocr=docker_image_noocr,
+fmt_docker_hub_tag=docker_hub_tag,
 )
 
 _tika_version = config.get('3rdParty', 'TikaVersion')
@@ -318,6 +322,7 @@ myst_substitutions = {
     'docker_image': docker_image,
     'docker_image_noocr': docker_image_noocr,
     'docker_image_noocr_code': f'`{docker_image_noocr}`',
+    'docker_hub_tag': docker_hub_tag,
     'release_docker_tags': f'`{release}`, `{release}-noocr`',
     'release_image_tags': f'`{release}` / `{release}-ocr` / `{release}-noocr`',
 }
