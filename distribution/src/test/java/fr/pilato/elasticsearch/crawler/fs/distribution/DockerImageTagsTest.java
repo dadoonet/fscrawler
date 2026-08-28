@@ -90,7 +90,11 @@ class DockerImageTagsTest extends AbstractFSCrawlerTestCase {
         assertThat(installation)
                 .as("docker-compose .env must pin the floating Hub tag, not |FSCrawler_version| (3.1-SNAPSHOT)")
                 .contains("FSCRAWLER_VERSION=|docker_hub_tag|")
-                .doesNotContain("FSCRAWLER_VERSION=|FSCrawler_version|");
+                .doesNotContain("FSCRAWLER_VERSION=|FSCrawler_version|")
+                .as("SNAPSHOT testers must be given snapshot / snapshot-noocr, not |release|")
+                .contains("FSCRAWLER_VERSION=snapshot-noocr")
+                .doesNotContain("FSCRAWLER_VERSION=|release|")
+                .doesNotContain("dadoonet/fscrawler:|release|");
 
         String readme = Files.readString(repoRoot().resolve("README.md"));
         assertThat(readme)

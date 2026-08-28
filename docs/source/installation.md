@@ -39,10 +39,9 @@ These docs describe a **SNAPSHOT** build. `docker pull dadoonet/fscrawler` (no t
 pulls the last **stable** release. To run this SNAPSHOT:
 
 ```{code-block} sh
-:substitutions:
 
 docker pull dadoonet/fscrawler:snapshot
-# or: docker pull dadoonet/fscrawler:|release|
+# or: docker pull dadoonet/fscrawler:snapshot-noocr
 ```
 :::
 ::::
@@ -207,10 +206,9 @@ These docs describe a **SNAPSHOT** build. `FSCRAWLER_VERSION=latest` still pulls
 **stable** release. To test this SNAPSHOT with Compose, set:
 
 ```{code-block} sh
-:substitutions:
 
 FSCRAWLER_VERSION=snapshot
-# or: FSCRAWLER_VERSION=|release|
+# or: FSCRAWLER_VERSION=snapshot-noocr
 ```
 
 `snapshot` is overwritten on every push to `main`, so run `docker compose pull` to pick up
