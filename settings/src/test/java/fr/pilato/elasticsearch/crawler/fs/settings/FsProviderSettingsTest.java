@@ -47,7 +47,7 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String password = randomToken();
         String pemName = randomToken() + ".pem";
 
-        FsSettings settings = loadJobYaml("""
+        FsSettings settings = loadJobYaml(jobYaml("""
                 name: "%s"
                 fs:
                   provider: "ssh"
@@ -59,7 +59,7 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
                       username: "%s"
                       password: "%s"
                       pem_path: "/keys/%s"
-                """.formatted(jobName, hostname, port, username, password, pemName));
+                """, jobName, hostname, port, username, password, pemName));
 
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ssh");
         Map<String, Object> ssh = settings.getFs().getProviderConfig("ssh");
@@ -80,7 +80,7 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
         String username = randomToken();
         String password = randomToken();
 
-        FsSettings settings = loadJobYaml("""
+        FsSettings settings = loadJobYaml(jobYaml("""
                 name: "%s"
                 fs:
                   provider: "ftp"
@@ -91,7 +91,7 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
                       port: %d
                       username: "%s"
                       password: "%s"
-                """.formatted(jobName, hostname, port, username, password));
+                """, jobName, hostname, port, username, password));
 
         Assertions.assertThat(settings.getFs().getProvider()).isEqualTo("ftp");
         Map<String, Object> ftp = settings.getFs().getProviderConfig("ftp");
@@ -161,6 +161,10 @@ class FsProviderSettingsTest extends AbstractFSCrawlerTestCase {
                 """.formatted(jobName, yamlHostname));
 
         Assertions.assertThat(settings.getFs().getProviderConfig("ssh")).containsEntry("hostname", yamlHostname);
+    }
+
+    private static String jobYaml(String template, Object... args) {
+        return String.format(Locale.ROOT, template, args);
     }
 
     private FsSettings loadJobYaml(String yaml) throws Exception {

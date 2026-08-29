@@ -39,10 +39,9 @@ These docs describe a **SNAPSHOT** build. `docker pull dadoonet/fscrawler` (no t
 pulls the last **stable** release. To run this SNAPSHOT:
 
 ```{code-block} sh
-:substitutions:
 
 docker pull dadoonet/fscrawler:snapshot
-# or: docker pull dadoonet/fscrawler:|release|
+# or: docker pull dadoonet/fscrawler:snapshot-noocr
 ```
 :::
 ::::
@@ -194,12 +193,28 @@ KIBANA_LOCAL_PORT=5601
 COMPOSE_PROJECT_NAME=fscrawler
 
 # FSCrawler Settings
-FSCRAWLER_VERSION=|FSCrawler_version|
+FSCRAWLER_VERSION=|docker_hub_tag|
 FSCRAWLER_PORT=8080
 
 # Optionally, you can change the log level settings
 FS_JAVA_OPTS="-DLOG_LEVEL=debug -DDOC_LEVEL=debug"
 ```
+
+::::{ifconfig} release.endswith('-SNAPSHOT')
+:::{warning}
+These docs describe a **SNAPSHOT** build. `FSCRAWLER_VERSION=latest` still pulls the last
+**stable** release. To test this SNAPSHOT with Compose, set:
+
+```{code-block} sh
+
+FSCRAWLER_VERSION=snapshot
+# or: FSCRAWLER_VERSION=snapshot-noocr
+```
+
+`snapshot` is overwritten on every push to `main`, so run `docker compose pull` to pick up
+a new SNAPSHOT. Use `snapshot-noocr` if you do not need OCR.
+:::
+::::
 
 And, the `docker-compose.yml` file looks like this:
 

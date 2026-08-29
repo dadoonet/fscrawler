@@ -74,8 +74,8 @@ unzip fscrawler-|release|.zip
 ```
 ````
 
-`|release|` is Sphinx's built-in. `|docker_image|`, `|docker_image_noocr|`, and
-`|downloadUrl|` are defined in `docs/source/conf.py`.
+`|release|` is Sphinx's built-in. `|docker_image|`, `|docker_image_noocr|`, `|docker_hub_tag|`,
+and `|downloadUrl|` are defined in `docs/source/conf.py`.
 
 To update the requirements file if you changed the `requirements.in` file, run:
 

@@ -48,6 +48,7 @@ For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the
 - With Elastic start-local, use `http://` (not `https://`) for Elasticsearch.
 - Do not set `elasticsearch.index` to the same value as the job `name`; FSCrawler creates an alias with the job name.
 - In Docker, `127.0.0.1` inside the container is not the host; use `host.docker.internal` or the host IP.
+- Untagged `dadoonet/fscrawler` (or `:latest`) is the last **stable** release. To test a SNAPSHOT, use `dadoonet/fscrawler:snapshot` (Compose: `FSCRAWLER_VERSION=snapshot`).
 - The job `name` field is mandatory in every `_settings.yaml`.
 
 ## Optional

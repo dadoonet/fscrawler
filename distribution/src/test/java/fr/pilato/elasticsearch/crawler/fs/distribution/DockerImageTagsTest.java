@@ -83,6 +83,33 @@ class DockerImageTagsTest extends AbstractFSCrawlerTestCase {
                 .contains("|docker_image|");
     }
 
+    @Test
+    void snapshotTestersAreToldToUseTheSnapshotDockerTag() throws Exception {
+        String installation =
+                Files.readString(repoRoot().resolve("docs").resolve("source").resolve("installation.md"));
+        assertThat(installation)
+                .as("docker-compose .env must pin the floating Hub tag, not |FSCrawler_version| (3.1-SNAPSHOT)")
+                .contains("FSCRAWLER_VERSION=|docker_hub_tag|")
+                .doesNotContain("FSCRAWLER_VERSION=|FSCrawler_version|")
+                .as("SNAPSHOT testers must be given snapshot / snapshot-noocr, not |release|")
+                .contains("FSCRAWLER_VERSION=snapshot-noocr")
+                .doesNotContain("FSCRAWLER_VERSION=|release|")
+                .doesNotContain("dadoonet/fscrawler:|release|");
+
+        String readme = Files.readString(repoRoot().resolve("README.md"));
+        assertThat(readme)
+                .as("README must tell SNAPSHOT testers to pull dadoonet/fscrawler:snapshot")
+                .contains("dadoonet/fscrawler:snapshot")
+                .contains("FSCRAWLER_VERSION=snapshot");
+
+        String llms =
+                Files.readString(repoRoot().resolve("docs").resolve("source").resolve("llms-txt.md"));
+        assertThat(llms)
+                .as("llms.txt source must tell SNAPSHOT testers to use the snapshot Docker tag")
+                .contains("dadoonet/fscrawler:snapshot")
+                .contains("FSCRAWLER_VERSION=snapshot");
+    }
+
     private static Path repoRoot() {
         return Path.of("..").toAbsolutePath().normalize();
     }
