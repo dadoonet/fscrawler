@@ -1628,10 +1628,19 @@ public class FsParser implements Runnable, AutoCloseable {
         indexDirectory(sign(path), folder);
     }
 
-    /** Remove a full directory and sub dirs recursively */
-    private void removeEsDirectoryRecursively(final String path, ScanStatistic stats) throws Exception {
+    /**
+     * Remove a full directory and its subdirectories recursively.
+     *
+     * @return {@code true} when the complete subtree was deleted; {@code false} when a query may have been truncated
+     *     and folder records were retained for a later crawl
+     */
+    private boolean removeEsDirectoryRecursively(final String path, ScanStatistic stats) throws Exception {
         logger.debug("Delete folder [{}]", path);
         Collection<String> listFile = getFileDirectory(path);
+        boolean deletionComplete = listFile.size() < FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT;
+        if (!deletionComplete) {
+            logDirectoryQueryLimitReached(path, "files");
+        }
 
         for (String esfile : listFile) {
             esDelete(managementService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, path));
@@ -1640,11 +1649,31 @@ public class FsParser implements Runnable, AutoCloseable {
         }
 
         Collection<String> listFolder = getFolderDirectory(path);
+        if (listFolder.size() >= FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT) {
+            deletionComplete = false;
+            logDirectoryQueryLimitReached(path, "folders");
+        }
         for (String esfolder : listFolder) {
-            removeEsDirectoryRecursively(esfolder, stats);
+            if (!removeEsDirectoryRecursively(esfolder, stats)) {
+                deletionComplete = false;
+            }
         }
 
-        esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), sign(path));
+        if (deletionComplete) {
+            esDelete(managementService, fsSettings.getElasticsearch().getIndexFolder(), sign(path));
+        } else {
+            logger.debug("Retaining folder record [{}] so deletion can continue on a later crawl", path);
+        }
+        return deletionComplete;
+    }
+
+    private void logDirectoryQueryLimitReached(String path, String entryType) {
+        logger.warn(
+                "Deletion query for folder [{}] returned the maximum [{}] {}. The result may be incomplete; "
+                        + "retaining folder records so remaining entries can be deleted on a later crawl.",
+                path,
+                FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT,
+                entryType);
     }
 
     /** Remove a document with the document service */
