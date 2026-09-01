@@ -1675,7 +1675,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 path,
                 FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT,
                 entryType);
-}
+    }
 
     /** Remove a document with the document service */
     private void esDelete(FsCrawlerDocumentService service, String index, String id) {
