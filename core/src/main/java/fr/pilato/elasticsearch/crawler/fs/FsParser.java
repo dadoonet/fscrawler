@@ -1668,13 +1668,14 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     private void logDirectoryQueryLimitReached(String path, String entryType) {
-        logger.warn(
+        logger.info(
                 "Deletion query for folder [{}] returned the maximum [{}] {}. The result may be incomplete; "
-                        + "retaining folder records so remaining entries can be deleted on a later crawl.",
+                        + "retaining folder records so remaining entries can be deleted on a later crawl."
+                        + " You can restart immediately a new crawl. Check https://fscrawler.readthedocs.io/en/latest/admin/status.html#forcing-a-new-scan",
                 path,
                 FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT,
                 entryType);
-    }
+}
 
     /** Remove a document with the document service */
     private void esDelete(FsCrawlerDocumentService service, String index, String id) {
