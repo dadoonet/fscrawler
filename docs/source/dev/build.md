@@ -6,6 +6,8 @@ Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the Intelli
 
 [![Jet Brains](../jetbrains.png)](https://www.jetbrains.com/?from=FSCrawler)
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dadoonet/fscrawler)
+
 ```{contents}
 :backlinks: entry
 ```
@@ -18,6 +20,62 @@ Use git to clone the project locally:
 git clone git@github.com:dadoonet/fscrawler.git
 cd fscrawler
 ```
+
+## Dev Containers and GitHub Codespaces
+
+You can develop FSCrawler in [VS Code](https://code.visualstudio.com/) /
+[Cursor](https://cursor.com/) Dev Containers or in
+[GitHub Codespaces](https://github.com/features/codespaces) using the shared
+configuration under `.devcontainer/`.
+
+### Prerequisites (local Dev Containers)
+
+* Docker Desktop (or another Docker engine) on the host
+* VS Code / Cursor with the Dev Containers extension
+
+Open the repository and use **Reopen in Container**. For Codespaces, use the
+badge above or open a codespace from the GitHub UI.
+
+### What the container provides
+
+* JDK 25 and Maven
+* Docker-outside-of-Docker (required for Elastic [start-local](https://github.com/elastic/start-local))
+* After create, `post-create.sh`:
+  * Starts Elasticsearch **9.x** (version from `<elasticsearch.version>` in the root `pom.xml`) with start-local **ES-only** under `IGNORE_ME/elastic-start-local/`
+  * Uses password `changeme` for the `elastic` user
+  * Warms the local Maven repository (`dependency:go-offline`)
+
+Elasticsearch is then available at `http://localhost:9200`.
+
+### Build and test inside the container
+
+```shell
+mvn clean package -DskipTests -Ddocker.skip
+```
+
+To run integration tests against the start-local cluster instead of Testcontainers:
+
+```shell
+source IGNORE_ME/elastic-start-local/.env
+mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
+  -Dtests.cluster.url=http://localhost:9200 \
+  -Dtests.cluster.apiKey="$ES_LOCAL_API_KEY"
+```
+
+### Optional Kibana
+
+By default only Elasticsearch is started (`--esonly`). To also run Kibana, re-run
+start-local **without** `--esonly`, using the same directory, password, and version,
+for example:
+
+```shell
+ES_VERSION="$(./.devcontainer/extract-es-version.sh)"
+curl -fsSL https://elastic.co/start-local \
+  | ES_LOCAL_PASSWORD=changeme ES_LOCAL_DIR="$PWD/IGNORE_ME/elastic-start-local" \
+    sh -s -- -v "$ES_VERSION"
+```
+
+Kibana listens on `http://localhost:5601` when enabled.
 
 ## Build the artifact
 
