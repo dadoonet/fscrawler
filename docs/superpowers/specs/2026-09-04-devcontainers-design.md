@@ -97,8 +97,8 @@ Update `docs/source/dev/build.md`:
 
 ## Error handling / edge cases
 
-- **ES already running:** skip start-local; do not fail create
-- **start-local / Docker failure:** fail clearly with a message that Docker socket / DooD is required; leave Maven warm-up optional to still run if ES failed (prefer fail-fast on ES if DooD is broken, so contributors notice early)
+- **ES already running:** skip start-local; continue with Maven warm-up
+- **start-local / Docker failure:** exit non-zero with a clear message that Docker socket / DooD is required (fail-fast; do not hide a broken Docker setup behind a successful Maven warm-up)
 - **Network required** on first create to download start-local and Maven artifacts
 - **Codespaces create time:** Maven `go-offline` may be slow; acceptable per product decision
 - Generated start-local files must stay under `IGNORE_ME/` and never be committed
