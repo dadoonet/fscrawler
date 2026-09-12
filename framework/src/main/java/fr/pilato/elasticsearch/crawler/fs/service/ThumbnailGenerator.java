@@ -6,10 +6,10 @@ import org.apache.logging.log4j.Logger;
 import co.elastic.thumbnails4j.core.Thumbnailer;
 import co.elastic.thumbnails4j.core.Dimensions;
 import co.elastic.thumbnails4j.core.ThumbnailingException;
-import co.elastic.thumbnails4j.pdf.PDFThumbnailer;
-import co.elastic.thumbnails4j.image.ImageThumbnailer;
 import co.elastic.thumbnails4j.doc.DOCThumbnailer;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import javax.imageio.ImageIO;
@@ -40,36 +40,11 @@ public class ThumbnailGenerator {
      */
     private Thumbnailer getThumbnailerForFile(File file) {
         String fileName = file.getName().toLowerCase();
-        logger.debug("Getting thumbnailer for file: {} (extension check)", fileName);
 
-        // PDF files
-        if (fileName.endsWith(".pdf")) {
-            logger.debug("Using PDFThumbnailer for: {}", fileName);
-            return new PDFThumbnailer();
-        }
-
-        // Document files (.doc, .docx)
         if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
-            logger.debug("Using DOCThumbnailer for: {}", fileName);
             return new DOCThumbnailer();
         }
 
-        // Image files - ImageThumbnailer requires output format as parameter
-        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
-            fileName.endsWith(".png") || fileName.endsWith(".gif") ||
-            fileName.endsWith(".bmp") || fileName.endsWith(".tiff") ||
-            fileName.endsWith(".tif") || fileName.endsWith(".webp")) {
-            logger.debug("Using ImageThumbnailer for: {}", fileName);
-            return new ImageThumbnailer("png");
-        }
-
-        // PSD files are handled by generatePsdThumbnail(), not via a Thumbnailer
-        if (fileName.endsWith(".psd")) {
-            logger.debug("PSD file will be handled via TwelveMonkeys ImageReader: {}", fileName);
-            return null;
-        }
-
-        logger.debug("No thumbnailer available for file type: {}", fileName);
         return null;
     }
 
@@ -107,6 +82,12 @@ public class ThumbnailGenerator {
                 BufferedImage psdThumb = generatePsdThumbnail(file);
                 thumbnails = (psdThumb != null) ? Collections.singletonList(psdThumb) : null;
 
+            // PDF files - rendered directly via PDFBox 3.x
+            } else if (fileName.endsWith(".pdf")) {
+                logger.debug("Using PDFBox rendering for: {}", file.getName());
+                BufferedImage pdfThumb = generatePdfThumbnail(file);
+                thumbnails = (pdfThumb != null) ? Collections.singletonList(pdfThumb) : null;
+
             // Standard image files - use direct ImageIO for consistent aspect-ratio scaling
             } else if (fileName.matches(".*\\.(jpg|jpeg|png|gif|bmp|tiff|tif|webp)$")) {
                 logger.debug("Using direct ImageIO processing for image file: {}", file.getName());
@@ -114,13 +95,11 @@ public class ThumbnailGenerator {
                 thumbnails = (imageThumb != null) ? Collections.singletonList(imageThumb) : null;
 
             } else {
-                // Use thumbnails4j for PDFs and office documents
+                // Office documents via thumbnails4j (DOC, DOCX)
                 Dimensions targetDimensions = new Dimensions(settings.getWidth(), settings.getHeight());
                 List<Dimensions> dimensionsList = Collections.singletonList(targetDimensions);
 
                 Thumbnailer thumbnailer = getThumbnailerForFile(file);
-                logger.debug("Selected thumbnailer: {}", thumbnailer != null ? thumbnailer.getClass().getSimpleName() : "null");
-
                 if (thumbnailer == null) {
                     logger.debug("No thumbnailer available for file type: {}", file.getName());
                     return null;
@@ -130,25 +109,9 @@ public class ThumbnailGenerator {
                 thumbnails = thumbnailer.getThumbnails(file, dimensionsList);
             }
 
-            logger.debug("getThumbnails() returned: {}", thumbnails != null ? "non-null list" : "null");
-
             if (thumbnails == null || thumbnails.isEmpty()) {
-                // Fallback for PDFs: try rendering with PDFBox directly
-                if (file.getName().toLowerCase().endsWith(".pdf")) {
-                    logger.debug("thumbnails4j returned empty list, trying PDFBox rendering for: {}", file.getName());
-                    BufferedImage pdfImage = renderPdfPageWithPDFBox(file);
-                    if (pdfImage != null) {
-                        thumbnails = Collections.singletonList(pdfImage);
-                        logger.debug("PDFBox rendering successful, created thumbnail list");
-                    }
-                }
-
-                if (thumbnails == null || thumbnails.isEmpty()) {
-                    logger.warn("No thumbnails generated for file: {}", file.getName());
-                    logger.debug("Thumbnail request details - file: {}, dimensions: {}x{}",
-                                file.getAbsolutePath(), settings.getWidth(), settings.getHeight());
-                    return null;
-                }
+                logger.warn("No thumbnails generated for file: {}", file.getName());
+                return null;
             }
 
             logger.debug("Number of thumbnails generated: {}", thumbnails.size());
@@ -225,19 +188,16 @@ public class ThumbnailGenerator {
         String fileName = file.getName().toLowerCase();
         logger.debug("Checking if can generate thumbnail for: {}", fileName);
 
-        // PDF files (supported by PDFThumbnailer)
         if (fileName.endsWith(".pdf")) {
             logger.debug("PDF file detected: {}", fileName);
             return true;
         }
 
-        // Document files (supported by DOCThumbnailer)
         if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
             logger.debug("Document file detected: {}", fileName);
             return true;
         }
 
-        // Image files (supported by ImageThumbnailer / direct ImageIO)
         if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
             fileName.endsWith(".png") || fileName.endsWith(".gif") ||
             fileName.endsWith(".bmp") || fileName.endsWith(".tiff") ||
@@ -336,34 +296,18 @@ public class ThumbnailGenerator {
         }
     }
 
-    /**
-     * Fallback method: render PDF page using PDFBox directly
-     * This is used when thumbnails4j fails (e.g., for scanned/image-based PDFs)
-     */
-    private BufferedImage renderPdfPageWithPDFBox(File pdfFile) {
-        logger.debug("Attempting to render PDF page directly with PDFBox for: {}", pdfFile.getName());
-
-        try (PDDocument document = PDDocument.load(pdfFile)) {
+    private BufferedImage generatePdfThumbnail(File pdfFile) {
+        logger.debug("Rendering PDF thumbnail with PDFBox for: {}", pdfFile.getName());
+        try (PDDocument document = Loader.loadPDF(pdfFile)) {
             if (document.getNumberOfPages() == 0) {
                 logger.warn("PDF has no pages: {}", pdfFile.getName());
                 return null;
             }
-
-            PDFRenderer pdfRenderer = new PDFRenderer(document);
-
-            // Render first page at 72 DPI
-            BufferedImage image = pdfRenderer.renderImageWithDPI(0, 72);
-
-            logger.debug("Successfully rendered PDF page: {}x{}", image.getWidth(), image.getHeight());
-
-            // Scale to thumbnail size
+            PDFRenderer renderer = new PDFRenderer(document);
+            BufferedImage image = renderer.renderImageWithDPI(0, 150, ImageType.RGB);
             return scaleImage(image, settings.getWidth(), settings.getHeight());
-
         } catch (IOException e) {
-            logger.error("Failed to render PDF with PDFBox: {}", pdfFile.getName(), e);
-            return null;
-        } catch (Exception e) {
-            logger.error("Unexpected error rendering PDF with PDFBox: {}", pdfFile.getName(), e);
+            logger.error("Failed to render PDF thumbnail for: {}", pdfFile.getName(), e);
             return null;
         }
     }

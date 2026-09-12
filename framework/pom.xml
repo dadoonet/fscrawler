@@ -96,50 +96,50 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jul</artifactId>
         </dependency>
-	<dependency>
-	    <groupId>co.elastic.thumbnails4j</groupId>
-	    <artifactId>thumbnails4j-core</artifactId>
+        <dependency>
+            <groupId>co.elastic.thumbnails4j</groupId>
+            <artifactId>thumbnails4j-core</artifactId>
             <version>1.1.6</version>
-    </dependency>
-    <dependency>
-    <groupId>co.elastic.thumbnails4j</groupId>
-    <artifactId>thumbnails4j-image</artifactId>
-    <version>1.1.6</version>
-</dependency>
-<dependency>
-    <groupId>co.elastic.thumbnails4j</groupId>
-    <artifactId>thumbnails4j-pdf</artifactId>
-    <version>1.1.6</version>
-</dependency>
-<dependency>
-    <groupId>co.elastic.thumbnails4j</groupId>
-    <artifactId>thumbnails4j-doc</artifactId>
-    <version>1.1.6</version>
-</dependency>
-<dependency>
-    <groupId>co.elastic.thumbnails4j</groupId>
-    <artifactId>thumbnails4j-docx</artifactId>
-    <version>1.1.6</version>
-</dependency>
-<dependency>
-    <groupId>co.elastic.thumbnails4j</groupId>
-    <artifactId>thumbnails4j-xls</artifactId>
-    <version>1.1.6</version>
-</dependency>
-<dependency>
-    <groupId>co.elastic.thumbnails4j</groupId>
-    <artifactId>thumbnails4j-xlsx</artifactId>
-    <version>1.1.6</version>
-</dependency>
-<dependency>
-    <groupId>co.elastic.thumbnails4j</groupId>
-    <artifactId>thumbnails4j-pptx</artifactId>
-    <version>1.1.6</version>
-</dependency>
-<dependency>
-    <groupId>com.twelvemonkeys.imageio</groupId>
-    <artifactId>imageio-psd</artifactId>
-    <version>${twelvemonkeys.version}</version>
-</dependency>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.thumbnails4j</groupId>
+            <artifactId>thumbnails4j-image</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.thumbnails4j</groupId>
+            <artifactId>thumbnails4j-doc</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.thumbnails4j</groupId>
+            <artifactId>thumbnails4j-docx</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.thumbnails4j</groupId>
+            <artifactId>thumbnails4j-xls</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.thumbnails4j</groupId>
+            <artifactId>thumbnails4j-xlsx</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.thumbnails4j</groupId>
+            <artifactId>thumbnails4j-pptx</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-psd</artifactId>
+            <version>${twelvemonkeys.version}</version>
+        </dependency>
 </dependencies>
 </project>
