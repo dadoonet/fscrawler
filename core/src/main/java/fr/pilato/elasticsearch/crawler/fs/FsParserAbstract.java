@@ -34,6 +34,7 @@ import fr.pilato.elasticsearch.crawler.fs.tika.XmlDocParser;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import fr.pilato.elasticsearch.crawler.fs.service.ThumbnailGenerator;
 
 import java.io.*;
 import java.io.File;
@@ -65,13 +66,15 @@ public abstract class FsParserAbstract extends FsParser {
     private final String pathSeparator;
     private final FileAbstractor<?> fileAbstractor;
     private final String metadataFilename;
+    private final ThumbnailGenerator thumbnailGenerator;
     private static final TimeValue CHECK_JOB_INTERVAL = TimeValue.timeValueSeconds(5);
 
-    FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop) {
+    FsParserAbstract(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService, FsCrawlerDocumentService documentService, Integer loop, ThumbnailGenerator thumbnailGenerator) {
         this.fsSettings = fsSettings;
         this.fsJobFileHandler = new FsJobFileHandler(config);
         this.managementService = managementService;
         this.documentService = documentService;
+	this.thumbnailGenerator = thumbnailGenerator;
 
         this.loop = loop;
         logger.debug("creating fs crawler thread [{}] for [{}] every [{}]", fsSettings.getName(),
@@ -494,7 +497,29 @@ public abstract class FsParserAbstract extends FsParser {
             } else {
                 // Extracting content with Tika
                 TikaDocParser.generate(fsSettings, inputStream, filename, fullFilename, doc, messageDigest, filesize);
+            // ADD THE THUMBNAIL GENERATION CODE RIGHT AFTER THIS LINE:
+if (thumbnailGenerator != null && thumbnailGenerator.isEnabled()) {
+    try {
+        // We need to create a File object from the path for thumbnail generation
+        File file = new File(fullFilename);
+        if (file.exists() && file.isFile()) {
+            logger.debug("Attempting to generate thumbnail for file: {}", fullFilename);
+            String thumbnailBase64 = thumbnailGenerator.generateThumbnailBase64(file);
+            if (thumbnailBase64 != null) {
+                // Add thumbnail to the Doc object
+                doc.setThumbnail(thumbnailBase64);
+                logger.debug("Added thumbnail to document for file: {} (thumbnail size: {} chars)", 
+                            filename, thumbnailBase64.length());
+            } else {
+                logger.debug("No thumbnail generated for file: {} (file type may not be supported)", filename);
             }
+        }
+    } catch (Exception e) {
+        logger.warn("Failed to generate thumbnail for file: {} - {}", filename, e.getMessage());
+        // Continue processing without thumbnail - don't fail the whole document indexing
+    }
+}
+	    }
 
             Doc mergedDoc = DocUtils.getMergedDoc(doc, metadataFilename, externalTags);
 

@@ -34,7 +34,9 @@ public class Doc {
     private Attributes attributes;
     private Map<String, Object> object;
     private Map<String, Object> external;
-
+    // ADD THIS LINE, vibe-coded
+    private String thumbnail;
+    
     public Doc() {
         meta = new Meta();
         file = new File();
@@ -109,5 +111,13 @@ public class Doc {
 
     public void setExternal(Map<String, Object> external) {
         this.external = external;
+    }
+    //Vibe-coded
+    public String getThumbnail() {
+        return thumbnail;
+    }
+
+    public void setThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
     }
 }

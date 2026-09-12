@@ -55,7 +55,8 @@ public class FileAbstractorFile extends FileAbstractor<File> {
     }
 
     private static final Comparator<Path> PATH_COMPARATOR = Comparator.comparing(
-            file -> getModificationOrCreationTime(file.toFile()));
+            (Path file) -> getModificationOrCreationTime(file.toFile()),
+            Comparator.nullsFirst(Comparator.naturalOrder()));
 
     @Override
     public FileAbstractModel toFileAbstractModel(String path, File file) {
@@ -91,13 +92,20 @@ public class FileAbstractorFile extends FileAbstractor<File> {
         final Collection<FileAbstractModel> result = new ArrayList<>();
         try {
             Files.list(Paths.get(dir))
-                    .filter(p -> fsSettings.getFs().isFollowSymlinks() || !Files.isSymbolicLink(p))
+                    .filter(p -> {
+                        if (!fsSettings.getFs().isFollowSymlinks() && Files.isSymbolicLink(p)) {
+                            logger.debug("Skipping symlink [{}] (set fs.follow_symlinks: true to index it)", p);
+                            return false;
+                        }
+                        return true;
+                    })
                     // TODO We can add the filter directly here
                     // .filter(s -> s.toString().endsWith(".xml"))
                     .sorted(PATH_COMPARATOR.reversed())
                     .forEach(p -> result.add(toFileAbstractModel(dir, p.toFile())));
         } catch (IOException e) {
-            // Logger
+            logger.warn("Failed to list directory [{}]: {}", dir, e.getMessage());
+            logger.debug("Full stack trace for directory listing failure:", e);
         }
 
         logger.debug("{} local files found", result.size());

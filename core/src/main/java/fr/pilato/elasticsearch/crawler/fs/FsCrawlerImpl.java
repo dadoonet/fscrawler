@@ -30,7 +30,8 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import fr.pilato.elasticsearch.crawler.fs.service.ThumbnailGenerator;
+import fr.pilato.elasticsearch.crawler.fs.settings.ThumbnailSettings;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,6 +58,8 @@ public class FsCrawlerImpl implements AutoCloseable {
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
 
+    private ThumbnailGenerator thumbnailGenerator;
+    
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
         FsCrawlerUtil.createDirIfMissing(config);
 
@@ -66,7 +69,24 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         this.managementService = new FsCrawlerManagementServiceElasticsearchImpl(config, settings);
         this.documentService = new FsCrawlerDocumentServiceElasticsearchImpl(config, settings);
-
+    
+	// Claude vibe-coded 
+        if (settings.getThumbnail() != null) {
+    // Use configured thumbnail settings
+    this.thumbnailGenerator = new ThumbnailGenerator(settings.getThumbnail());
+    //logger.info("Thumbnail generation is {} (width: {}, height: {})",
+    //            thumbnailGenerator.isEnabled() ? "enabled" : "disabled",
+    //            thumbnailGenerator.getSettings().getWidth(),
+    //            thumbnailGenerator.getSettings().getHeight());
+    logger.info("Thumbnail settings from YAML: {}", settings.getThumbnail());
+	} else {
+    // No thumbnail configuration found - create with disabled defaults
+    ThumbnailSettings defaultSettings = new ThumbnailSettings();
+    defaultSettings.setEnabled(false); // Explicitly disable when no config found
+    this.thumbnailGenerator = new ThumbnailGenerator(defaultSettings);
+    logger.info("Thumbnail generation is disabled (no configuration found)");
+}
+	// end vibe-coding
         // We don't go further as we have critical errors
         // It's just a double check as settings must be validated before creating the instance
         if (FsCrawlerValidator.validateSettings(logger, settings)) {
@@ -86,13 +106,13 @@ public class FsCrawlerImpl implements AutoCloseable {
             // What is the protocol used?
             if (settings.getServer() == null || Server.PROTOCOL.LOCAL.equals(settings.getServer().getProtocol())) {
                 // Local FS
-                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop);
+                fsParser = new FsParserLocal(settings, config, managementService, documentService, loop, thumbnailGenerator);
             } else if (Server.PROTOCOL.SSH.equals(settings.getServer().getProtocol())) {
                 // Remote SSH FS
-                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop);
+                fsParser = new FsParserSsh(settings, config, managementService, documentService, loop, thumbnailGenerator);
             } else if (Server.PROTOCOL.FTP.equals(settings.getServer().getProtocol())) {
                 // Remote FTP FS
-                fsParser = new FsParserFTP(settings, config, managementService, documentService, loop);
+                fsParser = new FsParserFTP(settings, config, managementService, documentService, loop, thumbnailGenerator);
             } else {
                 // Non supported protocol
                 throw new RuntimeException(settings.getServer().getProtocol() + " is not supported yet. Please use " +

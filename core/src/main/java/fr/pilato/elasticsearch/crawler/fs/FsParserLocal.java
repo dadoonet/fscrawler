@@ -24,14 +24,14 @@ import fr.pilato.elasticsearch.crawler.fs.crawler.fs.FileAbstractorFile;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-
+import fr.pilato.elasticsearch.crawler.fs.service.ThumbnailGenerator;
 import java.nio.file.Path;
 
 public class FsParserLocal extends FsParserAbstract {
 
     public FsParserLocal(FsSettings fsSettings, Path config, FsCrawlerManagementService managementService,
-                         FsCrawlerDocumentService documentService, Integer loop) {
-        super(fsSettings, config, managementService, documentService, loop);
+                         FsCrawlerDocumentService documentService, Integer loop, ThumbnailGenerator thumbnailGenerator) {
+        super(fsSettings, config, managementService, documentService, loop, thumbnailGenerator);
     }
 
     protected FileAbstractor<?> buildFileAbstractor(FsSettings fsSettings) {

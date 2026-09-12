@@ -59,6 +59,9 @@
         <imageio.version>3.0.3</imageio.version>
         <jpeg.version>1.4.0</jpeg.version>
 
+        <!-- TwelveMonkeys ImageIO (BSD-3 license) -->
+        <twelvemonkeys.version>3.12.0</twelvemonkeys.version>
+
         <!-- To skip Tests -->
         <skipTests>false</skipTests>
         <skipUnitTests>${skipTests}</skipUnitTests>

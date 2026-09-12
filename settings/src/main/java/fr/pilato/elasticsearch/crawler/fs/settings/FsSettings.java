@@ -20,6 +20,8 @@
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import java.util.Objects;
+import fr.pilato.elasticsearch.crawler.fs.settings.ThumbnailSettings;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @SuppressWarnings("SameParameterValue")
 public class FsSettings {
@@ -116,4 +118,21 @@ public class FsSettings {
                 ", tags=" + tags +
                 '}';
     }
+
+    private ThumbnailSettings thumbnail;
+
+    @JsonProperty("thumbnail")
+public ThumbnailSettings getThumbnail() {
+    return thumbnail;
+}
+
+public void setThumbnail(ThumbnailSettings thumbnail) {
+    this.thumbnail = thumbnail;
+}
+
+// Update the constructor to initialize thumbnail settings
+public FsSettings() {
+    // ... existing initialization code ...
+    this.thumbnail = new ThumbnailSettings();
+}
 }
