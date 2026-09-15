@@ -26,6 +26,9 @@ import java.util.Collection;
 
 public interface FsCrawlerManagementService extends FsCrawlerService {
 
+    /** Maximum number of direct files or folders returned by one Elasticsearch housekeeping query. */
+    int DIRECTORY_QUERY_LIMIT = 10_000;
+
     /**
      * Retrieve the list of files that are currently available within a dir
      *

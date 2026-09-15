@@ -617,6 +617,11 @@ fs:
 Setting `remove_deleted` is forced to `false` when using the Workplace Search output.
 ```
 
+When recursively removing a deleted directory, FSCrawler queries Elasticsearch
+for up to 10,000 direct files and 10,000 direct subfolders. If either query
+returns 10,000 results, FSCrawler logs a warning and retains the affected
+folder records so deletion can continue during subsequent crawls.
+
 ## Ignore content
 
 If you don’t want to extract file content but only index filesystem
