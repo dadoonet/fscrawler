@@ -81,7 +81,7 @@
         <jsonpath.version>3.0.0</jsonpath.version>
         <log4j.version>2.26.1</log4j.version>
         <jersey.version>4.0.2</jersey.version>
-        <httpcore5.version>5.4.3</httpcore5.version>
+        <httpcore5.version>5.4.4</httpcore5.version>
         <httpclient5.version>5.6.4</httpclient5.version>
         <jsoup.version>1.23.2</jsoup.version>
         <!-- Because of CVE-2024-29857 - this comes from Tika 2.9.2.
