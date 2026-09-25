@@ -1009,6 +1009,9 @@ public class FsParser implements Runnable, AutoCloseable {
             if (fsSettings.getFs().isRemoveDeleted()) {
                 logger.debug("Looking for removed files in [{}]...", filepath);
                 Collection<String> esFiles = getFileDirectory(filepath);
+                if (esFiles.size() >= FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT) {
+                    logDirectoryQueryLimitReached(filepath, "files");
+                }
 
                 // for the delete files
                 for (String esfile : esFiles) {
@@ -1035,6 +1038,9 @@ public class FsParser implements Runnable, AutoCloseable {
                 if (fsSettings.getFs().isIndexFolders()) {
                     logger.debug("Looking for removed directories in [{}]...", filepath);
                     Collection<String> esFolders = getFolderDirectory(filepath);
+                    if (esFolders.size() >= FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT) {
+                        logDirectoryQueryLimitReached(filepath, "folders");
+                    }
 
                     // for the delete folder
                     for (String esfolder : esFolders) {
