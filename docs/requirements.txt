@@ -82,5 +82,5 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 tabulate==0.10.0
     # via sphinx-markdown-builder
-urllib3==2.7.0
+urllib3==2.8.0
     # via requests
