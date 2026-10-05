@@ -239,18 +239,16 @@ class TikaInstance {
 
     /**
      * Applies the FSCrawler PDF OCR strategy on the given PDF parser. In Tika 4 the strategy moved from
-     * {@code PDFParser.setOcrStrategy(String)} to {@link PDFParserConfig#setOcr(OcrConfig)} with an
-     * {@link OcrConfig.Strategy} enum, so we translate our documented string values accordingly.
+     * {@code PDFParser.setOcrStrategy(String)} to {@link PDFParserConfig#setOcr(OcrConfig)}, which is now
+     * set-only, with an {@link OcrConfig.Strategy} enum, so we translate our documented string values
+     * accordingly.
      *
      * @param pdfParser the PDF parser to configure
      * @param strategy one of {@code no_ocr}, {@code auto}, {@code ocr_only} or {@code ocr_and_text}
      */
     private static void setPdfOcrStrategy(PDFParser pdfParser, String strategy) {
         PDFParserConfig pdfConfig = pdfParser.getPDFParserConfig();
-        OcrConfig ocrConfig = pdfConfig.getOcr();
-        if (ocrConfig == null) {
-            ocrConfig = new OcrConfig();
-        }
+        OcrConfig ocrConfig = new OcrConfig();
         ocrConfig.setStrategy(mapPdfOcrStrategy(strategy));
         pdfConfig.setOcr(ocrConfig);
     }
