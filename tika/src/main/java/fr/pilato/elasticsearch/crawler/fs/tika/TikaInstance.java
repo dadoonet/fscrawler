@@ -61,7 +61,8 @@ import org.apache.tika.parser.image.JpegParser;
 import org.apache.tika.parser.image.TiffParser;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.ocr.TesseractOCRParser;
-import org.apache.tika.parser.pdf.OcrConfig;
+import org.apache.tika.parser.pages.PagesConfig;
+import org.apache.tika.parser.pages.TextPolicy;
 import org.apache.tika.parser.pdf.PDFParser;
 import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.apache.tika.parser.vlm.AbstractVLMParser;
@@ -238,38 +239,35 @@ class TikaInstance {
     }
 
     /**
-     * Applies the FSCrawler PDF OCR strategy on the given PDF parser. In Tika 4 the strategy moved from
-     * {@code PDFParser.setOcrStrategy(String)} to {@link PDFParserConfig#setOcr(OcrConfig)}, which is now set-only,
-     * with an {@link OcrConfig.Strategy} enum, so we translate our documented string values accordingly.
+     * Applies the FSCrawler PDF OCR strategy on the given PDF parser. In Tika 4.1 the strategy lives on the generic
+     * {@link PagesConfig#setText(TextPolicy)}, reachable through {@link PDFParserConfig#getPages()}; the PDF-specific
+     * {@code OcrConfig} bridge is deprecated, so we translate our documented string values directly to a
+     * {@link TextPolicy}.
      *
      * @param pdfParser the PDF parser to configure
      * @param strategy one of {@code no_ocr}, {@code auto}, {@code ocr_only} or {@code ocr_and_text}
      */
-    private static void setPdfOcrStrategy(PDFParser pdfParser, String strategy) {
-        PDFParserConfig pdfConfig = pdfParser.getPDFParserConfig();
-        OcrConfig ocrConfig = new OcrConfig();
-        ocrConfig.setStrategy(mapPdfOcrStrategy(strategy));
-        pdfConfig.setOcr(ocrConfig);
+    static void setPdfOcrStrategy(PDFParser pdfParser, String strategy) {
+        pdfParser.getPDFParserConfig().getPages().setText(mapPdfOcrStrategy(strategy));
     }
 
     /**
-     * Maps an FSCrawler PDF OCR strategy string to the Tika 4 {@link OcrConfig.Strategy} enum. When the strategy is
-     * null, {@link OcrConfig.Strategy#AUTO} is used (the FSCrawler default). The FSCrawler value {@code ocr_and_text}
-     * maps to {@link OcrConfig.Strategy#OCR_AND_TEXT_EXTRACTION}. Unknown values fall back to
-     * {@link OcrConfig.Strategy#AUTO}.
+     * Maps an FSCrawler PDF OCR strategy string to the Tika 4.1 {@link TextPolicy} enum. When the strategy is null,
+     * {@link TextPolicy#AUTO} is used (the FSCrawler default). The FSCrawler value {@code ocr_and_text} maps to
+     * {@link TextPolicy#EXTRACT_AND_OCR}. Unknown values fall back to {@link TextPolicy#AUTO}.
      *
      * @param strategy the FSCrawler strategy string (may be null)
-     * @return the matching Tika strategy
+     * @return the matching Tika text policy
      */
-    private static OcrConfig.Strategy mapPdfOcrStrategy(String strategy) {
+    static TextPolicy mapPdfOcrStrategy(String strategy) {
         if (strategy == null) {
-            return OcrConfig.Strategy.AUTO;
+            return TextPolicy.AUTO;
         }
         return switch (strategy.toLowerCase(Locale.ROOT)) {
-            case PDF_STRATEGY_NO_OCR -> OcrConfig.Strategy.NO_OCR;
-            case "ocr_only" -> OcrConfig.Strategy.OCR_ONLY;
-            case "ocr_and_text", "ocr_and_text_extraction" -> OcrConfig.Strategy.OCR_AND_TEXT_EXTRACTION;
-            default -> OcrConfig.Strategy.AUTO;
+            case PDF_STRATEGY_NO_OCR -> TextPolicy.EXTRACT;
+            case "ocr_only" -> TextPolicy.OCR;
+            case "ocr_and_text", "ocr_and_text_extraction" -> TextPolicy.EXTRACT_AND_OCR;
+            default -> TextPolicy.AUTO;
         };
     }
 
