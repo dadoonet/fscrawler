@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import com.jayway.jsonpath.DocumentContext;
+import fr.pilato.elasticsearch.crawler.fs.FsParser;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -31,8 +32,12 @@ import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterv
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.OsValidator;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerManagementService;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow;
 import fr.pilato.elasticsearch.crawler.fs.test.integration.AbstractFsCrawlerITCase;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +51,11 @@ import java.util.Locale;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Disabled;
@@ -54,6 +64,99 @@ import org.junit.jupiter.api.Test;
 /** Test moving/removing/adding files */
 class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
     private static final Logger logger = LogManager.getLogger();
+
+    /**
+     * Verify that deleting more files than a single Elasticsearch housekeeping query can return is completed over
+     * subsequent crawls. The first deletion query is capped at
+     * {@link FsCrawlerManagementService#DIRECTORY_QUERY_LIMIT}, so FSCrawler must retain the folder record, explain
+     * that another crawl is needed, and eventually remove every deleted document while preserving the marker file.
+     */
+    @Test
+    @VerySlow
+    void remove_deleted_continues_after_directory_query_limit() throws Exception {
+        // Keep the marker in the crawl root and place all disposable files in one subdirectory. Removing that whole
+        // subdirectory exercises the recursive deletion path which must retain its folder record when the query is
+        // capped; putting every file in the root would let the marker consume one of the 10,000 query results.
+        deleteRecursively(currentTestResourceDir);
+        Files.createDirectories(currentTestResourceDir);
+
+        Path marker = Files.writeString(currentTestResourceDir.resolve("marker.txt"), "marker");
+        Path directoryToDelete = Files.createDirectory(currentTestResourceDir.resolve("directory_to_delete"));
+        int excess = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 500);
+        int filesToDelete = FsCrawlerManagementService.DIRECTORY_QUERY_LIMIT + excess;
+        for (int i = 0; i < filesToDelete; i++) {
+            Files.writeString(directoryToDelete.resolve("file_" + i + ".txt"), "x");
+        }
+
+        FsSettings fsSettings = createTestSettings();
+        fsSettings.getFs().setRemoveDeleted(true);
+        fsSettings.getFs().setUpdateRate(TimeValue.timeValueSeconds(1));
+        crawler = startCrawler(fsSettings, Duration.ofMinutes(10));
+
+        // Do not remove the source files until the initial crawl has indexed every document.
+        String index = fsSettings.getElasticsearch().getIndex();
+        countTestHelper(
+                new ESSearchRequest().withIndex(index),
+                filesToDelete + 1L,
+                currentTestResourceDir,
+                Duration.ofMinutes(10));
+
+        // Capture FsParser output before pausing so the test can distinguish a requested pause from the crawler thread
+        // actually reaching its wait point, as well as verify the capped-query guidance after resuming.
+        StringWriter capturedLogs = new StringWriter();
+        String appenderName = "directory-query-limit-" + getCrawlerName();
+        LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
+        Configuration configuration = loggerContext.getConfiguration();
+        WriterAppender appender = WriterAppender.newBuilder()
+                .setName(appenderName)
+                .setTarget(capturedLogs)
+                .setLayout(PatternLayout.newBuilder().withPattern("%p %m%n").build())
+                .build();
+        appender.start();
+        configuration.addAppender(appender);
+
+        LoggerConfig parserLogger = configuration.getLoggerConfig(FsParser.class.getName());
+        parserLogger.addAppender(appender, Level.INFO, null);
+        loggerContext.updateLoggers();
+
+        try {
+            // pause() changes the public state immediately. Wait for the crawler-thread message before deleting files
+            // so the initial scan cannot still be reading their metadata on slower filesystems.
+            crawler.getFsParser().pause();
+            Awaitility.await()
+                    .alias("crawler thread paused before deleting files")
+                    .atMost(Duration.ofMinutes(1))
+                    .until(() -> capturedLogs.toString().contains("Crawler is paused. Waiting for resume"));
+
+            // Deleting the subdirectory makes FSCrawler process a capped deletion query on the next scan.
+            deleteRecursively(directoryToDelete);
+            capturedLogs.getBuffer().setLength(0);
+            crawler.getFsParser().resume();
+
+            // Later one-second scans must finish the cleanup, leaving only the marker document in Elasticsearch.
+            countTestHelper(new ESSearchRequest().withIndex(index), 1L, currentTestResourceDir, Duration.ofMinutes(10));
+            countTestHelper(
+                    new ESSearchRequest()
+                            .withIndex(index)
+                            .withESQuery(new ESTermQuery(
+                                    "file.filename", marker.getFileName().toString())),
+                    1L,
+                    currentTestResourceDir);
+
+            // Reaching one document proves all necessary scans ran, so the capped first query must also have emitted
+            // the operator guidance. Assert it directly rather than allowing empty follow-up scans for five minutes.
+            Assertions.assertThat(capturedLogs.toString())
+                    .contains("INFO Deletion query for folder")
+                    .contains("returned the maximum [10000] files")
+                    .contains("remaining entries can be deleted on a later crawl")
+                    .contains("admin/status.html#forcing-a-new-scan");
+        } finally {
+            parserLogger.removeAppender(appenderName);
+            appender.stop();
+            configuration.getAppenders().remove(appenderName);
+            loggerContext.updateLoggers();
+        }
+    }
 
     @Test
     void remove_deleted_enabled() throws Exception {
