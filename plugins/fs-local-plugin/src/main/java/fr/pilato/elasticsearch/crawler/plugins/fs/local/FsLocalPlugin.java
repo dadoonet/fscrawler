@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -172,8 +173,10 @@ public class FsLocalPlugin extends FsCrawlerPlugin {
                 paths.filter(p -> fsSettings.getFs().isFollowSymlinks() || !Files.isSymbolicLink(p))
                         .sorted(PATH_COMPARATOR.reversed())
                         .forEach(p -> result.add(toFileAbstractModel(dir, p.toFile())));
-            } catch (IOException e) {
-                logger.warn("Error listing files in {}: {}", dir, e.getMessage());
+            } catch (IOException | UncheckedIOException | SecurityException e) {
+                // An unreadable or incomplete listing must never look like an empty directory:
+                // the crawler uses this result to reconcile deletions in Elasticsearch.
+                throw new FsCrawlerPluginException("Can not list directory " + dir, e);
             }
 
             logger.debug("{} local files found", result.size());

@@ -648,6 +648,14 @@ fs:
   continue_on_error: true
 ```
 
+If a directory cannot be listed completely (for example, a Windows share is unavailable
+or access is denied), FSCrawler preserves its indexed documents and keeps the directory
+pending. With `continue_on_error: true`, other accessible directories are processed,
+but the scan is reported as failed and its successful-scan timestamp is not advanced.
+Failed listings are attempted once per scan and retried on the next scheduled run or
+after restarting the job. With `continue_on_error: false`, the scan stops at the first
+listing failure. Successfully listed empty directories still reconcile deletions normally.
+
 ## Language detection
 
 You can ask for language detection using `lang_detect` option:

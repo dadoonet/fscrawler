@@ -152,6 +152,9 @@ public interface FsCrawlerExtensionFsProvider extends ExtensionPoint, AutoClosea
     /**
      * List all files and subdirectories in the given directory.
      *
+     * <p>Return an empty collection only after a successful enumeration of an empty directory. Never return null or a
+     * partial listing on failure: callers use these results to reconcile deletions. Propagate listing failures instead.
+     *
      * @param directory the directory to list
      * @return a collection of file abstract models representing the directory contents
      * @throws FsCrawlerPluginException if an error occurs while listing the directory or if crawling is not supported

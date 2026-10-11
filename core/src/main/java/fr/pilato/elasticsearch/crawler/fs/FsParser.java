@@ -66,9 +66,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -697,6 +699,8 @@ public class FsParser implements Runnable, AutoCloseable {
 
     /** Process directories using a work queue with checkpoint support */
     private void processDirectoriesWithCheckpoint(Instant lastScanDate, ScanStatistic stats) throws Exception {
+        Set<String> failedListings = new HashSet<>();
+        DirectoryListingException listingFailure = null;
         Span traverseSpan = FsCrawlerTracing.startSpan("fscrawler.directory.traverse");
         try (Scope ignored = traverseSpan.makeCurrent()) {
             traverseSpan.setAttribute("scan.id", String.valueOf(runNumber.get()));
@@ -716,6 +720,16 @@ public class FsParser implements Runnable, AutoCloseable {
                 String currentPath = checkpoint.get().pollNextPath();
                 if (currentPath == null) {
                     break;
+                }
+
+                // Failed paths stay in the persisted queue, but are attempted only once
+                // per scan so continue_on_error cannot spin on an unavailable share.
+                if (failedListings.contains(currentPath)) {
+                    checkpoint.get().addPath(currentPath);
+                    if (checkpoint.get().getPendingPaths().stream().allMatch(failedListings::contains)) {
+                        break;
+                    }
+                    continue;
                 }
 
                 // Skip if already completed (in case of resume with duplicates)
@@ -743,6 +757,22 @@ public class FsParser implements Runnable, AutoCloseable {
                     if (e instanceof NetworkErrorRecoveryException) {
                         throw e;
                     }
+                    if (e instanceof DirectoryListingException failure) {
+                        checkpoint.get().addPath(currentPath);
+                        checkpoint.get().setLastError(failure.getMessage());
+                        saveCheckpoint();
+                        if (!fsSettings.getFs().isContinueOnError()) {
+                            throw failure;
+                        }
+                        failedListings.add(currentPath);
+                        if (listingFailure == null) {
+                            listingFailure = failure;
+                        }
+                        logger.warn(
+                                "{}; keeping directory pending and continuing with other directories",
+                                failure.getMessage());
+                        continue;
+                    }
                     // Network errors (including FsCrawlerPluginException with SocketException etc. cause) get retry
                     if (isNetworkError(e)) {
                         handleNetworkError(e, currentPath);
@@ -763,8 +793,28 @@ public class FsParser implements Runnable, AutoCloseable {
                     }
                 }
             }
+            if (listingFailure != null) {
+                // Commit successful work, but do not advance the scan watermark or
+                // report COMPLETED while any listing is still unresolved.
+                documentService.flushAndEnsureBulkSucceeded();
+                throw listingFailure;
+            }
         } finally {
             traverseSpan.end();
+        }
+    }
+
+    private Collection<FileAbstractModel> listDirectory(String path) throws DirectoryListingException {
+        try {
+            return Objects.requireNonNull(crawlerPlugin.getFiles(path), "Provider returned a null directory listing");
+        } catch (RuntimeException e) {
+            throw new DirectoryListingException(path, e);
+        }
+    }
+
+    private static class DirectoryListingException extends IOException {
+        DirectoryListingException(String path, RuntimeException cause) {
+            super("Could not completely list directory [" + path + "]: " + cause.getMessage(), cause);
         }
     }
 
@@ -885,7 +935,7 @@ public class FsParser implements Runnable, AutoCloseable {
             // state.
             int indexedInThisPass = 0;
 
-            final Collection<FileAbstractModel> children = crawlerPlugin.getFiles(filepath);
+            final Collection<FileAbstractModel> children = listDirectory(filepath);
             Collection<String> fsFiles = new ArrayList<>();
             Collection<String> fsFolders = new ArrayList<>();
 
