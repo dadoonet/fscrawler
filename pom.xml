@@ -67,7 +67,7 @@
 
         <pl4j.version>3.16.0</pl4j.version>
 
-        <gestalt.version>0.38.1</gestalt.version>
+        <gestalt.version>0.39.0</gestalt.version>
         <snakeyaml.version>2.7</snakeyaml.version>
 
         <tika.version>4.1.0</tika.version>
