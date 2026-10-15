@@ -1,0 +1,39 @@
+{
+  "name": "FSCrawler",
+  "image": "mcr.microsoft.com/devcontainers/java:25",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "none",
+      "installMaven": true,
+      "installGradle": false
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": true
+    }
+  },
+  "forwardPorts": [9200, 5601],
+  "portsAttributes": {
+    "9200": {
+      "label": "Elasticsearch",
+      "onAutoForward": "notify"
+    },
+    "5601": {
+      "label": "Kibana (optional)",
+      "onAutoForward": "silent"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-maven"
+      ],
+      "settings": {
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.compile.nullAnalysis.mode": "automatic"
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}
