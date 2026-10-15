@@ -11,4 +11,11 @@
     <name>FSCrawler Local Plugin</name>
     <description>FSCrawler Local Plugin</description>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>

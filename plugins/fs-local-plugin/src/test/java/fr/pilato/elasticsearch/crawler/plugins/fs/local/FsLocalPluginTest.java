@@ -28,6 +28,10 @@ import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerExtensionFsProvider;
+import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -35,9 +39,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 class FsLocalPluginTest extends AbstractFSCrawlerTestCase {
 
@@ -107,5 +115,56 @@ class FsLocalPluginTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThatThrownBy(() -> plugin.start(fsSettings, Map.of(extraField, extraValue)))
                 .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
                 .hasMessageContaining("local url is missing");
+    }
+
+    @Test
+    void missingDirectoryIsNotAnEmptyListing() {
+        Path missing = testTmpDir.resolve(randomValue());
+        Assertions.assertThatThrownBy(() -> localPlugin.getFiles(missing.toString()))
+                .isInstanceOf(FsCrawlerPluginException.class)
+                .hasCauseInstanceOf(IOException.class)
+                .hasMessageContaining(missing.toString());
+    }
+
+    @Test
+    void successfullyListedEmptyDirectoryIsEmpty() throws Exception {
+        Path empty = Files.createDirectory(testTmpDir.resolve(randomValue()));
+        Assertions.assertThat(localPlugin.getFiles(empty.toString())).isEmpty();
+    }
+
+    @Test
+    void accessDeniedIsNotAnEmptyListing() {
+        Path directory = testTmpDir.resolve(randomValue());
+        AccessDeniedException failure = new AccessDeniedException(directory.toString());
+        try (MockedStatic<Files> files = Mockito.mockStatic(Files.class)) {
+            files.when(() -> Files.list(directory)).thenThrow(failure);
+            Assertions.assertThatThrownBy(() -> localPlugin.getFiles(directory.toString()))
+                    .isInstanceOf(FsCrawlerPluginException.class)
+                    .hasCause(failure);
+        }
+    }
+
+    @Test
+    void interruptedEnumerationFailsAndClosesStream() {
+        Path directory = testTmpDir.resolve(randomValue());
+        Path child = directory.resolve(randomValue());
+        IOException failure = new IOException("The specified network name is no longer available");
+        AtomicBoolean closed = new AtomicBoolean();
+        Stream<Path> entries = Stream.concat(Stream.of(child), Stream.<Path>generate(() -> {
+                    throw new UncheckedIOException(failure);
+                }))
+                .onClose(() -> closed.set(true));
+        try (MockedStatic<Files> files = Mockito.mockStatic(Files.class)) {
+            files.when(() -> Files.list(directory)).thenReturn(entries);
+            Assertions.assertThatThrownBy(() -> localPlugin.getFiles(directory.toString()))
+                    .isInstanceOf(FsCrawlerPluginException.class)
+                    .hasRootCause(failure);
+            Assertions.assertThat(closed).isTrue();
+        }
+    }
+
+    private String randomValue() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 16)
+                .toLowerCase(Locale.ROOT);
     }
 }
