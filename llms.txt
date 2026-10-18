@@ -20,6 +20,7 @@ For copy-paste prompts to use with ChatGPT, Claude, or other assistants, see the
 
 ## User guide
 
+- [Glossary](https://fscrawler.readthedocs.io/en/latest/glossary.html.md): Technical terms and FSCrawler concepts, including indexing, extraction, OCR and checkpoints.
 - [Crawler options](https://fscrawler.readthedocs.io/en/latest/user/options.html.md): Update rate, `--loop`, and `--restart`.
 - [Supported formats](https://fscrawler.readthedocs.io/en/latest/user/formats.html.md): Document types handled by Apache Tika.
 - [OCR](https://fscrawler.readthedocs.io/en/latest/user/ocr.html.md): Optical character recognition (Tesseract) and optional VLM OCR.
