@@ -50,6 +50,7 @@ user/ocr
 user/rest
 user/formats
 user/tips
+glossary
 ```
 
 ```{toctree}

@@ -15,6 +15,17 @@ To enable it, set the `OTEL_ENABLED=true` environment variable before starting F
 
 ## How it works
 
+**OTel** is short for **OpenTelemetry**, a framework for collecting and exporting
+monitoring data. **EDOT** means **Elastic Distributions of OpenTelemetry**.
+The **EDOT Collector** receives telemetry from applications, processes it and
+forwards it to a configured backend. In the Docker example below, FSCrawler sends
+traces to the collector, which forwards them to Elasticsearch; Kibana provides
+the interface for exploring them. These traces describe crawler activity and
+timings, while FSCrawler indexes file content separately.
+
+See the glossary entries for {term}`OTel (OpenTelemetry)`, {term}`EDOT`,
+{term}`EDOT Collector` and {term}`OTLP`.
+
 FSCrawler uses a hybrid instrumentation approach:
 
 * **Auto-instrumentation**: The `elastic-otel-javaagent` covers HTTP clients,
