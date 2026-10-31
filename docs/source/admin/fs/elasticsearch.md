@@ -755,3 +755,7 @@ GET docs/_search
  }
 }
 ```
+
+Bulk item rejection retries also use these retry duration and delay settings, with
+a maximum of three additional item attempts. See [Bounded bulk item retries](../../dev/bulk-item-retries.md)
+for classification, backoff, completion, and shutdown behavior.

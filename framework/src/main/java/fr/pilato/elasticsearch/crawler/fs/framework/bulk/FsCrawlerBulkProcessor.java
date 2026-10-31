@@ -141,6 +141,14 @@ public class FsCrawlerBulkProcessor<
         return this;
     }
 
+    /** Queue a listener retry without recursively executing another request on the callback stack. */
+    void addRetry(O request) {
+        synchronized (queueLock) {
+            ensureOpen();
+            bulkRequest.add(request);
+        }
+    }
+
     /** Must be called with queueLock held. */
     private void ensureOpen() {
         if (closed) {

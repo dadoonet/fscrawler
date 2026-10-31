@@ -348,7 +348,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                     ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> {
 
         private FailOnBulkErrorListener() {
-            super("es_rejected_execution_exception");
+            super(retryMaxDuration, retryInitialDelay, retryMaxDelay, "es_rejected_execution_exception");
         }
 
         @Override
