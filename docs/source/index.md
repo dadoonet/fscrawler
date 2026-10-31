@@ -84,6 +84,7 @@ dev/build
 dev/doc
 dev/release
 dev/test-fscrawler-cli
+dev/bulk-processing
 ```
 
 ```{toctree}
