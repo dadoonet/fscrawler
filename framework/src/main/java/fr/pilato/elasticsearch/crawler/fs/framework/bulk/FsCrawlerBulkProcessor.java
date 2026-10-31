@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
@@ -52,17 +51,13 @@ public class FsCrawlerBulkProcessor<
     private Q bulkRequest;
     private final Supplier<Q> requestSupplier;
     private final ScheduledExecutorService executor;
-    private volatile boolean closed = false;
+    private boolean closed = false;
     private final AtomicLong executionIdGen = new AtomicLong();
-    /** Guards {@link #inFlightExecutions} so {@link #flush()} can wait for timer-triggered bulks to finish. */
-    private final Object inFlightMonitor = new Object();
+    /** Guards queue ownership, lifecycle state, and registration/completion of detached batches. */
+    private final Object queueLock = new Object();
 
     private int inFlightExecutions = 0;
-    /**
-     * When true, only the thread holding {@link #quiesceLock} may start a new bulk execute. The flush-interval timer
-     * and size-triggered flushes from {@link #add} are suppressed so flush+ensure is atomic.
-     */
-    private final AtomicBoolean quiesced = new AtomicBoolean();
+    private boolean quiesced;
     /** Exclusive lock so crawl-end and REST cannot interleave two {@link #flushWhileQuiesced} calls. */
     private final ReentrantLock quiesceLock = new ReentrantLock();
 
@@ -93,24 +88,30 @@ public class FsCrawlerBulkProcessor<
     }
 
     private void internalClose() throws InterruptedException {
-        if (closed) {
-            return;
-        }
-        closed = true;
-
-        if (executor != null) {
-            logger.debug("Closing BulkProcessor");
-            executor.shutdown();
-            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-                logger.warn("We waited for the bulk processor shutdown but it did not close properly. "
-                        + "We might be missing some documents.");
+        quiesceLock.lockInterruptibly();
+        try {
+            synchronized (queueLock) {
+                if (closed) {
+                    return;
+                }
+                closed = true;
+                quiesced = true;
             }
-            logger.debug("BulkProcessor is now closed");
-        }
-
-        if (bulkRequest.numberOfActions() > 0) {
-            logger.debug("Executing [{}] remaining actions", bulkRequest.numberOfActions());
-            execute();
+            if (executor != null) {
+                executor.shutdown();
+            }
+            try {
+                drainAndRun(() -> {});
+            } finally {
+                synchronized (queueLock) {
+                    quiesced = false;
+                }
+            }
+            if (executor != null && !executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                logger.warn("Bulk processor timer did not terminate within 10 seconds");
+            }
+        } finally {
+            quiesceLock.unlock();
         }
     }
 
@@ -120,51 +121,60 @@ public class FsCrawlerBulkProcessor<
      * @param request request to add
      * @return this so we can link methods.
      */
-    public synchronized FsCrawlerBulkProcessor<O, Q, S> add(O request) {
-        ensureOpen();
-        bulkRequest.add(request);
-        executeIfNeeded();
+    public FsCrawlerBulkProcessor<O, Q, S> add(O request) {
+        Q batch = null;
+        synchronized (queueLock) {
+            ensureOpen();
+            bulkRequest.add(request);
+            if (!isQuiescedForOtherThreads() && bulkRequest.isOverTheLimit()) {
+                batch = detachBatch();
+            }
+        }
+        execute(batch);
         return this;
     }
 
+    /** Must be called with queueLock held. */
     private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("bulk process already closed");
         }
     }
 
-    private void executeIfNeeded() {
-        ensureOpen();
-        if (isQuiescedForOtherThreads()) {
-            return;
-        }
-        if (bulkRequest.isOverTheLimit()) {
-            execute();
-        }
-    }
-
     private void executeWhenNeeded() {
-        ensureOpen();
-        if (isQuiescedForOtherThreads()) {
+        Q batch;
+        synchronized (queueLock) {
+            // A scheduled invocation may already be running when close shuts down the executor.
+            if (closed || isQuiescedForOtherThreads()) {
+                return;
+            }
+            batch = detachBatch();
+        }
+        execute(batch);
+    }
+
+    /** Must be called with queueLock held. */
+    private boolean isQuiescedForOtherThreads() {
+        return quiesced && !quiesceLock.isHeldByCurrentThread();
+    }
+
+    /** Atomically detach and register a batch before releasing queueLock. */
+    private Q detachBatch() {
+        if (bulkRequest.numberOfActions() == 0) {
+            return null;
+        }
+        Q batch = bulkRequest;
+        bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
+        inFlightExecutions++;
+        return batch;
+    }
+
+    /** Network I/O and listeners must run without queueLock held. */
+    private void execute(Q br) {
+        if (br == null) {
             return;
         }
-        if (bulkRequest.numberOfActions() > 0) {
-            execute();
-        }
-    }
-
-    private boolean isQuiescedForOtherThreads() {
-        return quiesced.get() && !quiesceLock.isHeldByCurrentThread();
-    }
-
-    private void execute() {
-        final Q br = this.bulkRequest;
-        this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         final long executionId = executionIdGen.incrementAndGet();
-
-        synchronized (inFlightMonitor) {
-            inFlightExecutions++;
-        }
 
         Span bulkSpan = FsCrawlerTracing.startSpan("fscrawler.es.bulk");
         bulkSpan.setAttribute("es.bulk.actions", br.numberOfActions());
@@ -186,9 +196,9 @@ public class FsCrawlerBulkProcessor<
             }
         } finally {
             bulkSpan.end();
-            synchronized (inFlightMonitor) {
+            synchronized (queueLock) {
                 inFlightExecutions--;
-                inFlightMonitor.notifyAll();
+                queueLock.notifyAll();
             }
         }
     }
@@ -209,48 +219,53 @@ public class FsCrawlerBulkProcessor<
      * timer) to finish. No-op HTTP when the queue is empty so callers do not POST an empty {@code _bulk} body.
      */
     public void flush() {
-        executeWhenNeeded();
-        awaitInFlightExecutions();
+        flushWhileQuiesced(() -> {});
     }
 
     /**
-     * Exclusively suppress concurrent timer/size-triggered executes, drain until idle (including retry re-queues), then
-     * run {@code action} before releasing quiesce. Closes the race where a bulk starts after {@link #flush()} and fails
-     * after ensure.
-     *
-     * @param action runs after the processor is idle (no pending actions, no in-flight execute)
+     * Drain pending and in-flight batches (including listener retries), then run the action while idle. Queue changes
+     * and timer/size-triggered detachment cannot race the final idle check or the action.
      */
     public void flushWhileQuiesced(Runnable action) {
         quiesceLock.lock();
         try {
-            quiesced.set(true);
+            synchronized (queueLock) {
+                ensureOpen();
+                quiesced = true;
+            }
             try {
-                // Drain until empty: afterBulk retry listeners may re-queue under the bulk-size threshold.
-                do {
-                    executeWhenNeeded();
-                    awaitInFlightExecutions();
-                } while (bulkRequest.numberOfActions() > 0);
-                action.run();
+                drainAndRun(action);
             } finally {
-                quiesced.set(false);
+                synchronized (queueLock) {
+                    quiesced = false;
+                }
             }
         } finally {
             quiesceLock.unlock();
         }
     }
 
-    private void awaitInFlightExecutions() {
-        synchronized (inFlightMonitor) {
-            while (inFlightExecutions > 0) {
-                try {
-                    inFlightMonitor.wait();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    // Do not return while a bulk is still in flight: callers would run ensureBulkSucceeded()
-                    // too early and miss a fatal HTTP failure recorded by the completing bulk.
-                    throw new IllegalStateException("Interrupted while waiting for in-flight bulk execution(s)", e);
+    /** Called by the quiesce owner; wait releases queueLock so completing listeners can enqueue retries. */
+    private void drainAndRun(Runnable action) {
+        while (true) {
+            Q batch;
+            synchronized (queueLock) {
+                if (inFlightExecutions > 0) {
+                    try {
+                        queueLock.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new IllegalStateException("Interrupted while waiting for in-flight bulk execution(s)", e);
+                    }
+                    continue;
+                }
+                batch = detachBatch();
+                if (batch == null) {
+                    action.run();
+                    return;
                 }
             }
+            execute(batch);
         }
     }
 
