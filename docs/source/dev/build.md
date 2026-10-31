@@ -217,6 +217,114 @@ To run the tests in a more exhaustive way, you can use the `nightly` profile whi
 mvn verify -Pnightly
 ```
 
+## Verifying Tika metadata expectations
+
+The Word, PDF and JPEG checks in `TikaDocParserTest` assert both the exact number
+of raw metadata entries and their expected keys/values. Update these expectations
+only after checking the fixture and parser behaviour; changing a count alone can
+hide a missing field.
+
+### Word and PDF fixture evidence
+
+For `test.doc`, an independent OLE property reader finds stored line and paragraph
+counts of 3 and 2. Tika 4.2.0 deliberately exposes these properties as
+`meta:line-count` and `meta:paragraph-count` ([TIKA-4694 in the release notes](https://github.com/apache/tika/blob/4.2.0/CHANGES.txt)).
+Its [SummaryExtractor](https://github.com/apache/tika/blob/4.2.0/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-microsoft-module/src/main/java/org/apache/tika/parser/microsoft/SummaryExtractor.java)
+reads the corresponding document-summary properties. With the same fixture,
+source, JDK, seed, locale and timezone, Tika 4.1.0 returns 28 entries and 4.2.0
+returns 30; these are the only two added fields, with no existing value changes.
+The test expects 30 and explicitly checks both new values.
+
+For `test.pdf`, independent inspection finds two pages, a structure tree, the
+document's marked-content flag, and marked-content sequences on each page.
+Tika's [PDFMarkedContent2XHTML](https://github.com/apache/tika/blob/4.2.0/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-pdf-module/src/main/java/org/apache/tika/parser/pdf/PDFMarkedContent2XHTML.java)
+records tagged and fallback page counts. Both Tika 4.1.0 and 4.2.0 return
+`pdf:marked-content-pages-tagged=2` and `pdf:marked-content-pages-fallback=0`.
+These are the only two fields beyond the former 47-entry expectation; the other
+asserted values match. The test expects 49 and checks both counters explicitly.
+
+### Why JPEG metadata depends on the input and configuration
+
+The `test.jpg` fixture is 41,426 bytes and contains a 3,888-byte ICC profile with
+17 tag entries. Reading the ICC tag table directly confirms three `curv` tags
+(`rTRC`, `gTRC`, `bTRC`) and three `para` tags (`aarg`, `aagg`, `aabg`).
+Their presence in the file does not mean Tika exposes them by default.
+
+Tika 4.1.0 intentionally stopped emitting ICC tone curves and lookup tables by
+default ([TIKA-4902 in the release notes](https://github.com/apache/tika/blob/4.1.0/CHANGES.txt)).
+The [ImageMetadataConfig default](https://github.com/apache/tika/blob/4.2.0/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-image-module/src/main/java/org/apache/tika/parser/image/ImageMetadataConfig.java)
+is `includeIccCurvesAndLuts=false`; enabling it restores these six fields:
+
+* `icc:Red TRC`, `icc:Green TRC`, `icc:Blue TRC`;
+* `icc:Red Parametric TRC`, `icc:Green Parametric TRC`, `icc:Blue Parametric TRC`.
+
+The [JPEG metadata extractor](https://github.com/apache/tika/blob/4.2.0/tika-parsers/tika-parsers-standard/tika-parsers-standard-modules/tika-parser-image-module/src/main/java/org/apache/tika/parser/image/ImageMetadataExtractor.java)
+reads a file when its `TikaInputStream` already has one, otherwise it reads the
+stream directly. `img:File Name`, `img:File Size` and `img:File Modified Date`
+describe that backing file, not embedded image metadata. A file-backed
+`TikaInputStream` also supplies `Content-Length`.
+
+A four-way Tika 4.2.0 experiment with the same JPEG confirmed:
+
+| Input | ICC curves enabled | Added fields compared with the default stream |
+|-------|--------------------|-----------------------------------------------|
+| Stream | No | None |
+| Stream | Yes | The six ICC curve fields |
+| File | No | `Content-Length` and the three `img:File` fields |
+| File | Yes | All ten fields above |
+
+No other metadata values changed across those comparisons. The direct-parser
+experiment has fewer parser bookkeeping fields than the full FSCrawler pipeline;
+its absolute counts should not be substituted into the FSCrawler test.
+
+The existing FSCrawler JPEG test parses a resource stream with OCR disabled and
+the default image configuration. Both Tika 4.1.0 and 4.2.0 return 56 raw entries.
+The corrected test preserves all 56 remaining field checks and explicitly asserts
+that the ten inapplicable fields are absent. It does not disable colour-profile
+extraction, enable optional curve dumps, or change production parsing behaviour.
+
+### Reproducing the focused checks
+
+Historical validation with the same fixture hashes returned:
+
+| Tika version | Word entries | PDF entries | JPEG entries |
+|--------------|--------------|-------------|--------------|
+| 4.0.0 | 28 | 47 | 66 |
+| 4.1.0 | 28 | 49 | 56 |
+| 4.2.0 | 30 | 49 | 56 |
+
+The 4.1.0/4.2.0 comparison used the same FSCrawler source revision (`4b914438`).
+Current FSCrawler uses page-parser APIs absent from Tika 4.0.0, so the 4.0.0
+historical run used its compatible pre-upgrade revision (`0c244410`). All three
+original assertions passed there. This older-source comparison is historical
+corroboration; the parser sources and documented defaults explain the changes.
+
+Run from the repository root:
+
+```shell
+mvn test -pl tika -am "-Dtest=TikaDocParserTest#extractFromDoc+extractFromPdf+extractFromJpg" "-DskipIntegTests" "-Ddocker.skip"
+```
+
+Use JDK 21 on both Windows and Linux when comparing platform behaviour. The
+metadata investigation fixed the seed (`4C95134AF6B8B696`), locale (`en-US`) and
+timezone (`UTC`), and checked fixture SHA-256 hashes between version runs.
+Results are in `tika/target/surefire-reports`. Run the remaining Tika unit tests
+after changing these expectations; unavailable OCR tools can produce intentional
+skips, which should be reported separately from passes.
+
+Validation on 31 October 2026 ran all five Tika unit-test classes (58 reported
+tests). Windows/Temurin 21.0.13 and Linux/Temurin 21.0.9 through Podman each
+finished with 47 passed, 11 OCR-dependent skips and no failures or errors. The
+three metadata checks passed on both platforms. The full repository and its
+integration suite were not run for this test-only correction.
+
+On Windows, the first full run encountered the separate WireMock loopback startup
+failure. Setting `java.io.tmpdir` and `jdk.net.unixdomain.tmpdir` to a short local
+temporary directory for the test process allowed that test to run; the successful
+Windows full-suite result includes this environment workaround. The metadata
+correction does not resolve the socket-startup issue itself. The Linux result
+used a clean build of the final source without the diagnostic capture code.
+
 ## Code formatting (Spotless)
 
 The project uses [Spotless](https://github.com/diffplug/spotless) to enforce consistent code formatting
