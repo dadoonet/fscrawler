@@ -287,6 +287,9 @@ the thread's interrupt status and reports an `IOException`. The processor stops
 accepting new operations, but a later `close()` call can finish draining work
 accepted before shutdown. Call it from a thread that is no longer interrupted.
 
+For the locking design, shutdown behavior, and regression tests, see
+[Bulk processing, concurrency, and shutdown](../../dev/bulk-processing.md).
+
 Whole `_bulk` HTTP calls are retried on `429` (Too Many Requests) and `5xx` responses, using the
 same backoff policy as search requests. If retries are exhausted, the failure is logged and the
 crawl run is marked as `ERROR` in the checkpoint (documents are not silently dropped).
