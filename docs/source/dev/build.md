@@ -160,6 +160,76 @@ mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=
  ```
 ````
 
+### Tika raw-metadata count expectations and history
+
+The expected raw-metadata counts for the Word, PDF and JPEG fixtures are literal
+AssertJ `hasSize` assertions in
+`tika/src/test/java/fr/pilato/elasticsearch/crawler/fs/tika/TikaDocParserTest.java`.
+They check the number of entries in `doc.getMeta().getRaw()`, not the document's
+file size or extracted text length. They are test expectations, not configurable
+FSCrawler settings.
+
+At upstream revision `4b9144387ec5177c2498ad49f157eaf9cb14cd7e`, the assertions are:
+
+| Test method | Fixture | Expected entries | Source at that revision |
+|-------------|---------|------------------|-------------------------|
+| `extractFromDoc` | `test.doc` | 28 | [Line 226](https://github.com/dadoonet/fscrawler/blob/4b9144387ec5177c2498ad49f157eaf9cb14cd7e/tika/src/test/java/fr/pilato/elasticsearch/crawler/fs/tika/TikaDocParserTest.java#L226) |
+| `extractFromPdf` | `test.pdf` | 47 | [Line 468](https://github.com/dadoonet/fscrawler/blob/4b9144387ec5177c2498ad49f157eaf9cb14cd7e/tika/src/test/java/fr/pilato/elasticsearch/crawler/fs/tika/TikaDocParserTest.java#L468) |
+| `extractFromJpg` | `test.jpg` | 66 | [Line 545](https://github.com/dadoonet/fscrawler/blob/4b9144387ec5177c2498ad49f157eaf9cb14cd7e/tika/src/test/java/fr/pilato/elasticsearch/crawler/fs/tika/TikaDocParserTest.java#L545) |
+
+The following milestones trace the current assertions and their immediate
+predecessors. Dates in this table are Git author dates; a change can have a later
+committer or merge date.
+
+| Author date | Change | Word | PDF | JPEG |
+|-------------|--------|------|-----|------|
+| 4 April 2025 | [Switch to AssertJ (`484b2758`)](https://github.com/dadoonet/fscrawler/commit/484b2758bebf762286261da2d79726acd6a9508e): establishes the AssertJ form of the Word/PDF count checks | 25 | 42 | Not introduced by this change |
+| 11 November 2025 | [Add Image parsers (`1e1a72b1`)](https://github.com/dadoonet/fscrawler/commit/1e1a72b164fd1f4a04fb635fb6976fe36afb3364): adds the JPEG count assertion | 25 | 42 | 64 |
+| 7 July 2026 | [Update to Tika 4 (`897aff27`)](https://github.com/dadoonet/fscrawler/commit/897aff27e41eeb2241537951ba400929b3a46c68): changes all three counts and updates expected metadata entries | 25 → 28 | 42 → 47 | 64 → 66 |
+| 24 August 2026 | [Fix some metadata that have been renamed (`22ebb023`)](https://github.com/dadoonet/fscrawler/commit/22ebb0238fd0c0f7103033efb9c743c9f6844da6): updates metadata keys while retaining these counts | 28 | 47 | 66 |
+| 29 October 2026 | [Upgrade Tika 4.1.0 to 4.2.0 (`3fd421cc`)](https://github.com/dadoonet/fscrawler/commit/3fd421cc26718c9508c6b632e18fc4bdbd41070c), merged in [PR #2601](https://github.com/dadoonet/fscrawler/pull/2601): changes the dependency and documented version, not these tests | 28 | 47 | 66 |
+
+The Tika 4 update was authored on 7 July 2026 but has a committer date of
+24 August 2026. Git blame attributes all three current `hasSize` lines to that
+commit. This distinction explains why an author-date history and a chronological
+integration history can display different dates for the same change.
+
+#### Observed mismatch on Windows and Linux
+
+On 31 October 2026, local validation of unchanged upstream revision `4b914438`
+reported the same three count failures on Windows (Microsoft JDK 25.0.2) and
+Linux through Podman (Temurin JDK 21.0.9), using Maven 3.9.11:
+
+| Fixture | Expected | Windows actual | Linux actual |
+|---------|----------|----------------|--------------|
+| Word | 28 | 30 | 30 |
+| PDF | 47 | 49 | 49 |
+| JPEG | 66 | 56 | 56 |
+
+The Linux run selected only these three methods, with no failures ignored. The
+Word and PDF tests passed their preceding text, content-type and basic metadata
+checks before failing on the raw-map size. The JPEG test disables OCR and also
+expects specific fields that are absent from the observed map, so changing only
+the expected count would not resolve all of its assertions.
+
+These observations establish that the count mismatches are not Windows-specific.
+They do not establish which dependency change first caused them, whether the
+observed metadata is correct, or whether macOS behaves the same way. In particular,
+the Tika 4.2.0 upgrade is historical context, not a proven cause. This documentation
+does not change the assertions or production parsing behaviour.
+
+To reproduce the focused checks from the repository root:
+
+```shell
+mvn test -pl tika -am "-Dtest=TikaDocParserTest#extractFromDoc+extractFromPdf+extractFromJpg" "-DskipIntegTests" "-Ddocker.skip"
+```
+
+The Linux validation used the `maven:3.9.11-eclipse-temurin-21` image, source copied
+into the container's native filesystem, and `-Dspotless.skip` because the source
+archive did not include Git metadata. Results are written to
+`tika/target/surefire-reports`. This focused command does not run the full Tika or
+repository test suite.
+
 ### Changing the REST port
 
 By default, FS crawler will run the integration tests using a randomly chosen port for the REST service.
