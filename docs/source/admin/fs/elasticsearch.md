@@ -277,6 +277,11 @@ elasticsearch:
   flush_interval: "2s"
 ```
 
+The crawler and REST uploads share the bulk queue. Timer-based and size-based
+flushes coordinate batch ownership so an operation cannot be lost or submitted
+twice because two threads rotate the queue at the same time. Explicit flushes
+wait for pending batches and in-flight bulk requests before checking their outcome.
+
 Whole `_bulk` HTTP calls are retried on `429` (Too Many Requests) and `5xx` responses, using the
 same backoff policy as search requests. If retries are exhausted, the failure is logged and the
 crawl run is marked as `ERROR` in the checkpoint (documents are not silently dropped).
