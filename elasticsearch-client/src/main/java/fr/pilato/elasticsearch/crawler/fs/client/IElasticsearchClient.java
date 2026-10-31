@@ -218,7 +218,7 @@ public interface IElasticsearchClient extends Closeable {
     void flushAndEnsureBulkSucceededSince(long generation) throws ElasticsearchClientException;
 
     /**
-     * Throws if a previous bulk request failed after HTTP retries were exhausted. Does <b>not</b> clear the recorded
+     * Throws if a terminal item failure or whole-request failure was recorded. Does <b>not</b> clear the recorded
      * failure (so concurrent callers — e.g. crawl + REST — all observe it). Clear explicitly with
      * {@link #clearFatalBulkFailure()} at the start of a crawl run.
      *
