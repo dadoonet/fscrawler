@@ -241,3 +241,6 @@ The same class and seed also passed on the saved unchanged source: two passed,
 one skipped. The intermittent cause remains unresolved. These focused passes do
 not erase the full-run error or prove that timing-sensitive interactions cannot
 recur.
+
+The subsequent BUG-05 change now addresses the retry-policy limitations described
+in this historical BUG-04 record. See [Bounded bulk item retries](bulk-item-retries.md).

@@ -202,6 +202,92 @@ class ElasticsearchBulkItemFailureTest extends AbstractFSCrawlerTestCase {
         WireMock.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/" + index + "/_bulk")));
     }
 
+    @Test
+    void structuredRejectionRetriesWithoutTypeInReason() throws Exception {
+        String scenario = randomText();
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                .inScenario(scenario)
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willSetStateTo("ok")
+                .willReturn(WireMock.okJson(items(failure(id, "es_rejected_execution_exception", "queue full")))));
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                .inScenario(scenario)
+                .whenScenarioStateIs("ok")
+                .willReturn(WireMock.okJson(items(success(id)))));
+        try (var client = startClient()) {
+            client.indexRawJson(index, id, "{}", null);
+            client.flushAndEnsureBulkSucceeded();
+        }
+        WireMock.verify(2, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/" + index + "/_bulk")));
+    }
+
+    @Test
+    void rejectionRetriesAreBounded() throws Exception {
+        // A finite sixth-response success lets the old implementation terminate safely.
+        String scenario = randomText();
+        for (int attempt = 0; attempt < 6; attempt++) {
+            WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                    .inScenario(scenario)
+                    .whenScenarioStateIs(attempt == 0 ? Scenario.STARTED : "try" + attempt)
+                    .willSetStateTo("try" + (attempt + 1))
+                    .willReturn(WireMock.okJson(items(attempt == 5 ? success(id) : rejection(id)))));
+        }
+        try (var client = startClient()) {
+            client.indexRawJson(index, id, "{}", null);
+            Assertions.assertThatThrownBy(client::flushAndEnsureBulkSucceeded)
+                    .isInstanceOf(ElasticsearchClientException.class);
+        }
+        WireMock.verify(4, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/" + index + "/_bulk")));
+    }
+
+    @Test
+    void permanentErrorMentioningRejectionIsNotRetried() throws Exception {
+        respond(items(failure(id, "mapper_parsing_exception", "es_rejected_execution_exception in invalid field")));
+        try (var client = startClient()) {
+            client.indexRawJson(index, id, "{}", null);
+            // Old reason matching would repeat indefinitely; make the next response successful.
+            WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                    .inScenario("permanent")
+                    .whenScenarioStateIs(Scenario.STARTED)
+                    .willSetStateTo("ok")
+                    .willReturn(WireMock.okJson(
+                            items(failure(id, "mapper_parsing_exception", "es_rejected_execution_exception")))));
+            WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                    .inScenario("permanent")
+                    .whenScenarioStateIs("ok")
+                    .willReturn(WireMock.okJson(items(success(id)))));
+            Assertions.assertThatThrownBy(client::flushAndEnsureBulkSucceeded)
+                    .isInstanceOf(ElasticsearchClientException.class);
+        }
+        WireMock.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/" + index + "/_bulk")));
+    }
+
+    @Test
+    void repeatedIdRetriesTheRejectedPayloadOnly() throws Exception {
+        String first = randomText();
+        String second = randomText();
+        String scenario = randomText();
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                .inScenario(scenario)
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willSetStateTo("ok")
+                .willReturn(WireMock.okJson(items(success(id), rejection(id)))));
+        WireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                .inScenario(scenario)
+                .whenScenarioStateIs("ok")
+                .willReturn(WireMock.okJson(items(success(id)))));
+        try (var client = startClient()) {
+            client.indexRawJson(index, id, "{\"value\":\"" + first + "\"}", null);
+            client.indexRawJson(index, id, "{\"value\":\"" + second + "\"}", null);
+            client.flushAndEnsureBulkSucceeded();
+        }
+        WireMock.verify(
+                1,
+                WireMock.postRequestedFor(WireMock.urlPathEqualTo("/" + index + "/_bulk"))
+                        .withRequestBody(WireMock.containing(second))
+                        .withRequestBody(WireMock.notMatching("(?s).*" + first + ".*")));
+    }
+
     private ElasticsearchClient startClient() throws Exception {
         return startClient(BulkOperation.INDEX);
     }
