@@ -52,6 +52,7 @@ public class FsCrawlerBulkProcessor<
     private final Supplier<Q> requestSupplier;
     private final ScheduledExecutorService executor;
     private boolean closed = false;
+    private boolean closeCompleted;
     private final AtomicLong executionIdGen = new AtomicLong();
     /** Guards queue ownership, lifecycle state, and registration/completion of detached batches. */
     private final Object queueLock = new Object();
@@ -91,9 +92,10 @@ public class FsCrawlerBulkProcessor<
         quiesceLock.lockInterruptibly();
         try {
             synchronized (queueLock) {
-                if (closed) {
+                if (closeCompleted) {
                     return;
                 }
+                // An interrupted close still rejects new work, but a later close must finish draining.
                 closed = true;
                 quiesced = true;
             }
@@ -109,6 +111,9 @@ public class FsCrawlerBulkProcessor<
             }
             if (executor != null && !executor.awaitTermination(10, TimeUnit.SECONDS)) {
                 logger.warn("Bulk processor timer did not terminate within 10 seconds");
+            }
+            synchronized (queueLock) {
+                closeCompleted = true;
             }
         } finally {
             quiesceLock.unlock();
@@ -235,6 +240,9 @@ public class FsCrawlerBulkProcessor<
             }
             try {
                 drainAndRun(action);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for in-flight bulk execution(s)", e);
             } finally {
                 synchronized (queueLock) {
                     quiesced = false;
@@ -246,17 +254,12 @@ public class FsCrawlerBulkProcessor<
     }
 
     /** Called by the quiesce owner; wait releases queueLock so completing listeners can enqueue retries. */
-    private void drainAndRun(Runnable action) {
+    private void drainAndRun(Runnable action) throws InterruptedException {
         while (true) {
             Q batch;
             synchronized (queueLock) {
                 if (inFlightExecutions > 0) {
-                    try {
-                        queueLock.wait();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new IllegalStateException("Interrupted while waiting for in-flight bulk execution(s)", e);
-                    }
+                    queueLock.wait();
                     continue;
                 }
                 batch = detachBatch();

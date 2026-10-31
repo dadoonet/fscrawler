@@ -282,6 +282,11 @@ flushes coordinate batch ownership so an operation cannot be lost or submitted
 twice because two threads rotate the queue at the same time. Explicit flushes
 wait for pending batches and in-flight bulk requests before checking their outcome.
 
+If shutdown is interrupted while waiting for a bulk request, `close()` preserves
+the thread's interrupt status and reports an `IOException`. The processor stops
+accepting new operations, but a later `close()` call can finish draining work
+accepted before shutdown. Call it from a thread that is no longer interrupted.
+
 Whole `_bulk` HTTP calls are retried on `429` (Too Many Requests) and `5xx` responses, using the
 same backoff policy as search requests. If retries are exhausted, the failure is logged and the
 crawl run is marked as `ERROR` in the checkpoint (documents are not silently dropped).
