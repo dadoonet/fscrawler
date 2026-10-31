@@ -294,6 +294,14 @@ Whole `_bulk` HTTP calls are retried on `429` (Too Many Requests) and `5xx` resp
 same backoff policy as search requests. If retries are exhausted, the failure is logged and the
 crawl run is marked as `ERROR` in the checkpoint (documents are not silently dropped).
 
+An HTTP-successful bulk response can still contain rejected documents. Terminal
+item failures also make the crawl report `ERROR`; a later successful batch does
+not clear the failure. The checkpoint error includes the failed operation, index,
+document ID, status, error type, and reason. Successfully retried items and
+conflicts accepted by the existing policy do not become terminal failures.
+This reports rejection accurately but does not guarantee automatic replay of
+previously checkpointed files. See [Bulk item failures and crawl completion](../../dev/bulk-item-failures.md).
+
 ```{versionadded} 3.0
 ```
 
