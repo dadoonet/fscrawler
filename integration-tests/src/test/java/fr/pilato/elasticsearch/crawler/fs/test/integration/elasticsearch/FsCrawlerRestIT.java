@@ -534,7 +534,7 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     void uploadDocumentWithS3Plugin() throws Exception {
         logger.info("Starting Minio");
 
-        try (MinIOContainer container = new MinIOContainer("minio/minio")) {
+        try (MinIOContainer container = new MinIOContainer("quay.io/minio/minio")) {
             container.start();
             String s3Url = container.getS3URL();
             String s3Username = container.getUserName();
