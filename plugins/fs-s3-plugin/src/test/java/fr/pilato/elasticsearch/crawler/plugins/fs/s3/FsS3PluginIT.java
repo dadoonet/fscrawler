@@ -63,7 +63,7 @@ class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     @BeforeEach
     void startMinioContainer() {
         logger.info("Starting Minio");
-        container = new MinIOContainer("minio/minio");
+        container = new MinIOContainer("quay.io/minio/minio");
         container.start();
         s3Url = container.getS3URL();
         s3Username = container.getUserName();
