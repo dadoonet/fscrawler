@@ -38,6 +38,64 @@ The final artifacts are available in `distribution/target`.
  ```
 ````
 
+## SSH tests on Windows and Unix filesystems
+
+The SSH plugin separates portable configuration checks from its local SSH server
+and filesystem fixture:
+
+* `FsSshPluginTest` contains six checks for the plugin type, default SFTP URL and
+  port, required hostname and username, blank username rejection, and a missing
+  overlay path. These checks do not start an SSH server or create the SSH filesystem
+  fixture, and run on Windows as well as Linux.
+* `FsSshPluginFileSystemTest` contains the existing `sshPlugin` test, its
+  `@BeforeEach` filesystem/server setup, `@AfterEach` cleanup, and fixture helpers.
+  It checks file listings, Unix permissions and a directory whose name ends in a
+  space. A class-level `@DisabledOnOs(OS.WINDOWS)` prevents both the test and its
+  per-test setup from running on Windows. It remains part of the ordinary Maven
+  unit-test suite on other operating systems.
+
+Previously, all seven checks shared the filesystem setup. On Windows,
+`Path.resolve` rejected the fixture name `"subdir_with_space "` with
+`InvalidPathException` before any test assertions ran. Moving the setup out of the
+configuration test class allows those six checks to execute, rather than skipping
+them. Only the filesystem-dependent check is skipped on Windows, consistent with
+the existing trailing-space SSH integration-test restriction. Production SSH code
+and configuration behaviour are unchanged.
+
+### Run both SSH test classes
+
+Run this command from the repository root. Quoting the test selector also makes it
+suitable for PowerShell:
+
+```shell
+mvn test -pl plugins/fs-ssh-plugin -am "-Dtest=FsSshPlugin*Test" "-DskipIntegTests" "-Ddocker.skip"
+```
+
+This compiles the required modules and selects both SSH test classes. It does not
+run the complete repository test suite. Inspect the SSH module's
+`target/surefire-reports` directory for the individual results.
+
+### Windows and Linux validation
+
+The test split was validated locally on 31 October 2026 with Maven 3.9.11:
+
+| Environment | Passed | Skipped | Failures/errors |
+|-------------|--------|---------|-----------------|
+| Windows, Microsoft JDK 25.0.2 | 6 | 1 (filesystem test) | 0 |
+| Linux through Podman, Temurin JDK 21 | 7 | 0 | 0 |
+
+The unchanged Windows test class first reproduced all seven setup errors. After
+the split, the six portable checks passed on Windows, while Linux exercised all
+seven checks including the real local SSH server and filesystem assertions.
+The Linux run used the `maven:3.9.11-eclipse-temurin-21` image and source copied into
+the container's native filesystem, rather than a Windows-backed source mount.
+This preserves Unix permissions and trailing-space filename behaviour during the
+test. The disposable test container was removed after collecting the reports.
+
+Spotless and Git whitespace checks also passed. These results cover the focused
+SSH tests, not the full unit or integration suite, and do not establish macOS
+coverage or a broader supported-JDK matrix.
+
 ## Integration tests
 
 When running from the command line with `mvn` integration tests are ran against a real
