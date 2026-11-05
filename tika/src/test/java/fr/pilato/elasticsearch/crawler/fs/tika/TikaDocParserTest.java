@@ -223,7 +223,7 @@ class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         Assertions.assertThat(raw)
-                .hasSize(28)
+                .hasSize(30)
                 .containsEntry("Content-Length", "24576")
                 .containsEntry("Content-Type", "application/msword")
                 .containsEntry("cp:category", "test")
@@ -243,7 +243,9 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("meta:character-count", "68")
                 .containsEntry("meta:keyword", "keyword1, keyword2")
                 .containsEntry("meta:last-author", "David Pilato")
+                .containsEntry("meta:line-count", "3")
                 .containsEntry("meta:page-count", "2")
+                .containsEntry("meta:paragraph-count", "2")
                 .containsEntry("meta:word-count", "19")
                 .containsEntry("msoffice:comment-person-display-name", "Unknown")
                 .containsEntry("tk:content-type-magic-detected", "application/msword")
@@ -465,7 +467,7 @@ class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         Assertions.assertThat(raw)
-                .hasSize(47)
+                .hasSize(49)
                 .containsEntry("access-permission:assemble-document", "true")
                 .containsEntry("access-permission:can-modify", "true")
                 .containsEntry("access-permission:can-print", "true")
@@ -500,6 +502,8 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("pdf:has-xfa", "false")
                 .containsEntry("pdf:has-xmp", "false")
                 .containsEntry("pdf:incremental-update-count", "1")
+                .containsEntry("pdf:marked-content-pages-fallback", "0")
+                .containsEntry("pdf:marked-content-pages-tagged", "2")
                 .containsEntry("pdf:num-3d-annotations", "0")
                 .containsEntry("pdf:overall-percentage-unmapped-unicode-chars", "0.0")
                 .containsEntry("pdf:pdf-version", "1.5")
@@ -542,21 +546,16 @@ class TikaDocParserTest extends DocParserTestCase {
 
         Map<String, String> raw = doc.getMeta().getRaw();
         Assertions.assertThat(raw)
-                .hasSize(66)
-                .containsEntry("Content-Length", "41426")
+                .hasSize(56)
                 .containsEntry("Content-Type", "image/jpeg")
                 .containsKey("icc:Apple Multi-language Profile Name")
                 .containsKey("icc:Blue Colorant")
-                .containsKey("icc:Blue Parametric TRC")
-                .containsKey("icc:Blue TRC")
                 .containsKey("icc:Chromatic Adaptation")
                 .containsEntry("icc:Class", "Display Device")
                 .containsEntry("icc:CMM Type", "appl")
                 .containsEntry("icc:Color space", "RGB")
                 .containsEntry("icc:Device manufacturer", "APPL")
                 .containsKey("icc:Green Colorant")
-                .containsKey("icc:Green Parametric TRC")
-                .containsKey("icc:Green TRC")
                 .containsKey("icc:Make And Model")
                 .containsKey("icc:Media White Point")
                 .containsKey("icc:Native Display Information")
@@ -567,8 +566,6 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("icc:Profile Description", "Display")
                 .containsEntry("icc:Profile Size", "3888")
                 .containsKey("icc:Red Colorant")
-                .containsKey("icc:Red Parametric TRC")
-                .containsKey("icc:Red TRC")
                 .containsEntry("icc:Signature", "acsp")
                 .containsEntry("icc:Tag Count", "17")
                 .containsKey("icc:Version")
@@ -591,10 +588,6 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("img:Exif SubIFD:Exif Version", "2.21")
                 .containsEntry("img:Exif SubIFD:FlashPix Version", "1.00")
                 .containsEntry("img:Exif SubIFD:Scene Capture Type", "Standard")
-                .containsKey("img:File Modified Date")
-                .hasEntrySatisfying(
-                        "img:File Name", value -> Assertions.assertThat(value).startsWith("apache-tika-"))
-                .containsEntry("img:File Size", "41426 bytes")
                 .containsEntry("img:Image Height", "622 pixels")
                 .containsEntry("img:Image Width", "982 pixels")
                 .containsEntry("img:Number of Components", "3")
@@ -1216,16 +1209,14 @@ class TikaDocParserTest extends DocParserTestCase {
      */
     @Test
     void pdfIssue1097() throws IOException {
-        // Run the test with or without OCR as the behavior changes
+        // Run the test with or without OCR to ensure existing PDF text is not duplicated.
         boolean withOcr = isOcrAvailable && RandomizedTest.randomBoolean(randomizedRandomForTests);
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         fsSettings.getFs().getOcr().setEnabled(withOcr);
         Doc doc = extractFromFile("issue-1097.pdf", fsSettings);
-        // TODO This test is now passing but should be failing with ocr when
-        // https://issues.apache.org/jira/browse/TIKA-3364 is solved
-        Assertions.assertThat(doc.getContent())
-                .isEqualTo(withOcr ? "\nDummy PDF file\n\nDummy PDF file\n\n\n\n" : "\nDummy PDF file\n\n\n");
+        // The default auto OCR strategy skips this page because it already contains enough text.
+        Assertions.assertThat(doc.getContent()).isEqualTo("\nDummy PDF file\n\n\n");
 
         // Metadata
         Assertions.assertThat(doc.getMeta().getAuthor()).isNotNull();
