@@ -52,11 +52,32 @@ public class FsCrawlerRetryBulkProcessorListener<
             return;
         }
         for (FsCrawlerBulkResponse.BulkItemResponse<O> item : response.getItems()) {
-            if (shouldRetry(item)) {
-                retryItem(request, item);
+            if (!item.isFailed()) {
+                continue;
             }
+            Exception retryFailure = null;
+            if (shouldRetry(item)) {
+                try {
+                    if (retryItem(request, item)) {
+                        continue;
+                    }
+                    retryFailure = new IllegalStateException("Original operation was not found for retry");
+                } catch (Exception e) {
+                    // For example, shutdown may already have closed the processor to new operations.
+                    retryFailure = e;
+                }
+            }
+            onTerminalItemFailure(executionId, request, item, retryFailure);
         }
     }
+
+    /**
+     * Called for a failed item that was not requeued. Subclasses can propagate the terminal outcome to callers. The
+     * response has already been logged by the superclass; a successfully requeued item is handled on its next
+     * completion instead. The optional cause explains why an attempted retry could not be accepted.
+     */
+    protected void onTerminalItemFailure(
+            long executionId, Q request, FsCrawlerBulkResponse.BulkItemResponse<O> item, Exception retryFailure) {}
 
     /**
      * Tells whether a failed bulk item should be retried, i.e. it failed with one of the configured error messages.
@@ -66,6 +87,7 @@ public class FsCrawlerRetryBulkProcessorListener<
      */
     private boolean shouldRetry(FsCrawlerBulkResponse.BulkItemResponse<O> item) {
         return item.isFailed()
+                && item.getFailureMessage() != null
                 && Arrays.stream(errorMessages)
                         .anyMatch(s -> item.getFailureMessage().contains(s));
     }
@@ -76,7 +98,7 @@ public class FsCrawlerRetryBulkProcessorListener<
      * @param request the original bulk request holding the operations
      * @param item the failed bulk item to retry
      */
-    private void retryItem(Q request, FsCrawlerBulkResponse.BulkItemResponse<O> item) {
+    private boolean retryItem(Q request, FsCrawlerBulkResponse.BulkItemResponse<O> item) {
         logger.debug(
                 "We are going to retry document [{}] because of [{}]", item.getOperation(), item.getFailureMessage());
         // Find the matching operation in the original request
@@ -84,9 +106,10 @@ public class FsCrawlerRetryBulkProcessorListener<
             if (operation.compareTo(item.getOperation()) == 0) {
                 this.bulkProcessor.add(operation);
                 logger.debug("Document [{}] found. Can be retried.", item.getOperation());
-                return;
+                return true;
             }
         }
         logger.warn("Can not retry document [{}] because we can't find it anymore.", item.getOperation());
+        return false;
     }
 }
