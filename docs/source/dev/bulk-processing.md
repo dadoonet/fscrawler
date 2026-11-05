@@ -76,8 +76,20 @@ A slow Elasticsearch request therefore does not hold the queue monitor throughou
 network I/O, and a listener can enqueue a retry.
 
 Execution remains synchronous for the triggering thread. There is no additional
-bulk-request worker executor, and this mechanism does not establish a global
-completion order between concurrent batches.
+bulk-request worker executor. A separate, reentrant `executionLock` serializes
+ordinary batch detachment and execution, including listener completion. Acquiring
+that lock before detachment prevents a later producer batch from overtaking an
+earlier batch. Timer-triggered batches use the same lock.
+
+Producers add operations under `queueLock` before waiting for execution ownership.
+An add below the threshold can return while another batch is in network I/O; an
+add that triggers execution can wait, with its operation already accepted into
+the pending queue. Producers never hold `queueLock` while waiting for
+`executionLock`. Pending work can accumulate beyond the threshold during a slow
+send. Listener requeues can reacquire the execution lock on the same thread.
+
+This ordering protects batches within this processor; it does not establish
+ordering across separate processors, external writers or arbitrary retries.
 
 After the engine and listener finish, execution decrements `inFlightExecutions`
 and calls `queueLock.notifyAll()`. In-flight work includes listener processing:
@@ -88,6 +100,11 @@ listeners can record failures or enqueue more operations after HTTP completes.
 The existing `quiesceLock`, a `ReentrantLock`, serializes explicit flush barriers
 and shutdown. It has a different responsibility from the short queue-state
 critical sections protected by `queueLock`.
+
+Both flush and close acquire the lifecycle lock interruptibly. Draining also
+acquires `executionLock` interruptibly and retains it through the completion
+action, so draining cannot overlap an ordinary batch execution. Neither wait
+holds the queue monitor.
 
 `flush()` delegates to `flushWhileQuiesced()` with an empty completion action.
 The shared `drainAndRun()` helper repeatedly:
@@ -110,7 +127,9 @@ another thread acquiring the queue lock.
 
 An interrupted flush preserves the thread's interrupt flag and throws
 `IllegalStateException`. It does not run the completion action as though draining
-had succeeded.
+had succeeded. This includes interruption before acquiring the lifecycle lock,
+while another flush or close holds it. A caller that fails to acquire the lock
+does not unlock it or alter the owning flush's state.
 
 ## Shutdown and interruption
 
@@ -147,13 +166,15 @@ closed to new operations.
 ### Queue ownership and draining
 
 `framework/src/test/java/fr/pilato/elasticsearch/crawler/fs/framework/bulk/FsCrawlerBulkProcessorRaceTest.java`
-contains three tests:
+contains five tests:
 
 | Test | Behavior verified |
 |---|---|
 | `timerAndSizeFlushMustDeliverEveryAcceptedOperationExactlyOnce` | Pauses timer replacement allocation, overlaps producer work, and requires every accepted operation once with no missing or extra delivery. |
 | `slowBulkAllowsEnqueueAndCloseWaitsForAllAcceptedOperations` | Enqueueing remains possible during blocked bulk I/O; close waits, drains accepted work, rejects later adds, and is idempotent. |
 | `quiescedFlushWaitsForInFlightListenerAndDrainsItsRetry` | Flush waits for listener completion and drains a requeued operation below the batch threshold before running its action. |
+| `producerBatchesPreserveTheNewestValueForTheSameDocument` | With no timer, an older blocked update cannot overwrite a newer producer update to the same simulated document ID. |
+| `producerBatchesDoNotRecreateALaterDeletedDocument` | With no timer, an older blocked update cannot recreate a document after a later producer deletion. |
 
 The tests coordinate execution with `CountDownLatch`, collect observations in
 `ConcurrentLinkedQueue`, and use bounded waits. The timer test allows the corrected
@@ -163,7 +184,7 @@ unsafe early producer progress. Incidental unit-test payloads are randomized.
 ### Interrupted shutdown and flush
 
 `framework/src/test/java/fr/pilato/elasticsearch/crawler/fs/framework/bulk/FsCrawlerBulkProcessorShutdownTest.java`
-adds four cases:
+adds five cases:
 
 | Test | Behavior verified |
 |---|---|
@@ -171,6 +192,7 @@ adds four cases:
 | `closeCanBeRetriedAfterInterruptionAndDrainsPreviouslyAcceptedOperations` | A second close drains pending work left by an interrupted attempt without duplicate delivery. |
 | `interruptedCloseWaitingForQuiescedFlushLeavesProcessorOpen` | Interruption before acquiring the lifecycle lock does not prematurely close the processor. |
 | `interruptedFlushPreservesUncheckedContractAndDoesNotRunCompletionAction` | Flush retains its unchecked interruption contract, skips the premature action, and can subsequently drain successfully. |
+| `interruptedFlushWaitingForQuiescedFlushLeavesOwnerAndProcessorIntact` | A flush interrupted while waiting for the lifecycle lock returns before the owner releases it, preserves its exception/interrupt contract, and leaves the processor usable. |
 
 The first two cases failed before the shutdown correction: the drain helper
 surfaced an unchecked exception, and the closed flag caused a later close to
@@ -195,8 +217,7 @@ the complete HTTP retry policy.
 
 ## Running the checks
 
-Example 1: run the existing bulk tests together with the race and shutdown tests
-(15 tests at the time these regressions were added):
+Example 1: run the existing bulk tests together with the race and shutdown tests:
 
 ```sh
 mvn -B -ntp test -pl framework -am "-Dtest=FsCrawlerBulkProcessor*Test" "-DskipIntegTests"
