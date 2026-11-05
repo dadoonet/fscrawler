@@ -25,6 +25,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.Slow;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -35,6 +36,80 @@ import org.junit.jupiter.api.Test;
 
 @Slow
 class FsCrawlerBulkProcessorRaceTest extends AbstractFSCrawlerTestCase {
+    @Test
+    void producerBatchesPreserveTheNewestValueForTheSameDocument() throws Exception {
+        assertProducerBatchOrder(false);
+    }
+
+    @Test
+    void producerBatchesDoNotRecreateALaterDeletedDocument() throws Exception {
+        assertProducerBatchOrder(true);
+    }
+
+    private void assertProducerBatchOrder(boolean deleteLast) throws Exception {
+        var documentId = RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 8, 16);
+        var older = operation();
+        var newer = operation();
+        var documents = new ConcurrentHashMap<String, TestBean>();
+        var delivered = new ConcurrentLinkedQueue<TestOperation>();
+        var firstEntered = new CountDownLatch(1);
+        var releaseFirst = new CountDownLatch(1);
+        var secondStarted = new CountDownLatch(1);
+        var secondApplied = new CountDownLatch(1);
+        Engine<TestOperation, TestBulkRequest, TestBulkResponse> engine = request -> {
+            for (var operation : request.getOperations()) {
+                if (operation == older) {
+                    firstEntered.countDown();
+                    await(releaseFirst);
+                    documents.put(documentId, operation.getPayload());
+                } else {
+                    if (deleteLast) {
+                        documents.remove(documentId);
+                    } else {
+                        documents.put(documentId, operation.getPayload());
+                    }
+                    secondApplied.countDown();
+                }
+                delivered.add(operation);
+            }
+            return new TestBulkResponse();
+        };
+        var processor = new FsCrawlerBulkProcessor.Builder<>(
+                        engine,
+                        new FsCrawlerSimpleBulkProcessorListener<TestOperation, TestBulkRequest, TestBulkResponse>(),
+                        TestBulkRequest::new)
+                .setBulkActions(1)
+                .build(); // Deliberately no timer: this protects ordering between producers.
+        var workers = Executors.newFixedThreadPool(2);
+        try {
+            var first = workers.submit(() -> processor.add(older));
+            await(firstEntered);
+            var second = workers.submit(() -> {
+                secondStarted.countDown();
+                processor.add(newer);
+            });
+            await(secondStarted);
+            // Give the buggy implementation an opportunity to apply the later batch first.
+            // Correct code waits for the first execution without holding the queue monitor.
+            secondApplied.await(1, TimeUnit.SECONDS);
+            releaseFirst.countDown();
+            first.get(5, TimeUnit.SECONDS);
+            second.get(5, TimeUnit.SECONDS);
+            processor.flush();
+            if (deleteLast) {
+                Assertions.assertThat(documents).doesNotContainKey(documentId);
+            } else {
+                Assertions.assertThat(documents).containsEntry(documentId, newer.getPayload());
+            }
+            Assertions.assertThat(delivered).containsExactly(older, newer);
+        } finally {
+            releaseFirst.countDown();
+            workers.shutdownNow();
+            Assertions.assertThat(workers.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+            processor.close();
+        }
+    }
+
     @Test
     void timerAndSizeFlushMustDeliverEveryAcceptedOperationExactlyOnce() throws Exception {
         var timerCapturedBatch = new CountDownLatch(1);
@@ -142,7 +217,9 @@ class FsCrawlerBulkProcessorRaceTest extends AbstractFSCrawlerTestCase {
             first.get(5, TimeUnit.SECONDS);
             closing.get(5, TimeUnit.SECONDS);
             Assertions.assertThat(delivered).containsExactlyInAnyOrderElementsOf(operations);
-            Assertions.assertThatThrownBy(() -> processor.add(operation())).isInstanceOf(IllegalStateException.class);
+            var rejectedOperation = operation();
+            Assertions.assertThatThrownBy(() -> processor.add(rejectedOperation))
+                    .isInstanceOf(IllegalStateException.class);
             processor.close(); // Idempotent: no duplicate delivery on a second close.
             Assertions.assertThat(delivered).hasSize(operations.size());
         } finally {
