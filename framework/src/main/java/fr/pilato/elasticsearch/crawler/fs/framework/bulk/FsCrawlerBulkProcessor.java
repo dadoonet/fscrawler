@@ -28,11 +28,18 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,7 +58,41 @@ public class FsCrawlerBulkProcessor<
     private Q bulkRequest;
     private final Supplier<Q> requestSupplier;
     private final ScheduledExecutorService executor;
+    private final LongSupplier nanoTimeSupplier;
+    private final PriorityQueue<DeferredRetry> retries =
+            new PriorityQueue<>(Comparator.comparingLong((DeferredRetry retry) -> retry.dueNanos)
+                    .thenComparingLong(retry -> retry.sequence));
+    private long retrySequence;
+    private ScheduledFuture<?> retryWakeup;
+    private long retryWakeupGeneration;
     private boolean closed = false;
+
+    private final class DeferredRetry {
+        final O operation;
+        final long dueNanos;
+        final long deadlineNanos;
+        final Consumer<Exception> terminalFailure;
+        final long sequence;
+
+        DeferredRetry(O operation, long dueNanos, long deadlineNanos, Consumer<Exception> terminalFailure) {
+            this.operation = operation;
+            this.dueNanos = dueNanos;
+            this.deadlineNanos = deadlineNanos;
+            this.terminalFailure = terminalFailure;
+            this.sequence = retrySequence++;
+        }
+    }
+
+    private final class Batch {
+        final Q request;
+        final List<DeferredRetry> retries;
+
+        Batch(Q request, List<DeferredRetry> retries) {
+            this.request = request;
+            this.retries = retries;
+        }
+    }
+
     private boolean closeCompleted;
     private final AtomicLong executionIdGen = new AtomicLong();
     /** Guards queue ownership, lifecycle state, and registration/completion of detached batches. */
@@ -68,7 +109,8 @@ public class FsCrawlerBulkProcessor<
             int bulkActions,
             ByteSizeValue byteSize,
             Supplier<Q> requestSupplier,
-            ScheduledExecutorService executor) {
+            ScheduledExecutorService executor,
+            LongSupplier nanoTimeSupplier) {
         this.engine = engine;
         this.listener = listener;
         this.bulkActions = bulkActions;
@@ -76,8 +118,10 @@ public class FsCrawlerBulkProcessor<
         this.requestSupplier = requestSupplier;
         this.bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         this.executor = executor;
+        this.nanoTimeSupplier = nanoTimeSupplier;
     }
 
+    /** Close external submissions and drain accepted operations and their bounded retries. */
     @Override
     public void close() throws IOException {
         try {
@@ -98,6 +142,7 @@ public class FsCrawlerBulkProcessor<
                 // An interrupted close still rejects new work, but a later close must finish draining.
                 closed = true;
                 quiesced = true;
+                cancelRetryWakeup();
             }
             if (executor != null) {
                 executor.shutdown();
@@ -107,6 +152,7 @@ public class FsCrawlerBulkProcessor<
             } finally {
                 synchronized (queueLock) {
                     quiesced = false;
+                    rearmRetryWakeup();
                 }
             }
             if (executor != null && !executor.awaitTermination(10, TimeUnit.SECONDS)) {
@@ -127,7 +173,7 @@ public class FsCrawlerBulkProcessor<
      * @return this so we can link methods.
      */
     public FsCrawlerBulkProcessor<O, Q, S> add(O request) {
-        Q batch = null;
+        Batch batch = null;
         synchronized (queueLock) {
             ensureOpen();
             bulkRequest.add(request);
@@ -139,12 +185,80 @@ public class FsCrawlerBulkProcessor<
         return this;
     }
 
-    /** Queue a listener retry without recursively executing another request on the callback stack. */
-    void addRetry(O request) {
+    /** Queue a listener retry without blocking its response callback. */
+    void addRetry(O operation, long dueNanos, long deadlineNanos, Consumer<Exception> terminalFailure) {
         synchronized (queueLock) {
-            ensureOpen();
-            bulkRequest.add(request);
+            if (closeCompleted) {
+                throw new IllegalStateException("bulk process already closed");
+            }
+            retries.add(new DeferredRetry(operation, dueNanos, deadlineNanos, terminalFailure));
+            queueLock.notifyAll();
+            rearmRetryWakeup();
         }
+    }
+
+    /** Return the shared monotonic clock used for retry scheduling and expiry. */
+    long nanoTime() {
+        return nanoTimeSupplier.getAsLong();
+    }
+
+    /** Must be called with queueLock held. */
+    private void cancelRetryWakeup() {
+        retryWakeupGeneration++;
+        if (retryWakeup != null) {
+            retryWakeup.cancel(false);
+            retryWakeup = null;
+        }
+    }
+
+    /** Must be called with queueLock held. Completion rearms retries deferred by an active execution. */
+    private void rearmRetryWakeup() {
+        cancelRetryWakeup();
+        if (executor == null || closed || quiesced || retries.isEmpty() || inFlightExecutions > 0) {
+            return;
+        }
+        long generation = retryWakeupGeneration;
+        retryWakeup = executor.schedule(
+                () -> executeReadyRetries(generation),
+                Math.max(0, retries.peek().dueNanos - nanoTime()),
+                TimeUnit.NANOSECONDS);
+    }
+
+    private void executeReadyRetries(long generation) {
+        Batch batch;
+        synchronized (queueLock) {
+            if (generation != retryWakeupGeneration) {
+                return;
+            }
+            retryWakeup = null;
+            if (closed || quiesced || inFlightExecutions > 0) {
+                return;
+            }
+            batch = detachReadyRetries();
+            if (batch == null) {
+                rearmRetryWakeup();
+            }
+        }
+        execute(batch);
+    }
+
+    /** Must be called with queueLock held. */
+    private Batch detachReadyRetries() {
+        if (retries.isEmpty() || retries.peek().dueNanos - nanoTime() > 0) {
+            return null;
+        }
+        Q request = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
+        List<DeferredRetry> selected = new ArrayList<>();
+        while (!retries.isEmpty() && retries.peek().dueNanos - nanoTime() <= 0) {
+            DeferredRetry retry = retries.remove();
+            request.add(retry.operation);
+            selected.add(retry);
+            if (request.isOverTheLimit()) {
+                break;
+            }
+        }
+        inFlightExecutions++;
+        return new Batch(request, selected);
     }
 
     /** Must be called with queueLock held. */
@@ -155,7 +269,7 @@ public class FsCrawlerBulkProcessor<
     }
 
     private void executeWhenNeeded() {
-        Q batch;
+        Batch batch;
         synchronized (queueLock) {
             // A scheduled invocation may already be running when close shuts down the executor.
             if (closed || isQuiescedForOtherThreads()) {
@@ -172,21 +286,22 @@ public class FsCrawlerBulkProcessor<
     }
 
     /** Atomically detach and register a batch before releasing queueLock. */
-    private Q detachBatch() {
+    private Batch detachBatch() {
         if (bulkRequest.numberOfActions() == 0) {
             return null;
         }
         Q batch = bulkRequest;
         bulkRequest = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
         inFlightExecutions++;
-        return batch;
+        return new Batch(batch, List.of());
     }
 
     /** Network I/O and listeners must run without queueLock held. */
-    private void execute(Q br) {
-        if (br == null) {
+    private void execute(Batch batch) {
+        if (batch == null) {
             return;
         }
+        Q br = batch.request;
         final long executionId = executionIdGen.incrementAndGet();
 
         Span bulkSpan = FsCrawlerTracing.startSpan("fscrawler.es.bulk");
@@ -196,6 +311,39 @@ public class FsCrawlerBulkProcessor<
         boolean afterCalled = false;
         try (Scope ignored = bulkSpan.makeCurrent()) {
             listener.beforeBulk(executionId, br);
+            if (!batch.retries.isEmpty()) {
+                List<DeferredRetry> remaining = new ArrayList<>(batch.retries);
+                while (true) {
+                    List<DeferredRetry> expired = new ArrayList<>();
+                    for (DeferredRetry retry : remaining) {
+                        if (nanoTime() - retry.deadlineNanos >= 0) {
+                            expired.add(retry);
+                        }
+                    }
+                    remaining.removeAll(expired);
+                    for (DeferredRetry retry : expired) {
+                        try {
+                            retry.terminalFailure.accept(new IllegalStateException("Item retry deadline exhausted"));
+                        } catch (Exception failure) {
+                            logger.warn("Could not report expired bulk item retry", failure);
+                        }
+                    }
+                    if (remaining.isEmpty()) {
+                        return;
+                    }
+                    Q ready = supplyRequestWithLimits(requestSupplier, bulkActions, byteSize);
+                    for (DeferredRetry retry : remaining) {
+                        ready.add(retry.operation);
+                    }
+                    // Callbacks and request serialization can consume another item's remaining budget.
+                    long now = nanoTime();
+                    if (remaining.stream().anyMatch(retry -> now - retry.deadlineNanos >= 0)) {
+                        continue;
+                    }
+                    br = ready;
+                    break;
+                }
+            }
             S bulkItemResponses = engine.bulk(br);
             afterCalled = true;
             listener.afterBulk(executionId, br, bulkItemResponses);
@@ -212,6 +360,7 @@ public class FsCrawlerBulkProcessor<
             synchronized (queueLock) {
                 inFlightExecutions--;
                 queueLock.notifyAll();
+                rearmRetryWakeup();
             }
         }
     }
@@ -223,6 +372,7 @@ public class FsCrawlerBulkProcessor<
         return br;
     }
 
+    /** Return the listener associated with this processor. */
     public Listener<O, Q, S> getListener() {
         return listener;
     }
@@ -254,6 +404,7 @@ public class FsCrawlerBulkProcessor<
             } finally {
                 synchronized (queueLock) {
                     quiesced = false;
+                    rearmRetryWakeup();
                 }
             }
         } finally {
@@ -264,13 +415,20 @@ public class FsCrawlerBulkProcessor<
     /** Called by the quiesce owner; wait releases queueLock so completing listeners can enqueue retries. */
     private void drainAndRun(Runnable action) throws InterruptedException {
         while (true) {
-            Q batch;
+            Batch batch;
             synchronized (queueLock) {
                 if (inFlightExecutions > 0) {
                     queueLock.wait();
                     continue;
                 }
                 batch = detachBatch();
+                if (batch == null) {
+                    batch = detachReadyRetries();
+                }
+                if (batch == null && !retries.isEmpty()) {
+                    TimeUnit.NANOSECONDS.timedWait(queueLock, Math.max(1, retries.peek().dueNanos - nanoTime()));
+                    continue;
+                }
                 if (batch == null) {
                     action.run();
                     return;
@@ -285,36 +443,54 @@ public class FsCrawlerBulkProcessor<
 
         private int bulkActions;
         private TimeValue flushInterval;
+        private LongSupplier nanoTimeSupplier = System::nanoTime;
         private ByteSizeValue byteSize;
         private final Engine<O, Q, S> engine;
         private final Listener<O, Q, S> listener;
         private final Supplier<Q> requestSupplier;
 
+        /**
+         * Create a processor builder.
+         *
+         * @param engine bulk transport
+         * @param listener completion listener
+         * @param requestSupplier factory for empty bulk requests
+         */
         public Builder(Engine<O, Q, S> engine, Listener<O, Q, S> listener, Supplier<Q> requestSupplier) {
             this.engine = engine;
             this.listener = listener;
             this.requestSupplier = requestSupplier;
         }
 
+        /** Set the action limit used by ordinary and retry batches. */
         public Builder<O, Q, S> setBulkActions(int bulkActions) {
             this.bulkActions = bulkActions;
             return this;
         }
 
+        /** Set the ordinary flush interval and enable independent retry wakeups. */
         public Builder<O, Q, S> setFlushInterval(TimeValue flushInterval) {
             this.flushInterval = flushInterval;
             return this;
         }
 
+        /** Set the serialized byte limit used by ordinary and retry batches. */
         public Builder<O, Q, S> setByteSize(ByteSizeValue byteSizeValue) {
             this.byteSize = byteSizeValue;
             return this;
         }
 
+        /** Replace the monotonic clock for deterministic scheduling tests. */
+        Builder<O, Q, S> setNanoTimeSupplier(LongSupplier nanoTimeSupplier) {
+            this.nanoTimeSupplier = nanoTimeSupplier;
+            return this;
+        }
+
+        /** Build the processor and start its configured scheduler. */
         public FsCrawlerBulkProcessor<O, Q, S> build() {
             ScheduledExecutorService exec = flushInterval != null ? Executors.newScheduledThreadPool(1) : null;
-            var processor =
-                    new FsCrawlerBulkProcessor<>(engine, listener, bulkActions, byteSize, requestSupplier, exec);
+            var processor = new FsCrawlerBulkProcessor<>(
+                    engine, listener, bulkActions, byteSize, requestSupplier, exec, nanoTimeSupplier);
             processor.listener.setBulkProcessor(processor);
             if (exec != null) {
                 exec.scheduleWithFixedDelay(

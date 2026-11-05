@@ -26,16 +26,32 @@ continues to have its own budget; these budgets do not constitute a strict overa
 crawl deadline or interrupt an in-flight network request.
 
 Backoff doubles on successive retries, capped by `retry_max_delay`, with jitter
-between half and all of the capped delay. Waiting is interruptible and takes place
-outside the processor queue monitor. Waiting is per rejected operation, so
-large rejected batches can accumulate delays. An exhausted budget, exhausted attempt count,
-interruption, missing original operation, or closed processor produces a terminal
-failure through the BUG-04 completion reporting mechanism.
+between half and all of the capped delay. A response callback records each retry's
+due time and returns without sleeping. Rejected items therefore wait concurrently;
+a large rejected batch does not accumulate one backoff wait per item. Each retry
+retains its elapsed deadline while queued. The processor checks it immediately
+before dispatch, including after `beforeBulk` callbacks, and reports expired items
+without sending another HTTP request. Expired items are removed before response
+positions are matched to the remaining operations.
 
-`FsCrawlerBulkProcessor.addRetry()` queues work without triggering nested network
-execution. The regular flush timer or explicit flush drains it. Flush barriers keep
-in-flight response callbacks and queued retries visible before reporting completion.
-With the timer disabled, callers must explicitly flush to complete deferred retries.
+`FsCrawlerBulkProcessor.addRetry()` uses a separate due-time queue without nested
+network execution. Ready retries are grouped into fresh requests using the same
+action and byte limits as ordinary batches. With a flush timer configured, an
+independent wakeup dispatches the earliest retry even when the regular interval is
+long. With the timer disabled, explicit flush or close drives deferred retries.
+
+Flush barriers include in-flight response callbacks, queued retries, and terminal
+failure callbacks before reporting completion. A flush waiting for a future retry
+is interruptible; interruption preserves its pending work for a later flush or
+close. Close rejects new external additions while draining retries descended from
+already accepted operations. A transient rejection can recover during close;
+persistent rejection ends after at most three retries or the elapsed budget.
+Canceled retry wakeups do not delay scheduler shutdown.
+
+An exhausted budget or attempt count, an already interrupted response callback,
+or a missing original operation produces a terminal failure through the BUG-04
+completion reporting mechanism. Request-level failures keep their existing
+handling and do not trigger another item retry.
 
 Bulk response positions identify original operations, so repeated document IDs in
 one batch retry the rejected payload rather than the first payload with that ID.
@@ -60,6 +76,11 @@ An additional `repeatedIdRetriesTheRejectedPayloadOnly` regression failed agains
 the ID-only lookup and passes with response-position matching. It checks the
 actual retry HTTP body, rather than just the number of requests.
 
+`FsCrawlerDeferredRetryTest` also covers nonblocking rejected batches, transient
+batch recovery, queued and pre-dispatch expiry, expiry while another item's
+terminal callback runs, bounded retry groups, timer-independent wakeups,
+interrupted drain recovery, and bounded close behavior.
+
 The persistent-rejection fixture returns success on its sixth response so the old
 implementation can terminate safely. The corrected implementation must stop before
 that success response. Adjacent BUG-04, queue ownership, interrupted shutdown,
@@ -68,7 +89,7 @@ response-parser, and whole-request HTTP retry tests are also run.
 Example 1: focused validation.
 
 ```sh
-mvn -B -ntp test -pl elasticsearch-client -am "-Dtest=ElasticsearchBulkItemFailureTest,ElasticsearchClientRetryTest,ElasticsearchBulkResponseTest,FsCrawlerBulkProcessor*Test,FsCrawlerItemRetryTest" "-DskipIntegTests"
+mvn -B -ntp test -pl elasticsearch-client -am "-Dtest=ElasticsearchBulkItemFailureTest,ElasticsearchClientRetryTest,ElasticsearchBulkResponseTest,FsCrawlerBulkProcessor*Test,FsCrawlerItemRetryTest,FsCrawlerDeferredRetryTest" "-DskipIntegTests"
 ```
 
 Example 2: regular unit suite.

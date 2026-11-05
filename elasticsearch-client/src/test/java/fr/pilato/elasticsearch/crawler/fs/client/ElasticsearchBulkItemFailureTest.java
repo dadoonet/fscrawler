@@ -192,14 +192,14 @@ class ElasticsearchBulkItemFailureTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void retryRejectedDuringCloseIsRecordedAsTerminalFailure() throws Exception {
+    void persistentRejectionDuringCloseExhaustsBoundedRetries() throws Exception {
         respond(items(rejection(id)));
         try (var client = startClient()) {
             client.indexRawJson(index, id, "{}", null);
             client.close();
             Assertions.assertThatThrownBy(client::ensureBulkSucceeded).isInstanceOf(ElasticsearchClientException.class);
         }
-        WireMock.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/" + index + "/_bulk")));
+        WireMock.verify(4, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/" + index + "/_bulk")));
     }
 
     @Test

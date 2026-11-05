@@ -26,8 +26,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * This Listener implements a simple and naive retry mechanism. When a document is rejected because of an
@@ -37,8 +35,6 @@ public class FsCrawlerRetryBulkProcessorListener<
                 O extends FsCrawlerOperation<O>, Q extends FsCrawlerBulkRequest<O>, S extends FsCrawlerBulkResponse<O>>
         extends FsCrawlerAdvancedBulkProcessorListener<O, Q, S> {
 
-    private static final Logger logger = LogManager.getLogger();
-
     private final String[] errorMessages;
     private final Duration maxDuration;
     private final Duration initialDelay;
@@ -47,7 +43,12 @@ public class FsCrawlerRetryBulkProcessorListener<
     private static final int MAX_RETRIES = 3;
 
     private static final class RetryState {
-        final long started = System.nanoTime();
+        final long started;
+
+        RetryState(long started) {
+            this.started = started;
+        }
+
         int attempts;
     }
 
@@ -60,6 +61,14 @@ public class FsCrawlerRetryBulkProcessorListener<
         this(Duration.ofSeconds(30), Duration.ofMillis(100), Duration.ofSeconds(1), errorMessages);
     }
 
+    /**
+     * Create a listener with bounded item retries.
+     *
+     * @param maxDuration elapsed item retry budget from the first rejection
+     * @param initialDelay initial backoff cap
+     * @param maxDelay maximum backoff cap
+     * @param errorMessages retryable structured error types or fallback reason fragments
+     */
     public FsCrawlerRetryBulkProcessorListener(
             Duration maxDuration, Duration initialDelay, Duration maxDelay, String... errorMessages) {
         this.maxDuration = maxDuration;
@@ -68,6 +77,7 @@ public class FsCrawlerRetryBulkProcessorListener<
         this.errorMessages = errorMessages;
     }
 
+    /** Handle each response item, queuing retryable failures without waiting for backoff. */
     @Override
     public void afterBulk(long executionId, Q request, S response) {
         super.afterBulk(executionId, request, response);
@@ -88,7 +98,7 @@ public class FsCrawlerRetryBulkProcessorListener<
             Exception retryFailure = null;
             if (shouldRetry(item)) {
                 try {
-                    if (retryItem(operation, item)) {
+                    if (retryItem(executionId, request, operation, item)) {
                         continue;
                     }
                     retryFailure = new IllegalStateException("Original operation was not found for retry");
@@ -127,46 +137,53 @@ public class FsCrawlerRetryBulkProcessorListener<
                         .anyMatch(s -> item.getFailureMessage().contains(s));
     }
 
-    /**
-     * Re-adds the operation matching the failed item to the bulk processor so that it can be retried.
-     *
-     * @param operation the original operation at the response item position
-     * @param item the failed bulk item to retry
-     */
-    private boolean retryItem(O operation, FsCrawlerBulkResponse.BulkItemResponse<O> item) {
+    /** Schedule the original operation with a shared monotonic deadline and bounded backoff. */
+    private boolean retryItem(
+            long executionId, Q request, O operation, FsCrawlerBulkResponse.BulkItemResponse<O> item) {
         if (operation == null) return false;
+        if (Thread.currentThread().isInterrupted()) throw new IllegalStateException("Item retry interrupted");
         RetryState state;
         int attempt;
         synchronized (retries) {
-            state = retries.computeIfAbsent(operation, ignored -> new RetryState());
+            state = retries.computeIfAbsent(operation, ignored -> new RetryState(bulkProcessor.nanoTime()));
             if (state.attempts >= MAX_RETRIES) {
                 throw new IllegalStateException("Item retry limit exhausted after " + MAX_RETRIES + " retries");
             }
             attempt = ++state.attempts;
         }
-        long remaining = maxDuration.toNanos() - (System.nanoTime() - state.started);
-        long cap = Math.min(maxDelay.toNanos(), initialDelay.toNanos() * (1L << (attempt - 1)));
-        long delay = cap <= 1 ? Math.max(0, cap) : ThreadLocalRandom.current().nextLong(cap / 2, cap + 1);
+        long now = bulkProcessor.nanoTime();
+        long remaining = maxDuration.toNanos() - (now - state.started);
+        long initial = Math.max(0, initialDelay.toNanos());
+        long multiplier = 1L << (attempt - 1);
+        long cap = Math.min(
+                maxDelay.toNanos(), initial > Long.MAX_VALUE / multiplier ? Long.MAX_VALUE : initial * multiplier);
+        long delay = retryDelayNanos(cap);
         if (remaining <= delay) throw new IllegalStateException("Item retry deadline exhausted");
-        try {
-            pauseBeforeRetry(delay);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Item retry interrupted", e);
-        }
-        if (Thread.currentThread().isInterrupted()) throw new IllegalStateException("Item retry interrupted");
-        if (System.nanoTime() - state.started >= maxDuration.toNanos()) {
-            throw new IllegalStateException("Item retry deadline exhausted");
-        }
-        this.bulkProcessor.addRetry(operation);
+        bulkProcessor.addRetry(operation, now + delay, state.started + maxDuration.toNanos(), failure -> {
+            forgetOperation(operation);
+            onTerminalItemFailure(executionId, request, item, failure);
+        });
         return true;
     }
 
-    /** Backoff runs outside the processor queue lock and remains interruptible. */
+    /** Return a jittered delay between half the cap and the cap, inclusive. */
+    protected long retryDelayNanos(long cap) {
+        return cap <= 1
+                ? Math.max(0, cap)
+                : ThreadLocalRandom.current().nextLong(cap / 2, cap == Long.MAX_VALUE ? cap : cap + 1);
+    }
+
+    /**
+     * Compatibility hook retained for subclasses. Deferred retries no longer invoke it.
+     *
+     * @deprecated Override {@link #retryDelayNanos(long)} to control retry delays instead.
+     */
+    @Deprecated
     protected void pauseBeforeRetry(long nanos) throws InterruptedException {
         TimeUnit.NANOSECONDS.sleep(nanos);
     }
 
+    /** Forget retry accounting when the entire request fails. */
     @Override
     public void afterBulk(long executionId, Q request, Throwable failure) {
         forget(request);
