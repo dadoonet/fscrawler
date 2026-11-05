@@ -90,7 +90,7 @@
         <bouncycastle.version>1.86</bouncycastle.version>
 
         <!-- For FSCrawler S3 plugin -->
-        <minio.version>9.0.3</minio.version>
+        <minio.version>9.0.4</minio.version>
 
         <!-- Tests -->
         <junit.version>6.1.3</junit.version>
@@ -507,7 +507,7 @@
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.15.0</version>
+                <version>2.15.1</version>
             </dependency>
 
             <!-- Because of CVE-2024-7254 - this comes from Tika 2.9.2 -->
@@ -849,7 +849,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.6.1</version>
                     <configuration>
                         <failIfNoTests>false</failIfNoTests>
                         <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
@@ -962,7 +962,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.6.3</version>
+                    <version>3.7.0</version>
                     <configuration>
                         <rules>
                             <requireJavaVersion>

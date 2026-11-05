@@ -13,10 +13,10 @@ does not mean the tests execute on Java 17, or that every newer JDK is validated
 
 | Requirement | Windows | Linux | macOS |
 |-------------|---------|-------|-------|
-| Java and Maven | Use JDK 21; check `mvn --version` | Same | Same recommendation; not validated in the local work described here |
+| Java and Maven | Use JDK 21; check `mvn --version` | Same | Same |
 | Python tests | Verify the executable name; installations may expose `python` or `py` rather than `python3` | `python3` must be installed; minimal Java images may omit it | Verify the installed Python command |
-| Container-based tests | Docker-compatible service; Podman was exercised through its Windows named pipe | Docker/Testcontainers, or a compatible configured service | Requires a working container service; not exercised here |
-| OCR tests | Tesseract and the language data required by the selected tests | Same | Same prerequisites; not exercised here |
+| Container-based tests | Docker-compatible service; check the configured endpoint when using Podman | Docker/Testcontainers, or a compatible configured service | Requires a working container service |
+| OCR tests | Tesseract and the language data required by the selected tests | Same | Same |
 
 The same Maven phases apply on every platform. Filesystem permissions, symlinks,
 trailing-space filenames, executable names and shell quoting can affect coverage.
@@ -62,8 +62,7 @@ mvn clean package "-DskipTests" "-Ddocker.skip"
 mvn test "-Dtest=*Test" "-DskipIntegTests" "-Ddocker.skip"
 ```
 
-The explicit selector is intentional: the unqualified `mvn test` command reported
-zero tests on the revision used for the local audit. Check the executed test count
+The explicit selector selects the unit-test classes. Check the executed test count
 before treating a successful build as validation. Some unit tests start local
 HTTP or SSH servers; they are not all independent of sockets and filesystems.
 
@@ -172,10 +171,9 @@ be used to make CI green. Also verify that tests actually executed: excluded
 tags and discovery settings can leave cases unselected rather than reported as
 skipped.
 
-Local validation described in [the troubleshooting notes](build-troubleshooting.md)
-covers Windows/JDK 21 and selected Linux/Podman runs. It does not establish macOS
-coverage or an unrestricted supported-JDK matrix. Check the documentation version
-and the checked-out revision before relying on a recently introduced setting.
+See [platform troubleshooting](build-troubleshooting.md) for executable names,
+temporary paths and filesystem restrictions. Check the documentation version and
+the checked-out revision before relying on a recently introduced setting.
 
 ## Code formatting (Spotless)
 
