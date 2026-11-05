@@ -59,13 +59,13 @@ class UpdateReadmeVersionsTest extends AbstractFSCrawlerTestCase {
     @Test
     void updateReadmeVersionsPythonTestsPass() throws Exception {
         Path testsDir = repoRoot().resolve("scripts").resolve("tests");
-        ProcessBuilder pb =
-                new ProcessBuilder("python3", "-m", "unittest", "discover", "-s", testsDir.toString(), "-v");
+        String python = System.getProperty("tests.python", "python3");
+        ProcessBuilder pb = new ProcessBuilder(python, "-m", "unittest", "discover", "-s", testsDir.toString(), "-v");
         pb.redirectErrorStream(true);
         Process process = pb.start();
         String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         int code = process.waitFor();
-        assertThat(code).as("python3 -m unittest output:%n%s", output).isZero();
+        assertThat(code).as("%s -m unittest output:%n%s", python, output).isZero();
     }
 
     private static Path repoRoot() {

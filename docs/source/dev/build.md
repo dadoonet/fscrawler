@@ -350,6 +350,38 @@ of the `ossindex` maven plugin in the `pom.xml` file:
 </configuration>
 ```
 
+## Python tests in the distribution module
+
+`UpdateReadmeVersionsTest` checks the README version-table markers and launches
+Python's `unittest` discovery over `scripts/tests`. That Python suite also covers
+documentation markup and release-automation helpers. Python must be installed to
+run it; an unavailable interpreter is an error, not a skipped test.
+
+The interpreter defaults to `python3`. If your installation uses another name,
+set the Maven system property `tests.python` to the executable name or full path.
+For example, a Windows installation exposing `python.exe` can use:
+
+```powershell
+mvn test -pl distribution -am "-Dtest=UpdateReadmeVersionsTest" "-Dtests.python=python" "-DskipIntegTests" "-Ddocker.skip"
+```
+
+An absolute path avoids relying on `PATH`. Quote the entire Maven argument when
+the path contains spaces:
+
+```powershell
+mvn test -pl distribution -am "-Dtest=UpdateReadmeVersionsTest" "-Dtests.python=C:/Program Files/Python315/python.exe" "-DskipIntegTests" "-Ddocker.skip"
+```
+
+The property is one executable, not a shell command: do not supply `py -3.15` or
+append Python arguments. The test adds `-m unittest discover` and its discovery
+arguments itself, and passes the executable as a single `ProcessBuilder` argument.
+Choose the full interpreter path when you need a particular installed version.
+
+On Linux, no override is needed when `python3` is on `PATH`. Minimal Java/Maven
+container images may not include Python; install it before running these tests.
+The setting affects this Java test wrapper only. It does not change your system
+Python installation, release scripts, or production FSCrawler behaviour.
+
 ## Docker build
 
 The docker images build is run when calling the maven `package` phase. If you want to skip the build of the images,
