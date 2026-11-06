@@ -83,7 +83,7 @@
         <jersey.version>4.0.3</jersey.version>
         <httpcore5.version>5.4.4</httpcore5.version>
         <httpclient5.version>5.6.5</httpclient5.version>
-        <jsoup.version>1.23.2</jsoup.version>
+        <jsoup.version>1.24.1</jsoup.version>
         <!-- Because of CVE-2024-29857 - this comes from Tika 2.9.2.
              Keep the whole BC jdk18on family aligned: mixing versions
              (e.g. bcprov 1.85 + bcutil 1.84) breaks provider init. -->
