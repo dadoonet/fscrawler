@@ -34,15 +34,16 @@ Failure details from the bulk client remain in the error.
 
 ## Boundaries and bulk settings
 
-These limits are implementation constants rather than new YAML options.
+These limits are configured independently through `fs.checkpoint`; omitted fields
+use the defaults below. See {ref}`checkpoint-settings` for loading and validation.
 A boundary is requested when any limit is reached at a safe traversal point:
 
 | Trigger | Current policy |
 |---|---|
-| Fully examined directories since the last commit | 100 |
-| Submitted operations | Greater of 5,000 or ten times `elasticsearch.bulk_size` |
-| Estimated submitted bytes | Greater of 32 MiB or three times `elasticsearch.byte_size` |
-| Elapsed time since the last acknowledged snapshot | 30 seconds |
+| Fully examined directories since the last commit | 100 (`fs.checkpoint.max_directories`) |
+| Submitted operations | 5,000, overridable with `fs.checkpoint.max_operations` |
+| Estimated submitted bytes | 32 MiB, overridable with `fs.checkpoint.max_bytes` |
+| Elapsed time since the last acknowledged snapshot | 30 seconds (`fs.checkpoint.max_interval`) |
 | End of scan | Commit the final partial batch before successful scan completion |
 | Pause | Save the safe frontier immediately; the crawler additionally drains before waiting |
 | Close | Save the safe frontier immediately; acknowledged final draining may advance it safely |
@@ -285,6 +286,10 @@ download above. No unrelated test failures were suppressed in the reported count
 
 ## Larger alternating experiment with a 5,000-operation minimum
 
+This historical experiment predates explicit `fs.checkpoint` settings. Its bulk
+scaling formula describes those measured revisions, not the current loader. With
+the benchmark bulk defaults, the four effective limits match today's defaults.
+
 The candidate branch `codex/checkpoint-5000-benchmark` preserves the earlier
 1,000-operation branch and changes only the operation minimum to 5,000. The
 100-directory, estimated-byte, 30-second and lifecycle boundaries remain intact.
@@ -393,4 +398,38 @@ Example 6: calculate the paired comparison after successful completion.
 
 ```powershell
 python scripts/compare-checkpoint-paired.py C:\bench\run01\paired-results.json
+```
+
+## Explicit checkpoint configuration validation
+
+The later `codex/configurable-checkpoint-limits` branch replaces implicit bulk
+scaling with four independently configured `fs.checkpoint` fields. Existing jobs
+use 100 directories, 5,000 operations, 32 MiB and 30 seconds; overrides can change
+any subset. Invalid values and unknown YAML/JSON section keys fail loading.
+Valid limits below bulk thresholds warn without being rewritten.
+
+`CheckpointSettingsTest` covers real YAML/JSON loading, partial/default sections,
+round trips, split files, property precedence, invalid values and warning output.
+`FsParserCheckpointAcknowledgementTest` checks configured directory, operation,
+byte and elapsed-time boundaries, including independence from large bulk settings.
+Its elapsed-time case advances the internal monotonic timestamp instead of sleeping.
+`FsCrawlerCheckpointSettingsIT` writes and reloads a real job `_settings.yaml`,
+then checks a completed Elasticsearch crawl with explicit limits. Existing replay
+and bulk-item-failure integration cases remain part of the focused validation.
+
+Validation on 7 November 2026: the initial tests produced 27 settings failures and
+one ignored-directory-limit failure against the constant-based implementation.
+Further red cases exposed saturated non-finite/oversized byte sizes and semantic
+duration equality on a settings round trip; both were corrected in the new code.
+The final integration-test reactor run reported 402 unit cases (387 passed, 15
+skipped) and three selected integration cases (all passed), without failure-ignore
+flags. All 33 `CheckpointSettingsTest` cases and all eleven checkpoint
+acknowledgement/boundary cases passed. The distribution-module suite was outside
+this reactor selection. Strict Sphinx documentation validation also passed.
+
+Example 7: reproduce the settings/parser unit and selected integration verification
+against a disposable Elasticsearch instance.
+
+```powershell
+mvn -B -ntp verify -pl integration-tests -am '-Pdaily,sequential_tests' '-Dtest=*Test' '-Dit.test=FsCrawlerCheckpointSettingsIT,FsCrawlerCheckpointReplayIT,FsCrawlerBulkItemFailureIT' '-Dtests.cluster.url=http://127.0.0.1:19203' '-Dtests.leaveTemporary=false' '-Ddocker.skip=true'
 ```

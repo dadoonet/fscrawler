@@ -34,6 +34,18 @@ import org.github.gestalt.config.annotations.Config;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
+    @Config
+    private Checkpoint checkpoint = new Checkpoint();
+
+    public Checkpoint getCheckpoint() {
+        return checkpoint;
+    }
+
+    public void setCheckpoint(Checkpoint checkpoint) {
+        if (checkpoint == null) throw new IllegalArgumentException("fs.checkpoint must not be null");
+        this.checkpoint = checkpoint;
+    }
+
     @Config(defaultVal = Defaults.DEFAULT_DIR)
     private String url;
 
@@ -449,6 +461,7 @@ public class Fs {
                 && followSymlinks == fs.followSymlinks
                 && Objects.equals(url, fs.url)
                 && Objects.equals(updateRate, fs.updateRate)
+                && Objects.equals(checkpoint, fs.checkpoint)
                 && Objects.equals(includes, fs.includes)
                 && Objects.equals(excludes, fs.excludes)
                 && Objects.equals(filters, fs.filters)
@@ -468,6 +481,7 @@ public class Fs {
         return Objects.hash(
                 url,
                 updateRate,
+                checkpoint,
                 includes,
                 excludes,
                 filters,
@@ -500,7 +514,7 @@ public class Fs {
     @Override
     public String toString() {
         return "Fs{" + "url='" + url + '\'' + ", updateRate="
-                + updateRate + ", includes="
+                + updateRate + ", checkpoint=" + checkpoint + ", includes="
                 + includes + ", excludes="
                 + excludes + ", filters="
                 + filters + ", jsonSupport="

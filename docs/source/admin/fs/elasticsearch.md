@@ -277,6 +277,10 @@ elasticsearch:
   flush_interval: "2s"
 ```
 
+For recovery checkpoints, see {ref}`checkpoint-settings`. Bulk settings control
+requests; they do not change `fs.checkpoint` limits. A checkpoint can force a
+partial request before a bulk threshold is reached.
+
 The crawler and REST uploads share the bulk queue. Timer-based and size-based
 flushes coordinate batch ownership so an operation cannot be lost or submitted
 twice because two threads rotate the queue at the same time. Explicit flushes

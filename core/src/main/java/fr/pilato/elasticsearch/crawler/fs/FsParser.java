@@ -103,10 +103,6 @@ public class FsParser implements Runnable, AutoCloseable {
             "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored";
 
     // Checkpoint configuration
-    private static final int CHECKPOINT_BATCH_DIRECTORIES = 100;
-    private static final int CHECKPOINT_BATCH_OPERATIONS = 5000;
-    private static final long CHECKPOINT_BATCH_BYTES = 32L * 1024 * 1024;
-    private static final long CHECKPOINT_BATCH_NANOS = Duration.ofSeconds(30).toNanos();
     private static final int MAX_RETRIES = 10;
     private static final long INITIAL_RETRY_DELAY_MS = 1000;
 
@@ -138,7 +134,7 @@ public class FsParser implements Runnable, AutoCloseable {
     private FsCrawlerCheckpoint acknowledgedCheckpoint;
 
     private int batchDirectories;
-    private int batchOperations;
+    private long batchOperations;
     private long batchBytes;
     private long lastCheckpointNanos = System.nanoTime();
     private String statisticsDirectory;
@@ -175,6 +171,7 @@ public class FsParser implements Runnable, AutoCloseable {
             boolean rest,
             FsCrawlerExtensionFsProvider crawlerPlugin,
             FsCrawlerExtensionPasswordProvider passwordProvider) {
+        fsSettings.getFs().getCheckpoint().validate();
         this.fsSettings = fsSettings;
         this.checkpointHandler = new FsCrawlerCheckpointFileHandler(config);
         this.fsAclsFileHandler = initializeAclsFileHandler(fsSettings, config);
@@ -783,23 +780,14 @@ public class FsParser implements Runnable, AutoCloseable {
 
     /** Bulk thresholds remain independent; this boundary may flush a final partial request. */
     private void maybeSaveCheckpoint() {
-        if (batchDirectories >= CHECKPOINT_BATCH_DIRECTORIES
-                || batchOperations >= checkpointOperationLimit()
-                || batchBytes >= checkpointByteLimit()
-                || System.nanoTime() - lastCheckpointNanos >= CHECKPOINT_BATCH_NANOS) {
+        if (batchDirectories >= fsSettings.getFs().getCheckpoint().getMaxDirectories()
+                || batchOperations >= fsSettings.getFs().getCheckpoint().getMaxOperations()
+                || batchBytes
+                        >= fsSettings.getFs().getCheckpoint().getMaxBytes().getBytes()
+                || System.nanoTime() - lastCheckpointNanos
+                        >= fsSettings.getFs().getCheckpoint().getMaxInterval().nanos()) {
             commitCheckpointBatch();
         }
-    }
-
-    private long checkpointOperationLimit() {
-        return Math.max(
-                CHECKPOINT_BATCH_OPERATIONS, 10L * fsSettings.getElasticsearch().getBulkSize());
-    }
-
-    private long checkpointByteLimit() {
-        ByteSizeValue bulkSize = fsSettings.getElasticsearch().getByteSize();
-        long bytes = bulkSize == null ? 0 : bulkSize.getBytes();
-        return Math.max(CHECKPOINT_BATCH_BYTES, bytes > Long.MAX_VALUE / 3 ? Long.MAX_VALUE : 3 * bytes);
     }
 
     private static long utf8Length(String value) {
@@ -808,7 +796,8 @@ public class FsParser implements Runnable, AutoCloseable {
 
     private void submittedOperation(long approximateBytes) {
         batchOperations++;
-        batchBytes += Math.max(0, approximateBytes);
+        long bytes = Math.max(0, approximateBytes);
+        batchBytes = bytes > Long.MAX_VALUE - batchBytes ? Long.MAX_VALUE : batchBytes + bytes;
     }
 
     /** Process directories using a work queue with checkpoint support */

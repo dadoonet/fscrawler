@@ -145,10 +145,13 @@ class FsParserCheckpointAcknowledgementTest extends AbstractFSCrawlerTestCase {
         parser.run();
     }
 
-    @org.junit.jupiter.api.Test
-    void directoryCountBatchesCompletionRatherThanFlushingEveryDirectory() throws Exception {
+    @ParameterizedTest
+    @ValueSource(ints = {3, 100})
+    void directoryCountBatchesCompletionRatherThanFlushingEveryDirectory(int limit) throws Exception {
         String root = testTmpDir.toString();
-        var settings = FsSettingsLoader.load();
+        var file = testTmpDir.resolve("checkpoint.yaml");
+        java.nio.file.Files.writeString(file, "fs:\n  checkpoint:\n    max_directories: " + limit);
+        var settings = FsSettingsLoader.load(file);
         settings.setName(jobName);
         settings.getFs().setUrl(root);
         settings.getFs().setJsonSupport(true);
@@ -157,7 +160,7 @@ class FsParserCheckpointAcknowledgementTest extends AbstractFSCrawlerTestCase {
         var provider = mock(FsCrawlerExtensionFsProvider.class);
         var listed = new java.util.concurrent.atomic.AtomicInteger();
         var children = new java.util.ArrayList<FileAbstractModel>();
-        for (int n = 0; n < 100; n++)
+        for (int n = 0; n < limit; n++)
             children.add(model(root, testTmpDir.resolve(randomName()).toString(), false));
         when(provider.exists(root)).thenReturn(true);
         when(provider.getFiles(anyString())).thenAnswer(i -> {
@@ -178,7 +181,7 @@ class FsParserCheckpointAcknowledgementTest extends AbstractFSCrawlerTestCase {
         parser.run();
         assertThat(barriers)
                 .as("100 completed directories form one batch, then commit the remainder")
-                .containsExactly(100, 101);
+                .containsExactly(limit, limit + 1);
         assertThat(parser.getCheckpointHandler().read(jobName).getState()).isEqualTo(CrawlerState.COMPLETED);
     }
 
@@ -287,6 +290,59 @@ class FsParserCheckpointAcknowledgementTest extends AbstractFSCrawlerTestCase {
                     .isTrue();
             parser.close();
         }
+    }
+
+    /** Each independent limit must reach the real parser boundary, even with much larger bulk settings. */
+    @ParameterizedTest
+    @ValueSource(strings = {"max_operations: 2", "max_bytes: 1b", "max_interval: 10s"})
+    void configuredBoundaryOverridesBulkSizing(String setting) throws Exception {
+        var config = testTmpDir.resolve("checkpoint.yaml");
+        java.nio.file.Files.writeString(
+                config,
+                "fs:\n  checkpoint:\n    " + setting + "\nelasticsearch:\n  bulk_size: 10000\n  byte_size: 100mb");
+        var settings = FsSettingsLoader.load(config);
+        settings.setName(jobName);
+        settings.getElasticsearch().setIndex(randomName());
+        String root = testTmpDir.toString();
+        settings.getFs().setUrl(root);
+        settings.getFs().setJsonSupport(true);
+        settings.getFs().setIndexFolders(false);
+        settings.getFs().setRemoveDeleted(false);
+        var provider = mock(FsCrawlerExtensionFsProvider.class);
+        when(provider.exists(root)).thenReturn(true);
+        when(provider.getFiles(root))
+                .thenReturn(List.of(
+                        model(root, testTmpDir.resolve(randomName() + ".json").toString(), true),
+                        model(root, testTmpDir.resolve(randomName() + ".json").toString(), true),
+                        model(root, testTmpDir.resolve(randomName() + ".json").toString(), true)));
+        var documents = mock(FsCrawlerDocumentService.class);
+        var opened = new java.util.concurrent.atomic.AtomicInteger();
+        var barriers = new java.util.ArrayList<Integer>();
+        doAnswer(i -> {
+                    barriers.add(opened.get());
+                    return null;
+                })
+                .when(documents)
+                .flushAndEnsureBulkSucceeded();
+        var parser = new FsParser(
+                settings, testTmpDir, mock(FsCrawlerManagementService.class), documents, 1, false, provider);
+        when(provider.getInputStream(any())).thenAnswer(i -> {
+            if (opened.incrementAndGet() == 1 && setting.startsWith("max_interval")) {
+                // Advance elapsed time deterministically without sleeping or waiting for a real ten-second interval.
+                var clock = FsParser.class.getDeclaredField("lastCheckpointNanos");
+                clock.setAccessible(true);
+                clock.setLong(
+                        parser,
+                        System.nanoTime() - java.time.Duration.ofSeconds(20).toNanos());
+            }
+            return new ByteArrayInputStream("{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        });
+        parser.closed.set(false);
+        parser.run();
+        if (setting.startsWith("max_operations")) assertThat(barriers).containsExactly(2, 3);
+        else if (setting.startsWith("max_bytes")) assertThat(barriers).containsExactly(1, 2, 3, 3);
+        else assertThat(barriers).containsExactly(1, 3);
+        assertThat(parser.getCheckpointHandler().read(jobName).getState()).isEqualTo(CrawlerState.COMPLETED);
     }
 
     private FileAbstractModel model(String parent, String full, boolean file) {
