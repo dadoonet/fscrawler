@@ -62,19 +62,9 @@ class FsCrawlerCheckpointBenchmarkIT extends AbstractFsCrawlerITCase {
                 for (int d = 0; d < 10050; d++) Files.createDirectories(source.resolve("d" + d));
             }
             for (int iteration = 0; iteration <= repeats; iteration++) {
-                // The local provider currently sorts by access time read during comparisons.
-                // Pin fixture access times ahead of the run to avoid unrelated NTFS deferred updates.
-                try (var entries = Files.walk(source)) {
-                    for (var entry : entries.toList())
-                        Files.getFileAttributeView(entry, java.nio.file.attribute.BasicFileAttributeView.class)
-                                .setTimes(
-                                        null,
-                                        java.nio.file.attribute.FileTime.from(
-                                                java.time.Instant.parse("2100-01-01T00:00:00Z")),
-                                        null);
-                }
                 var settings = createTestSettings();
                 settings.getFs().setUrl(source.toString());
+                settings.getFs().setProvider("checkpoint-benchmark");
                 settings.getFs().setJsonSupport(true);
                 settings.getFs().setIndexFolders(false);
                 settings.getFs().setRemoveDeleted(false);
