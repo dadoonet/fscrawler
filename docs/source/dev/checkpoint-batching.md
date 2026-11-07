@@ -28,7 +28,9 @@ frontier. The disk write occurs outside the bulk processor queue monitor.
 
 A failed barrier or acknowledgement-checkpoint write escapes ordinary
 `continue_on_error` file handling. The crawler reports `ERROR` and preserves the
-previous safe frontier. Failure details from the bulk client remain in the error.
+previous acknowledged frontier in memory. Preserving the previous file through a
+failed write or power loss additionally requires atomic file replacement (BUG-07).
+Failure details from the bulk client remain in the error.
 
 ## Boundaries and bulk settings
 
@@ -69,7 +71,8 @@ and completed directories covered by successful acknowledgement remain completed
 
 Tentative statistics for the unfinished directory are excluded from the durable
 snapshot so replay can count that directory once. These are recovery counters,
-not an exactly-once operation journal; deletion accounting may differ on replay. A finished directory becomes
+not an exactly-once operation journal; deletion accounting and interrupted
+in-process traversal counters may differ on replay. A finished directory becomes
 committed only after its associated writes succeed. Successful-scan timestamps are
 advanced only after the entire scan succeeds.
 
@@ -129,11 +132,13 @@ flush interval five seconds. Folder indexing and deletion reconciliation are
 disabled to isolate indexing/traversal/checkpoint behavior. These are not PDF
 extraction or deletion-reconciliation benchmarks.
 
-Fixture generation, access-time stabilization, validation, and cleanup occur outside
-the timed interval. Timing includes crawler construction/startup through one scan
-finishing. Each workload has one discarded warm-up and five measured runs. Fixture
-access timestamps are fixed to avoid unrelated NTFS deferred-access-time changes
-destabilizing the current filesystem sorting comparator.
+Fixture generation, validation, and cleanup occur outside the timed interval. Timing includes crawler construction/startup through one scan
+finishing. Each workload has one discarded warm-up and five measured runs. Both phases use the same test-only `CheckpointBenchmarkFsProvider`. It reads real
+files and metadata and inherits local stream handling, but sorts immutable path
+names instead of repeatedly querying mutable access times during comparisons.
+This isolates checkpoint cost from the stock local provider's separate sorting
+failure observed in exploratory runs. It is not a benchmark of stock-provider
+sorting performance, and no production sorting change is included.
 
 Example 2: collect samples on the baseline revision, then repeat on the fixed revision
 using the same cluster configuration and benchmark script.
@@ -159,3 +164,118 @@ change. A 10% slowdown is the initial practical threshold for this experiment, n
 a product performance guarantee. Five runs per workload cannot establish behavior
 for every filesystem, document type, cluster load, or deployment. A borderline
 result calls for more repetitions rather than an all-clear based on one timing.
+
+## Recorded validation: 7 November 2026
+
+The local implementation branch is `codex/fix-checkpoint-ack-batching`. It is stacked
+on the bulk-queue, bulk-item-failure, and bounded-retry fixes, merged with main
+`9ab67967`. The baseline retains those prerequisite fixes and the same benchmark
+harness, but uses the old checkpoint implementation. This comparison isolates
+BUG-03; it is not a comparison against an unmodified upstream release.
+
+The production change is confined to `FsParser`. The benchmark-only filesystem
+adapter and its service registration are integration-test sources. No production
+filesystem sorting change is included.
+
+### Before and after correctness checks
+
+| Check | Before BUG-03 fix | After BUG-03 fix |
+|---|---|---|
+| New checkpoint unit regressions | Seven failures | Seven passed |
+| Real Elasticsearch rejection/restart/replay integration test | Failed: missing document was not replayed | Passed: both documents recovered; accepted file replayed |
+| Focused checkpoint, parser, crawler and bulk/retry validation | Not used as a substitute for the red tests | 55 unit cases and two integration cases passed |
+
+The focused integration cases are `FsCrawlerCheckpointReplayIT` and
+`FsCrawlerBulkItemFailureIT`. They use real Elasticsearch with the REST gateway
+disabled. The red phase ran the new tests against old production code before the
+fix. Their failing state and the passing fixed state were recorded separately.
+
+### Healthy processing times
+
+Environment: Windows, Java 25.0.2, Maven 3.9.11, Elasticsearch 9.5.5 in a disposable
+Podman container. All accepted timing runs finished successfully and validated
+document counts. No failures were injected. The runner also rejected processing
+errors and retry diagnostics. No other Maven suite ran concurrently with timing.
+
+| Workload | Measured runs per phase | Before median | After median | Change | Indicative 95% interval for change |
+|---|---:|---:|---:|---:|---:|
+| 100 directories / 1,000 JSON files | 5 | 2.153 s | 1.927 s | -10.5% | -27.8% to -7.9% |
+| One directory / 10,050 JSON files, initial experiment | 5 | 13.259 s | 16.064 s | +21.2% | -13.2% to +23.5% |
+| 10,050 empty child directories | 5 | 11.693 s | 12.001 s | +2.6% | -3.9% to +3.4% |
+| One directory / 10,050 JSON files, separate follow-up | 10 | 12.671 s | 13.775 s | +8.7% | +0.08% to +16.38% |
+
+**A material large-directory slowdown cannot be ruled out.** The follow-up's
+observed 8.7% median increase is below the chosen 10% practical threshold, but its
+interval extends above that threshold. The initial unfavorable result remains
+reported rather than being replaced or selectively pooled with the follow-up.
+The small-directory and wide-directory samples did not show a material slowdown.
+These results do not establish equivalent performance in every deployment.
+
+The experiment ran baseline then fixed, rather than interleaving randomized A/B
+trials. The bootstrap intervals describe sample variability; they do not remove
+machine-load, filesystem-cache, JVM, or ordering effects. Directory replay is a
+correctness tradeoff and checkpoint acknowledgement barriers can add waiting.
+The measurements do not isolate which component accounts for the observed cost.
+
+| Experiment | Baseline revision | Fixed revision |
+|---|---|---|
+| Initial, five samples | `8d5b408de99c2c1e6c350d43e86e057836d688ea` | `a4f2cd67` |
+| Follow-up, ten samples | `868e4c9ac07c8b54300f23be649b22b2825f63fb` | `c8af774c03c0dd05dd478ece917ef930edd7f065` |
+
+The production parser SHA-256 is identical between the two baseline experiments,
+and likewise identical between the two fixed experiments. Only the workload
+selection in the test harness changed for the follow-up.
+Download the {download}`raw samples, revisions, source hashes, timestamps and comparisons <checkpoint-benchmark-results.json>`.
+
+Example 4: repeat the large-directory experiment with ten measured runs per phase.
+Run once on each corresponding revision, using distinct labels.
+
+```powershell
+./scripts/benchmark-checkpoint.ps1 -Label baseline-large10 -Workload large-directory -Repeats 10 -ClusterUrl http://127.0.0.1:19203
+./scripts/benchmark-checkpoint.ps1 -Label fixed-large10 -Workload large-directory -Repeats 10 -ClusterUrl http://127.0.0.1:19203
+```
+
+### Regular Maven suite
+
+The full unit run reported 418 cases: 402 passed, 15 skipped, and one error.
+`UpdateReadmeVersionsTest.updateReadmeVersionsPythonTestsPass` could not start
+`python3` on Windows (`CreateProcess error=2`). Running the underlying Python
+suite directly with the available interpreter passed all 25 tests. This direct
+check does not change the Maven wrapper's reported error. The wrapper also
+failed with the same missing-`python3` error when explicitly rerun on the
+unchanged-checkpoint baseline.
+
+The broad suite uses `maven.test.failure.ignore=true` to collect failures across
+modules. A successful Maven process exit under that option does **not** mean that
+all tests passed.
+
+The completed daily/sequential integration run reported 183 cases:
+160 passed, 19 skipped, one assertion failure, and three errors.
+The opt-in timing benchmark accounts for one intentional skip in this ordinary run.
+The new replay test and existing bulk-item-failure test passed in this broad run too.
+
+Six cases were skipped because Testcontainers could not discover a Docker
+environment through the Windows container API. The Podman CLI and the explicitly
+started Elasticsearch container worked, so the Elasticsearch-backed tests ran,
+but container-dependent S3/MinIO and Nginx coverage was not exercised. Other skips
+include Windows filesystem exclusions, unavailable Tesseract/Kibana, and already
+disabled cases. A smaller failure count than an earlier run must not be read as
+proof that these skipped scenarios have been fixed.
+
+| Unsuccessful integration case | Observed cause | Baseline evidence |
+|---|---|---|
+| `FsHttpPluginIT.readTxtFileFromWebsite` | Could not open the external HTTPS robots.txt stream | Reproduced against unchanged checkpoint code in the current environment |
+| `FsCrawlerRestIT.deleteDocumentApi` | HTTP 400 Bad Request | Reproduced against unchanged checkpoint code in the current environment |
+| `FsCrawlerTestOcrIT.ocr_disabled` | Raw metadata assertion expected 66 fields, received 56 | Reproduced against unchanged checkpoint code in the current environment |
+| `FsCrawlerTestRemoveDeletedIT.remove_deleted_continues_after_directory_query_limit` | Timeout while repeatedly resuming the directory removed by the test; provider listing fails | Same test and repeated missing-directory error recorded in the earlier BUG-05 run; not rerun on today's baseline |
+
+These results are **not an all-green full suite**. The historical comparison is
+evidence of an already observed deletion-test problem, not proof that every
+baseline/environment combination behaves identically. The three smaller failing
+cases were explicitly rerun against baseline revision `868e4c9a`; all three failed
+again. No new failing integration identity appeared relative to the saved BUG-05 run.
+
+Repository-wide Spotless and the strict Sphinx HTML build passed. Raw local Maven
+logs, XML reports, red/green results, and benchmark runner reports were retained
+for review; benchmark samples and revision/source hashes are included in the
+download above. No unrelated test failures were suppressed in the reported counts.

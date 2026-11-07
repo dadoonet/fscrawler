@@ -1,0 +1,588 @@
+{
+  "date": "2026-11-07",
+  "environment": {
+    "os": "Windows",
+    "java": "25.0.2",
+    "maven": "3.9.11",
+    "elasticsearch": "9.5.5",
+    "rest_gateway": false,
+    "bulk_size": 100,
+    "flush_interval_seconds": 5,
+    "provider": "test-only CheckpointBenchmarkFsProvider; real local files, immutable path ordering",
+    "document_mode": "JSON passthrough; semantic search, folder indexing, deletion reconciliation disabled"
+  },
+  "design": "Sequential baseline then fixed; one discarded warm-up per workload and phase; no injected failures. The ten-sample large-directory follow-up is reported separately from the initial five-sample experiment. Bootstrap intervals are indicative and do not remove temporal or filesystem-cache confounding.",
+  "reports": {
+    "baseline-stable": {
+      "label": "baseline-stable",
+      "revision": "8d5b408de99c2c1e6c350d43e86e057836d688ea",
+      "parserSha256": "38B77CFDE7EEDBB8AEEFB8A033ACFAE78268A5ADF0A2A9F2757566F5BFEC5D6B",
+      "startedUtc": "2026-11-07T14:33:55.9524920Z",
+      "completedUtc": "2026-11-07T14:39:16.5903955Z",
+      "repeats": 5,
+      "samples": [
+        {
+          "workload": "small-directories",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 2843.23,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 2255.99,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 2153.102,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 2311.554,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 2125.808,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 2136.362,
+          "documents": 1000
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 15719.928,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 15391.557,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 13259.028,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 13004.158,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 13365.729,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 13219.549,
+          "documents": 10050
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 11055.068,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 11692.93,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 11846.432,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 12195.663,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 11692.185,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 11679.913,
+          "documents": 0
+        }
+      ]
+    },
+    "fixed-stable": {
+      "label": "fixed-stable",
+      "revision": "a4f2cd67fffcb444940e4ac5b99da45d6141a91a",
+      "parserSha256": "9605433600493D1DB15538BB14565E30C6D8A84E2E8F3BFAAB97CF7AEA3C3B4E",
+      "startedUtc": "2026-11-07T14:39:50.6591160Z",
+      "completedUtc": "2026-11-07T14:44:21.6708720Z",
+      "repeats": 5,
+      "samples": [
+        {
+          "workload": "small-directories",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 2500.856,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 1982.78,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 1926.728,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 1555.16,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 1672.029,
+          "documents": 1000
+        },
+        {
+          "workload": "small-directories",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 1949.378,
+          "documents": 1000
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 13045.546,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 12389.939,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 11596.45,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 16259.742,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 16064.293,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 16088.463,
+          "documents": 10050
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 11057.978,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 12000.867,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 12024.645,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 11387.16,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 11460.764,
+          "documents": 0
+        },
+        {
+          "workload": "wide-directory",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 12095.525,
+          "documents": 0
+        }
+      ]
+    },
+    "baseline-large10": {
+      "label": "baseline-large10",
+      "workloads": [
+        "large-directory"
+      ],
+      "revision": "868e4c9ac07c8b54300f23be649b22b2825f63fb",
+      "parserSha256": "38B77CFDE7EEDBB8AEEFB8A033ACFAE78268A5ADF0A2A9F2757566F5BFEC5D6B",
+      "startedUtc": "2026-11-07T14:49:39.3719955Z",
+      "completedUtc": "2026-11-07T14:53:18.4398149Z",
+      "repeats": 10,
+      "samples": [
+        {
+          "workload": "large-directory",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 15664.248,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 14705.532,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 13659.325,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 14231.697,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 12639.088,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 12703.07,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 6,
+          "warmup": false,
+          "elapsed_ms": 12270.565,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 7,
+          "warmup": false,
+          "elapsed_ms": 12310.522,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 8,
+          "warmup": false,
+          "elapsed_ms": 12376.955,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 9,
+          "warmup": false,
+          "elapsed_ms": 11762.953,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 10,
+          "warmup": false,
+          "elapsed_ms": 13125.686,
+          "documents": 10050
+        }
+      ]
+    },
+    "fixed-large10": {
+      "label": "fixed-large10",
+      "workloads": [
+        "large-directory"
+      ],
+      "revision": "c8af774c03c0dd05dd478ece917ef930edd7f065",
+      "parserSha256": "9605433600493D1DB15538BB14565E30C6D8A84E2E8F3BFAAB97CF7AEA3C3B4E",
+      "startedUtc": "2026-11-07T14:54:25.4375265Z",
+      "completedUtc": "2026-11-07T14:58:44.4600653Z",
+      "repeats": 10,
+      "samples": [
+        {
+          "workload": "large-directory",
+          "iteration": 0,
+          "warmup": true,
+          "elapsed_ms": 16838.212,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 1,
+          "warmup": false,
+          "elapsed_ms": 13852.809,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 2,
+          "warmup": false,
+          "elapsed_ms": 13697.712,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 3,
+          "warmup": false,
+          "elapsed_ms": 13436.879,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 4,
+          "warmup": false,
+          "elapsed_ms": 12723.127,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 5,
+          "warmup": false,
+          "elapsed_ms": 12940.95,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 6,
+          "warmup": false,
+          "elapsed_ms": 14797.915,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 7,
+          "warmup": false,
+          "elapsed_ms": 15429.188,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 8,
+          "warmup": false,
+          "elapsed_ms": 14671.666,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 9,
+          "warmup": false,
+          "elapsed_ms": 14060.075,
+          "documents": 10050
+        },
+        {
+          "workload": "large-directory",
+          "iteration": 10,
+          "warmup": false,
+          "elapsed_ms": 13693.582,
+          "documents": 10050
+        }
+      ]
+    }
+  },
+  "initial_comparison": [
+    {
+      "workload": "small-directories",
+      "baseline_ms": [
+        2255.99,
+        2153.102,
+        2311.554,
+        2125.808,
+        2136.362
+      ],
+      "fixed_ms": [
+        1982.78,
+        1926.728,
+        1555.16,
+        1672.029,
+        1949.378
+      ],
+      "baseline_median_ms": 2153.102,
+      "fixed_median_ms": 1926.728,
+      "median_change_percent": -10.513853965116372,
+      "bootstrap_95_percent_interval": [
+        -27.77118780252862,
+        -7.910540234508156
+      ],
+      "practical_threshold_percent": 10,
+      "interpretation": "no material slowdown in these samples"
+    },
+    {
+      "workload": "large-directory",
+      "baseline_ms": [
+        15391.557,
+        13259.028,
+        13004.158,
+        13365.729,
+        13219.549
+      ],
+      "fixed_ms": [
+        12389.939,
+        11596.45,
+        16259.742,
+        16064.293,
+        16088.463
+      ],
+      "baseline_median_ms": 13259.028,
+      "fixed_median_ms": 16064.293,
+      "median_change_percent": 21.1573955496587,
+      "bootstrap_95_percent_interval": [
+        -13.23742984763494,
+        23.531973388819182
+      ],
+      "practical_threshold_percent": 10,
+      "interpretation": "insufficient precision to rule out a material slowdown"
+    },
+    {
+      "workload": "wide-directory",
+      "baseline_ms": [
+        11692.93,
+        11846.432,
+        12195.663,
+        11692.185,
+        11679.913
+      ],
+      "fixed_ms": [
+        12000.867,
+        12024.645,
+        11387.16,
+        11460.764,
+        12095.525
+      ],
+      "baseline_median_ms": 11692.93,
+      "fixed_median_ms": 12000.867,
+      "median_change_percent": 2.633531544275036,
+      "bootstrap_95_percent_interval": [
+        -3.8768803974057353,
+        3.443063458004114
+      ],
+      "practical_threshold_percent": 10,
+      "interpretation": "no material slowdown in these samples"
+    }
+  ],
+  "large_directory_followup": [
+    {
+      "workload": "large-directory",
+      "baseline_ms": [
+        14705.532,
+        13659.325,
+        14231.697,
+        12639.088,
+        12703.07,
+        12270.565,
+        12310.522,
+        12376.955,
+        11762.953,
+        13125.686
+      ],
+      "fixed_ms": [
+        13852.809,
+        13697.712,
+        13436.879,
+        12723.127,
+        12940.95,
+        14797.915,
+        15429.188,
+        14671.666,
+        14060.075,
+        13693.582
+      ],
+      "baseline_median_ms": 12671.079,
+      "fixed_median_ms": 13775.2605,
+      "median_change_percent": 8.714186850228,
+      "bootstrap_95_percent_interval": [
+        0.07838364617831495,
+        16.381844122832014
+      ],
+      "practical_threshold_percent": 10,
+      "interpretation": "insufficient precision to rule out a material slowdown"
+    }
+  ],
+  "conclusion": "Small and wide workloads stayed below the 10% practical slowdown threshold in these samples. Large-directory follow-up median slowed by 8.7%, with an indicative 95% interval of 0.08% to 16.38%; a material slowdown cannot be ruled out. Initial five-sample median slowdown was 21.2%."
+}
