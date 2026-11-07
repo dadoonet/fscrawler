@@ -17,5 +17,7 @@ $mavenArgs=@('-B','-ntp','verify','-pl','integration-tests','-am','-Pdaily,seque
     "-Dtests.checkpoint.paired.files=$Files", "-Dtests.checkpoint.paired.directories=$Directories",
     '-Dtests.seed=3939393939393939', "-Dtests.cluster.url=$ClusterUrl",
     '-Dtests.leaveTemporary=false','-Ddocker.skip=true')
+if(-not $env:CHECKPOINT_BENCHMARK_API_KEY){throw 'Set CHECKPOINT_BENCHMARK_API_KEY to a dedicated shared test key'}
+$mavenArgs += "-Dtests.cluster.apiKey=$env:CHECKPOINT_BENCHMARK_API_KEY"
 & mvn @mavenArgs
 exit $LASTEXITCODE

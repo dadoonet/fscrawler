@@ -38,6 +38,8 @@ def main():
     p.add_argument('--files', type=int, default=50000)
     p.add_argument('--directories', type=int, default=500)
     a = p.parse_args()
+    if not os.environ.get('CHECKPOINT_BENCHMARK_API_KEY'):
+        p.error('Set CHECKPOINT_BENCHMARK_API_KEY to a dedicated shared test key; identical seeds otherwise invalidate each other\'s generated keys')
     if min(a.repeats, a.files, a.directories) < 1 or a.warmups < 0 or a.files % a.directories:
         p.error('Require positive counts, nonnegative warmups, and files divisible by directories')
     roots = dict(baseline=a.baseline.resolve(), fixed=a.fixed.resolve())
