@@ -104,7 +104,7 @@ public class FsParser implements Runnable, AutoCloseable {
 
     // Checkpoint configuration
     private static final int CHECKPOINT_BATCH_DIRECTORIES = 100;
-    private static final int CHECKPOINT_BATCH_OPERATIONS = 1000;
+    private static final int CHECKPOINT_BATCH_OPERATIONS = 5000;
     private static final long CHECKPOINT_BATCH_BYTES = 32L * 1024 * 1024;
     private static final long CHECKPOINT_BATCH_NANOS = Duration.ofSeconds(30).toNanos();
     private static final int MAX_RETRIES = 10;

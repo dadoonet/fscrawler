@@ -194,21 +194,23 @@ class FsParserCheckpointAcknowledgementTest extends AbstractFSCrawlerTestCase {
         settings.getFs().setRemoveDeleted(false);
         var provider = mock(FsCrawlerExtensionFsProvider.class);
         var files = new java.util.ArrayList<FileAbstractModel>();
-        for (int n = 0; n < 1001; n++)
+        for (int n = 0; n < 5001; n++)
             files.add(model(root, testTmpDir.resolve(randomName() + ".json").toString(), true));
         when(provider.exists(root)).thenReturn(true);
         when(provider.getFiles(root)).thenReturn(files);
         var opened = new java.util.concurrent.atomic.AtomicInteger();
+        var documents = mock(FsCrawlerDocumentService.class);
+        var barriers = new java.util.ArrayList<Integer>();
+        doAnswer(i -> {
+                    barriers.add(opened.get());
+                    return null;
+                })
+                .when(documents)
+                .flushAndEnsureBulkSucceeded();
         var parser = new FsParser(
-                settings,
-                testTmpDir,
-                mock(FsCrawlerManagementService.class),
-                mock(FsCrawlerDocumentService.class),
-                1,
-                false,
-                provider);
+                settings, testTmpDir, mock(FsCrawlerManagementService.class), documents, 1, false, provider);
         when(provider.getInputStream(any())).thenAnswer(i -> {
-            if (opened.incrementAndGet() == 1001) {
+            if (opened.incrementAndGet() == 5001) {
                 var saved = parser.getCheckpointHandler().read(jobName);
                 assertThat(saved.getPendingPaths()).contains(root);
                 assertThat(saved.getCompletedPaths()).doesNotContain(root);
@@ -221,10 +223,13 @@ class FsParserCheckpointAcknowledgementTest extends AbstractFSCrawlerTestCase {
         });
         parser.closed.set(false);
         parser.run();
-        assertThat(opened.get()).isEqualTo(1001);
+        assertThat(opened.get()).isEqualTo(5001);
+        assertThat(barriers)
+                .as("the 5,000-operation minimum avoids earlier barriers and still commits the final remainder")
+                .containsExactly(5000, 5001);
         var saved = parser.getCheckpointHandler().read(jobName);
         assertThat(saved.getState()).isEqualTo(CrawlerState.COMPLETED);
-        assertThat(saved.getFilesProcessed()).isEqualTo(1001);
+        assertThat(saved.getFilesProcessed()).isEqualTo(5001);
     }
 
     /**
