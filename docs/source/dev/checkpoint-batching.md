@@ -34,13 +34,13 @@ Failure details from the bulk client remain in the error.
 
 ## Boundaries and bulk settings
 
-These initial limits are implementation constants rather than new YAML options.
+These limits are implementation constants rather than new YAML options.
 A boundary is requested when any limit is reached at a safe traversal point:
 
-| Trigger | Initial policy |
+| Trigger | Current policy |
 |---|---|
 | Fully examined directories since the last commit | 100 |
-| Submitted operations | Greater of 1,000 or ten times `elasticsearch.bulk_size` |
+| Submitted operations | Greater of 5,000 or ten times `elasticsearch.bulk_size` |
 | Estimated submitted bytes | Greater of 32 MiB or three times `elasticsearch.byte_size` |
 | Elapsed time since the last acknowledged snapshot | 30 seconds |
 | End of scan | Commit the final partial batch before successful scan completion |
@@ -98,7 +98,7 @@ the unchanged checkpoint implementation:
 - A close save cannot publish speculative completed directories.
 - A pause during a blocked acknowledgement persists only the safe frontier.
 - Directory completion uses a 100-directory barrier, rather than a flush per directory.
-- A boundary inside a 1,001-file directory retains a replayable directory and no file cursor.
+- A boundary inside a 5,001-file directory retains a replayable directory and no file cursor; the first operation barrier is at 5,000 submissions.
 
 `FsCrawlerCheckpointReplayIT` additionally rejects one real document in an ingest
 pipeline, corrects the pipeline, and starts a fresh crawler/client. It verifies
@@ -166,6 +166,9 @@ for every filesystem, document type, cluster load, or deployment. A borderline
 result calls for more repetitions rather than an all-clear based on one timing.
 
 ## Recorded validation: 7 November 2026
+
+This earlier validation used the initial 1,000-operation minimum. The later
+5,000-operation experiment and its validation are recorded separately below.
 
 The local implementation branch is `codex/fix-checkpoint-ack-batching`. It is stacked
 on the bulk-queue, bulk-item-failure, and bounded-retry fixes, merged with main
@@ -279,3 +282,115 @@ Repository-wide Spotless and the strict Sphinx HTML build passed. Raw local Mave
 logs, XML reports, red/green results, and benchmark runner reports were retained
 for review; benchmark samples and revision/source hashes are included in the
 download above. No unrelated test failures were suppressed in the reported counts.
+
+## Larger alternating experiment with a 5,000-operation minimum
+
+The candidate branch `codex/checkpoint-5000-benchmark` preserves the earlier
+1,000-operation branch and changes only the operation minimum to 5,000. The
+100-directory, estimated-byte, 30-second and lifecycle boundaries remain intact.
+The operation limit is therefore `max(5000, 10 * elasticsearch.bulk_size)`.
+
+### Experimental design and controls
+
+Two datasets were tested: 50,000 JSON files in one directory, and 500 child
+directories containing 100 JSON files each. Each dataset/version received two
+discarded warm-ups and ten measured crawls: 48 validated crawls in total, of which
+40 were measured. The test asserts `COMPLETED` and exactly 50,000 Elasticsearch
+documents on every crawl. Retry and processing-failure diagnostics invalidate the
+experiment. Fresh destination indices and checkpoints are used for each crawl.
+
+Both versions remain in separate persistent JVMs. The coordinator permits one
+crawler at a time and alternates pair order AB, BA, AB, BA, including warm-ups.
+Both fixtures must be ready before timing starts. Phase gates prevent subsequent
+fixture preparation and final teardown from overlapping another timed crawl.
+Validation, index/checkpoint cleanup and crawler close finish before the next turn.
+The timed interval remains crawler construction/start through scan completion.
+This measures warm filesystem conditions; it does not claim cold-cache behavior.
+
+The same stable-order test provider and harness run on both versions, with source
+hash equality checked before starting. The provider reads real local files and
+metadata but avoids the separate stock mutable-access-time sorting problem.
+Settings remain bulk count 100, flush interval five seconds, JSON passthrough,
+semantic search disabled, REST gateway disabled, no folder indexing and no deletion
+reconciliation. These are synthetic checkpoint/indexing tests, not representative
+PDF extraction or production-provider sorting tests.
+
+Hardware was an Intel Core Ultra 5 135U (12 cores, 14 logical processors), Windows
+11 Enterprise with approximately 15.5 GiB visible RAM. Podman had seven virtual
+CPUs and 2 GiB RAM; Elasticsearch 9.5.5 had a 1 GiB heap. Test JVMs had a 1 GiB
+maximum heap. Java was 25.0.2 and Maven 3.9.11. No other build or test suite ran
+during measured crawls. The idle partner JVM remains resident, which is part of
+this controlled comparison rather than a single-process production deployment.
+
+The identical randomized seed otherwise generates identical API-key names, and
+the shared test helper invalidates an existing key by name. A small smoke test
+exposed that authentication collision. Both workers therefore receive one
+dedicated test API key through `CHECKPOINT_BENCHMARK_API_KEY`. It is not recorded
+in result metadata. The corrected smoke test passed all twelve reduced-size
+crawls. The failed smoke run is excluded from the larger experiment.
+
+### Measured results
+
+| Dataset | Before median | Fixed 5K median | Change | Indicative paired-bootstrap 95% interval |
+|---|---:|---:|---:|---:|
+| One directory / 50,000 files | 83.026 s | 85.822 s | +3.37% | -31.56% to +38.03% |
+| 500 directories / 100 files each | 89.421 s | 91.117 s | +1.90% | -23.16% to +27.96% |
+
+For `single-50000`, the comparison reports **insufficient precision to rule out a material slowdown** against the preselected 10% practical slowdown threshold.
+
+For `many-50000`, the comparison reports **insufficient precision to rule out a material slowdown** against the preselected 10% practical slowdown threshold.
+
+
+The table compares the two versions' separate medians. The median of the
+within-pair percentage changes was -0.63% for the single directory and -5.21% for
+many directories. These are different statistics: the median of ratios need not
+equal the ratio of medians. Both are included in the raw comparison. The interval
+resamples matched pairs and estimates change in the ratio of medians shown in
+the table. Neither dataset has enough precision to rule out a 10% slowdown.
+
+These results compare the old checkpoint implementation with the fixed 5,000-operation
+policy. They do not directly compare 1,000 against 5,000 on the same larger datasets.
+The earlier smaller, sequential experiment cannot establish that difference.
+Paired bootstrap intervals retain baseline/fixed pairing but remain indicative:
+samples within persistent JVMs may be correlated, and alternating order does not
+remove every filesystem-cache, thermal, load or cluster effect. No runs were
+discarded based on whether their timing favored the change.
+
+Size-triggered bulk requests execute synchronously on the calling crawler thread
+in `FsCrawlerBulkProcessor.execute`. Timer-triggered requests can overlap traversal.
+Consequently, reduced asynchronous overlap alone is not an established explanation
+for the earlier timing difference. This experiment measures complete healthy scans;
+it does not separately attribute time to acknowledgement waiting, checkpoint I/O,
+filesystem operations or garbage collection.
+
+Download the {download}`larger experiment samples, source revisions, hardware and paired comparisons <checkpoint-benchmark-5000-results.json>`.
+
+### Candidate validation and reproduction
+
+The revised 5,001-file regression was first run against the 1,000-operation code.
+It failed because actual barriers were `[1000, 2000, 3000, 4000, 5000, 5001]`,
+where the candidate requires `[5000, 5001]`. After changing the minimum, 27
+parser/crawler unit cases and two real Elasticsearch integration cases passed,
+including rejected-document recovery with a fresh crawler/client. The earlier
+full regular-suite totals above belong to the earlier revision; they are not
+presented as a new full-suite run on this candidate.
+
+The benchmark runner requires clean committed sources in both working trees and
+an identical harness/provider. It preserves old Failsafe summaries separately so
+modules without selected tests cannot verify a stale failure from another run.
+It rejects incomplete samples, failed Maven verification and processing errors.
+
+Example 5: run the complete alternating experiment from the fixed checkout.
+Supply a dedicated API key for the disposable test cluster and identical JVM
+options for both workers through the parent environment.
+
+```powershell
+$env:CHECKPOINT_BENCHMARK_API_KEY = '<dedicated test API key>'
+python scripts/benchmark-checkpoint-paired.py --baseline C:\work\baseline --fixed C:\work\fixed --output C:\bench\run01
+```
+
+Example 6: calculate the paired comparison after successful completion.
+
+```powershell
+python scripts/compare-checkpoint-paired.py C:\bench\run01\paired-results.json
+```
