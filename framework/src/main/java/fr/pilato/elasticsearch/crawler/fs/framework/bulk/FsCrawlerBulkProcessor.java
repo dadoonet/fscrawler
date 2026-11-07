@@ -61,6 +61,8 @@ public class FsCrawlerBulkProcessor<
     private boolean quiesced;
     /** Exclusive lock so crawl-end and REST cannot interleave two {@link #flushWhileQuiesced} calls. */
     private final ReentrantLock quiesceLock = new ReentrantLock();
+    /** Serializes batch detachment and execution without holding the queue monitor during I/O. */
+    private final ReentrantLock executionLock = new ReentrantLock();
 
     private FsCrawlerBulkProcessor(
             Engine<O, Q, S> engine,
@@ -127,15 +129,15 @@ public class FsCrawlerBulkProcessor<
      * @return this so we can link methods.
      */
     public FsCrawlerBulkProcessor<O, Q, S> add(O request) {
-        Q batch = null;
+        boolean executeNeeded;
         synchronized (queueLock) {
             ensureOpen();
             bulkRequest.add(request);
-            if (!isQuiescedForOtherThreads() && bulkRequest.isOverTheLimit()) {
-                batch = detachBatch();
-            }
+            executeNeeded = !isQuiescedForOtherThreads() && bulkRequest.isOverTheLimit();
         }
-        execute(batch);
+        if (executeNeeded) {
+            executeWhenNeeded();
+        }
         return this;
     }
 
@@ -155,15 +157,20 @@ public class FsCrawlerBulkProcessor<
     }
 
     private void executeWhenNeeded() {
-        Q batch;
-        synchronized (queueLock) {
-            // A scheduled invocation may already be running when close shuts down the executor.
-            if (closed || isQuiescedForOtherThreads()) {
-                return;
+        executionLock.lock();
+        try {
+            Q batch;
+            synchronized (queueLock) {
+                // A waiting producer or timer may resume after flush or close has taken ownership.
+                if (closed || isQuiescedForOtherThreads()) {
+                    return;
+                }
+                batch = detachBatch();
             }
-            batch = detachBatch();
+            execute(batch);
+        } finally {
+            executionLock.unlock();
         }
-        execute(batch);
     }
 
     /** Must be called with queueLock held. */
@@ -240,7 +247,12 @@ public class FsCrawlerBulkProcessor<
      * and timer/size-triggered detachment cannot race the final idle check or the action.
      */
     public void flushWhileQuiesced(Runnable action) {
-        quiesceLock.lock();
+        try {
+            quiesceLock.lockInterruptibly();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for the bulk lifecycle lock", e);
+        }
         try {
             synchronized (queueLock) {
                 ensureOpen();
@@ -263,20 +275,25 @@ public class FsCrawlerBulkProcessor<
 
     /** Called by the quiesce owner; wait releases queueLock so completing listeners can enqueue retries. */
     private void drainAndRun(Runnable action) throws InterruptedException {
-        while (true) {
-            Q batch;
-            synchronized (queueLock) {
-                if (inFlightExecutions > 0) {
-                    queueLock.wait();
-                    continue;
+        executionLock.lockInterruptibly();
+        try {
+            while (true) {
+                Q batch;
+                synchronized (queueLock) {
+                    if (inFlightExecutions > 0) {
+                        queueLock.wait();
+                        continue;
+                    }
+                    batch = detachBatch();
+                    if (batch == null) {
+                        action.run();
+                        return;
+                    }
                 }
-                batch = detachBatch();
-                if (batch == null) {
-                    action.run();
-                    return;
-                }
+                execute(batch);
             }
-            execute(batch);
+        } finally {
+            executionLock.unlock();
         }
     }
 

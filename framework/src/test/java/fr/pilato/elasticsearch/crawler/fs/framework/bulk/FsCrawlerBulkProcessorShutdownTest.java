@@ -50,7 +50,8 @@ class FsCrawlerBulkProcessorShutdownTest extends AbstractFSCrawlerTestCase {
                     .isInstanceOf(IOException.class)
                     .hasCauseInstanceOf(InterruptedException.class);
             Assertions.assertThat(outcome.interrupted()).isTrue();
-            Assertions.assertThatThrownBy(() -> fixture.processor.add(operation()))
+            var rejectedOperation = operation();
+            Assertions.assertThatThrownBy(() -> fixture.processor.add(rejectedOperation))
                     .isInstanceOf(IllegalStateException.class);
             fixture.releaseEngine.countDown();
             producing.get(5, TimeUnit.SECONDS);
@@ -104,6 +105,57 @@ class FsCrawlerBulkProcessorShutdownTest extends AbstractFSCrawlerTestCase {
             var accepted = operation();
             processor.add(accepted);
             processor.close();
+            Assertions.assertThat(delivered).containsExactly(accepted);
+        } finally {
+            releaseAction.countDown();
+            workers.shutdownNow();
+            Assertions.assertThat(workers.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+            processor.close();
+        }
+    }
+
+    @Test
+    void interruptedFlushWaitingForQuiescedFlushLeavesOwnerAndProcessorIntact() throws Exception {
+        var actionEntered = new CountDownLatch(1);
+        var releaseAction = new CountDownLatch(1);
+        var delivered = new ConcurrentLinkedQueue<TestOperation>();
+        var processor = processor(request -> {
+            delivered.addAll(List.copyOf(request.getOperations()));
+            return new TestBulkResponse();
+        });
+        var workers = Executors.newFixedThreadPool(2);
+        var thread = new AtomicReference<Thread>();
+        var started = new CountDownLatch(1);
+        try {
+            var owner = workers.submit(() -> processor.flushWhileQuiesced(() -> {
+                actionEntered.countDown();
+                await(releaseAction);
+            }));
+            await(actionEntered);
+            var waiting = workers.submit(() -> {
+                thread.set(Thread.currentThread());
+                started.countDown();
+                Exception failure = null;
+                try {
+                    processor.flush();
+                } catch (Exception e) {
+                    failure = e;
+                }
+                return new CloseOutcome(failure, Thread.currentThread().isInterrupted());
+            });
+            await(started);
+            new ClosingAttempt(thread, waiting).interruptWaiting();
+            var outcome = waiting.get(2, TimeUnit.SECONDS);
+            Assertions.assertThat(outcome.failure())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasCauseInstanceOf(InterruptedException.class);
+            Assertions.assertThat(outcome.interrupted()).isTrue();
+            Assertions.assertThat(owner).isNotDone();
+            releaseAction.countDown();
+            owner.get(5, TimeUnit.SECONDS);
+            var accepted = operation();
+            processor.add(accepted);
+            processor.flush();
             Assertions.assertThat(delivered).containsExactly(accepted);
         } finally {
             releaseAction.countDown();
