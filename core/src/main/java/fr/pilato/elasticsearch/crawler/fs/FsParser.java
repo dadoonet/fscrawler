@@ -103,7 +103,10 @@ public class FsParser implements Runnable, AutoCloseable {
             "trying to add new file while closing crawler. Document [{}]/[{}] has been ignored";
 
     // Checkpoint configuration
-    private static final int CHECKPOINT_INTERVAL_FILES = 100; // Save checkpoint every N files
+    private static final int CHECKPOINT_BATCH_DIRECTORIES = 100;
+    private static final int CHECKPOINT_BATCH_OPERATIONS = 1000;
+    private static final long CHECKPOINT_BATCH_BYTES = 32L * 1024 * 1024;
+    private static final long CHECKPOINT_BATCH_NANOS = Duration.ofSeconds(30).toNanos();
     private static final int MAX_RETRIES = 10;
     private static final long INITIAL_RETRY_DELAY_MS = 1000;
 
@@ -131,7 +134,22 @@ public class FsParser implements Runnable, AutoCloseable {
 
     // Checkpoint for current scan
     private final AtomicReference<FsCrawlerCheckpoint> checkpoint = new AtomicReference<>(new FsCrawlerCheckpoint());
-    private int filesSinceLastCheckpoint = 0;
+    /** Only this acknowledged traversal frontier may be persisted by pause/close/error threads. */
+    private FsCrawlerCheckpoint acknowledgedCheckpoint;
+
+    private int batchDirectories;
+    private int batchOperations;
+    private long batchBytes;
+    private long lastCheckpointNanos = System.nanoTime();
+    private String statisticsDirectory;
+    private long currentDirectoryNewFiles;
+    private long currentDirectoryDeletedFiles;
+
+    private static final class CheckpointCommitException extends IllegalStateException {
+        CheckpointCommitException(Exception cause) {
+            super("Unable to commit acknowledged checkpoint: " + cause.getMessage(), cause);
+        }
+    }
     /** Lock for serializing checkpoint file writes (close/pause/crawler threads). */
     private final Object checkpointWriteLock = new Object();
 
@@ -348,7 +366,7 @@ public class FsParser implements Runnable, AutoCloseable {
                 // Drop sticky bulk failures from a previous run (ensureBulkSucceeded does not clear them).
                 // REST-only unit tests may pass a null documentService.
                 clearFatalBulkFailureIfPresent();
-                filesSinceLastCheckpoint = 0;
+                resetCheckpointBatch();
 
                 String url = fsSettings.getFs().getUrl();
                 if (crawlerPlugin == null || FsCrawlerUtil.isNullOrEmpty(url)) {
@@ -407,7 +425,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     processDirectoriesWithCheckpoint(effectiveScanDate, stats);
 
                     // Flush async bulks and fail the run if HTTP retries were exhausted (marks checkpoint ERROR)
-                    documentService.flushAndEnsureBulkSucceeded();
+                    commitCheckpointBatch();
 
                     stats.setEndTime(Instant.now());
                     stats.setNbDocScan((int) checkpoint.get().getFilesProcessed());
@@ -634,8 +652,16 @@ public class FsParser implements Runnable, AutoCloseable {
     }
 
     private void setCurrentCheckpoint(FsCrawlerCheckpoint cp) {
-        cp.setLoadedThisRun(true);
-        checkpoint.set(cp);
+        synchronized (checkpointWriteLock) {
+            cp.setLoadedThisRun(true);
+            checkpoint.set(cp);
+            acknowledgedCheckpoint = copyCheckpoint(cp);
+            statisticsDirectory = null;
+            currentDirectoryNewFiles = 0;
+            currentDirectoryDeletedFiles = 0;
+            resetCheckpointBatch();
+            saveCheckpoint();
+        }
     }
 
     /**
@@ -645,7 +671,14 @@ public class FsParser implements Runnable, AutoCloseable {
     private void saveCheckpoint() {
         synchronized (checkpointWriteLock) {
             try {
-                checkpointHandler.write(fsSettings.getName(), checkpoint.get());
+                FsCrawlerCheckpoint working = checkpoint.get();
+                FsCrawlerCheckpoint safe =
+                        copyCheckpoint(acknowledgedCheckpoint != null ? acknowledgedCheckpoint : working);
+                // Status is observable immediately; speculative traversal progress is never copied.
+                safe.setState(working.getState());
+                safe.setLastError(working.getLastError());
+                safe.setRetryCount(working.getRetryCount());
+                checkpointHandler.write(fsSettings.getName(), safe);
                 logger.trace(
                         "✅ Checkpoint saved: {} files processed, {} directories pending",
                         checkpoint.get().getFilesProcessed(),
@@ -679,7 +712,7 @@ public class FsParser implements Runnable, AutoCloseable {
         localCheckpoint.setLastError(null);
         localCheckpoint.resetRetryCount();
 
-        saveCheckpoint();
+        persistAcknowledgedCheckpoint();
         logger.debug(
                 "💾 Checkpoint updated as completed: scanEndTime [{}], nextCheck [{}], indexed [{}], deleted [{}]",
                 scanEndTime,
@@ -688,13 +721,94 @@ public class FsParser implements Runnable, AutoCloseable {
                 localCheckpoint.getFilesDeleted());
     }
 
-    /** Maybe save checkpoint based on file count */
-    private void maybeSaveCheckpoint() {
-        filesSinceLastCheckpoint++;
-        if (filesSinceLastCheckpoint >= CHECKPOINT_INTERVAL_FILES) {
-            saveCheckpoint();
-            filesSinceLastCheckpoint = 0;
+    private static FsCrawlerCheckpoint copyCheckpoint(FsCrawlerCheckpoint source) {
+        // Copy the DTO directly: checkpoint batching must not serialize/parse its large path sets twice.
+        FsCrawlerCheckpoint copy = new FsCrawlerCheckpoint();
+        copy.setScanId(source.getScanId());
+        copy.setScanStartTime(source.getScanStartTime());
+        copy.setCurrentPath(source.getCurrentPath());
+        copy.setPendingPaths(new java.util.ArrayDeque<>(source.getPendingPaths()));
+        copy.setCompletedPaths(new HashSet<>(source.getCompletedPaths()));
+        copy.setFilesProcessed(source.getFilesProcessed());
+        copy.setFilesDeleted(source.getFilesDeleted());
+        copy.setState(source.getState());
+        copy.setRetryCount(source.getRetryCount());
+        copy.setLastError(source.getLastError());
+        copy.setScanDate(source.getScanDate());
+        copy.setScanEndTime(source.getScanEndTime());
+        copy.setNextCheck(source.getNextCheck());
+        copy.setCurrentPathFilesIndexedCount(source.getCurrentPathFilesIndexedCount());
+        return copy;
+    }
+
+    private void resetCheckpointBatch() {
+        batchDirectories = 0;
+        batchOperations = 0;
+        batchBytes = 0;
+        lastCheckpointNanos = System.nanoTime();
+    }
+
+    /** A failed barrier or checkpoint write must escape continue_on_error file handling. */
+    private void commitCheckpointBatch() {
+        try {
+            documentService.flushAndEnsureBulkSucceeded();
+            persistAcknowledgedCheckpoint();
+        } catch (Exception e) {
+            throw new CheckpointCommitException(e);
         }
+    }
+
+    private void persistAcknowledgedCheckpoint() {
+        synchronized (checkpointWriteLock) {
+            FsCrawlerCheckpoint candidate = copyCheckpoint(checkpoint.get());
+            String current = candidate.getCurrentPath();
+            if (current != null && !candidate.isCompleted(current)) {
+                if (!candidate.isPending(current)) candidate.addPathFirst(current);
+                // Resume replays this whole directory. Do not persist a file-position cursor or double-count it.
+                candidate.setFilesProcessed(Math.max(0, candidate.getFilesProcessed() - currentDirectoryNewFiles));
+                candidate.setFilesDeleted(Math.max(0, candidate.getFilesDeleted() - currentDirectoryDeletedFiles));
+            } else {
+                candidate.setCurrentPath(null);
+            }
+            candidate.setCurrentPathFilesIndexedCount(0);
+            try {
+                checkpointHandler.write(fsSettings.getName(), candidate);
+            } catch (IOException e) {
+                throw new CheckpointCommitException(e);
+            }
+            acknowledgedCheckpoint = candidate;
+            resetCheckpointBatch();
+        }
+    }
+
+    /** Bulk thresholds remain independent; this boundary may flush a final partial request. */
+    private void maybeSaveCheckpoint() {
+        if (batchDirectories >= CHECKPOINT_BATCH_DIRECTORIES
+                || batchOperations >= checkpointOperationLimit()
+                || batchBytes >= checkpointByteLimit()
+                || System.nanoTime() - lastCheckpointNanos >= CHECKPOINT_BATCH_NANOS) {
+            commitCheckpointBatch();
+        }
+    }
+
+    private long checkpointOperationLimit() {
+        return Math.max(
+                CHECKPOINT_BATCH_OPERATIONS, 10L * fsSettings.getElasticsearch().getBulkSize());
+    }
+
+    private long checkpointByteLimit() {
+        ByteSizeValue bulkSize = fsSettings.getElasticsearch().getByteSize();
+        long bytes = bulkSize == null ? 0 : bulkSize.getBytes();
+        return Math.max(CHECKPOINT_BATCH_BYTES, bytes > Long.MAX_VALUE / 3 ? Long.MAX_VALUE : 3 * bytes);
+    }
+
+    private static long utf8Length(String value) {
+        return value == null ? 0 : value.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+    }
+
+    private void submittedOperation(long approximateBytes) {
+        batchOperations++;
+        batchBytes += Math.max(0, approximateBytes);
     }
 
     /** Process directories using a work queue with checkpoint support */
@@ -708,6 +822,7 @@ public class FsParser implements Runnable, AutoCloseable {
             while (checkpoint.get().hasPendingWork() && !closed.get()) {
                 // Handle pause
                 if (paused.get()) {
+                    commitCheckpointBatch();
                     checkpoint.get().setState(CrawlerState.PAUSED);
                     saveCheckpoint();
                     waitForResume();
@@ -742,6 +857,7 @@ public class FsParser implements Runnable, AutoCloseable {
                     boolean fullyProcessed = processDirectory(currentPath, lastScanDate, stats);
                     if (fullyProcessed) {
                         checkpoint.get().markCompleted(currentPath);
+                        batchDirectories++;
                         checkpoint.get().resetRetryCount();
                         maybeSaveCheckpoint();
                     } else {
@@ -753,6 +869,7 @@ public class FsParser implements Runnable, AutoCloseable {
                         saveCheckpoint();
                     }
                 } catch (Exception e) {
+                    if (e instanceof CheckpointCommitException) throw e;
                     // Path already re-added in handleNetworkError; do not add again to avoid duplicate in pending queue
                     if (e instanceof NetworkErrorRecoveryException) {
                         throw e;
@@ -796,7 +913,7 @@ public class FsParser implements Runnable, AutoCloseable {
             if (listingFailure != null) {
                 // Commit successful work, but do not advance the scan watermark or
                 // report COMPLETED while any listing is still unresolved.
-                documentService.flushAndEnsureBulkSucceeded();
+                commitCheckpointBatch();
                 throw listingFailure;
             }
         } finally {
@@ -918,6 +1035,11 @@ public class FsParser implements Runnable, AutoCloseable {
             // we index (we still re-index them for idempotency) so we don't double-count. Only apply skip count
             // when this directory is the same as the one that was interrupted (checkpoint's currentPath is set on
             // interrupt and must not be overwritten before this check; we set it below after this block).
+            if (!filepath.equals(statisticsDirectory)) {
+                statisticsDirectory = filepath;
+                currentDirectoryNewFiles = 0;
+                currentDirectoryDeletedFiles = 0;
+            }
             FsCrawlerCheckpoint cp = checkpoint.get();
             int skipCount = (filepath.equals(cp.getCurrentPath()) && cp.getCurrentPathFilesIndexedCount() > 0)
                     ? cp.getCurrentPathFilesIndexedCount()
@@ -975,6 +1097,7 @@ public class FsParser implements Runnable, AutoCloseable {
                             return false; // Interrupted - directory not fully processed
                         }
 
+                        maybeSaveCheckpoint();
                         logger.trace("FileAbstractModel = {}", child);
                         String filename = child.getName();
 
@@ -1013,6 +1136,8 @@ public class FsParser implements Runnable, AutoCloseable {
                                         if (updatedSkipCount != null) {
                                             skipCount = updatedSkipCount;
                                             indexedInThisPass++;
+                                            // File streams are closed before a checkpoint barrier can wait for HTTP.
+                                            maybeSaveCheckpoint();
                                         }
                                     } else {
                                         logger.debug(
@@ -1055,6 +1180,8 @@ public class FsParser implements Runnable, AutoCloseable {
                 }
             }
 
+            maybeSaveCheckpoint();
+
             // Handle deleted files
             if (fsSettings.getFs().isRemoveDeleted()) {
                 logger.debug("Looking for removed files in [{}]...", filepath);
@@ -1082,6 +1209,7 @@ public class FsParser implements Runnable, AutoCloseable {
                                 generateIdFromFilename(esfile, filepath));
                         stats.removeFile();
                         checkpoint.get().incrementFilesDeleted();
+                        currentDirectoryDeletedFiles++;
                     }
                 }
 
@@ -1400,6 +1528,8 @@ public class FsParser implements Runnable, AutoCloseable {
                                 id,
                                 mergedDoc,
                                 fsSettings.getElasticsearch().getPipeline());
+                        submittedOperation(
+                                512L + utf8Length(mergedDoc.getContent()) + utf8Length(mergedDoc.getAttachment()));
                         rememberCurrentAclHash(id, fileAbstractModel);
                     } else {
                         logger.warn(
@@ -1493,10 +1623,11 @@ public class FsParser implements Runnable, AutoCloseable {
             } else {
                 stats.addFile();
                 checkpoint.get().incrementFilesProcessed();
+                currentDirectoryNewFiles++;
             }
-            maybeSaveCheckpoint();
             return skipCount;
         } catch (Exception e) {
+            if (e instanceof CheckpointCommitException) throw e;
             if (fsSettings.getFs().isContinueOnError()) {
                 logger.warn("Unable to index {}, skipping...: {}", child.getName(), e.getMessage());
                 return null;
@@ -1555,6 +1686,7 @@ public class FsParser implements Runnable, AutoCloseable {
                         id,
                         jsonString,
                         fsSettings.getElasticsearch().getPipeline());
+                submittedOperation(512L + utf8Length(jsonString));
                 rememberCurrentAclHash(id, fileAbstractModel);
             } else {
                 logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndex(), id);
@@ -1579,12 +1711,14 @@ public class FsParser implements Runnable, AutoCloseable {
             ScanStatistic stats) {
         try {
             // We index the xml content directly (after transformation to json)
+            String xmlJson = XmlDocParser.generate(inputStream);
             if (!closed.get()) {
                 documentService.indexRawJson(
                         fsSettings.getElasticsearch().getIndex(),
                         id,
-                        XmlDocParser.generate(inputStream),
+                        xmlJson,
                         fsSettings.getElasticsearch().getPipeline());
+                submittedOperation(512L + utf8Length(xmlJson));
                 rememberCurrentAclHash(id, fileAbstractModel);
             } else {
                 logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndex(), id);
@@ -1622,6 +1756,7 @@ public class FsParser implements Runnable, AutoCloseable {
         if (!closed.get()) {
             managementService.storeVisitedDirectory(
                     fsSettings.getElasticsearch().getIndexFolder(), id, folder);
+            submittedOperation(512L + utf8Length(id));
         } else {
             logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndexFolder(), id);
         }
@@ -1702,6 +1837,7 @@ public class FsParser implements Runnable, AutoCloseable {
             esDelete(managementService, fsSettings.getElasticsearch().getIndex(), generateIdFromFilename(esfile, path));
             stats.removeFile();
             checkpoint.get().incrementFilesDeleted();
+            currentDirectoryDeletedFiles++;
         }
 
         Collection<String> listFolder = getFolderDirectory(path);
@@ -1738,6 +1874,8 @@ public class FsParser implements Runnable, AutoCloseable {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed.get()) {
             service.delete(index, id);
+            submittedOperation(128L + utf8Length(id));
+            maybeSaveCheckpoint();
             removeStoredAclHash(id);
         } else {
             logger.warn(
@@ -1750,6 +1888,8 @@ public class FsParser implements Runnable, AutoCloseable {
         logger.debug("Deleting {}/{}", index, id);
         if (!closed.get()) {
             service.delete(index, id);
+            submittedOperation(128L + utf8Length(id));
+            maybeSaveCheckpoint();
             removeStoredAclHash(id);
         } else {
             logger.warn(

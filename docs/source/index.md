@@ -87,6 +87,7 @@ dev/test-fscrawler-cli
 dev/bulk-processing
 dev/bulk-item-failures
 dev/bulk-item-retries
+dev/checkpoint-batching
 ```
 
 ```{toctree}

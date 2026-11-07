@@ -227,6 +227,63 @@ class FsParserCheckpointAcknowledgementTest extends AbstractFSCrawlerTestCase {
         assertThat(saved.getFilesProcessed()).isEqualTo(1001);
     }
 
+    /**
+     * Force a lifecycle save while the final response is still unacknowledged. The checkpoint writer must stay
+     * responsive without publishing the processed directory.
+     */
+    @org.junit.jupiter.api.Test
+    void pauseDuringBlockedAcknowledgementPersistsOnlyTheSafeFrontier() throws Exception {
+        String root = testTmpDir.toString();
+        String directory = testTmpDir.resolve(randomName()).toString();
+        var settings = FsSettingsLoader.load();
+        settings.setName(jobName);
+        settings.getElasticsearch().setIndex(randomName());
+        settings.getFs().setUrl(root);
+        settings.getFs().setJsonSupport(true);
+        settings.getFs().setIndexFolders(false);
+        settings.getFs().setRemoveDeleted(false);
+        var provider = mock(FsCrawlerExtensionFsProvider.class);
+        when(provider.exists(root)).thenReturn(true);
+        when(provider.getFiles(root)).thenReturn(List.of(model(root, directory, false)));
+        when(provider.getFiles(directory))
+                .thenReturn(List.of(model(directory, directory + "/" + randomName() + ".json", true)));
+        when(provider.getInputStream(any()))
+                .thenAnswer(i -> new ByteArrayInputStream("{}".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        var documents = mock(FsCrawlerDocumentService.class);
+        var entered = new java.util.concurrent.CountDownLatch(1);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        doAnswer(i -> {
+                    entered.countDown();
+                    assertThat(release.await(10, java.util.concurrent.TimeUnit.SECONDS))
+                            .isTrue();
+                    return null;
+                })
+                .when(documents)
+                .flushAndEnsureBulkSucceeded();
+        var parser = new FsParser(
+                settings, testTmpDir, mock(FsCrawlerManagementService.class), documents, 1, false, provider);
+        var worker = java.util.concurrent.Executors.newSingleThreadExecutor();
+        parser.closed.set(false);
+        var running = worker.submit(parser);
+        try {
+            assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            parser.pause();
+            var saved = parser.getCheckpointHandler().read(jobName);
+            assertThat(saved.getState()).isEqualTo(CrawlerState.PAUSED);
+            assertThat(saved.getCompletedPaths()).doesNotContain(directory);
+            assertThat(saved.hasPendingWork()).isTrue();
+            release.countDown();
+            running.get(5, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(parser.getCheckpointHandler().read(jobName).getState()).isEqualTo(CrawlerState.COMPLETED);
+        } finally {
+            release.countDown();
+            worker.shutdownNow();
+            assertThat(worker.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS))
+                    .isTrue();
+            parser.close();
+        }
+    }
+
     private FileAbstractModel model(String parent, String full, boolean file) {
         String name = java.nio.file.Path.of(full).getFileName().toString();
         return new FileAbstractModel(
