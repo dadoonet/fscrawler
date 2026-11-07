@@ -73,14 +73,17 @@ class FsCrawlerItemRetryTest extends AbstractFSCrawlerTestCase {
                         Assertions.assertThat(cause).hasMessageContaining("interrupted");
                     }
                 };
-        Engine<TestOperation, TestBulkRequest, TestBulkResponse> engine =
-                request -> response(operation, calls.incrementAndGet() == 1);
+        Engine<TestOperation, TestBulkRequest, TestBulkResponse> engine = request -> {
+            boolean failed = calls.incrementAndGet() == 1;
+            // Enter flush without interruption, then interrupt the retry callback itself.
+            if (failed) Thread.currentThread().interrupt();
+            return response(operation, failed);
+        };
         var processor = new FsCrawlerBulkProcessor.Builder<>(engine, listener, TestBulkRequest::new)
                 .setBulkActions(100)
                 .build();
         try {
             processor.add(operation);
-            Thread.currentThread().interrupt();
             processor.flush();
             Assertions.assertThat(Thread.currentThread().isInterrupted()).isTrue();
             Assertions.assertThat(calls.get()).isEqualTo(1);
