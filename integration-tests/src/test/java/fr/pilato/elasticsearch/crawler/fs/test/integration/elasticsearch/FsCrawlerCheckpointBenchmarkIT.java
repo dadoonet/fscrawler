@@ -46,7 +46,11 @@ class FsCrawlerCheckpointBenchmarkIT extends AbstractFsCrawlerITCase {
     @org.junit.jupiter.api.Timeout(value = 20, unit = java.util.concurrent.TimeUnit.MINUTES)
     void healthyWorkloads() throws Exception {
         int repeats = Integer.getInteger("tests.checkpoint.repeats", 5);
-        for (String workload : new String[] {"small-directories", "large-directory", "wide-directory"}) {
+        String selected =
+                System.getProperty("tests.checkpoint.workloads", "small-directories,large-directory,wide-directory");
+        for (String workload : selected.split(",")) {
+            if (!java.util.List.of("small-directories", "large-directory", "wide-directory")
+                    .contains(workload)) throw new IllegalArgumentException("Unknown benchmark workload: " + workload);
             var source = Files.createDirectories(currentTestResourceDir.resolve(workload));
             int expected = 0;
             if (workload.equals("small-directories")) {

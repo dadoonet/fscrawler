@@ -24,7 +24,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('baseline'); parser.add_argument('fixed')
     args=parser.parse_args(); before=samples(args.baseline); after=samples(args.fixed)
-    if set(before)!=set(after) or len(before)!=3: raise ValueError('Workloads do not match')
+    if set(before)!=set(after) or not before: raise ValueError('Workloads do not match')
     rng=random.Random(3939); result=[]
     for name in before:
         a,b=before[name],after[name]
