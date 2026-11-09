@@ -65,7 +65,7 @@
         <elasticsearch7.version>7.17.29</elasticsearch7.version>
         <elasticsearch.version>9.5.5</elasticsearch.version>
 
-        <pl4j.version>3.16.0</pl4j.version>
+        <pl4j.version>3.16.1</pl4j.version>
 
         <gestalt.version>0.39.0</gestalt.version>
         <snakeyaml.version>2.7</snakeyaml.version>
