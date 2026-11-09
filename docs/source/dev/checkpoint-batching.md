@@ -3,15 +3,17 @@
 
 ## Failure being corrected
 
-BUG-03 occurs when traversal progress is persisted before its Elasticsearch writes
-are acknowledged. Previously, `FsParser` could mark a directory completed after
+The recovery failure occurs when traversal progress is persisted before its
+Elasticsearch writes are acknowledged. Previously, `FsParser` could mark a
+directory completed after
 queuing its operations, save that state during later work or lifecycle changes,
 and only check bulk results after directory traversal. A crash or write failure
 could therefore leave a completed directory whose missing writes would not be
 replayed when the saved traversal resumed.
 
-BUG-04 makes terminal item failures visible. BUG-03 additionally ensures that the
-checkpoint's restart frontier does not omit the work associated with those failures.
+Bulk-item failure reporting makes terminal item failures visible. Acknowledged
+checkpointing additionally ensures that the checkpoint's restart frontier does
+not omit the work associated with those failures.
 
 ## Working progress and acknowledged progress
 
@@ -29,7 +31,7 @@ frontier. The disk write occurs outside the bulk processor queue monitor.
 A failed barrier or acknowledgement-checkpoint write escapes ordinary
 `continue_on_error` file handling. The crawler reports `ERROR` and preserves the
 previous acknowledged frontier in memory. Preserving the previous file through a
-failed write or power loss additionally requires atomic file replacement (BUG-07).
+failed write or power loss additionally requires atomic file replacement.
 Failure details from the bulk client remain in the error.
 
 ## Boundaries and bulk settings
@@ -86,7 +88,7 @@ query pagination is a separate concern.
 Recovery is at least once. Stable IDs usually avoid duplicate indexed documents,
 but repeated writes can rerun ingest side effects. This change is not a per-file
 durable journal, does not repair previously lost documents automatically, and does
-not implement atomic checkpoint-file replacement (BUG-07).
+not implement atomic checkpoint-file replacement.
 
 ## Regression tests
 
@@ -175,7 +177,8 @@ The local implementation branch is `codex/fix-checkpoint-ack-batching`. It is st
 on the bulk-queue, bulk-item-failure, and bounded-retry fixes, merged with main
 `9ab67967`. The baseline retains those prerequisite fixes and the same benchmark
 harness, but uses the old checkpoint implementation. This comparison isolates
-BUG-03; it is not a comparison against an unmodified upstream release.
+the checkpoint acknowledgement change; it is not a comparison against an
+unmodified upstream release.
 
 The production change is confined to `FsParser`. The benchmark-only filesystem
 adapter and its service registration are integration-test sources. No production
@@ -183,7 +186,7 @@ filesystem sorting change is included.
 
 ### Before and after correctness checks
 
-| Check | Before BUG-03 fix | After BUG-03 fix |
+| Check | Before checkpoint fix | After checkpoint fix |
 |---|---|---|
 | New checkpoint unit regressions | Seven failures | Seven passed |
 | Real Elasticsearch rejection/restart/replay integration test | Failed: missing document was not replayed | Passed: both documents recovered; accepted file replayed |
@@ -271,13 +274,14 @@ proof that these skipped scenarios have been fixed.
 | `FsHttpPluginIT.readTxtFileFromWebsite` | Could not open the external HTTPS robots.txt stream | Reproduced against unchanged checkpoint code in the current environment |
 | `FsCrawlerRestIT.deleteDocumentApi` | HTTP 400 Bad Request | Reproduced against unchanged checkpoint code in the current environment |
 | `FsCrawlerTestOcrIT.ocr_disabled` | Raw metadata assertion expected 66 fields, received 56 | Reproduced against unchanged checkpoint code in the current environment |
-| `FsCrawlerTestRemoveDeletedIT.remove_deleted_continues_after_directory_query_limit` | Timeout while repeatedly resuming the directory removed by the test; provider listing fails | Same test and repeated missing-directory error recorded in the earlier BUG-05 run; not rerun on today's baseline |
+| `FsCrawlerTestRemoveDeletedIT.remove_deleted_continues_after_directory_query_limit` | Timeout while repeatedly resuming the directory removed by the test; provider listing fails | Same test and repeated missing-directory error recorded in the earlier bounded-retry validation run; not rerun on today's baseline |
 
 These results are **not an all-green full suite**. The historical comparison is
 evidence of an already observed deletion-test problem, not proof that every
 baseline/environment combination behaves identically. The three smaller failing
 cases were explicitly rerun against baseline revision `868e4c9a`; all three failed
-again. No new failing integration identity appeared relative to the saved BUG-05 run.
+again. No new failing integration identity appeared relative to the saved
+bounded-retry validation run.
 
 Repository-wide Spotless and the strict Sphinx HTML build passed. Raw local Maven
 logs, XML reports, red/green results, and benchmark runner reports were retained
@@ -523,7 +527,7 @@ The test is not opt-in: selecting normal integration tests includes it. Its
 at two minutes. Dataset generation and instrumentation are test code only.
 
 This is a fresh-instance recovery test after a controlled stop. It does not kill
-the JVM, simulate power loss, verify atomic checkpoint replacement (BUG-07), or
+the JVM, simulate power loss, verify atomic checkpoint replacement, or
 exercise files being renamed/deleted while the crawler is stopped. Those are
 separate failure scenarios. Linux and Windows runtime results are recorded with
 the validation report for this change.
