@@ -433,3 +433,107 @@ against a disposable Elasticsearch instance.
 ```powershell
 mvn -B -ntp verify -pl integration-tests -am '-Pdaily,sequential_tests' '-Dtest=*Test' '-Dit.test=FsCrawlerCheckpointSettingsIT,FsCrawlerCheckpointReplayIT,FsCrawlerBulkItemFailureIT' '-Dtests.cluster.url=http://127.0.0.1:19203' '-Dtests.leaveTemporary=false' '-Ddocker.skip=true'
 ```
+
+## Nested text-tree recovery regression
+
+This test checks how FSCrawler uses `_checkpoint.json` to restart an
+interrupted scan. During a scan, the checkpoint records completed folders,
+folders still waiting to be scanned, and the current unfinished folder. Progress
+is saved in batches, after the associated Elasticsearch bulk operations have
+succeeded, so the file can lag behind the work currently happening in memory.
+
+When scanning restarts, FSCrawler skips folders recorded as completed in the
+saved checkpoint and continues with the pending folders. It replays an unfinished
+folder from its beginning, so some files in that folder may be indexed again.
+Work completed after the last saved checkpoint may also be repeated. This is
+intentional: recovery repeats work where necessary rather than treating
+unconfirmed progress as safely completed. A checkpoint marked `COMPLETED`
+instead supplies the time reference for a new scan.
+
+`FsCrawlerCheckpointNestedReplayIT` creates 1,000 real UTF-8 `.txt` files in
+40 directories, plus the source root. Eight independent branches each extend
+five directory levels below the root; every non-root directory contains 25 files.
+Names include a randomized, reproducible token. Content includes a non-ASCII
+character to check UTF-8 extraction. All paths use Java `Path.resolve`, without
+drive letters, shell commands or platform-specific separators.
+
+The test uses real Tika extraction and a real Elasticsearch instance. Its
+test-only `CheckpointRecoveryFsProvider` extends the existing stable-order local
+filesystem adapter. Instance-local `ConcurrentHashMap` counters record directory
+listings and file opens. Hooks execute on the crawler thread, so interruption is
+triggered by a particular file rather than an elapsed-time guess. This adapter
+is registered only in the integration-test service-loader resource.
+
+### Scenario A: restart an interrupted nested crawl
+
+Checkpoint boundaries are deliberately small: one completed directory or ten
+operations; Elasticsearch bulk size is ten. When traversal opens the thirteenth
+file in the fourth branch's fifth-level directory, the hook calls
+`FsParser.close()`. Earlier whole five-level branches already have acknowledged
+checkpoints, which the test explicitly asserts. The current directory is
+incomplete, and multiple directories remain pending.
+
+The test closes and joins the original crawler, checks the on-disk checkpoint,
+then creates a fresh `FsCrawlerImpl`, provider and Elasticsearch clients with
+the same metadata directory. Recovery assertions verify:
+
+- The current directory is pending and is not durably marked completed.
+- The saved file cursor is zero; its processed counter excludes the unfinished
+  directory, even when some of its documents have reached Elasticsearch.
+- Completed directories are neither listed nor opened again.
+- Every remaining directory is listed exactly once.
+- Every file in the interrupted directory is reopened, including its first file.
+- The first replayed document's Elasticsearch version increases by exactly one;
+  a document in a completed directory retains version one.
+- All 1,000 expected filenames and extracted contents match, rather than merely
+  checking a total that could hide a missing or duplicated document.
+- The folder index contains 41 records, and final checkpoint counters report
+  1,000 files, zero deletions, COMPLETED, and empty traversal lists.
+
+### Scenario B: parent replay and defensive completed-entry handling
+
+The second parameterized case stops in the fourth branch at depth one, so
+the root has both completed and pending immediate children. It then deliberately
+adjusts that genuine saved frontier: the root is made current and
+unfinished, and an already completed directory is placed in the pending queue.
+This is a synthetic recovery fixture, not a claim that a healthy queue normally
+contains that contradictory entry.
+
+On restart, the completed queue entry must be skipped. Re-listing the root must
+neither enqueue its completed children nor duplicate children already pending.
+Queue snapshots are captured by the provider and asserted on the test thread.
+The same final document, version, directory-listing and counter checks apply.
+
+Each fixture uses its own job and index names. The two cases also execute on the
+same JUnit thread. No production code or checkpoint format changes are needed.
+
+### Running on Windows or Linux
+
+Example 8: run the nested recovery cases against a dedicated Elasticsearch test
+cluster. This single-line Maven command works in PowerShell and Linux shells.
+The existing harness uses the supplied API key, or generates one with its default
+test credentials (`elastic` / `changeme`); API-key support must be enabled.
+
+```text
+mvn -B -ntp verify -pl integration-tests -am -DskipUnitTests -Dit.test=FsCrawlerCheckpointNestedReplayIT -Dtests.cluster.url=http://127.0.0.1:19204 -Dtests.leaveTemporary=false -Ddocker.skip=true -Dossindex.skip=true
+```
+
+The test is not opt-in: selecting normal integration tests includes it. Its
+`@VerySlow` annotation permits up to ten minutes. Each Awaitility wait is bounded
+at two minutes. Dataset generation and instrumentation are test code only.
+
+This is a fresh-instance recovery test after a controlled stop. It does not kill
+the JVM, simulate power loss, verify atomic checkpoint replacement (BUG-07), or
+exercise files being renamed/deleted while the crawler is stopped. Those are
+separate failure scenarios. Linux and Windows runtime results are recorded with
+the validation report for this change.
+
+Validation on 9 November 2026: the integration-test reactor on Windows (Java 25,
+compiling for Java 17) reported 405 unit cases: 390 passed, 15 skipped, with no
+failures or errors. All five selected integration cases passed (the two nested
+recovery cases plus the existing replay, checkpoint-settings and bulk-item-failure
+cases). After strengthening the natural stop point to depth five, both nested
+cases passed again on Windows and on Linux (Java 21 in the Maven 3.9.11 container),
+without failures, errors or skips. Elasticsearch 9.5.6 ran in a dedicated test
+container. The integration-test module's full Spotless check also passed.
+These runs did not select every integration test or the distribution-module suite.
