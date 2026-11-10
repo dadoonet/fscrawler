@@ -160,4 +160,14 @@ public class FsCrawlerManagementServiceElasticsearchImpl implements FsCrawlerMan
     public void delete(String index, String id) {
         client.delete(index, id);
     }
+
+    @Override
+    public void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException {
+        client.flushAndEnsureBulkSucceeded();
+    }
+
+    @Override
+    public void clearFatalBulkFailure() {
+        client.clearFatalBulkFailure();
+    }
 }

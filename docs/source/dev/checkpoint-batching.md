@@ -23,10 +23,25 @@ Pause, close, and error saves copy only acknowledged traversal progress, while
 recording the latest lifecycle state and diagnostic message. Those saves cannot
 publish speculative completed directories.
 
-At a checkpoint boundary the crawler flushes and verifies outstanding bulk work,
-including response callbacks and retries, then builds and writes a stable snapshot.
-Only after that write succeeds does the snapshot become the new acknowledged
-frontier. The disk write occurs outside the bulk processor queue monitor.
+At a checkpoint boundary the crawler flushes and verifies the document client's
+bulk work, then the management client's bulk work, including response callbacks
+and retries, before building and writing a stable snapshot. Only after that write
+succeeds does the snapshot become the new acknowledged frontier. The disk write
+occurs outside the bulk processor queue monitor.
+
+The management service uses a separate Elasticsearch client for folder records
+and recursive deletion of removed directories and their documents. Its queue and
+retained failure state are independent of the document service. A successful
+document flush alone cannot acknowledge management operations, even when both
+clients connect to the same cluster. Both queues are checked at intermediate
+checkpoint boundaries and at the end of the scan before it can become `COMPLETED`.
+A management failure preserves the preceding acknowledged frontier and reports
+`ERROR`. At the start of the next crawl, retained failures in both clients are
+cleared so replay can succeed after the underlying problem is corrected.
+
+The two queues are acknowledged sequentially, not transactionally. An operation
+accepted by Elasticsearch is not rolled back when another operation fails;
+recovery retains the existing at-least-once replay policy.
 
 A failed barrier or acknowledgement-checkpoint write escapes ordinary
 `continue_on_error` file handling. The crawler reports `ERROR` and preserves the
@@ -102,6 +117,13 @@ the unchanged checkpoint implementation:
 - A pause during a blocked acknowledgement persists only the safe frontier.
 - Directory completion uses a 100-directory barrier, rather than a flush per directory.
 - A boundary inside a 5,001-file directory retains a replayable directory and no file cursor; the first operation barrier is at 5,000 submissions.
+
+`FsParserManagementAcknowledgementTest` exercises the real management bulk
+processor and failure listener with an in-memory transport. It checks buffered
+folder writes, terminal management failures, an intermediate directory boundary,
+recovery on a later healthy run, successful and rejected recursive deletions,
+and a successful management-item retry. The transport fixture avoids sockets and
+does not require a live Elasticsearch cluster.
 
 `FsCrawlerCheckpointReplayIT` additionally rejects one real document in an ingest
 pipeline, corrects the pipeline, and starts a fresh crawler/client. It verifies
