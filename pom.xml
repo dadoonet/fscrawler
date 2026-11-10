@@ -1005,7 +1005,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>flatten-maven-plugin</artifactId>
-                    <version>1.8.0</version>
+                    <version>1.9.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
