@@ -24,9 +24,15 @@ import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ClientRequestFilter;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +41,24 @@ import org.junit.jupiter.api.Test;
  * and must be reassigned.
  */
 class RestClientQueryParamsTest extends AbstractFSCrawlerTestCase {
+
+    @Test
+    void deleteEncodesUnicodeFilenameWithoutSendingAnInvalidRawHeader() {
+        String filename = RandomizedTest.randomAsciiLettersOfLength(randomizedRandomForTests, 8) + "-漢字 +%.txt";
+        AtomicReference<MultivaluedMap<String, Object>> sent = new AtomicReference<>();
+        try (Client client = ClientBuilder.newClient()) {
+            client.register((ClientRequestFilter) request -> {
+                sent.set(new jakarta.ws.rs.core.MultivaluedHashMap<>(request.getHeaders()));
+                request.abortWith(Response.ok("deleted").build());
+            });
+            String result = AbstractRestITCase.delete(
+                    client.target("http://localhost"), "/_document", String.class, Map.of("filename", filename));
+            Assertions.assertThat(result).isEqualTo("deleted");
+            Assertions.assertThat(sent.get()).doesNotContainKey("filename");
+            Assertions.assertThat(sent.get().getFirst("filename*"))
+                    .isEqualTo("UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8));
+        }
+    }
 
     @Test
     void withQueryParamsReassignsImmutableWebTarget() {
