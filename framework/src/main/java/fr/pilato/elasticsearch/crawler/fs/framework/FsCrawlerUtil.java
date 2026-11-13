@@ -484,8 +484,11 @@ public class FsCrawlerUtil {
      */
     public static Properties readPropertiesFromClassLoader(String resource) {
         Properties properties = new Properties();
-        try {
-            properties.load(FsCrawlerUtil.class.getClassLoader().getResourceAsStream(resource));
+        try (InputStream stream = FsCrawlerUtil.class.getClassLoader().getResourceAsStream(resource)) {
+            if (stream == null) {
+                throw new IOException("Missing resource: " + resource);
+            }
+            properties.load(stream);
         } catch (IOException e) {
             throw new FsCrawlerIOException("Cannot load properties resource [" + resource + "]", e);
         }
