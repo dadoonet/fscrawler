@@ -5,6 +5,12 @@
 fs:
   # define a "local" file path crawler, if running inside a docker container this must be the path INSIDE the container
   #url: "/tmp/es"
+  # optional: acknowledged recovery checkpoints; omit any field to use its default
+  #checkpoint:
+  #  max_directories: 100
+  #  max_operations: 5000
+  #  max_bytes: "32mb"
+  #  max_interval: "30s"
   # optional: scan every 15 minutes for changes in url defined above
   #update_rate: "15m"
   # optional: define includes and excludes; "~" and ".DS_Store" files are excluded by default if not defined below
