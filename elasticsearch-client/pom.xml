@@ -57,6 +57,11 @@
 
         <!-- Test dependencies -->
         <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>fr.pilato.elasticsearch.crawler</groupId>
             <artifactId>fscrawler-test-framework</artifactId>
             <scope>test</scope>
