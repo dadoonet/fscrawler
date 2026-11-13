@@ -1,279 +1,179 @@
 # Building the project
 
-This project is built with [Maven](https://maven.apache.org/). It needs Java >= {{ java_version }}.
-Source code is available on [GitHub](https://github.com/dadoonet/fscrawler/).
-Thanks to [JetBrains](https://www.jetbrains.com/?from=FSCrawler) for the IntelliJ IDEA License!
-
-[![Jet Brains](../jetbrains.png)](https://www.jetbrains.com/?from=FSCrawler)
+FSCrawler uses Maven. Source code is available on [GitHub](https://github.com/dadoonet/fscrawler/).
+The project compiles for Java {{ java_version }}; the inspected pull-request CI
+uses Temurin JDK 21. Use JDK 21 when reproducing CI results. Compiling for Java 17
+does not mean the tests execute on Java 17, or that every newer JDK is validated.
 
 ```{contents}
 :backlinks: entry
 ```
 
-## Clone the project
+## Prerequisites and platforms
 
-Use git to clone the project locally:
+| Requirement | Windows | Linux | macOS |
+|-------------|---------|-------|-------|
+| Java and Maven | Use JDK 21; check `mvn --version` | Same | Same |
+| Python tests | Verify the executable name; installations may expose `python` or `py` rather than `python3` | `python3` must be installed; minimal Java images may omit it | Verify the installed Python command |
+| Container-based tests | Docker-compatible service; check the configured endpoint when using Podman | Docker/Testcontainers, or a compatible configured service | Requires a working container service |
+| OCR tests | Tesseract and the language data required by the selected tests | Same | Same |
+
+The same Maven phases apply on every platform. Filesystem permissions, symlinks,
+trailing-space filenames, executable names and shell quoting can affect coverage.
+Some tests deliberately exclude Windows; unavailable OCR or service prerequisites
+can cause additional skips. See [platform troubleshooting](build-troubleshooting.md).
+
+## Clone and check your tools
 
 ```shell
-git clone git@github.com:dadoonet/fscrawler.git
+git clone https://github.com/dadoonet/fscrawler.git
 cd fscrawler
+mvn --version
 ```
 
-## Build the artifact
+Run Maven from the repository root containing `pom.xml`. Verify the Java version
+shown by Maven, which can differ from another Java installation on your machine.
 
-To build the project, run:
+## Choose the build you need
+
+Each Maven phase includes the earlier phases:
+
+| Phase | Result | Normal test layer |
+|-------|--------|-------------------|
+| `compile` | Compile production sources | None |
+| `test` | Compile and execute unit tests | Surefire: `*Test` |
+| `package` | Also create JARs and distribution archives | Unit tests |
+| `verify` | Also execute and check integration tests | Unit and Failsafe: `*IT` |
+| `install` | Also install artifacts in the local Maven repository | Both; distribution Docker image build is bound here |
+| `deploy` | Publish configured artifacts | Both unless skipped; distribution Docker push is bound here |
+
+`clean` removes previous build outputs. Distribution archives are produced under
+`distribution/target`.
+
+### Package without executing tests
 
 ```shell
-mvn clean package
+mvn clean package "-DskipTests" "-Ddocker.skip"
 ```
 
-The final artifacts are available in `distribution/target`.
-
-````{tip}
-
- To build it faster (without tests), run:
-
- ```shell
- mvn clean package -DskipTests
- ```
-````
-
-## SSH tests on Windows and Unix filesystems
-
-The SSH plugin separates portable configuration checks from its local SSH server
-and filesystem fixture:
-
-* `FsSshPluginTest` contains six checks for the plugin type, default SFTP URL and
-  port, required hostname and username, blank username rejection, and a missing
-  overlay path. These checks do not start an SSH server or create the SSH filesystem
-  fixture, and run on Windows as well as Linux.
-* `FsSshPluginFileSystemTest` contains the existing `sshPlugin` test, its
-  `@BeforeEach` filesystem/server setup, `@AfterEach` cleanup, and fixture helpers.
-  It checks file listings, Unix permissions and a directory whose name ends in a
-  space. A class-level `@DisabledOnOs(OS.WINDOWS)` prevents both the test and its
-  per-test setup from running on Windows. It remains part of the ordinary Maven
-  unit-test suite on other operating systems.
-
-Previously, all seven checks shared the filesystem setup. On Windows,
-`Path.resolve` rejected the fixture name `"subdir_with_space "` with
-`InvalidPathException` before any test assertions ran. Moving the setup out of the
-configuration test class allows those six checks to execute, rather than skipping
-them. Only the filesystem-dependent check is skipped on Windows, consistent with
-the existing trailing-space SSH integration-test restriction. Production SSH code
-and configuration behaviour are unchanged.
-
-### Run both SSH test classes
-
-Run this command from the repository root. Quoting the test selector also makes it
-suitable for PowerShell:
+### Run regular unit tests
 
 ```shell
-mvn test -pl plugins/fs-ssh-plugin -am "-Dtest=FsSshPlugin*Test" "-DskipIntegTests" "-Ddocker.skip"
+mvn test "-Dtest=*Test" "-DskipIntegTests" "-Ddocker.skip"
 ```
 
-This compiles the required modules and selects both SSH test classes. It does not
-run the complete repository test suite. Inspect the SSH module's
-`target/surefire-reports` directory for the individual results.
+The explicit selector selects the unit-test classes. Check the executed test count
+before treating a successful build as validation. Some unit tests start local
+HTTP or SSH servers; they are not all independent of sockets and filesystems.
 
-### Windows and Linux validation
-
-The test split was validated locally on 31 October 2026 with Maven 3.9.11:
-
-| Environment | Passed | Skipped | Failures/errors |
-|-------------|--------|---------|-----------------|
-| Windows, Microsoft JDK 25.0.2 | 6 | 1 (filesystem test) | 0 |
-| Linux through Podman, Temurin JDK 21 | 7 | 0 | 0 |
-
-The unchanged Windows test class first reproduced all seven setup errors. After
-the split, the six portable checks passed on Windows, while Linux exercised all
-seven checks including the real local SSH server and filesystem assertions.
-The Linux run used the `maven:3.9.11-eclipse-temurin-21` image and source copied into
-the container's native filesystem, rather than a Windows-backed source mount.
-This preserves Unix permissions and trailing-space filename behaviour during the
-test. The disposable test container was removed after collecting the reports.
-
-Spotless and Git whitespace checks also passed. These results cover the focused
-SSH tests, not the full unit or integration suite, and do not establish macOS
-coverage or a broader supported-JDK matrix.
-
-## Integration tests
-
-When running from the command line with `mvn` integration tests are ran against a real
-Elasticsearch instance launched using Docker (via [Testcontainers](https://java.testcontainers.org/modules/elasticsearch/)).
-
-### Run tests from your IDE
-
-To run integration tests from your IDE, you need to start tests in `fscrawler-it` module.
-But you can specify the Maven profile to use and rebuild the project.
-
-* `es-8x` for Elasticsearch 8.x
-* `es-7x` for Elasticsearch 7.x
-
-### Faster integration tests
-
-As we are using [Testcontainers](https://java.testcontainers.org/modules/elasticsearch/),
-we can [reuse](https://java.testcontainers.org/features/reuse/) the Elasticsearch container instead of having to restart
-one everytime.
-
-```{note} 
-
- You need to explicitly [enable this feature](https://java.testcontainers.org/features/reuse/).
-```
-
-If you run from the IDE, reusing containers is the default behavior. But if you run the CLI, you need
-to set `tests.leaveTemporary` to `true`:
+### Run regular integration tests
 
 ```shell
-mvn verify -Dtests.leaveTemporary=true
+mvn verify "-Pdaily,sequential_tests" "-DskipUnitTests" "-Dit.test=*IT" "-Ddocker.skip"
 ```
 
-### Parallel test execution
+For PowerShell, quote the profile argument as `"-Pdaily,sequential_tests"`.
+The `daily` profile excludes tests tagged `Nightly`; `sequential_tests` makes
+integration execution sequential. This command may need containers and additional
+services even though it skips distribution Docker image building.
 
-By default, parallel test execution is disabled to avoid static field issues (shared ElasticsearchClient for example).
-To enable parallel execution of test classes and methods, use the `parallel_tests` Maven profile:
+### Understand the skip flags
+
+| Flag | Effect |
+|------|--------|
+| `-DskipUnitTests` | Skip Surefire unit-test execution |
+| `-DskipIntegTests` | Skip Failsafe integration-test execution |
+| `-DskipTests` | By default, skip both layers; test sources can still be compiled |
+| `-Ddocker.skip` | Skip distribution Docker build/push activity; does not disable containers requested by tests |
+
+### Run a selected test or module
+
+Use `test` for Surefire and `it.test` for Failsafe. Selecting one integration test
+does not itself skip unit tests. `-pl` selects modules; `-am` also builds their
+required project modules.
 
 ```shell
-mvn verify -P parallel_tests
+mvn test -pl tika -am "-Dtest=TikaDocParserTest#extractFromDoc" "-DskipIntegTests" "-Ddocker.skip"
+mvn verify -pl integration-tests -am "-Dit.test=FsCrawlerTestAddNewFilesIT#add_new_files_and_force_rescan" "-DskipUnitTests" "-Ddocker.skip"
 ```
 
-This profile enables JUnit 6's parallel execution engine, running both test classes concurrently
-and test methods within each class in parallel.
+The quoted selectors and system-property arguments also work in PowerShell.
+Use single-line commands there, rather than copying POSIX backslash continuations.
 
-### Run a specific test from your Terminal
+## Integration services and profiles
 
-To run a specific unit test, just run:
+Elasticsearch integration tests normally start Elasticsearch through
+[Testcontainers](https://java.testcontainers.org/modules/elasticsearch/).
+Alternatively, set `tests.cluster.url` to an existing **disposable test cluster**.
+These tests create and remove indices and other test resources; use a dedicated
+instance rather than a cluster containing data you want to retain.
 
 ```shell
-mvn verify -DskipIntegTests -Dtest=CLASS_NAME#METHOD_NAME
+mvn verify "-Pdaily,sequential_tests" "-DskipUnitTests" "-Dit.test=*IT" "-Ddocker.skip" "-Dtests.cluster.url=http://localhost:9200"
 ```
 
-To run a specific integration test, just run:
+The full client suite exercises API-key creation, so disabling Elasticsearch
+security is not equivalent to providing the required authenticated test service.
+The test defaults use `elastic`/`changeme`; `tests.cluster.apiKey` supplies an API
+key where appropriate. Use the endpoint's actual HTTP/HTTPS scheme. Trust the
+cluster certificate when using HTTPS; `tests.cluster.check_ssl=false` disables
+verification for tests against a self-signed test endpoint.
 
-```shell
-mvn verify -DskipUnitTests -Dit.test=CLASS_NAME#METHOD_NAME
-```
+An external Elasticsearch service does not remove other requirements:
 
-```{note}
+* S3 tests start MinIO and require access to the configured container image.
+* Some HTTP tests start a local container; others fetch public HTTPS endpoints
+  and depend on network access and the test JVM's certificate trust.
+* `tests.kibana.url` enables the dashboard integration test; it is skipped when
+  no Kibana endpoint is supplied.
+* Tesseract and the required language data enable OCR coverage.
+* The container-start helper test intentionally skips when an external cluster
+  is supplied, so that coverage needs a separate container-start run.
 
- Integration tests (`*IT.java`) are run by `maven-failsafe-plugin` and use `-Dit.test=`.
- Unit tests (`*Test.java`) are run by `maven-surefire-plugin` and use `-Dtest=`.
-```
+### Elasticsearch versions and execution profiles
 
-### Run tests with an external cluster
+The inspected configuration defaults to Elasticsearch 9, with `es-8x` and `es-7x`
+profiles selecting their configured versions. The PR matrix explicitly exercises
+Elasticsearch 8 and 9; the existence of a profile is not proof of current CI coverage.
 
-Launching the docker containers might take some time so if to want to run the test suite against an already running
-cluster, you need to provide a `tests.cluster.url` value. This will skip launching the docker instances.
+Unit tests are configured to execute sequentially; integration tests are configured
+for concurrent execution. Use `sequential_tests` to disable integration parallelism.
+Specify `daily` explicitly when combining profiles to retain its nightly exclusion:
+activating another profile can deactivate Maven's `activeByDefault` profile.
 
-To run the test suite against an elasticsearch instance running locally, just run:
+The `nightly` profile selects only `Nightly`-tagged tests, rather than adding them
+to the regular tests. Nightly coverage is separate from the regular quick start.
 
-```shell
-mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it -Dtests.cluster.url=https://localhost:9200
-```
+### Useful test settings
 
-````{hint}
+| Property | Purpose |
+|----------|---------|
+| `tests.rest.port` | REST port; `0` selects a random port |
+| `tests.leaveTemporary` | Retain temporary files/containers when supported; defaults to `false` |
+| `tests.output` | Redirect test output to report files; defaults to `false` |
+| `tests.seed` | Reproduce randomized test data |
+| `tests.locale`, `tests.timezone` | Reproduce the test locale and timezone |
+| `tests.timeoutSuite`, `tests.timeout` | Forwarded timeout settings; class/method annotations also define execution limits |
 
- If you are using an external cluster, you must set the `tests.cluster.apiKey` if your cluster does not use
- `elastic` and `changeme` as their credentials, and it's anyway the recommended approach:
+Use the reproduction command printed for a failure, including its seed, locale
+and timezone. Very slow tests can belong to the daily profile; a long runtime
+does not by itself mean a nightly test was selected.
 
- ```shell
- mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-     -Dtests.cluster.apiKey=APIKEYHERE \
-     -Dtests.cluster.url=https://localhost:9200 \
- ```
+## Interpret the results
 
- If the cluster is using a self generated SSL certificate, you can bypass checking the certificate by using
- `tests.cluster.check_ssl`:
+Read each module's `target/surefire-reports` for unit results and
+`target/failsafe-reports` for integration results. Distinguish passes, failures,
+errors and skips; a skipped test supplies no validation of its behaviour.
 
- ```shell
- mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-     -Dtests.cluster.apiKey=APIKEYHERE \
-     -Dtests.cluster.url=https://localhost:9200 \
-     -Dtests.cluster.check_ssl=false
- ```
-````
+`maven.test.failure.ignore=true` is useful when deliberately collecting failures
+across modules, but can produce `BUILD SUCCESS` while tests fail. It should not
+be used to make CI green. Also verify that tests actually executed: excluded
+tags and discovery settings can leave cases unselected rather than reported as
+skipped.
 
-````{hint}
-
- To run tests against another instance (ie. running on
- [Elasticsearch service by Elastic](https://www.elastic.co/cloud/elasticsearch-service),
- you can also use `tests.cluster.url` to set where elasticsearch is running::
-
- ```shell
- mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-     -Dtests.cluster.apiKey=APIKEYHERE \
-     -Dtests.cluster.url=https://ALIAS.es.REGION.CLOUD_PROVIDER.elastic.cloud
- ```
-
- You can use both Elasticsearch service and Serverless projects.
-
- To also run the Kibana dashboard integration test (`FsCrawlerTestKibanaDashboardIT`), set
- `tests.kibana.url`. This IT is skipped unless that property is set (CI enables it only on Cloud and
- Serverless jobs to avoid starting Kibana in the default TestContainers matrix):
-
- ```shell
- mvn verify -pl fr.pilato.elasticsearch.crawler:fscrawler-it \
-     -Dtests.cluster.apiKey=APIKEYHERE \
-     -Dtests.cluster.url=https://ALIAS.es.REGION.CLOUD_PROVIDER.elastic.cloud \
-     -Dtests.kibana.url=https://ALIAS.kb.REGION.CLOUD_PROVIDER.elastic.cloud
- ```
-````
-
-### Changing the REST port
-
-By default, FS crawler will run the integration tests using a randomly chosen port for the REST service.
-You can change this by using `tests.rest.port` option:
-
-```shell
-mvn verify -Dtests.rest.port=8280
-```
-
-When set to `0` (default value), the port is assigned randomly.
-
-### Randomized testing
-
-FS Crawler uses the [randomized testing framework](https://github.com/randomizedtesting/randomizedtesting-jupiter).
-In case of failure, it will print a line like:
-
-```none
-REPRODUCE WITH:
-mvn verify -pl integration-tests -am -Dit.test=FsCrawlerTestOcrIT#ocr_disabled -Dtests.seed=AC6992149EB4B547 -Dtests.locale=tr-TR
-```
-
-You can just run the test again using the same seed to make sure you always run the test in the same context as before.
-
-### Tests options
-
-Some options are available from the command line when running the tests:
-
-* `tests.leaveTemporary` leaves temporary files after tests (and also the TestContainers instance). `false` by default.
-* `tests.parallelism` set to `true` if you want to allow multiple suites to be ran in parallel. Default to `false`.
-* `tests.output` set to `true` if you want to redirect the tests output redirected to a file.
-Defaults to `false`.
-* `tests.seed` if you need to reproduce a specific failure using the exact same random seed.
-* `tests.timeoutSuite` how long a full suite of tests can run. It's set by default to `120` which means 2 minutes.
-* `tests.timeout` how long a single test can run. It's set by default to `60` which means 1 minute.
-* `tests.locale` by default it's set to `random` but you can force the locale to use.
-* `tests.timezone` by default it's set to `random` but you can force the timezone to use, like `CEST` or `-0200`.
-
-For example:
-
-```shell
-mvn install -rf :fscrawler-it \
-    -Dtests.output=always \
-    -Dtests.locale=fr-FR \
-    -Dtests.timezone=CEST \
-    -Dtests.verbose \
-    -Dtests.leaveTemporary \
-    -Dtests.seed=E776CE45185A6E7A
-```
-
-### Nightly tests
-
-To run the tests in a more exhaustive way, you can use the `nightly` profile which will run only the longest tests:
-
-```shell
-mvn verify -Pnightly
-```
+See [platform troubleshooting](build-troubleshooting.md) for executable names,
+temporary paths and filesystem restrictions. Check the documentation version and
+the checked-out revision before relying on a recently introduced setting.
 
 ## Code formatting (Spotless)
 
@@ -350,45 +250,13 @@ of the `ossindex` maven plugin in the `pom.xml` file:
 </configuration>
 ```
 
-## Python tests in the distribution module
-
-`UpdateReadmeVersionsTest` checks the README version-table markers and launches
-Python's `unittest` discovery over `scripts/tests`. That Python suite also covers
-documentation markup and release-automation helpers. Python must be installed to
-run it; an unavailable interpreter is an error, not a skipped test.
-
-The interpreter defaults to `python3`. If your installation uses another name,
-set the Maven system property `tests.python` to the executable name or full path.
-For example, a Windows installation exposing `python.exe` can use:
-
-```powershell
-mvn test -pl distribution -am "-Dtest=UpdateReadmeVersionsTest" "-Dtests.python=python" "-DskipIntegTests" "-Ddocker.skip"
-```
-
-An absolute path avoids relying on `PATH`. Quote the entire Maven argument when
-the path contains spaces:
-
-```powershell
-mvn test -pl distribution -am "-Dtest=UpdateReadmeVersionsTest" "-Dtests.python=C:/Program Files/Python315/python.exe" "-DskipIntegTests" "-Ddocker.skip"
-```
-
-The property is one executable, not a shell command: do not supply `py -3.15` or
-append Python arguments. The test adds `-m unittest discover` and its discovery
-arguments itself, and passes the executable as a single `ProcessBuilder` argument.
-Choose the full interpreter path when you need a particular installed version.
-
-On Linux, no override is needed when `python3` is on `PATH`. Minimal Java/Maven
-container images may not include Python; install it before running these tests.
-The setting affects this Java test wrapper only. It does not change your system
-Python installation, release scripts, or production FSCrawler behaviour.
-
 ## Docker build
 
-The docker images build is run when calling the maven `package` phase. If you want to skip the build of the images,
+The Docker image build is bound to the Maven `install` phase in the distribution module. If you want to skip the build of the images,
 you can manually use the `docker.skip` option:
 
 ```shell
-mvn package -Ddocker.skip
+mvn install "-Ddocker.skip"
 ```
 
 ## Docker Hub tags
