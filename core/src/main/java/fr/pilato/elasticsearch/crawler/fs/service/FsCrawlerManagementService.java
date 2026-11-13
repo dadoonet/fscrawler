@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
@@ -64,4 +65,15 @@ public interface FsCrawlerManagementService extends FsCrawlerService {
      * @param id Document ID
      */
     void delete(String index, String id);
+
+    /**
+     * Drain folder writes and recursive deletions, including retries, and fail if any management bulk operation failed.
+     * Checkpoint progress must not advance before this acknowledgement succeeds.
+     *
+     * @throws ElasticsearchClientException when a terminal item or whole-request failure was recorded
+     */
+    void flushAndEnsureBulkSucceeded() throws ElasticsearchClientException;
+
+    /** Clears the retained failure from a previous crawl so its replay can succeed on a healthy cluster. */
+    void clearFatalBulkFailure();
 }

@@ -12,6 +12,12 @@ The checkpoint file serves multiple purposes:
 2. **Resume capability**: If FSCrawler is stopped or crashes during a scan, it will automatically resume from where it left off when restarted.
 3. **Scan history**: After a successful scan, the checkpoint stores when the last scan completed (`scan_end_time`) and when the next scan should run (`next_check`).
 
+Checkpoint progress advances only after both document indexing and management
+operations (folder records and recursive deletions) have been acknowledged by
+Elasticsearch. A terminal failure in either queue reports `ERROR` and retains
+the last acknowledged recovery frontier. Correct the underlying failure before
+resuming; already successful operations may be replayed.
+
 The information in this file includes:
 
 - `scan_id`: unique identifier for the current scan session

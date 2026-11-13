@@ -12,6 +12,10 @@ Here is a list of Local FS settings (under `fs.` prefix):
 | `fs.provider`            | `FSCRAWLER_FS_PROVIDER`            | `"local"`       | [Crawler Provider](#crawler-provider)                   |
 | `fs.url`                 | `FSCRAWLER_FS_URL`                 | `"/tmp/es"`     | [Root directory](#root-directory)                       |
 | `fs.update_rate`         | `FSCRAWLER_FS_UPDATE_RATE`         | `"15m"`         | [Update Rate](#update-rate)                             |
+| `fs.checkpoint.max_directories` | `FSCRAWLER_FS_CHECKPOINT_MAX_DIRECTORIES` | `100` | {ref}`checkpoint-settings` |
+| `fs.checkpoint.max_operations` | `FSCRAWLER_FS_CHECKPOINT_MAX_OPERATIONS` | `5000` | {ref}`checkpoint-settings` |
+| `fs.checkpoint.max_bytes` | `FSCRAWLER_FS_CHECKPOINT_MAX_BYTES` | `"32mb"` | {ref}`checkpoint-settings` |
+| `fs.checkpoint.max_interval` | `FSCRAWLER_FS_CHECKPOINT_MAX_INTERVAL` | `"30s"` | {ref}`checkpoint-settings` |
 | `fs.includes`            | `FSCRAWLER_FS_INCLUDES`            | `null`          | [Includes and excludes](#includes-and-excludes)         |
 | `fs.excludes`            | `FSCRAWLER_FS_EXCLUDES`            | `["*/~*", "*/.ds_store"]` | [Includes and excludes](#includes-and-excludes)         |
 | `fs.filters`             | `FSCRAWLER_FS_FILTERS`             | `null`          | [Filter content](#filter-content)                       |
@@ -38,6 +42,105 @@ Here is a list of Local FS settings (under `fs.` prefix):
 | `fs.tika_config_path`    | `FSCRAWLER_FS_TIKA_CONFIG_PATH`    | `null`          | [Tika Config Path](#tika-config-path)                   |
 | `fs.ocr.enabled`         | `FSCRAWLER_FS_OCR_ENABLED`         | `true`          | {ref}`ocr_integration`                                  |
 
+
+(checkpoint-settings)=
+## Recovery checkpoint settings
+
+```{versionadded} 3.1
+```
+
+`fs.checkpoint` controls how often FSCrawler confirms outstanding Elasticsearch
+writes and saves a recovery position. It is independent of Elasticsearch bulk
+request sizing and of `fs.update_rate`, which schedules scans.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `fs.checkpoint.max_directories` | `100` | Fully processed directories since the last acknowledged checkpoint |
+| `fs.checkpoint.max_operations` | `5000` | Submitted document, folder and deletion operations since the last checkpoint; retries do not count again |
+| `fs.checkpoint.max_bytes` | `"32mb"` (32 MiB) | Approximate submitted payload volume since the last checkpoint |
+| `fs.checkpoint.max_interval` | `"30s"` | Elapsed time since the last acknowledged checkpoint |
+
+The corresponding environment variables are
+`FSCRAWLER_FS_CHECKPOINT_MAX_DIRECTORIES`, `FSCRAWLER_FS_CHECKPOINT_MAX_OPERATIONS`,
+`FSCRAWLER_FS_CHECKPOINT_MAX_BYTES` and `FSCRAWLER_FS_CHECKPOINT_MAX_INTERVAL`.
+System properties use the dotted setting names. Existing file-over-property
+precedence and placeholders apply.
+
+Example CP-1: explicitly configure all four limits in `_settings.yaml`.
+
+```yaml
+fs:
+  checkpoint:
+    max_directories: 100
+    max_operations: 5000
+    max_bytes: "32mb"
+    max_interval: "30s"
+```
+
+**None of these fields is mandatory.** Omit the entire section, use
+`checkpoint: {}`, or specify any subset. Each omitted field retains its default;
+there is no all-or-nothing requirement. This keeps existing job files valid.
+
+Example CP-2: change only the directory limit; the other three defaults still apply.
+
+```yaml
+fs:
+  checkpoint:
+    max_directories: 500
+```
+
+Reaching **any** threshold requests a checkpoint at the next safe processing
+point. End of scan always drains outstanding work before successful completion.
+Pause and close preserve the acknowledged recovery frontier; graceful draining
+can advance it safely. Limits cannot disable those correctness safeguards.
+
+The interval is a soft boundary, not a background timer or a deadline: a blocked
+directory listing, large file read, HTTP request or retry can delay it. The byte
+limit estimates content and metadata; it is not an exact serialized request size
+or a hard memory cap. A single operation can exceed it.
+
+### Validation and warnings
+
+Counts must be positive whole numbers: directory counts must fit a signed 32-bit
+integer and operation counts a signed 64-bit integer. Sizes must be positive and
+include units, such as `1b`, `512kb`, `32mb` or `1gb`. Finite decimal sizes
+such as `0.5mb` are allowed if they represent at least one byte and no more than
+9,223,372,036,854,775,807 bytes; scientific notation and non-finite sizes are rejected. Durations must use positive whole-number amounts
+with units `ms`, `s`, `m`, `h` or `d`, and fit signed 64-bit nanoseconds.
+Zero and negative values do not mean unlimited or disabled.
+
+Malformed YAML/JSON checkpoint sections, explicit nulls, unknown keys inside the
+section, invalid units and out-of-range values stop configuration loading with
+the offending `fs.checkpoint.*` path. For example, `max_opertions` is rejected;
+it does not silently fall back to 5,000. Omit a field to use its default rather
+than setting it to null. Omitting fields does not itself produce a warning; combinations with bulk
+settings can still produce the warnings described below.
+
+Valid settings are honored exactly. FSCrawler logs a warning if the operation
+or byte checkpoint limit is below the corresponding bulk threshold, or if the
+checkpoint interval is shorter than `elasticsearch.flush_interval`. These
+configurations are allowed, but checkpoints can force partial bulk requests or
+flush pending work sooner. A warning does not silently increase the limit.
+
+### Bulk settings and recovery tradeoff
+
+`elasticsearch.bulk_size`, `elasticsearch.byte_size` and
+`elasticsearch.flush_interval` continue to send ordinary bulk requests. Changing
+them **does not change checkpoint settings**. For example, bulk size 1,000 and
+checkpoint operation limit 5,000 normally allow several bulk requests between
+checkpoint boundaries; another checkpoint trigger can fire earlier.
+
+Smaller limits confirm progress more frequently but can add checkpoint work and
+partial bulk requests. Larger limits can reduce that work while leaving more
+completed traversal to repeat after interruption. For empty or mostly unchanged
+directories, the directory/time limits can be more relevant than operation count.
+
+An unfinished directory is replayed from its beginning after restart, even if it
+contains more than 10,000 files. More frequent checkpoints do not provide a
+per-file resume cursor. Recovery is at least once: accepted documents can be
+submitted again, including ingest-pipeline side effects. These settings do not
+repair earlier missing documents or implement atomic checkpoint-file replacement.
+See {ref}`checkpoint-batching` for the acknowledgement design, tests and benchmarks.
 
 (crawler-provider)=
 ## Crawler Provider

@@ -85,6 +85,12 @@ bin/fscrawler test
 name: "test"
 
 fs:
+  # optional: acknowledged recovery checkpoints; omitted fields use these defaults
+  #checkpoint:
+  #  max_directories: 100
+  #  max_operations: 5000
+  #  max_bytes: "32mb"
+  #  max_interval: "30s"
   # when using ssh or ftp, set provider and the matching fs.providers block
   # provider: "ssh"
   # providers:

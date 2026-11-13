@@ -139,6 +139,7 @@ public class FsSettingsLoader extends MetaFileHandler {
         }
 
         try {
+            validateCheckpointSections(configFiles);
             GestaltBuilder builder = new GestaltBuilder()
                     .addSource(ClassPathConfigSourceBuilder.builder()
                             .setResource(DEFAULT_SETTINGS)
@@ -175,12 +176,20 @@ public class FsSettingsLoader extends MetaFileHandler {
             settings.setRest(gestalt.getConfigOptional("rest", Rest.class).orElse(null));
             settings.setKibana(gestalt.getConfigOptional("kibana", Kibana.class).orElse(null));
 
+            if (settings.getFs() != null) {
+                settings.getFs()
+                        .getCheckpoint()
+                        .validationWarnings(settings.getElasticsearch())
+                        .forEach(logger::warn);
+            }
             logger.debug(
                     "Successfully loaded settings from classpath [fscrawler-default.properties] and files {}",
                     (Object) configFiles);
             logger.trace("Loaded settings [{}]", settings);
 
             return settings;
+        } catch (FsCrawlerIllegalConfigurationException e) {
+            throw e;
         } catch (Exception e) {
             throw new FsCrawlerIllegalConfigurationException(
                     "Can not load settings. " + "Please make sure that your setting file(s) are properly formatted.",
@@ -197,16 +206,86 @@ public class FsSettingsLoader extends MetaFileHandler {
      * env/sysprops.
      */
     private static Fs loadFs(Gestalt gestalt, Path... configFiles) {
+        Checkpoint checkpoint = new Checkpoint();
+        checkpoint.setMaxDirectories(checkpointValue(gestalt, "max_directories", Integer.class));
+        checkpoint.setMaxOperations(checkpointValue(gestalt, "max_operations", Long.class));
+        checkpoint.setMaxBytes(checkpointBytes(gestalt));
+        checkpoint.setMaxInterval(
+                checkpointValue(gestalt, "max_interval", fr.pilato.elasticsearch.crawler.fs.framework.TimeValue.class));
+        checkpoint.validate();
         Fs fs = gestalt.getConfigOptional("fs", Fs.class).orElse(null);
         if (fs == null) {
             return null;
         }
 
+        fs.setCheckpoint(checkpoint);
         Map<String, Object> providers = loadNestedMap(configFiles, "fs", "providers");
         overlayProviderScalars(providers, gestalt, fs.getProvider());
         fs.setProviders(providers.isEmpty() ? null : providers);
 
         return fs;
+    }
+
+    /** Reject non-finite and saturated decimal sizes before the shared parser can round them into a valid long. */
+    private static fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue checkpointBytes(Gestalt gestalt) {
+        String value = checkpointValue(gestalt, "max_bytes", String.class);
+        var match = java.util.regex.Pattern.compile(
+                        "(?i)([0-9]+(?:\\.[0-9]+)?)\\s*(b|k(?:b)?|m(?:b)?|g(?:b)?|t(?:b)?|p(?:b)?)")
+                .matcher(value.trim());
+        if (!match.matches()) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Setting [fs.checkpoint.max_bytes] must be a positive finite byte size with a unit");
+        }
+        char unit = Character.toLowerCase(match.group(2).charAt(0));
+        long multiplier =
+                switch (unit) {
+                    case 'k' -> 1L << 10;
+                    case 'm' -> 1L << 20;
+                    case 'g' -> 1L << 30;
+                    case 't' -> 1L << 40;
+                    case 'p' -> 1L << 50;
+                    default -> 1L;
+                };
+        var bytes = new java.math.BigDecimal(match.group(1)).multiply(java.math.BigDecimal.valueOf(multiplier));
+        if (bytes.compareTo(java.math.BigDecimal.ONE) < 0
+                || bytes.compareTo(java.math.BigDecimal.valueOf(Long.MAX_VALUE)) > 0) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Setting [fs.checkpoint.max_bytes] must be between 1 and " + Long.MAX_VALUE + " bytes");
+        }
+        return new fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue(value);
+    }
+
+    private static <T> T checkpointValue(Gestalt gestalt, String field, Class<T> type) {
+        String path = "fs.checkpoint." + field;
+        try {
+            return gestalt.getConfig(path, type);
+        } catch (Exception e) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Invalid setting [" + path + "]: expected " + type.getSimpleName(), e);
+        }
+    }
+
+    /** Only the new checkpoint section is strict; existing unrelated settings keep their loading behavior. */
+    private static void validateCheckpointSections(Path[] files) {
+        for (Path file : files) {
+            Map<String, Object> root = loadYamlRoot(new Yaml(), file);
+            if (!(root.get("fs") instanceof Map<?, ?> fs) || !fs.containsKey("checkpoint")) continue;
+            if (!(fs.get("checkpoint") instanceof Map<?, ?> section)) {
+                throw new FsCrawlerIllegalConfigurationException(
+                        "Setting [fs.checkpoint] must be a mapping; omit it or use {} for defaults");
+            }
+            for (Map.Entry<?, ?> entry : section.entrySet()) {
+                String path = "fs.checkpoint." + entry.getKey();
+                if (!List.of("max_directories", "max_operations", "max_bytes", "max_interval")
+                        .contains(entry.getKey()))
+                    throw new FsCrawlerIllegalConfigurationException("Unknown setting [" + path + "]");
+                if (entry.getValue() == null
+                        || entry.getValue() instanceof Map<?, ?>
+                        || entry.getValue() instanceof List<?>)
+                    throw new FsCrawlerIllegalConfigurationException(
+                            "Setting [" + path + "] must be a non-null scalar; omit it to use its default");
+            }
+        }
     }
 
     /**

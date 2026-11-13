@@ -1,0 +1,2 @@
+fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch.CheckpointBenchmarkFsProvider
+fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch.CheckpointRecoveryFsProvider
