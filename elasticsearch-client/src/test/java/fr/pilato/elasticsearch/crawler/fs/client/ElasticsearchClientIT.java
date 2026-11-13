@@ -26,7 +26,10 @@ import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
 import fr.pilato.elasticsearch.crawler.fs.framework.ExponentialBackoffPollInterval;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerSimpleBulkProcessorListener;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettingsLoader;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
@@ -52,7 +55,13 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 import javax.net.ssl.SSLHandshakeException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -624,6 +633,83 @@ class ElasticsearchClientIT extends AbstractFSCrawlerTestCase {
 
         Assertions.assertThat(esClient.isExistingPipeline(crawlerName)).isTrue();
         Assertions.assertThat(esClient.isExistingPipeline(crawlerName + "_foo")).isFalse();
+    }
+
+    /** Verify the queue-rotation regression through real bulk HTTP requests, including duplicate detection. */
+    @Test
+    void concurrent_timer_and_size_flush_deliver_each_document_once() throws Exception {
+        createIndex();
+        String index = getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS;
+        var captured = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var produced = new CountDownLatch(1);
+        var allocations = new AtomicInteger();
+        var failures = new ConcurrentLinkedQueue<Throwable>();
+        var operations = IntStream.range(0, 3)
+                .mapToObj(i ->
+                        new ElasticsearchIndexOperation(index, Integer.toString(i), null, "{\"position\":" + i + "}"))
+                .toList();
+        var listener =
+                new FsCrawlerSimpleBulkProcessorListener<
+                        ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>() {
+                    @Override
+                    public void afterBulk(
+                            long id, ElasticsearchBulkRequest request, ElasticsearchBulkResponse response) {
+                        if (response.hasFailures()) {
+                            failures.add(response.buildFailureMessage());
+                        }
+                    }
+
+                    @Override
+                    public void afterBulk(long id, ElasticsearchBulkRequest request, Throwable failure) {
+                        failures.add(failure);
+                    }
+                };
+        var processor = new FsCrawlerBulkProcessor.Builder<>(new ElasticsearchEngine(esClient), listener, () -> {
+                    if (allocations.incrementAndGet() == 2) {
+                        captured.countDown();
+                        try {
+                            if (!release.await(10, TimeUnit.SECONDS)) {
+                                throw new IllegalStateException("Timer release timed out");
+                            }
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException(e);
+                        }
+                    }
+                    return new ElasticsearchBulkRequest();
+                })
+                .setBulkActions(2)
+                .setFlushInterval(TimeValue.timeValueMillis(10))
+                .build();
+        var worker = Executors.newSingleThreadExecutor();
+        try {
+            processor.add(operations.get(0));
+            Assertions.assertThat(captured.await(10, TimeUnit.SECONDS)).isTrue();
+            var future = worker.submit(() -> {
+                try {
+                    processor.add(operations.get(1));
+                    processor.add(operations.get(2));
+                } finally {
+                    produced.countDown();
+                }
+            });
+            produced.await(1, TimeUnit.SECONDS);
+            release.countDown();
+            future.get(10, TimeUnit.SECONDS);
+            processor.flush();
+            Assertions.assertThat(failures).isEmpty();
+            // Realtime GET avoids relying on refresh timing. Version 1 proves the action was not sent twice.
+            for (var operation : operations) {
+                Assertions.assertThat(esClient.get(index, operation.getId()).getVersion())
+                        .isEqualTo(1);
+            }
+        } finally {
+            release.countDown();
+            worker.shutdownNow();
+            Assertions.assertThat(worker.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+            processor.close();
+        }
     }
 
     @Test
