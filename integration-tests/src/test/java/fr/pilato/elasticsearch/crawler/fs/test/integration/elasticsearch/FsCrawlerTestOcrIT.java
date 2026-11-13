@@ -155,21 +155,28 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
         Map<String, String> raw = JsonPath.read(jpgHitSource, "$.meta.raw");
         Assertions.assertThat(raw)
                 .as("test-ocr.jpg: raw metadata")
-                .hasSize(66)
+                .hasSize(56)
+                // Match the stream-based JPEG parser; ICC curves and temporary-file fields are not emitted.
+                .doesNotContainKeys(
+                        "icc:Blue Parametric TRC",
+                        "icc:Blue TRC",
+                        "icc:Green Parametric TRC",
+                        "icc:Green TRC",
+                        "icc:Red Parametric TRC",
+                        "icc:Red TRC",
+                        "img:File Modified Date",
+                        "img:File Name",
+                        "img:File Size")
                 .containsEntry("Content-Type", "image/jpeg")
                 .containsEntry("tk:content-type-magic-detected", "image/jpeg")
                 .containsKey("icc:Apple Multi-language Profile Name")
                 .containsKey("icc:Blue Colorant")
-                .containsKey("icc:Blue Parametric TRC")
-                .containsKey("icc:Blue TRC")
                 .containsKey("icc:Chromatic Adaptation")
                 .containsEntry("icc:Class", "Display Device")
                 .containsEntry("icc:CMM Type", "appl")
                 .containsEntry("icc:Color space", "RGB")
                 .containsEntry("icc:Device manufacturer", "APPL")
                 .containsKey("icc:Green Colorant")
-                .containsKey("icc:Green Parametric TRC")
-                .containsKey("icc:Green TRC")
                 .containsKey("icc:Make And Model")
                 .containsKey("icc:Media White Point")
                 .containsKey("icc:Native Display Information")
@@ -180,8 +187,6 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                 .containsEntry("icc:Profile Description", "Display")
                 .containsEntry("icc:Profile Size", "3888")
                 .containsKey("icc:Red Colorant")
-                .containsKey("icc:Red Parametric TRC")
-                .containsKey("icc:Red TRC")
                 .containsEntry("icc:Signature", "acsp")
                 .containsEntry("icc:Tag Count", "17")
                 .containsKey("icc:Version")
@@ -204,10 +209,6 @@ class FsCrawlerTestOcrIT extends AbstractFsCrawlerITCase {
                 .containsEntry("img:Exif SubIFD:Exif Version", "2.21")
                 .containsEntry("img:Exif SubIFD:FlashPix Version", "1.00")
                 .containsEntry("img:Exif SubIFD:Scene Capture Type", "Standard")
-                .containsKey("img:File Modified Date")
-                .hasEntrySatisfying(
-                        "img:File Name", value -> Assertions.assertThat(value).startsWith("apache-tika-"))
-                .containsEntry("img:File Size", "41426 bytes")
                 .containsEntry("img:Image Height", "622 pixels")
                 .containsEntry("img:Image Width", "982 pixels")
                 .containsEntry("img:Number of Components", "3")
