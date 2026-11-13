@@ -45,6 +45,7 @@ import fr.pilato.elasticsearch.crawler.plugins.FsCrawlerPluginException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
@@ -166,6 +167,65 @@ class FsParserDirectoryListingFailureTest extends AbstractFSCrawlerTestCase {
         assertThat(completed.getPendingPaths()).isEmpty();
         verify(documents).delete(eq(settings.getElasticsearch().getIndex()), anyString());
         verify(management).delete(eq(settings.getElasticsearch().getIndexFolder()), anyString());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "true, true, directory",
+        "false, true, directory",
+        "true, false, directory",
+        "true, true, root",
+        "true, true, entry",
+        "true, true, source"
+    })
+    void confirmedMissingQueuedDirectoryDoesNotBlockLaterCrawls(
+            boolean removeDeleted, boolean indexFolders, String missingKind) throws Exception {
+        FsSettings settings = FsSettingsLoader.load();
+        settings.setName(jobName);
+        String root = testTmpDir.toString();
+        String queued = missingKind.equals("root")
+                ? root
+                : testTmpDir.resolve(randomName()).toString();
+        String missing = missingKind.equals("entry")
+                ? java.nio.file.Path.of(queued).resolve(randomName()).toString()
+                : queued;
+        settings.getFs().setUrl(root);
+        settings.getFs().setRemoveDeleted(removeDeleted);
+        settings.getFs().setIndexFolders(indexFolders);
+        settings.getElasticsearch().setIndex(randomName());
+        settings.getElasticsearch().setIndexFolder(randomName());
+        FsCrawlerExtensionFsProvider provider = mock(FsCrawlerExtensionFsProvider.class);
+        when(provider.exists(root)).thenReturn(true);
+        if (missingKind.equals("source")) {
+            // The source root disappeared after the initial existence check.
+            when(provider.exists(root)).thenReturn(true, false);
+        }
+        when(provider.getFiles(queued))
+                .thenThrow(new FsCrawlerPluginException(
+                        "Can not list directory " + queued, new NoSuchFileException(missing)));
+        FsCrawlerManagementService management = mock(FsCrawlerManagementService.class);
+        when(management.getFileDirectory(queued)).thenReturn(List.of(randomName() + ".txt"));
+        when(management.getFolderDirectory(queued)).thenReturn(List.of());
+        FsCrawlerCheckpoint checkpoint = FsCrawlerCheckpoint.newCheckpoint(root);
+        checkpoint.clearPendingPaths();
+        checkpoint.addPath(queued);
+        if (!queued.equals(root)) checkpoint.markCompleted(root);
+        FsParser parser = new FsParser(
+                settings, testTmpDir, management, mock(FsCrawlerDocumentService.class), 1, false, provider);
+        parser.getCheckpointHandler().write(jobName, checkpoint);
+        parser.closed.set(false);
+        parser.run();
+        FsCrawlerCheckpoint saved = parser.getCheckpointHandler().read(jobName);
+        boolean confirmedDirectory = missingKind.equals("directory");
+        assertThat(saved.getState()).isEqualTo(confirmedDirectory ? CrawlerState.COMPLETED : CrawlerState.ERROR);
+        if (confirmedDirectory) assertThat(saved.getPendingPaths()).isEmpty();
+        else assertThat(saved.getPendingPaths()).contains(queued);
+        if (confirmedDirectory && removeDeleted && indexFolders) {
+            verify(management).delete(eq(settings.getElasticsearch().getIndex()), anyString());
+            verify(management).delete(eq(settings.getElasticsearch().getIndexFolder()), anyString());
+        } else {
+            verify(management, never()).delete(anyString(), anyString());
+        }
     }
 
     private String randomName() {
