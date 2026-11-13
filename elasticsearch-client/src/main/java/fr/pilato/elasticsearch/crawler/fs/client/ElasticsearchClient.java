@@ -224,9 +224,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
 
-        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
-                .hostnameVerifier(new NullHostNameVerifier())
-                .withConfig(config);
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(config);
 
         SSLContext sslContext = null;
         if (settings.getElasticsearch().isSslVerification()) {
@@ -238,6 +236,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 clientBuilder.sslContext(sslContext);
             }
         } else {
+            // Hostname checks are bypassed only when certificate verification is explicitly disabled.
+            clientBuilder.hostnameVerifier(new NullHostNameVerifier());
             // Trusting all certificates. For test purposes only.
             try {
                 sslContext = SSLContext.getInstance("TLS");
