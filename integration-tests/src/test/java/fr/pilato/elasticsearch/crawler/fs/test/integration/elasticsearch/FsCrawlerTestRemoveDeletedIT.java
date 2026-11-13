@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs.test.integration.elasticsearch;
 import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import com.jayway.jsonpath.DocumentContext;
 import fr.pilato.elasticsearch.crawler.fs.FsParser;
+import fr.pilato.elasticsearch.crawler.fs.beans.CrawlerState;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.client.ESSearchRequest;
@@ -120,13 +121,15 @@ class FsCrawlerTestRemoveDeletedIT extends AbstractFsCrawlerITCase {
         loggerContext.updateLoggers();
 
         try {
-            // pause() changes the public state immediately. Wait for the crawler-thread message before deleting files
-            // so the initial scan cannot still be reading their metadata on slower filesystems.
+            // pause() changes the public state immediately. Wait for the crawler thread to stop processing files.
+            // A completed scan can already be waiting between runs without emitting the mid-scan pause message.
             crawler.getFsParser().pause();
             Awaitility.await()
                     .alias("crawler thread paused before deleting files")
                     .atMost(Duration.ofMinutes(1))
-                    .until(() -> capturedLogs.toString().contains("Crawler is paused. Waiting for resume"));
+                    .until(() -> crawler.getFsParser().isPaused()
+                            && (capturedLogs.toString().contains("Crawler is paused. Waiting for resume")
+                                    || crawler.getFsParser().getCheckpoint().getState() == CrawlerState.COMPLETED));
 
             // Deleting the subdirectory makes FSCrawler process a capped deletion query on the next scan.
             deleteRecursively(directoryToDelete);

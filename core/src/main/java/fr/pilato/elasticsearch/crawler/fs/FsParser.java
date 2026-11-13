@@ -58,6 +58,7 @@ import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -758,6 +759,19 @@ public class FsParser implements Runnable, AutoCloseable {
                         throw e;
                     }
                     if (e instanceof DirectoryListingException failure) {
+                        if (isMissingQueuedDirectory(currentPath, failure)) {
+                            logger.info(
+                                    "Queued directory [{}] was removed; reconciling its indexed entries", currentPath);
+                            if (fsSettings.getFs().isRemoveDeleted()
+                                    && fsSettings.getFs().isIndexFolders()) {
+                                // Truncated queries retain their folder record for the next full crawl.
+                                removeEsDirectoryRecursively(currentPath, stats);
+                            }
+                            checkpoint.get().markCompleted(currentPath);
+                            checkpoint.get().resetRetryCount();
+                            maybeSaveCheckpoint();
+                            continue;
+                        }
                         checkpoint.get().addPath(currentPath);
                         checkpoint.get().setLastError(failure.getMessage());
                         saveCheckpoint();
@@ -802,6 +816,21 @@ public class FsParser implements Runnable, AutoCloseable {
         } finally {
             traverseSpan.end();
         }
+    }
+
+    private boolean isMissingQueuedDirectory(String path, DirectoryListingException failure) {
+        // Losing the crawl root is an outage, not permission to erase the index.
+        if (path.equals(fsSettings.getFs().getUrl())) {
+            return false;
+        }
+        for (Throwable cause = failure.getCause(); cause != null; cause = cause.getCause()) {
+            // A missing entry encountered while enumerating a directory does not prove the directory is gone.
+            if (cause instanceof NoSuchFileException missing && path.equals(missing.getFile())) {
+                // A vanished share can make every queued child look missing. Recheck its root first.
+                return crawlerPlugin.exists(fsSettings.getFs().getUrl());
+            }
+        }
+        return false;
     }
 
     private Collection<FileAbstractModel> listDirectory(String path) throws DirectoryListingException {
