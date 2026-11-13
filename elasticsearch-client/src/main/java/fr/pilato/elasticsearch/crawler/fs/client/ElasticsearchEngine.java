@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.client;
 
+import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.Engine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,25 +41,17 @@ public class ElasticsearchEngine
 
         request.getOperations().forEach(r -> {
             StringBuilder bulkRequest = new StringBuilder();
-            // Header
-            bulkRequest
-                    .append("{\"")
-                    .append(r.getOperation().asLowerCaseString())
-                    .append("\":{");
-
+            // Serialize metadata separately so user-controlled values cannot change NDJSON framing.
+            var header = JsonUtil.mapper.createObjectNode();
+            var metadata = header.putObject(r.getOperation().asLowerCaseString());
             if (commonIndex == null) {
-                bulkRequest.append("\"_index\":\"").append(r.getIndex()).append("\",");
+                metadata.put("_index", r.getIndex());
             }
-
-            bulkRequest.append("\"_id\":\"").append(r.getId()).append("\"");
-
+            metadata.put("_id", r.getId());
             if (r instanceof ElasticsearchInsertOperation insertOp && insertOp.getPipeline() != null) {
-                bulkRequest
-                        .append(",\"pipeline\":\"")
-                        .append(insertOp.getPipeline())
-                        .append("\"");
+                metadata.put("pipeline", insertOp.getPipeline());
             }
-            bulkRequest.append("}}\n");
+            bulkRequest.append(JsonUtil.serialize(header)).append('\n');
             if (r instanceof ElasticsearchInsertOperation insertOp) {
                 // NDJSON needs one JSON object per line. Pretty-printed documents may contain
                 // structural CR/LF; strip them without a Jackson round-trip (which rejects large

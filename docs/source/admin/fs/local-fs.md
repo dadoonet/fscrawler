@@ -418,6 +418,39 @@ fs:
 
 When `filename_as_id` is `true`, `fs.hash_algorithm` is ignored.
 
+(bulk-metadata-json)=
+### JSON encoding of bulk metadata
+
+FSCrawler sends documents and bulk action metadata to Elasticsearch as JSON,
+including when crawling PDFs, Office files and ordinary text files. This also
+applies when `fs.json_support` and `fs.xml_support` are both `false`.
+
+Within JSON strings, double quotes, backslashes and control characters must be
+escaped. For example, a newline inside a value is represented as `\n` rather than
+an actual line break. FSCrawler performs this encoding automatically when writing
+the `_id`, `pipeline` and per-action `_index` fields in bulk action metadata.
+This preserves each value without allowing it to add fields or action lines.
+
+| Bulk metadata | Setting or input | Where it is used |
+|---|---|---|
+| `_id` | Filenames when `fs.filename_as_id: true`; explicitly supplied REST document IDs | Crawling and REST uploads. Default hashed IDs avoid the special-filename trigger. |
+| `pipeline` | `elasticsearch.pipeline` | Document writes from crawling and REST uploads use the configured pipeline. The upload endpoint has no per-request pipeline override. |
+| `_index` | `elasticsearch.index`, `elasticsearch.index_folder`, or a REST document `index` override | Individual action headers when a bulk request targets different indices. REST uploads otherwise use the configured document index. |
+
+REST index overrides can come from the `index` HTTP header, query parameter or,
+for multipart uploads, form field. `elasticsearch.index_folder` is used for crawler
+folder management; it is not the document-upload target.
+
+Keep ordinary values in `_settings.yaml`. YAML quoting and JSON encoding are
+separate steps: do not add JSON escape sequences to settings or filenames to
+compensate for bulk encoding. Normal Elasticsearch limits and validation still
+apply; JSON encoding does not make an invalid index or pipeline name valid.
+
+This encoding concerns bulk action metadata. Extracted document fields already
+use the document serializer, and existing JSON document bodies are not escaped
+wholesale into strings. Other settings, such as URLs, passwords, timeouts and OCR
+options, are outside this bulk metadata change.
+
 ## Adding file attributes
 
 If you want to add file attributes such as `attributes.owner`, `attributes.group`
