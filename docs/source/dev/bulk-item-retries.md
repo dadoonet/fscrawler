@@ -56,6 +56,10 @@ Five new tests reproduced BUG-05 against the BUG-04 parent:
 | `retriesDoNotNestBulkExecution` | Failure | Two requests, maximum `execute()` stack depth one. |
 | `interruptedBackoffRecordsTerminalFailureAndPreservesInterrupt` | Failure | No retry, terminal failure, interrupt preserved. |
 
+The interruption test interrupts inside the backoff hook, after flush acquires its
+lifecycle locks. Interrupting before calling flush instead exercises lifecycle-lock
+acquisition, which rejects the interrupted caller before executing any bulk request.
+
 An additional `repeatedIdRetriesTheRejectedPayloadOnly` regression failed against
 the ID-only lookup and passes with response-position matching. It checks the
 actual retry HTTP body, rather than just the number of requests.

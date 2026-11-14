@@ -64,6 +64,13 @@ class FsCrawlerItemRetryTest extends AbstractFSCrawlerTestCase {
         var listener =
                 new FsCrawlerRetryBulkProcessorListener<TestOperation, TestBulkRequest, TestBulkResponse>("rejected") {
                     @Override
+                    protected void pauseBeforeRetry(long nanos) throws InterruptedException {
+                        // Interrupt the backoff itself, after flush has acquired its lifecycle locks.
+                        Thread.currentThread().interrupt();
+                        super.pauseBeforeRetry(nanos);
+                    }
+
+                    @Override
                     protected void onTerminalItemFailure(
                             long id,
                             TestBulkRequest request,
@@ -80,7 +87,6 @@ class FsCrawlerItemRetryTest extends AbstractFSCrawlerTestCase {
                 .build();
         try {
             processor.add(operation);
-            Thread.currentThread().interrupt();
             processor.flush();
             Assertions.assertThat(Thread.currentThread().isInterrupted()).isTrue();
             Assertions.assertThat(calls.get()).isEqualTo(1);
