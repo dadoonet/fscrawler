@@ -734,3 +734,18 @@ GET docs/_search
  }
 }
 ```
+
+## HTTP transport timeouts
+
+Every HTTP attempt uses finite transport timeouts. Configure durations under
+`elasticsearch`: `connect_timeout` defaults to `10s`, `read_timeout` to `60s`,
+and `connection_request_timeout` (waiting for a pooled connection) to `10s`.
+Values must be at least `1ms` and at most `2147483647ms`; zero and negative
+values are rejected before opening the client. The same settings can be supplied
+through the corresponding `FSCRAWLER_ELASTICSEARCH_*` environment variables.
+
+These limits apply to each request, including bulk requests. The read timeout
+bounds waiting for response data, not the total duration of a response that keeps
+delivering data. The retry budget is checked between attempts and does not cancel
+an in-flight request. It is therefore not a strict overall flush/shutdown deadline.
+Increase the read timeout for clusters with legitimately long bulk processing.
