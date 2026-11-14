@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,11 +54,11 @@ public class FsCrawlerCheckpoint {
     private Deque<String> pendingPaths;
 
     /**
-     * Set of paths in {@link #pendingPaths} for O(1) membership checks during crawl. Not persisted; rebuilt from
-     * pendingPaths in {@link #ensureConcurrentCollections()}.
+     * Occurrence counts in {@link #pendingPaths} for O(1) membership checks during crawl, including duplicate paths.
+     * Not persisted; rebuilt from pendingPaths in {@link #ensureConcurrentCollections()}.
      */
     @JsonIgnore
-    private Set<String> pendingPathsSet;
+    private ConcurrentMap<String, Integer> pendingPathCounts;
 
     /** Directories that have been fully processed */
     private Set<String> completedPaths;
@@ -116,7 +117,7 @@ public class FsCrawlerCheckpoint {
 
     public FsCrawlerCheckpoint() {
         this.pendingPaths = new ConcurrentLinkedDeque<>();
-        this.pendingPathsSet = ConcurrentHashMap.newKeySet();
+        this.pendingPathCounts = new ConcurrentHashMap<>();
         this.completedPaths = ConcurrentHashMap.newKeySet();
         this.state.set(CrawlerState.STOPPED);
         this.filesProcessed.set(0);
@@ -132,16 +133,10 @@ public class FsCrawlerCheckpoint {
     public void ensureConcurrentCollections() {
         if (pendingPaths == null) {
             this.pendingPaths = new ConcurrentLinkedDeque<>();
-            this.pendingPathsSet = ConcurrentHashMap.newKeySet();
         } else {
             this.pendingPaths = new ConcurrentLinkedDeque<>(pendingPaths);
-            if (pendingPathsSet == null) {
-                pendingPathsSet = ConcurrentHashMap.newKeySet();
-            } else {
-                pendingPathsSet.clear();
-            }
-            pendingPathsSet.addAll(this.pendingPaths);
         }
+        rebuildPendingPathCounts();
         if (completedPaths == null) {
             this.completedPaths = ConcurrentHashMap.newKeySet();
         } else {
@@ -197,21 +192,14 @@ public class FsCrawlerCheckpoint {
     }
 
     public void setPendingPaths(Deque<String> pendingPaths) {
-        if (pendingPaths == null) {
-            this.pendingPaths = new ConcurrentLinkedDeque<>();
-            if (pendingPathsSet == null) {
-                pendingPathsSet = ConcurrentHashMap.newKeySet();
-            } else {
-                pendingPathsSet.clear();
-            }
-        } else {
-            this.pendingPaths = pendingPaths;
-            if (pendingPathsSet == null) {
-                pendingPathsSet = ConcurrentHashMap.newKeySet();
-            } else {
-                pendingPathsSet.clear();
-            }
-            pendingPathsSet.addAll(pendingPaths);
+        this.pendingPaths = pendingPaths == null ? new ConcurrentLinkedDeque<>() : pendingPaths;
+        rebuildPendingPathCounts();
+    }
+
+    private void rebuildPendingPathCounts() {
+        pendingPathCounts = new ConcurrentHashMap<>();
+        for (String path : pendingPaths) {
+            pendingPathCounts.merge(path, 1, Integer::sum);
         }
     }
 
@@ -346,8 +334,8 @@ public class FsCrawlerCheckpoint {
      */
     public String pollNextPath() {
         String path = pendingPaths.poll();
-        if (path != null && pendingPathsSet != null) {
-            pendingPathsSet.remove(path);
+        if (path != null && pendingPathCounts != null) {
+            pendingPathCounts.computeIfPresent(path, (key, count) -> count == 1 ? null : count - 1);
         }
         return path;
     }
@@ -359,8 +347,8 @@ public class FsCrawlerCheckpoint {
      */
     public void addPathFirst(String path) {
         pendingPaths.addFirst(path);
-        if (pendingPathsSet != null) {
-            pendingPathsSet.add(path);
+        if (pendingPathCounts != null) {
+            pendingPathCounts.merge(path, 1, Integer::sum);
         }
     }
 
@@ -371,8 +359,8 @@ public class FsCrawlerCheckpoint {
      */
     public void addPath(String path) {
         pendingPaths.addLast(path);
-        if (pendingPathsSet != null) {
-            pendingPathsSet.add(path);
+        if (pendingPathCounts != null) {
+            pendingPathCounts.merge(path, 1, Integer::sum);
         }
     }
 
@@ -387,19 +375,18 @@ public class FsCrawlerCheckpoint {
         if (path == null || pendingPaths == null || pendingPaths.isEmpty()) {
             return false;
         }
-        if (pendingPathsSet == null) {
-            // Defensive rebuild: pendingPathsSet is @JsonIgnore and may be null on partially initialized instances.
-            pendingPathsSet = ConcurrentHashMap.newKeySet();
-            pendingPathsSet.addAll(pendingPaths);
+        if (pendingPathCounts == null) {
+            // Defensive rebuild: counts are @JsonIgnore and may be null on partially initialized instances.
+            rebuildPendingPathCounts();
         }
-        return pendingPathsSet.contains(path);
+        return pendingPathCounts.containsKey(path);
     }
 
-    /** Clear the pending queue and its lookup set (e.g. when marking scan completed). */
+    /** Clear the pending queue and its occurrence counts (e.g. when marking scan completed). */
     public void clearPendingPaths() {
         pendingPaths.clear();
-        if (pendingPathsSet != null) {
-            pendingPathsSet.clear();
+        if (pendingPathCounts != null) {
+            pendingPathCounts.clear();
         }
     }
 
