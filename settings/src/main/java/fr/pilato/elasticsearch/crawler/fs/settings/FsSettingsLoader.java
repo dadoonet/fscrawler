@@ -68,17 +68,18 @@ public class FsSettingsLoader extends MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     public FsSettings read(String jobName) throws IOException {
-        Path configYaml = root.resolve(jobName).resolve(SETTINGS_YAML);
+        Path directory = resolveJobDirectory(root, jobName);
+        Path configYaml = directory.resolve(SETTINGS_YAML);
         logger.trace("Trying to read settings from [{}] file", configYaml);
         if (Files.exists(configYaml)) {
             return load(configYaml);
         }
-        Path configJson = root.resolve(jobName).resolve(SETTINGS_JSON);
+        Path configJson = directory.resolve(SETTINGS_JSON);
         logger.trace("Trying to read settings from [{}] file", configJson);
         if (Files.exists(configJson)) {
             return load(configJson);
         }
-        Path configDir = root.resolve(jobName).resolve(SETTINGS_DIR);
+        Path configDir = directory.resolve(SETTINGS_DIR);
         logger.trace("Trying to read settings from [{}] directory", configDir);
         if (Files.exists(configDir)) {
             return load(readDir(configDir).toArray(new Path[0]));
