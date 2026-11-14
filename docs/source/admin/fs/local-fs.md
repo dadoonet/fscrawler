@@ -150,79 +150,245 @@ The supported units for duration are:
 (includes_excludes)=
 ## Includes and excludes
 
-Let’s say you want to index only docs like `*.doc` and `*.pdf` but
-`resume*`. So `resume_david.pdf` won’t be indexed.
+Use `fs.includes` to select files and `fs.excludes` to reject files or skip
+directories. These settings are lists of patterns:
 
-Define `fs.includes` and `fs.excludes` properties in your
-`~/.fscrawler/test/_settings.yaml` file:
+* If `includes` is omitted or empty, all files are eligible unless excluded.
+* Otherwise, a file must match **at least one** include pattern.
+* A match against **any** exclude pattern rejects the file, even if it also
+  matches an include. The order of the patterns does not change this precedence.
+* Directories remain traversable even when their names do not match an include
+  pattern. An excluded directory is skipped, including its descendants.
+
+For example, index Word and PDF documents, except files whose names start with
+`resume`:
+
+<!-- test:includes-excludes-opening:start -->
 
 ```yaml
-name: "test"
+name: 'test'
+fs:
+  url: '/data'
+  includes:
+    - '*\.doc'
+    - '*\.pdf'
+  excludes:
+    - '*/resume*'
+    - '*/~*'
+    - '*/\.ds_store'
+```
+
+The backslash before each dot makes it a literal dot. Use single-quoted YAML
+strings to preserve these backslashes; see the escaping examples below.
+
+| File on disk | Path used for matching | Result |
+|---|---|---|
+| `/data/report.pdf` | `/report.pdf` | Included |
+| `/data/reports/report.doc` | `/reports/report.doc` | Included |
+| `/data/report.txt` | `/report.txt` | Does not match an include |
+| `/data/resume_david.pdf` | `/resume_david.pdf` | Excluded, despite matching an include |
+| `/data/reports/resume_david.pdf` | `/reports/resume_david.pdf` | Excluded |
+| `/data/~draft.doc` | `/~draft.doc` | Excluded |
+
+<!-- test:includes-excludes-opening:end -->
+
+### Paths and wildcard behaviour
+
+Patterns match the **entire virtual path**, relative to `fs.url`, with a leading
+`/`. For `fs.url: '/data'`, use `/reports/report.pdf`, not
+`/data/reports/report.pdf`. Windows backslashes in file paths are converted to
+`/` for matching. Use `/` as the separator in patterns, including on Windows;
+reserve backslashes in patterns for escaping special characters.
+
+The current matcher retains its existing behaviour for compatibility. It
+lowercases the path and pattern, replaces `*` with the regular expression `.*`
+and `?` with `.?`, and then performs a full Java regular-expression match.
+This is not a conventional shell glob implementation:
+
+| Pattern feature | Current meaning | Example |
+|---|---|---|
+| `*` | Zero or more characters; can cross directory separators | `/images/*\.jpg` matches both `/images/photo.jpg` and `/images/archive/photo.jpg` |
+| `?` | Zero or one character | `*/report?\.doc` matches `/report.doc` and `/report1.doc`, but not `/report12.doc` |
+| Leading `/` | Starts at the crawl root | `/images/*` does not match `/archive/images/photo.jpg` |
+| `*/` | Any path prefix ending in `/` | `*/old-*\.jpg` matches `/old-photo.jpg` and `/archive/old-photo.jpg` |
+| Letter case | Both strings are lowercased using the JVM default locale | Usually `*\.pdf` also matches `/REPORT.PDF`; see the locale limitation below |
+
+Java regular expressions normally do not let `.` match line terminators, so
+the wildcard translations above do not cover every possible Unix filename.
+
+```{warning}
+Other Java regular-expression characters remain active. An unescaped dot in
+`*.doc` matches any character, so that pattern also matches `/reportXdoc`.
+An unescaped `+` changes repetition, and an unmatched `[` can cause a
+`PatternSyntaxException` during matching. Use the escapes below when those
+characters are intended literally.
+
+Lowercasing depends on the JVM default locale. For example, under Turkish
+locale, `/FILE.TXT` does not match `*/file.txt` because uppercase `I` lowercases
+to dotless `ı`. These compatibility limitations are unchanged by this documentation.
+```
+
+### Escaping special characters in YAML
+
+There are two stages: YAML first reads the string, then FSCrawler converts it
+to a regular expression. To match a literal regex special character, prefix it
+with a backslash in the string that reaches FSCrawler.
+
+Use **single quotes** around patterns containing backslashes. YAML preserves
+backslashes inside single-quoted strings:
+
+```yaml
 fs:
   includes:
-  - "*/*.doc"
-  - "*/*.pdf"
-  excludes:
-  - "*/resume*"
+    - '*\.doc'
+    - '*/report\+final\.pdf'
+    - '*/report\[draft\]\.pdf'
+    - '*/report\(final\)\.pdf'
+    - '*/price\$list\.pdf'
 ```
 
-By default, FSCrawler will exclude files starting with `~` and macOS Finder
-metadata files named `.DS_Store` (matched case-insensitively via `*/.ds_store`).
+| Single-quoted YAML pattern | Matches | Does not match |
+|---|---|---|
+| `'*\.doc'` | `/report.doc` | `/reportXdoc` |
+| `'*/report\+final\.pdf'` | `/report+final.pdf` | `/reportfinal.pdf` |
+| `'*/report\[draft\]\.pdf'` | `/report[draft].pdf` | `/reportd.pdf` |
+| `'*/report\(final\)\.pdf'` | `/report(final).pdf` | `/reportfinal.pdf` |
+| `'*/price\$list\.pdf'` | `/price$list.pdf` | `/pricelist.pdf` |
 
-It also applies to directory names. So if you want to ignore `.ignore`
-dir, just add `.ignore` as an excluded name. Note that `includes` and `excludes`
-apply to directory names as well.
+The characters `.`, `+`, `(`, `)`, `[`, `]`, `{`, `}`, `^`, `$`, and `|` can have special meanings in regular expressions. When they are intended as literal filename characters outside regex character classes, escape them to avoid unexpected matches, missed matches, or invalid-pattern exceptions.
 
-Let's take the following example with the `root` dir as `/tmp`:
+**What happens without escaping?**
 
-```
- /tmp
- ├── folderA
- │   ├── subfolderA
- │   ├── subfolderB
- │   └── subfolderC
- ├── folderB
- │   ├── subfolderA
- │   ├── subfolderB
- │   └── subfolderC
- └── folderC
-     ├── subfolderA
-     ├── subfolderB
-     └── subfolderC
-```
+The following patterns leave the character being discussed unescaped. Dots in extensions are escaped as `\.` in the other rows so that each example isolates the relevant behaviour.
 
-If you define the following `fs.excludes` property in your
-`~/.fscrawler/test/_settings.yaml` file:
+| Character | Unescaped pattern | Current impact |
+|---|---|---|
+| `.` | `*.pdf` | The dot matches any character: `/report.pdf` and `/reportXpdf` both match. |
+| `+` | `*/report+final\.pdf` | Repeats the preceding `t`: `/reportfinal.pdf` matches, but `/report+final.pdf` does not. |
+| `(` and `)` | `*/report(final)\.pdf` | Groups the text: `/reportfinal.pdf` matches, but `/report(final).pdf` does not. |
+| `[` and `]` | `*/report[12]\.pdf` | Selects one character: `/report1.pdf` and `/report2.pdf` match, but `/report[12].pdf` does not. |
+| `{` and `}` | `*/report{2}\.pdf` | Repeats the preceding `t` twice: `/reportt.pdf` matches, but `/report{2}.pdf` does not. |
+| `^` | `*/^report\.pdf` | Requires the start of the path after matching `/`; the intended `/^report.pdf` cannot match. |
+| `$` | `*/budget$\.pdf` | Requires the end of the path before matching the extension; `/budget$.pdf` cannot match. |
+| `\|` | `*/report(a\|b)\.pdf` | Means either `a` or `b` in the group: `/reporta.pdf` and `/reportb.pdf` match, but `/report(a\|b).pdf` does not. |
+
+With `includes`, an unexpected match can make an unintended file eligible for indexing, while a missed match can omit the file you wanted. With `excludes`, an unexpected match can skip an unintended file, while a missed match can allow the file you meant to reject.
+
+For example, `excludes: ['*.pdf']` also rejects `/reportXpdf`. Use `excludes: ['*\.pdf']` to require a literal dot. The same patterns in `includes` determine which files are eligible instead.
+
+An unmatched opening bracket in `*/report[\.pdf`, or an unmatched opening parenthesis, can produce an invalid regular expression and throw `PatternSyntaxException` when matching runs. Whether that stops the crawl depends on the caller's error handling.
+
+The effect depends on context: a standalone closing `]` or `}` may be treated literally. Escaping literal punctuation consistently avoids relying on these distinctions. This advice preserves the current matcher; it does not change its behaviour.
+
+Spaces, underscores, and hyphens do not need escaping in these examples.
+To include an apostrophe in a single-quoted YAML string, double the apostrophe:
+`'*/author''s report\.pdf'`.
+
+With **double quotes**, YAML processes backslash escapes, so double each
+backslash. These two configurations pass the same pattern to FSCrawler:
 
 ```yaml
-name: "test"
 fs:
-  excludes:
-  - "/folderB/subfolder*"
+  includes:
+    - '*\.doc'       # Single quotes: one backslash
 ```
-
-Then all files but the ones in `/folderB/subfolderA`, `/folderB/subfolderB` and
-`/folderB/subfolderC` will be indexed.
-
-If you want to exclude a specific folder, you need to use a wildcard character at the end of the folder name, like:
 
 ```yaml
-name: "test"
 fs:
-  excludes:
-  - "/folderB/subfolderB/*"
+  includes:
+    - "*\\.doc"      # Double quotes: two backslashes
 ```
 
-Since the includes and excludes work on the entire *path of the file* you must consider that when using wildcards. Below are some includes and excludes pattern to help convey the idea better.
+Do not write `"*\.doc"`: `\.` is not a valid YAML double-quoted escape, so the
+settings file fails to load. Always quote patterns beginning with `*`; an
+unquoted `*.pdf` is interpreted as YAML alias syntax rather than a pattern.
 
-| Pattern         | Includes                                      | Excludes                                      |
-|-----------------|-----------------------------------------------|-----------------------------------------------|
-| `*.jpg`         | Include all jpg files                         | exclude all jpg files                         |
-| `/images/*.jpg` | Include all jpg files in the images directory | Exclude all jpg files in the images directory |
-| `*/old-*.jpg`   | Include all jpg files that start with `old-`  | Exclude all jpg files that start with `old-`  |
+```{warning}
+Do not assume that `\*` or `\?` matches a literal asterisk or question mark.
+FSCrawler replaces these wildcard characters even when preceded by a
+backslash. Likewise, patterns are not passed through as arbitrary Java regex:
+the wildcard replacement and lowercasing still occur. The examples above
+escape literal punctuation while retaining FSCrawler's wildcard behaviour.
+```
 
+### Default exclusions
 
-If a folder contains a file named `.fscrawlerignore`, this folder and its subfolders will be entirely skipped.
+When `excludes` is omitted, its default value is
+`['*/~*', '*/.ds_store']`. This skips names starting with `~` and macOS Finder
+metadata named `.DS_Store`, subject to the matching rules above. The default dot
+in `.ds_store` is unescaped and therefore also matches other characters in
+that position.
+
+The current YAML settings loader combines lists with lower-priority defaults
+**by index**. A custom list with one entry replaces `*/~*` at index 0 but leaves
+`*/.ds_store` at index 1. Two custom entries replace both default positions.
+This is different from treating every custom list as a complete replacement.
+
+To retain the intended default exclusions when adding your own, include them
+explicitly; use an escaped dot to target the literal `.DS_Store` name:
+
+```yaml
+fs:
+  excludes:
+    - '*/~*'
+    - '*/\.ds_store'
+    - '*/private/*'
+```
+
+An explicit YAML `excludes: []` does **not** clear the inherited defaults in
+the current loader. For example:
+
+| YAML value for `excludes` | Effective patterns with the built-in defaults |
+|---|---|
+| Omitted or `[]` | `['*/~*', '*/.ds_store']` |
+| `['*/private/*']` | `['*/private/*', '*/.ds_store']` |
+| `['*/private/*', '*/archive/*']` | `['*/private/*', '*/archive/*']` |
+
+An empty `includes: []` imposes no inclusion restriction when no higher-level
+configuration supplies include patterns. These examples assume the built-in
+defaults and the YAML file, without additional environment or system-property
+overrides.
+
+### Excluding directories
+
+Directories are matched with a trailing `/`. A pattern must account for this
+separator to exclude the directory itself. For example, with `fs.url: '/data'`:
+
+| Exclude pattern | Effect |
+|---|---|
+| `/folderB/subfolder*` | Skips directories such as `/data/folderB/subfolderA` and their descendants |
+| `/folderB/subfolderB/*` | Skips `/data/folderB/subfolderB` and its descendants |
+| `*/private/*` | Skips directories named `private` at any depth |
+| `*/\.ignore/*` | Skips directories named `.ignore` at any depth |
+
+<!-- test:includes-excludes-directory-tree:start -->
+
+For example, with `fs.url: '/data'` and the exclude pattern `/folderB/subfolderB/*`:
+
+```text
+/data/                       [scanned]
+├── folderA/                 [scanned]
+└── folderB/                 [scanned]
+    ├── subfolderA/          [scanned]
+    ├── subfolderB/          [skipped, including all descendants]
+    └── subfolderC/          [scanned]
+```
+
+<!-- test:includes-excludes-directory-tree:end -->
+
+Here, **scanned** means the crawler visits the directory. Files inside scanned directories must still satisfy the include and exclude rules.
+
+The pattern `/folderB/subfolderB` alone does not match the directory path
+`/folderB/subfolderB/`. Similarly, `.ignore` alone is not a directory exclusion
+pattern for a virtual path such as `/.ignore/`.
+
+An include such as `*\.pdf` does not prevent traversal into `/reports/` to
+find PDFs. However, an exclusion such as `*/private/*` prevents scanning that
+directory even when includes contains `*`.
+
+If a folder contains a file named `.fscrawlerignore`, that folder and its
+subfolders are skipped entirely.
+
 
 ## Filter content
 
