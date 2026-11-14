@@ -97,6 +97,23 @@ tags:
   metaFilename: "meta_tags.json"
 ```
 
+## Merge behavior
+
+Metadata must have an object at its root. Empty input, JSON `null` and an empty
+object leave the document unchanged; arrays and scalar values at the root are
+rejected as invalid metadata.
+
+Objects are merged recursively, filling fields missing from the metadata with
+the document's existing values. A metadata array takes precedence as a whole,
+including an empty array. Array elements are neither paired by position nor
+combined, even when both arrays contain objects or have different lengths.
+For example, a sidecar `meta.keywords` array replaces the extracted keywords
+while an omitted `meta.title` can retain the extracted title.
+
+The same merge rules apply to static metadata and per-directory metadata. The
+per-directory file takes precedence over static metadata where both provide a
+value.
+
 ## Static Metadata
 
 ```{versionadded} 3.0
