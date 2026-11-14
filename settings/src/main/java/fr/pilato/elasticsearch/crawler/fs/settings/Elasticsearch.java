@@ -77,6 +77,18 @@ public class Elasticsearch {
     @Nullable
     private TimeValue retryMaxDelay;
 
+    @Config(defaultVal = "10s")
+    @Nullable
+    private TimeValue connectTimeout = TimeValue.timeValueSeconds(10);
+
+    @Config(defaultVal = "60s")
+    @Nullable
+    private TimeValue readTimeout = TimeValue.timeValueSeconds(60);
+
+    @Config(defaultVal = "10s")
+    @Nullable
+    private TimeValue connectionRequestTimeout = TimeValue.timeValueSeconds(10);
+
     @Config(defaultVal = "10mb")
     @Nullable
     private ByteSizeValue byteSize;
@@ -300,6 +312,30 @@ public class Elasticsearch {
         this.forcePushTemplates = forcePushTemplates;
     }
 
+    public TimeValue getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(TimeValue value) {
+        connectTimeout = value;
+    }
+
+    public TimeValue getReadTimeout() {
+        return readTimeout;
+    }
+
+    public void setReadTimeout(TimeValue value) {
+        readTimeout = value;
+    }
+
+    public TimeValue getConnectionRequestTimeout() {
+        return connectionRequestTimeout;
+    }
+
+    public void setConnectionRequestTimeout(TimeValue value) {
+        connectionRequestTimeout = value;
+    }
+
     public String getCaCertificate() {
         return caCertificate;
     }
@@ -314,6 +350,10 @@ public class Elasticsearch {
 
     public void setSemanticSearch(boolean semanticSearch) {
         this.semanticSearch = semanticSearch;
+    }
+
+    private static Long timeoutMillis(TimeValue value) {
+        return value == null ? null : value.millis();
     }
 
     @Override
@@ -340,6 +380,10 @@ public class Elasticsearch {
         if (!Objects.equals(retryMaxDuration, that.retryMaxDuration)) return false;
         if (!Objects.equals(retryInitialDelay, that.retryInitialDelay)) return false;
         if (!Objects.equals(retryMaxDelay, that.retryMaxDelay)) return false;
+        if (!Objects.equals(timeoutMillis(connectTimeout), timeoutMillis(that.connectTimeout))) return false;
+        if (!Objects.equals(timeoutMillis(readTimeout), timeoutMillis(that.readTimeout))) return false;
+        if (!Objects.equals(timeoutMillis(connectionRequestTimeout), timeoutMillis(that.connectionRequestTimeout)))
+            return false;
         return Objects.equals(flushInterval, that.flushInterval);
     }
 
@@ -362,6 +406,9 @@ public class Elasticsearch {
         result = 31 * result + (sslVerification ? 1 : 0);
         result = 31 * result + (pushTemplates ? 1 : 0);
         result = 31 * result + (forcePushTemplates ? 1 : 0);
+        result = 31 * result + Objects.hashCode(timeoutMillis(connectTimeout));
+        result = 31 * result + Objects.hashCode(timeoutMillis(readTimeout));
+        result = 31 * result + Objects.hashCode(timeoutMillis(connectionRequestTimeout));
         return result;
     }
 
@@ -376,7 +423,9 @@ public class Elasticsearch {
                 + flushInterval + ", retryMaxDuration="
                 + retryMaxDuration + ", retryInitialDelay="
                 + retryInitialDelay + ", retryMaxDelay="
-                + retryMaxDelay + ", byteSize="
+                + retryMaxDelay + ", connectTimeout=" + connectTimeout
+                + ", readTimeout=" + readTimeout + ", connectionRequestTimeout=" + connectionRequestTimeout
+                + ", byteSize="
                 + byteSize + ", apiKey='"
                 + apiKey + '\'' + ", username='"
                 + username + '\'' + ", pipeline='"

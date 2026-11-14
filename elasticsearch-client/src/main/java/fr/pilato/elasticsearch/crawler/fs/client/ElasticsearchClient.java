@@ -79,10 +79,13 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+import org.glassfish.jersey.apache5.connector.Apache5ClientProperties;
 import org.glassfish.jersey.apache5.connector.Apache5ConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -203,6 +206,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
         return timeValue == null ? fallback : Duration.ofMillis(timeValue.millis());
     }
 
+    private static int transportTimeoutMillis(TimeValue value, int fallback, String name) {
+        long millis = value == null ? fallback : value.millis();
+        if (millis <= 0 || millis > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                    "elasticsearch." + name + " must be between 1ms and " + Integer.MAX_VALUE + "ms");
+        }
+        return (int) millis;
+    }
+
     @FunctionalInterface
     private interface InsertOperationFactory {
         ElasticsearchInsertOperation create(String index, String id, String pipeline, String json);
@@ -215,11 +227,26 @@ public class ElasticsearchClient implements IElasticsearchClient {
             return;
         }
 
+        int connectTimeout =
+                transportTimeoutMillis(settings.getElasticsearch().getConnectTimeout(), 10_000, "connect_timeout");
+        int readTimeout = transportTimeoutMillis(settings.getElasticsearch().getReadTimeout(), 60_000, "read_timeout");
+        int poolTimeout = transportTimeoutMillis(
+                settings.getElasticsearch().getConnectionRequestTimeout(), 10_000, "connection_request_timeout");
+
         // Create the client
         ClientConfig config = new ClientConfig();
 
         // Use JDK Native HttpClient instead of the default HttpURLConnection
         config.connectorProvider(new Apache5ConnectorProvider());
+
+        config.property(ClientProperties.CONNECT_TIMEOUT, connectTimeout);
+        config.property(ClientProperties.READ_TIMEOUT, readTimeout);
+        config.property(
+                Apache5ClientProperties.REQUEST_CONFIG,
+                RequestConfig.custom()
+                        .setConnectionRequestTimeout(Timeout.ofMilliseconds(poolTimeout))
+                        .setResponseTimeout(Timeout.ofMilliseconds(readTimeout))
+                        .build());
 
         // We need to suppress this, so we can do DELETE with body
         config.property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true);
