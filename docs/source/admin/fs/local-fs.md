@@ -281,6 +281,25 @@ fs:
 Of course, if you did not define a mapping before launching the crawler,
 Elasticsearch will auto guess the mapping.
 
+## Errors in JSON and XML source files
+
+When `json_support` or `xml_support` is enabled, parsing failures and immediate
+document-submission failures follow `fs.continue_on_error`:
+
+- With `continue_on_error: false` (the default), the crawl reports `ERROR` and
+  retains replayable checkpoint progress. Correct the source file or submission
+  problem before resuming. Already accepted operations may be replayed.
+- With `continue_on_error: true`, the failed file is skipped and later files can
+  be indexed. Skipped files are not counted as successfully processed.
+
+Use the [includes and excludes](#includes-and-excludes) settings to select the
+appropriate files when a source directory contains multiple formats. A selected
+file that cannot be parsed in the configured mode follows the error policy above.
+
+An exception reported by the final bulk flush still fails the crawl even when
+`continue_on_error` is enabled. This change addresses source parsing and immediate
+submission failures; it does not alter bulk acknowledgement handling.
+
 ## Add as Inner Object
 
 The default settings store the contents of JSON and XML documents
