@@ -1560,8 +1560,9 @@ public class FsParser implements Runnable, AutoCloseable {
                 logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndex(), id);
             }
         } catch (Exception e) {
-            logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+            logger.warn("Unable to index raw JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
             logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+            throw e;
         } finally {
             if (inputStream != null) {
                 crawlerPlugin.closeInputStream(inputStream);
@@ -1590,8 +1591,9 @@ public class FsParser implements Runnable, AutoCloseable {
                 logger.warn(ADD_WHILE_CLOSING_MSG, fsSettings.getElasticsearch().getIndex(), id);
             }
         } catch (Exception e) {
-            logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
+            logger.warn("Unable to index raw XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
             logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
+            throw e;
         } finally {
             if (inputStream != null) {
                 crawlerPlugin.closeInputStream(inputStream);
