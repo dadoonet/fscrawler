@@ -63,8 +63,16 @@ public class FsCrawlerImpl implements AutoCloseable {
     private final FsCrawlerPluginsManager pluginsManager;
     private final FsParser fsParser;
     private final Thread fsCrawlerThread;
+    private volatile boolean stopped;
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
+        // We don't go further as we have critical errors
+        // It's just a double check as settings must be validated before creating the instance
+        if (FsCrawlerValidator.validateSettings(logger, settings)) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "Settings are incorrect and should have been verified with FsCrawlerValidator.validateSettings before.");
+        }
+
         FsCrawlerUtil.createDirIfMissing(config);
 
         this.settings = settings;
@@ -77,48 +85,46 @@ public class FsCrawlerImpl implements AutoCloseable {
 
         // Initialize and start the plugin manager
         this.pluginsManager = new FsCrawlerPluginsManager();
-        pluginsManager.loadPlugins();
-        pluginsManager.startPlugins();
+        try {
+            pluginsManager.loadPlugins();
+            pluginsManager.startPlugins();
 
-        // We don't go further as we have critical errors
-        // It's just a double check as settings must be validated before creating the instance
-        if (FsCrawlerValidator.validateSettings(logger, settings)) {
-            throw new FsCrawlerIllegalConfigurationException(
-                    "Settings are incorrect and should have been verified with FsCrawlerValidator.validateSettings before.");
+            // Generate the directory where we write status and other files
+            Path jobSettingsFolder = config.resolve(settings.getName());
+            FsCrawlerUtil.createDirIfMissing(jobSettingsFolder);
+
+            // Migrate the old status file to the new checkpoint file if needed
+            new FsCrawlerCheckpointFileHandler(config).migrateLegacyStatus(settings.getName());
+
+            // Set default temp directory if not configured
+            if (settings.getFs().getTempDir() == null) {
+                Path tempDir = jobSettingsFolder.resolve("tmp");
+                settings.getFs().setTempDir(tempDir.toString());
+                logger.debug("Using default temp directory: [{}]", tempDir);
+            }
+
+            FsCrawlerExtensionPasswordProvider passwordProvider = resolvePasswordProvider(pluginsManager, settings);
+
+            // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
+            // pass null so we don't resolve/start a provider that could fail if config is missing.
+            final FsCrawlerExtensionFsProvider crawlerPlugin;
+            if (loop != null && loop == 0) {
+                logger.debug("Loop is 0 (REST-only mode): no crawler provider");
+                crawlerPlugin = null;
+            } else {
+                String protocolType = determineProtocolType(settings);
+                logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
+                crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
+                crawlerPlugin.start(settings);
+            }
+
+            fsParser = new FsParser(
+                    settings, config, managementService, documentService, loop, rest, crawlerPlugin, passwordProvider);
+            fsCrawlerThread = new Thread(fsParser, "fs-crawler");
+        } catch (RuntimeException | Error failure) {
+            cleanup(failure, managementService, documentService, kibanaService, pluginsManager);
+            throw failure;
         }
-
-        // Generate the directory where we write status and other files
-        Path jobSettingsFolder = config.resolve(settings.getName());
-        FsCrawlerUtil.createDirIfMissing(jobSettingsFolder);
-
-        // Migrate the old status file to the new checkpoint file if needed
-        new FsCrawlerCheckpointFileHandler(config).migrateLegacyStatus(settings.getName());
-
-        // Set default temp directory if not configured
-        if (settings.getFs().getTempDir() == null) {
-            Path tempDir = jobSettingsFolder.resolve("tmp");
-            settings.getFs().setTempDir(tempDir.toString());
-            logger.debug("Using default temp directory: [{}]", tempDir);
-        }
-
-        FsCrawlerExtensionPasswordProvider passwordProvider = resolvePasswordProvider(pluginsManager, settings);
-
-        // Create the fsParser instance. When loop == 0 (REST-only), no crawler backend is required:
-        // pass null so we don't resolve/start a provider that could fail if config is missing.
-        final FsCrawlerExtensionFsProvider crawlerPlugin;
-        if (loop != null && loop == 0) {
-            logger.debug("Loop is 0 (REST-only mode): no crawler provider");
-            crawlerPlugin = null;
-        } else {
-            String protocolType = determineProtocolType(settings);
-            logger.debug("Using crawler plugin for protocol type [{}]", protocolType);
-            crawlerPlugin = pluginsManager.findFsProviderForCrawling(protocolType);
-            crawlerPlugin.start(settings);
-        }
-
-        fsParser = new FsParser(
-                settings, config, managementService, documentService, loop, rest, crawlerPlugin, passwordProvider);
-        fsCrawlerThread = new Thread(fsParser, "fs-crawler");
     }
 
     private static FsCrawlerExtensionPasswordProvider resolvePasswordProvider(
@@ -177,40 +183,81 @@ public class FsCrawlerImpl implements AutoCloseable {
     }
 
     public void start() throws Exception {
-        managementService.start();
-        documentService.start();
-        documentService.createSchema();
-        setupKibanaDashboardIfNeeded();
+        if (stopped) throw new IllegalStateException("A stopped crawler cannot be restarted; create a new instance");
+        try {
+            managementService.start();
+            documentService.start();
+            documentService.createSchema();
+            setupKibanaDashboardIfNeeded();
 
-        if (loop == 0 && !rest) {
-            logger.warn("Number of runs is set to 0 and rest layer has not been started. Exiting");
-            return;
+            if (loop == 0 && !rest) {
+                logger.warn("Number of runs is set to 0 and rest layer has not been started. Exiting");
+                return;
+            }
+
+            logger.info("FSCrawler is now connected to Elasticsearch version [{}]", managementService.getVersion());
+
+            logger.debug("Starting FSCrawler for job [{}]", settings.getName());
+            if (loop < 0) {
+                logger.info("FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.");
+            }
+
+            // Set closed=false before start() so a concurrent close() cannot set true and then be overwritten here
+            fsParser.closed.set(false);
+            fsCrawlerThread.start();
+        } catch (Exception | Error failure) {
+            try {
+                close();
+            } catch (Throwable cleanupFailure) {
+                if (cleanupFailure != failure) failure.addSuppressed(cleanupFailure);
+            }
+            throw failure;
         }
-
-        logger.info("FSCrawler is now connected to Elasticsearch version [{}]", managementService.getVersion());
-
-        logger.debug("Starting FSCrawler for job [{}]", settings.getName());
-        if (loop < 0) {
-            logger.info("FSCrawler started in watch mode. It will run unless you stop it with CTRL+C.");
-        }
-
-        // Set closed=false before start() so a concurrent close() cannot set true and then be overwritten here
-        fsParser.closed.set(false);
-        fsCrawlerThread.start();
     }
 
     @Override
     public void close() throws InterruptedException, IOException {
+        stopped = true;
         logger.debug("Closing FS crawler [{}]", settings.getName());
+        Throwable failure = cleanup(
+                null,
+                () -> {
+                    if (fsParser != null) fsParser.close();
+                },
+                () -> {
+                    if (fsParser != null) {
+                        synchronized (fsParser.getSemaphore()) {
+                            fsParser.getSemaphore().notifyAll();
+                        }
+                    }
+                },
+                this::stopCrawlerThread,
+                managementService,
+                documentService,
+                kibanaService,
+                pluginsManager);
+        if (failure instanceof InterruptedException e) throw e;
+        if (failure instanceof IOException e) throw e;
+        if (failure instanceof RuntimeException e) throw e;
+        if (failure instanceof Error e) throw e;
+        if (failure != null) throw new IOException("Unable to close crawler resources", failure);
+        logger.info("FS crawler [{}] stopped", settings.getName());
+    }
 
-        if (fsParser != null) {
-            fsParser.close();
-
-            synchronized (fsParser.getSemaphore()) {
-                fsParser.getSemaphore().notifyAll();
+    private static Throwable cleanup(Throwable failure, AutoCloseable... resources) {
+        for (AutoCloseable resource : resources) {
+            if (resource == null) continue;
+            try {
+                resource.close();
+            } catch (Throwable cleanupFailure) {
+                if (failure == null) failure = cleanupFailure;
+                else if (failure != cleanupFailure) failure.addSuppressed(cleanupFailure);
             }
         }
+        return failure;
+    }
 
+    private void stopCrawlerThread() {
         if (this.fsCrawlerThread != null) {
             try {
                 // Interrupt the thread in case notifyAll() arrived before the crawler entered
@@ -240,18 +287,6 @@ public class FsCrawlerImpl implements AutoCloseable {
                         settings.getName());
             }
         }
-
-        managementService.close();
-        documentService.close();
-        if (kibanaService != null) {
-            kibanaService.close();
-        }
-        logger.debug("ES Client Manager stopped");
-
-        pluginsManager.close();
-        logger.debug("Plugins Manager stopped");
-
-        logger.info("FS crawler [{}] stopped", settings.getName());
     }
 
     public FsParser getFsParser() {

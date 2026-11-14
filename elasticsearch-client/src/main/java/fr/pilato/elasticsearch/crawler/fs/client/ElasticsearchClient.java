@@ -262,67 +262,92 @@ public class ElasticsearchClient implements IElasticsearchClient {
             clientBuilder.sslContext(sslContext);
         }
         client = clientBuilder.build();
-        if (logger.isTraceEnabled()) {
-            client
-                    //                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT,
-                    // ElasticsearchClient.class.getName())
-                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, Level.FINEST.getName())
-                    .property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
-                    .property(LoggingFeature.LOGGING_FEATURE_MAX_ENTITY_SIZE_CLIENT, 8000);
-        }
-
         try {
-            String esVersion = getVersion();
-            logger.debug("Elasticsearch Client connected to a node running version {}", esVersion);
-            if (!settings.getElasticsearch().isSslVerification()) {
-                logger.warn("We are not doing SSL verification. It's not recommended for production.");
+            if (logger.isTraceEnabled()) {
+                client
+                        //                    .property(LoggingFeature.LOGGING_FEATURE_LOGGER_NAME_CLIENT,
+                        // ElasticsearchClient.class.getName())
+                        .property(LoggingFeature.LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, Level.FINEST.getName())
+                        .property(LoggingFeature.LOGGING_FEATURE_VERBOSITY_CLIENT, LoggingFeature.Verbosity.PAYLOAD_ANY)
+                        .property(LoggingFeature.LOGGING_FEATURE_MAX_ENTITY_SIZE_CLIENT, 8000);
             }
-        } catch (Exception e) {
-            logger.warn(
-                    "Failed to create elasticsearch client on {}. Message: {}.",
-                    settings.getElasticsearch(),
-                    e.getMessage());
-            throw e;
-        }
 
-        // Check that the pipeline exists when one is defined
-        if (settings.getElasticsearch().getPipeline() != null
-                && !isExistingPipeline(settings.getElasticsearch().getPipeline())) {
-            throw new ElasticsearchClientException(
-                    "You defined pipeline:" + settings.getElasticsearch().getPipeline() + ", but it does not exist.");
-        }
-
-        if (semanticSearch) {
-            // Check the version we are running or if it's using serverless
-            if ((majorVersion >= 8 && minorVersion >= 17) || serverless || (majorVersion >= 9)) {
-                logger.debug(
-                        "Semantic search is enabled and we are running on a version of Elasticsearch {} "
-                                + "which is 8.17 or higher. We will try to use the semantic search features.",
-                        version);
-                license = getLicense();
-                if (!"enterprise".equals(license) && !"trial".equals(license)) {
-                    logger.warn(
-                            "Semantic search is enabled but we are running Elasticsearch with a {} "
-                                    + "license although we need either an enterprise or trial license. "
-                                    + "We will not be able to use the semantic search features ATM. We might switch later to "
-                                    + "a vector embeddings generation.",
-                            license);
-                    semanticSearch = false;
-                    vectorSearch = true;
-                } else {
-                    logger.debug("Semantic search is enabled");
+            try {
+                String esVersion = getVersion();
+                logger.debug("Elasticsearch Client connected to a node running version {}", esVersion);
+                if (!settings.getElasticsearch().isSslVerification()) {
+                    logger.warn("We are not doing SSL verification. It's not recommended for production.");
                 }
-            } else {
+            } catch (Exception e) {
                 logger.warn(
-                        "Semantic search is enabled but we are running on a version of Elasticsearch {} "
-                                + "which is lower than 8.17. We will not be able to use the semantic search features.",
-                        version);
-                semanticSearch = false;
+                        "Failed to create elasticsearch client on {}. Message: {}.",
+                        settings.getElasticsearch(),
+                        e.getMessage());
+                throw e;
             }
-        }
 
-        // Create the BulkProcessor instance
-        initBulkProcessor();
+            // Check that the pipeline exists when one is defined
+            if (settings.getElasticsearch().getPipeline() != null
+                    && !isExistingPipeline(settings.getElasticsearch().getPipeline())) {
+                throw new ElasticsearchClientException("You defined pipeline:"
+                        + settings.getElasticsearch().getPipeline() + ", but it does not exist.");
+            }
+
+            if (semanticSearch) {
+                // Check the version we are running or if it's using serverless
+                if ((majorVersion >= 8 && minorVersion >= 17) || serverless || (majorVersion >= 9)) {
+                    logger.debug(
+                            "Semantic search is enabled and we are running on a version of Elasticsearch {} "
+                                    + "which is 8.17 or higher. We will try to use the semantic search features.",
+                            version);
+                    license = getLicense();
+                    if (!"enterprise".equals(license) && !"trial".equals(license)) {
+                        logger.warn(
+                                "Semantic search is enabled but we are running Elasticsearch with a {} "
+                                        + "license although we need either an enterprise or trial license. "
+                                        + "We will not be able to use the semantic search features ATM. We might switch later to "
+                                        + "a vector embeddings generation.",
+                                license);
+                        semanticSearch = false;
+                        vectorSearch = true;
+                    } else {
+                        logger.debug("Semantic search is enabled");
+                    }
+                } else {
+                    logger.warn(
+                            "Semantic search is enabled but we are running on a version of Elasticsearch {} "
+                                    + "which is lower than 8.17. We will not be able to use the semantic search features.",
+                            version);
+                    semanticSearch = false;
+                }
+            }
+
+            // Create the BulkProcessor instance
+            initBulkProcessor();
+        } catch (ElasticsearchClientException | RuntimeException | Error failure) {
+            try {
+                close();
+            } catch (Throwable cleanupFailure) {
+                if (cleanupFailure != failure) failure.addSuppressed(cleanupFailure);
+            } finally {
+                client = null;
+                bulkProcessor = null;
+                version = null;
+                license = null;
+                majorVersion = 0;
+                minorVersion = 0;
+                serverless = false;
+                semanticSearch = settings.getElasticsearch().isSemanticSearch();
+                vectorSearch = false;
+                synchronized (this) {
+                    hosts.clear();
+                    hosts.addAll(initialHosts);
+                    currentNode = hosts.size() == 1 ? 0 : -1;
+                    currentRun = -1;
+                }
+            }
+            throw failure;
+        }
     }
 
     /**
@@ -788,11 +813,10 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @Override
     public void close() throws IOException {
         logger.debug("Closing Elasticsearch client manager");
-        if (bulkProcessor != null) {
-            bulkProcessor.close();
-        }
-        if (client != null) {
-            client.close();
+        try (java.io.Closeable httpCleanup = () -> {
+            if (client != null) client.close();
+        }) {
+            if (bulkProcessor != null) bulkProcessor.close();
         }
     }
 
