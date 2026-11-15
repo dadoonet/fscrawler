@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 
@@ -100,6 +102,61 @@ class FsCrawlerLifecycleCleanupTest extends AbstractFSCrawlerTestCase {
             Assertions.assertThatThrownBy(crawler::start).isSameAs(failure);
             Assertions.assertThat(events).contains("management close", "document close");
             Assertions.assertThat(manager.closes).isEqualTo(1);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void interruptedCleanupPreservesInterruptAndClosesRemainingResources(boolean earlierFailure) throws Exception {
+        try (Manager manager = new Manager()) {
+            FsCrawlerImpl crawler = new FsCrawlerImpl(rootTmpDir, settings(), 0, false);
+            IOException primary = new IOException(jobName);
+            InterruptedException interruption = new InterruptedException(jobName);
+            FsCrawlerManagementService management = Mockito.mock(FsCrawlerManagementService.class);
+            FsCrawlerDocumentService document = Mockito.mock(FsCrawlerDocumentService.class);
+            if (earlierFailure) Mockito.doThrow(primary).when(management).close();
+            Mockito.doAnswer(invocation -> {
+                        throw interruption;
+                    })
+                    .when(document)
+                    .close();
+            replace(crawler, "managementService", management);
+            replace(crawler, "documentService", document);
+            try {
+                Assertions.assertThatThrownBy(crawler::close).isSameAs(earlierFailure ? primary : interruption);
+                Assertions.assertThat(Thread.currentThread().isInterrupted()).isTrue();
+                if (earlierFailure)
+                    Assertions.assertThat(primary.getSuppressed()).containsExactly(interruption);
+                Assertions.assertThat(manager.closes).isEqualTo(1);
+            } finally {
+                Thread.interrupted();
+            }
+        }
+    }
+
+    @Test
+    void interruptedStartupRollbackPreservesInterruptAndStartupFailure() throws Exception {
+        InterruptedException interruption = new InterruptedException(jobName);
+        try (Manager manager = new Manager()) {
+            FsCrawlerImpl crawler = new FsCrawlerImpl(rootTmpDir, settings(), 0, false) {
+                @Override
+                public void close() throws InterruptedException, IOException {
+                    super.close();
+                    throw interruption;
+                }
+            };
+            IOException failure = new IOException(jobName);
+            FsCrawlerManagementService management = Mockito.mock(FsCrawlerManagementService.class);
+            Mockito.doThrow(failure).when(management).start();
+            replace(crawler, "managementService", management);
+            try {
+                Assertions.assertThatThrownBy(crawler::start).isSameAs(failure);
+                Assertions.assertThat(Thread.currentThread().isInterrupted()).isTrue();
+                Assertions.assertThat(failure.getSuppressed()).containsExactly(interruption);
+                Assertions.assertThat(manager.closes).isEqualTo(1);
+            } finally {
+                Thread.interrupted();
+            }
         }
     }
 

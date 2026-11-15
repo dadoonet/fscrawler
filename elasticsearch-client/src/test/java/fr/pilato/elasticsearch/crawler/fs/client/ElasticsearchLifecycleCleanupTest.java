@@ -61,7 +61,9 @@ class ElasticsearchLifecycleCleanupTest extends AbstractFSCrawlerTestCase {
             }
 
             @Override
-            protected void initBulkProcessor() {}
+            protected void initBulkProcessor() {
+                // Host-state retry tests do not need a background bulk flush thread.
+            }
         }) {
             Assertions.assertThatThrownBy(client::start)
                     .isInstanceOf(checkedFailure ? ElasticsearchClientException.class : IllegalStateException.class);
@@ -111,7 +113,9 @@ class ElasticsearchLifecycleCleanupTest extends AbstractFSCrawlerTestCase {
             }
 
             @Override
-            protected void initBulkProcessor() {}
+            protected void initBulkProcessor() {
+                // HTTP-client lifecycle tests do not need a background bulk flush thread.
+            }
         }) {
             Assertions.assertThatThrownBy(client::start)
                     .isInstanceOf(checkedFailure ? ElasticsearchClientException.class : IllegalStateException.class);

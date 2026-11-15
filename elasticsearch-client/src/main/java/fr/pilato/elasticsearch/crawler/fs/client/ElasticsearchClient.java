@@ -272,19 +272,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
                         .property(LoggingFeature.LOGGING_FEATURE_MAX_ENTITY_SIZE_CLIENT, 8000);
             }
 
-            try {
-                String esVersion = getVersion();
-                logger.debug("Elasticsearch Client connected to a node running version {}", esVersion);
-                if (!settings.getElasticsearch().isSslVerification()) {
-                    logger.warn("We are not doing SSL verification. It's not recommended for production.");
-                }
-            } catch (Exception e) {
-                logger.warn(
-                        "Failed to create elasticsearch client on {}. Message: {}.",
-                        settings.getElasticsearch(),
-                        e.getMessage());
-                throw e;
-            }
+            logConnectedVersion();
 
             // Check that the pipeline exists when one is defined
             if (settings.getElasticsearch().getPipeline() != null
@@ -326,9 +314,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
             initBulkProcessor();
         } catch (ElasticsearchClientException | RuntimeException | Error failure) {
             try {
-                close();
-            } catch (Throwable cleanupFailure) {
-                if (cleanupFailure != failure) failure.addSuppressed(cleanupFailure);
+                closeAfterFailedStart(failure);
             } finally {
                 client = null;
                 bulkProcessor = null;
@@ -347,6 +333,32 @@ public class ElasticsearchClient implements IElasticsearchClient {
                 }
             }
             throw failure;
+        }
+    }
+
+    // A cleanup Error must not replace the startup failure that triggered rollback.
+    @SuppressWarnings("java:S1181")
+    private void closeAfterFailedStart(Throwable failure) {
+        try {
+            close();
+        } catch (IOException | RuntimeException | Error cleanupFailure) {
+            if (cleanupFailure != failure) failure.addSuppressed(cleanupFailure);
+        }
+    }
+
+    private void logConnectedVersion() throws ElasticsearchClientException {
+        try {
+            String esVersion = getVersion();
+            logger.debug("Elasticsearch Client connected to a node running version {}", esVersion);
+            if (!settings.getElasticsearch().isSslVerification()) {
+                logger.warn("We are not doing SSL verification. It's not recommended for production.");
+            }
+        } catch (ElasticsearchClientException | RuntimeException e) {
+            logger.warn(
+                    "Failed to create elasticsearch client on {}. Message: {}.",
+                    settings.getElasticsearch(),
+                    e.getMessage());
+            throw e;
         }
     }
 

@@ -206,11 +206,7 @@ public class FsCrawlerImpl implements AutoCloseable {
             fsParser.closed.set(false);
             fsCrawlerThread.start();
         } catch (Exception | Error failure) {
-            try {
-                close();
-            } catch (Throwable cleanupFailure) {
-                if (cleanupFailure != failure) failure.addSuppressed(cleanupFailure);
-            }
+            cleanup(failure, this);
             throw failure;
         }
     }
@@ -244,12 +240,18 @@ public class FsCrawlerImpl implements AutoCloseable {
         logger.info("FS crawler [{}] stopped", settings.getName());
     }
 
+    // Cleanup must continue even after an Error, preserving it as the primary or a suppressed failure.
+    @SuppressWarnings("java:S1181")
     private static Throwable cleanup(Throwable failure, AutoCloseable... resources) {
         for (AutoCloseable resource : resources) {
             if (resource == null) continue;
             try {
                 resource.close();
-            } catch (Throwable cleanupFailure) {
+            } catch (InterruptedException cleanupFailure) {
+                Thread.currentThread().interrupt();
+                if (failure == null) failure = cleanupFailure;
+                else if (failure != cleanupFailure) failure.addSuppressed(cleanupFailure);
+            } catch (Exception | Error cleanupFailure) {
                 if (failure == null) failure = cleanupFailure;
                 else if (failure != cleanupFailure) failure.addSuppressed(cleanupFailure);
             }
