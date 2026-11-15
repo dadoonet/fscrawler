@@ -120,3 +120,28 @@ were `daily,sequential_tests`; nightly tests were not run.
 The initial partial integration run was stopped when the repeated-ID regression
 was identified. The final unit and integration runs above both cover the final
 implementation; the integration run used a newly recreated test cluster.
+
+## Standalone integration validation (15 November 2026)
+
+The combined fix was reapplied directly to upstream `main` at `5a3889bc`,
+including the queue ordering and interruptible-flush corrections. It includes all
+required queue, completion-reporting, and retry changes and can merge without
+any preceding pull request being merged.
+
+On Windows with Microsoft JDK 21.0.8 and Maven 3.9.11:
+
+- Client and dependency unit suites: 291 cases, 288 passed, three skipped,
+  zero failures or errors. No failure-ignore option was used.
+- Elasticsearch 9.5.6 Testcontainers: queue-rotation delivery and REST-disabled
+  filesystem rejection regressions both passed (two cases, no skips).
+- Spotless, strict Sphinx HTML, and Git whitespace checks passed.
+
+These are targeted checks, not a complete repository or cross-platform run.
+Parallel execution disables thread-leak detection in this environment.
+
+Deferred retries do not guarantee ordering against later accepted operations on
+that document. An older rejected write queued after a newer update or deletion
+can overwrite that update or recreate the deleted document. Likewise, retrying
+an older rejected item after a newer successful item in the same response needs
+an explicit ordering policy. This remains outside this correction; the producer
+ordering tests cover batches without retries.
