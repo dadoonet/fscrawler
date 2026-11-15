@@ -19,6 +19,55 @@ git clone git@github.com:dadoonet/fscrawler.git
 cd fscrawler
 ```
 
+## Build and test prerequisites
+
+Maven runs the build and Java tests in the environment where you launch it.
+Testcontainers is a Java library that starts supporting services through a
+Docker-compatible runtime; it does not run the Maven build itself in a container.
+
+| Task | Requirements |
+|------|--------------|
+| Compile and package without tests | JDK and Maven; no Elasticsearch or container runtime required |
+| Unit tests (`*Test.java`) | JDK and Maven; local temporary files and embedded Java servers for some tests; no Docker required |
+| Distribution unit tests | Python, in addition to the Java test requirements; see [Python tests](#python-tests-in-the-distribution-module) |
+| Integration tests (`*IT.java`) | A running Docker-compatible runtime for Elasticsearch, MinIO and Nginx test services; see [Integration tests](#integration-tests) |
+| OCR test coverage | Tesseract and the language data needed by the tests in the environment running Maven; some OCR tests skip when Tesseract is unavailable |
+| Build FSCrawler Docker images | A running Docker-compatible runtime; image construction is bound to Maven's `install` phase |
+
+The tests use JUnit Jupiter with RandomizedTesting. Unit tests run through Maven
+Surefire during `test`; integration tests run through Maven Failsafe during
+`integration-test` and are checked during `verify`.
+
+### Windows and macOS setup
+
+[Docker Desktop](https://docs.docker.com/desktop/) supplies a Linux container
+runtime on both platforms. Start it before running container-based tests or
+building images. Testcontainers normally detects Docker Desktop automatically;
+alternative runtimes such as Podman and Colima can need additional socket and
+network settings. See the [Testcontainers runtime requirements](https://java.testcontainers.org/supported_docker_environment/).
+
+| Aspect | Windows | macOS |
+|--------|---------|-------|
+| Container runtime | Docker Desktop in Linux-container mode, commonly using its WSL 2 backend | Docker Desktop running a Linux virtual machine |
+| Java/Maven environment | Native Windows from PowerShell, or Linux inside WSL | Native macOS from a terminal |
+| Filesystem used by Java tests | Windows rules for native Maven; Linux rules inside WSL, subject to the filesystem holding the checkout | macOS filesystem rules |
+| Python executable | May need `"-Dtests.python=python"` or a full interpreter path | Uses `python3` by default; install it if missing |
+
+Running test services in Linux containers does not change the filesystem rules
+for Java tests running on the host. Native Windows runs skip selected tests that
+require Unix permissions, symlinks or trailing-space filenames. See
+[SSH tests on Windows and Unix filesystems](#ssh-tests-on-windows-and-unix-filesystems).
+The Windows-specific exclusions do not apply on macOS, but that does not establish
+full macOS test coverage.
+
+If you run Maven inside WSL, install the JDK, Maven, Python and any OCR tools in
+that Linux environment and enable Docker Desktop integration for the distribution.
+Keep the checkout in WSL's Linux filesystem when testing Unix filesystem behaviour;
+a checkout under `/mnt/c` retains Windows-backed filesystem constraints. See
+[Docker's WSL guidance](https://docs.docker.com/desktop/features/wsl/).
+Installing Tesseract in the FSCrawler Docker image does not provide it to tests
+running in the host JVM.
+
 ## Build the artifact
 
 To build the project, run:
@@ -28,6 +77,27 @@ mvn clean package
 ```
 
 The final artifacts are available in `distribution/target`.
+
+### Common build and test commands
+
+Run these commands from the repository root. The quoted Maven properties work in
+PowerShell and macOS shells. Adjust `tests.python` as described above if necessary.
+
+| Purpose | Command | Container runtime needed? |
+|---------|---------|---------------------------|
+| Package without running tests | `mvn clean package "-DskipTests" "-Ddocker.skip"` | No |
+| Run unit tests | `mvn clean test "-DskipIntegTests" "-Ddocker.skip"` | No |
+| Run unit and integration tests | `mvn clean verify "-Ddocker.skip"` | Yes, for container-based tests |
+| Install artifacts without building Docker images, with tests | `mvn clean install "-Ddocker.skip"` | Yes, for container-based tests |
+| Install artifacts and build Docker images without running tests | `mvn clean install "-DskipTests"` | Yes, for image construction |
+
+`package` runs unit tests but does not reach the integration-test phases.
+`verify` runs both test suites, and `install` also builds the distribution's Docker
+images unless `docker.skip` is set. See [Docker build](#docker-build).
+
+`-Ddocker.skip` controls the Docker image build, not Testcontainers. Use
+`-DskipIntegTests` to skip integration tests, `-DskipUnitTests` to skip unit tests,
+or `-DskipTests` to skip both suites.
 
 ````{tip}
 
@@ -98,8 +168,27 @@ coverage or a broader supported-JDK matrix.
 
 ## Integration tests
 
-When running from the command line with `mvn` integration tests are ran against a real
-Elasticsearch instance launched using Docker (via [Testcontainers](https://java.testcontainers.org/modules/elasticsearch/)).
+Integration tests use real services, including Linux containers managed by
+[Testcontainers](https://java.testcontainers.org/). Start the container runtime
+before running the full integration suite. The first run downloads the required
+images; subsequent runs can use the local image cache.
+
+| Service | How tests provide it |
+|---------|----------------------|
+| Elasticsearch | The main crawler integration suite tries its configured endpoint, defaulting to `https://127.0.0.1:9200`. If the default endpoint is unavailable, it starts an Elasticsearch container using the configured integration-test version, mapped port and container certificate when present. |
+| MinIO | Containers started by S3 plugin and selected REST tests provide an S3-compatible service. |
+| Nginx | Containers started by HTTP plugin, selected REST and Elasticsearch client tests serve HTTP content. |
+| SSH/SFTP and FTP | Tests start embedded Java SSH and fake FTP servers; no separate SSH or FTP container is required. |
+| Kibana | Optional external service for the dashboard test, enabled with `tests.kibana.url`; it is not started by the default container setup. |
+
+The crawler and its REST server run in the test JVM. You do not need to build the
+FSCrawler Docker images to run these tests. The main crawler suite shares its
+Elasticsearch client and container within the test JVM; other test modules can
+start their own containers.
+
+Some container-based tests use `@DisabledIfNoDocker` and skip when no runtime is
+available. Check the Failsafe reports in each module's `target/failsafe-reports`
+directory for skipped tests before treating a successful run as full coverage.
 
 ### Run tests from your IDE
 
@@ -161,8 +250,14 @@ mvn verify -DskipUnitTests -Dit.test=CLASS_NAME#METHOD_NAME
 
 ### Run tests with an external cluster
 
-Launching the docker containers might take some time so if to want to run the test suite against an already running
-cluster, you need to provide a `tests.cluster.url` value. This will skip launching the docker instances.
+To use an already running Elasticsearch cluster, provide `tests.cluster.url`.
+For the main crawler suite, a non-default endpoint that cannot be reached causes
+an error rather than falling back to a container. Use the protocol exposed by your
+cluster (`http://` or `https://`).
+
+This replaces the Elasticsearch container for tests that support an external
+cluster. It does not replace the MinIO or Nginx containers started by other tests,
+so the full integration suite still needs a container runtime.
 
 To run the test suite against an elasticsearch instance running locally, just run:
 
@@ -384,12 +479,28 @@ Python installation, release scripts, or production FSCrawler behaviour.
 
 ## Docker build
 
-The docker images build is run when calling the maven `package` phase. If you want to skip the build of the images,
-you can manually use the `docker.skip` option:
+The distribution module uses the Fabric8 Docker Maven plugin to build OCR and
+no-OCR FSCrawler images during the Maven `install` phase. `package` produces the
+distribution archive and `verify` runs integration tests, without constructing
+these images.
+
+To install artifacts without building images, use `docker.skip`:
 
 ```shell
-mvn package -Ddocker.skip
+mvn clean install "-Ddocker.skip"
 ```
+
+Tests still run with this command, including tests that use Testcontainers. To
+build the images while skipping both test suites, use:
+
+```shell
+mvn clean install "-DskipTests"
+```
+
+The container runtime must be running for image construction. The first OCR image
+build can take substantially longer because it installs Tesseract and language
+packages. Image publication is a separate step bound to `deploy`; see
+[DockerHub publication](#dockerhub-publication).
 
 ## Docker Hub tags
 
