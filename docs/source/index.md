@@ -81,6 +81,7 @@ admin/status
 :maxdepth: 3
 
 dev/build
+dev/build-troubleshooting
 dev/doc
 dev/release
 dev/test-fscrawler-cli
