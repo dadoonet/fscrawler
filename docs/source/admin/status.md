@@ -64,6 +64,13 @@ current time or to `null`. FSCrawler will then start a new scan at most after 5 
 You can also use the REST API to check the status and force a scan by clearing the checkpoint.
 See {ref}`rest-service` for more details.
 
+## Inventory search failures
+
+If an Elasticsearch file or folder inventory query fails, the crawl reports an error and retains checkpoint
+progress for recovery rather than accepting the failure as an empty directory inventory. Successful empty
+queries and explicitly missing indices remain valid, including on a first crawl. Deletions already accepted
+before a later query fails may be replayed during recovery.
+
 ## Migration from previous versions
 
 ```{note}

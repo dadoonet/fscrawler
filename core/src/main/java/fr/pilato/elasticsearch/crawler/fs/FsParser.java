@@ -31,6 +31,7 @@ import fr.pilato.elasticsearch.crawler.fs.beans.FsAclsFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpoint;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.beans.ScanStatistic;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FSCrawlerLogger;
 import fr.pilato.elasticsearch.crawler.fs.framework.FileAcl;
@@ -1269,7 +1270,8 @@ public class FsParser implements Runnable, AutoCloseable {
         return false;
     }
 
-    private Collection<String> getFileDirectory(String path) throws NoSuchAlgorithmException {
+    private Collection<String> getFileDirectory(String path)
+            throws NoSuchAlgorithmException, ElasticsearchClientException {
         // If the crawler is being closed, we return
         if (closed.get()) {
             return new ArrayList<>();
@@ -1277,7 +1279,8 @@ public class FsParser implements Runnable, AutoCloseable {
         return managementService.getFileDirectory(path);
     }
 
-    private Collection<String> getFolderDirectory(String path) throws NoSuchAlgorithmException {
+    private Collection<String> getFolderDirectory(String path)
+            throws NoSuchAlgorithmException, ElasticsearchClientException {
         // If the crawler is being closed, we return
         if (closed.get()) {
             return new ArrayList<>();
