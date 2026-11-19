@@ -45,6 +45,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @DetectThreadLeaks.ExcludeThreads({
     WindowsSpecificThreadFilter.class,
@@ -53,6 +54,7 @@ import org.testcontainers.containers.MinIOContainer;
     MinioThreadFilter.class
 })
 @DisabledIfNoDocker
+@fr.pilato.elasticsearch.crawler.fs.test.framework.VerySlow
 class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static MinIOContainer container;
@@ -63,7 +65,8 @@ class FsS3PluginIT extends AbstractFSCrawlerTestCase {
     @BeforeEach
     void startMinioContainer() {
         logger.info("Starting Minio");
-        container = new MinIOContainer("quay.io/minio/minio");
+        container = new MinIOContainer(DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
+                .asCompatibleSubstituteFor("minio/minio"));
         container.start();
         s3Url = container.getS3URL();
         s3Username = container.getUserName();
