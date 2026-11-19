@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.beans;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
@@ -31,6 +32,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     private static final Logger logger = LogManager.getLogger();
@@ -127,15 +130,22 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void testIsPendingRebuildsLookupSetWhenNull() throws Exception {
+    void testIsPendingRebuildsOccurrenceCountsWhenNull() throws Exception {
         FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
-        checkpoint.addPath("/path1");
+        String path = randomPath();
+        checkpoint.addPath(path);
+        checkpoint.addPath(path);
+        checkpoint.addPath(path + "/child");
 
-        Field pendingPathsSetField = FsCrawlerCheckpoint.class.getDeclaredField("pendingPathsSet");
-        pendingPathsSetField.setAccessible(true);
-        pendingPathsSetField.set(checkpoint, null);
+        Field pendingPathCountsField = FsCrawlerCheckpoint.class.getDeclaredField("pendingPathCounts");
+        pendingPathCountsField.setAccessible(true);
+        pendingPathCountsField.set(checkpoint, null);
 
-        Assertions.assertThat(checkpoint.isPending("/path1")).isTrue();
+        Assertions.assertThat(checkpoint.isPending(path)).isTrue();
+        Assertions.assertThat(checkpoint.pollNextPath()).isEqualTo(path);
+        Assertions.assertThat(checkpoint.isPending(path)).isTrue();
+        Assertions.assertThat(checkpoint.pollNextPath()).isEqualTo(path);
+        Assertions.assertThat(checkpoint.isPending(path)).isFalse();
     }
 
     @Test
@@ -149,6 +159,89 @@ class FsCrawlerCheckpointTest extends AbstractFSCrawlerTestCase {
         Assertions.assertThat(checkpoint.isCompleted("/path1")).isTrue();
         Assertions.assertThat(checkpoint.isCompleted("/path2")).isFalse();
         Assertions.assertThat(checkpoint.getCompletedPaths()).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void duplicatePathRemainsPendingUntilLastOccurrenceIsPolled(boolean insertFirst) {
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        String path = randomPath();
+        String other = path + "/child";
+        checkpoint.addPath(path);
+        checkpoint.addPath(other);
+        if (insertFirst) {
+            checkpoint.addPathFirst(path);
+        } else {
+            checkpoint.addPath(path);
+        }
+
+        Assertions.assertThat(checkpoint.pollNextPath()).isEqualTo(path);
+        Assertions.assertThat(checkpoint.isPending(path)).isTrue();
+        if (!insertFirst) {
+            Assertions.assertThat(checkpoint.pollNextPath()).isEqualTo(other);
+        }
+        Assertions.assertThat(checkpoint.pollNextPath()).isEqualTo(path);
+        Assertions.assertThat(checkpoint.isPending(path)).isFalse();
+        if (insertFirst) {
+            Assertions.assertThat(checkpoint.pollNextPath()).isEqualTo(other);
+        }
+        Assertions.assertThat(checkpoint.hasPendingWork()).isFalse();
+        Assertions.assertThat(checkpoint.peekNextPath()).isNull();
+        Assertions.assertThat(checkpoint.pollNextPath()).isNull();
+    }
+
+    @Test
+    void resumeCounterSurvivesSerializationAndClampsNegativeValues() throws IOException {
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        int count = RandomizedTest.randomIntInRange(randomizedRandomForTests, 1, 10000);
+        checkpoint.setCurrentPathFilesIndexedCount(count);
+
+        String json = JsonUtil.prettyMapper.writeValueAsString(checkpoint);
+        Assertions.assertThat(JsonUtil.prettyMapper
+                        .readTree(json)
+                        .get("current_path_files_indexed_count")
+                        .asInt())
+                .isEqualTo(count);
+        FsCrawlerCheckpoint restored = JsonUtil.prettyMapper.readValue(json, FsCrawlerCheckpoint.class);
+        Assertions.assertThat(restored.getCurrentPathFilesIndexedCount()).isEqualTo(count);
+        restored.setCurrentPathFilesIndexedCount(-count);
+        Assertions.assertThat(restored.getCurrentPathFilesIndexedCount()).isZero();
+    }
+
+    @Test
+    void restoringConcurrentCollectionsPreservesPathsAndMembership() throws IOException {
+        FsCrawlerCheckpoint checkpoint = new FsCrawlerCheckpoint();
+        String first = randomPath();
+        String second = first + "/child";
+        String completed = first + "/completed";
+        checkpoint.addPath(first);
+        checkpoint.addPath(second);
+        checkpoint.addPath(first);
+        checkpoint.markCompleted(completed);
+        String json = JsonUtil.prettyMapper.writeValueAsString(checkpoint);
+        FsCrawlerCheckpoint restored = JsonUtil.prettyMapper.readValue(json, FsCrawlerCheckpoint.class);
+
+        // Repeated initialization must preserve both ordering and duplicate membership.
+        restored.ensureConcurrentCollections();
+        restored.ensureConcurrentCollections();
+        Assertions.assertThat(restored.getPendingPaths()).containsExactly(first, second, first);
+        Assertions.assertThat(restored.getCompletedPaths()).containsExactly(completed);
+        Assertions.assertThat(restored.isCompleted(completed)).isTrue();
+        Assertions.assertThat(restored.isPending(second)).isTrue();
+        Assertions.assertThat(restored.pollNextPath()).isEqualTo(first);
+        Assertions.assertThat(restored.isPending(first)).isTrue();
+        restored.clearPendingPaths();
+        Assertions.assertThat(restored.isPending(first)).isFalse();
+        Assertions.assertThat(restored.isPending(second)).isFalse();
+        restored.addPathFirst(second);
+        Assertions.assertThat(restored.isPending(second)).isTrue();
+        Assertions.assertThat(restored.pollNextPath()).isEqualTo(second);
+        Assertions.assertThat(restored.isPending(second)).isFalse();
+        Assertions.assertThat(restored.getCompletedPaths()).containsExactly(completed);
+    }
+
+    private String randomPath() {
+        return "/" + RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 16);
     }
 
     @Test
