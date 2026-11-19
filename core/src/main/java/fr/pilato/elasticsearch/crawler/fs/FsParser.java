@@ -1473,21 +1473,26 @@ public class FsParser implements Runnable, AutoCloseable {
             FileAbstractModel metadataFile,
             int skipCount)
             throws Exception {
-        InputStream inputStream = null;
-        InputStream metadataStream = null;
-        TikaDocParser.InputStreamSupplier reopenableInputStream = null;
+        boolean raw = fsSettings.getFs().isJsonSupport() || fsSettings.getFs().isXmlSupport();
+        boolean needsContent = raw
+                && (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource());
+        TikaDocParser.InputStreamSupplier reopenableInputStream =
+                raw ? null : createReopenableInputStreamSupplier(child);
         try {
-            if (fsSettings.getFs().isJsonSupport() || fsSettings.getFs().isXmlSupport()) {
-                if (fsSettings.getFs().isIndexContent() || fsSettings.getFs().isStoreSource()) {
-                    inputStream = crawlerPlugin.getInputStream(child);
-                }
-            } else {
-                reopenableInputStream = createReopenableInputStreamSupplier(child);
+            // Acquire each resource in its initializer so metadata-open failure releases content.
+            try (InputStream inputStream =
+                            providerOwned(needsContent ? crawlerPlugin.getInputStream(child) : null, child);
+                    InputStream metadataStream = providerOwned(
+                            metadataFile == null ? null : crawlerPlugin.getInputStream(metadataFile), metadataFile)) {
+                indexFile(
+                        child,
+                        stats,
+                        filepath,
+                        borrowed(inputStream),
+                        reopenableInputStream,
+                        child.getSize(),
+                        borrowed(metadataStream));
             }
-            if (metadataFile != null) {
-                metadataStream = crawlerPlugin.getInputStream(metadataFile);
-            }
-            indexFile(child, stats, filepath, inputStream, reopenableInputStream, child.getSize(), metadataStream);
             if (skipCount > 0) {
                 skipCount--;
             } else {
@@ -1503,37 +1508,39 @@ public class FsParser implements Runnable, AutoCloseable {
             } else {
                 throw e;
             }
-        } finally {
-            if (metadataStream != null) {
-                crawlerPlugin.closeInputStream(metadataStream);
-            }
-            if (inputStream != null) {
-                crawlerPlugin.closeInputStream(inputStream);
-            }
         }
     }
 
-    private TikaDocParser.InputStreamSupplier createReopenableInputStreamSupplier(FileAbstractModel child) {
-        return () -> {
-            InputStream delegate = crawlerPlugin.getInputStream(child);
-            return new FilterInputStream(delegate) {
-                private boolean closed;
-
-                @Override
-                public void close() throws IOException {
-                    if (closed) {
-                        return;
-                    }
-                    closed = true;
-                    try {
-                        crawlerPlugin.closeInputStream(delegate);
-                    } catch (FsCrawlerPluginException e) {
-                        throw new IOException(
-                                "Unable to close crawl input stream for [" + child.getFullpath() + "]", e);
-                    }
-                }
-            };
+    private static InputStream borrowed(InputStream stream) {
+        if (stream == null) return null;
+        return new FilterInputStream(stream) {
+            @Override
+            public void close() {
+                // JSON/XML parsers may close their input; the enclosing resource scope owns release.
+            }
         };
+    }
+
+    private InputStream providerOwned(InputStream delegate, FileAbstractModel file) {
+        if (delegate == null) return null;
+        return new FilterInputStream(delegate) {
+            private boolean released;
+
+            @Override
+            public void close() throws IOException {
+                if (released) return;
+                released = true;
+                try {
+                    crawlerPlugin.closeInputStream(delegate);
+                } catch (FsCrawlerPluginException e) {
+                    throw new IOException("Unable to close crawl input stream for [" + file.getFullpath() + "]", e);
+                }
+            }
+        };
+    }
+
+    private TikaDocParser.InputStreamSupplier createReopenableInputStreamSupplier(FileAbstractModel child) {
+        return () -> providerOwned(crawlerPlugin.getInputStream(child), child);
     }
 
     private void indexRawJsonContent(
@@ -1562,10 +1569,6 @@ public class FsParser implements Runnable, AutoCloseable {
         } catch (Exception e) {
             logger.warn("Unable to parse JSON file [{}] in [{}]: {}", filename, dirname, e.getMessage());
             logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
-        } finally {
-            if (inputStream != null) {
-                crawlerPlugin.closeInputStream(inputStream);
-            }
         }
     }
 
@@ -1592,10 +1595,6 @@ public class FsParser implements Runnable, AutoCloseable {
         } catch (Exception e) {
             logger.warn("Unable to parse XML file [{}] in [{}]: {}", filename, dirname, e.getMessage());
             logger.debug(FULL_STACKTRACE_LOG_MESSAGE, e);
-        } finally {
-            if (inputStream != null) {
-                crawlerPlugin.closeInputStream(inputStream);
-            }
         }
     }
 
