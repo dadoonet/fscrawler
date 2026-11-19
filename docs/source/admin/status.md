@@ -64,6 +64,13 @@ current time or to `null`. FSCrawler will then start a new scan at most after 5 
 You can also use the REST API to check the status and force a scan by clearing the checkpoint.
 See {ref}`rest-service` for more details.
 
+## Deleted queued directories
+
+If a queued subdirectory disappears while crawling is paused, FSCrawler reconciles its indexed entries when
+`remove_deleted` and `index_folders` are enabled, then completes the removed queue entry. Capped deletion
+queries retain folder records so later full crawls can finish cleanup. Missing source roots, permission errors
+and incomplete listings remain errors and retain pending work.
+
 ## Migration from previous versions
 
 ```{note}
