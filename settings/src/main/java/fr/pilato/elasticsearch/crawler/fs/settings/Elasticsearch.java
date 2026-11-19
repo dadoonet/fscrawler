@@ -378,7 +378,7 @@ public class Elasticsearch {
                 + retryInitialDelay + ", retryMaxDelay="
                 + retryMaxDelay + ", byteSize="
                 + byteSize + ", apiKey='"
-                + apiKey + '\'' + ", username='"
+                + (apiKey == null ? null : "[REDACTED]") + '\'' + ", username='"
                 + username + '\'' + ", pipeline='"
                 + pipeline + '\'' + ", pathPrefix='"
                 + pathPrefix + '\'' + ", sslVerification="

@@ -1534,7 +1534,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         String id = document.read("$.id");
         String encodedApiKey = document.read("$.encoded");
-        logger.debug("generated key [{}] for [{}]: [{}]", id, keyName, encodedApiKey);
+        logger.debug("Generated API key id [{}] for [{}]", id, keyName);
         return encodedApiKey;
     }
 
@@ -1821,12 +1821,22 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private String invokeHttp(Invocation.Builder callBuilder, String method, String node, String path, Object data) {
         if (data == null) {
             String response = callBuilder.method(method, String.class);
-            logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
+            logResponse(method, node, path, response);
             return response;
         }
         String response = callBuilder.method(method, Entity.json(data), String.class);
-        logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
+        logResponse(method, node, path, response);
         return response;
+    }
+
+    private static void logResponse(String method, String node, String path, String response) {
+        // Security endpoints return bearer credentials. Never include their response payload,
+        // including when a reverse proxy adds a path prefix.
+        if (path != null && (path.startsWith("_security/") || path.contains("/_security/"))) {
+            logger.trace("{} {}/{} completed (security response omitted)", method, node, path);
+        } else {
+            logger.trace("{} {}/{} gives {}", method, node, path == null ? "" : path, response);
+        }
     }
 
     /**
