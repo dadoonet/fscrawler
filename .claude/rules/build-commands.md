@@ -3,16 +3,19 @@
 ## Maven Commands
 
 ```bash
-# Fast build, no tests (~1-2 min) — skip Docker
+# Package without tests — no container runtime required
 mvn clean package -DskipTests -Ddocker.skip
 
-# Fast build, no tests — with Docker build
-mvn clean package -DskipTests
+# Install artifacts and build Docker images without tests — requires Docker
+mvn clean install -DskipTests
 
 # Unit tests only (~45-60 sec)
 mvn clean test -DskipIntegTests
 
-# Full build including integration tests
+# Unit and integration tests, without building Docker images — requires Docker
+mvn clean verify -Ddocker.skip
+
+# Full build including integration tests and Docker images — requires Docker
 mvn clean install
 
 # Specific Elasticsearch version
@@ -23,6 +26,21 @@ mvn clean package -DskipTests -pl distribution
 ```
 
 **Note**: `mvn install` with Docker can take 30+ minutes on first run (Tesseract OCR installation).
+
+Docker image construction is bound to `install` in `distribution/pom.xml`, not
+`package`. `-Ddocker.skip` skips that image build; it does not disable
+Testcontainers. Use `-DskipIntegTests` to skip integration tests or `-DskipTests`
+to skip both test suites.
+
+Unit tests need no Docker runtime, but the distribution tests require Python
+(`python3` by default; override with `"-Dtests.python=python"` or an executable
+path). Integration tests use Elasticsearch, MinIO and Nginx containers. An external
+Elasticsearch cluster does not replace the MinIO/Nginx containers. SSH/FTP test
+servers run inside the JVM. OCR coverage needs Tesseract in the Maven environment.
+
+On Windows, use Linux containers (typically Docker Desktop with WSL 2); on macOS,
+Docker Desktop runs a Linux VM. Native Java tests retain host filesystem rules.
+See `docs/source/dev/build.md` for prerequisites, platform setup and commands.
 
 ## Distribution Artifact
 
