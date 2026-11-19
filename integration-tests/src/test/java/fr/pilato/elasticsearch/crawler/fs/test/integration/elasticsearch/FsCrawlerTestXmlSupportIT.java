@@ -79,6 +79,8 @@ class FsCrawlerTestXmlSupportIT extends AbstractFsCrawlerITCase {
     void xmlSupportAndOtherFiles() throws Exception {
         FsSettings fsSettings = createTestSettings();
         fsSettings.getFs().setXmlSupport(true);
+        // This mixed-format fixture intentionally skips files that are not XML.
+        fsSettings.getFs().setContinueOnError(true);
         crawler = startCrawler(fsSettings);
         ESSearchResponse response = countTestHelper(
                 new ESSearchRequest().withIndex(getCrawlerName() + FsCrawlerUtil.INDEX_SUFFIX_DOCS), 3L, null);
