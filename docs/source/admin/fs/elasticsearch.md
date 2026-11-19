@@ -566,7 +566,12 @@ from cloud.elastic.co.
 But if you are using a self signed certificate, which is the case in development mode, you need to either
 ignore the ssl check (not recommended) or provide the certificate to the Elasticsearch client.
 
-To bypass the SSL Certificate verification, you can use the `ssl_verification` option:
+With `ssl_verification: true` (the default), FSCrawler checks both certificate trust
+and the server identity. The hostname or IP address in `elasticsearch.urls` must
+match the identity in the server certificate, normally its Subject Alternative Names. Providing a trusted
+CA with `ca_certificate` does not bypass this identity check.
+
+To bypass certificate and hostname verification, you can use the `ssl_verification` option:
 
 ```yaml
 name: "test"
