@@ -72,6 +72,49 @@ jobs:
     - name: Build but the docker images
       run: mvn --batch-mode package -Ddocker.skip -DskipIntegTests
 
+  # Unit tests on Windows run independently of the Elastic Cloud integration job.
+  unit-windows:
+    name: Windows unit tests (JDK 21)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Fetch base branch for Spotless ratchet
+        run: git fetch origin main --depth=1
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.15'
+      - name: Configure short temporary paths for Windows sockets
+        shell: pwsh
+        run: |
+          $testTemp = Join-Path $env:RUNNER_TEMP 'fscrawler'
+          New-Item -ItemType Directory -Force -Path $testTemp | Out-Null
+          "JAVA_TOOL_OPTIONS=-Djava.io.tmpdir=$testTemp -Djdk.net.unixdomain.tmpdir=$testTemp" >> $env:GITHUB_ENV
+      - name: Display tool versions
+        shell: pwsh
+        run: |
+          mvn --version
+          python --version
+      - name: Run unit tests
+        shell: pwsh
+        run: mvn --batch-mode test "-DskipIntegTests" "-Ddocker.skip" "-Dtests.python=python" "-Dpdfbox.fontcache.skipchecksums=true" "-Djunit.jupiter.execution.timeout.threaddump.enabled=true"
+      - name: Upload unit-test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-unit-test-reports
+          path: '**/target/surefire-reports/**'
+          retention-days: 7
+          if-no-files-found: warn
+
   # We run integration tests with elastic stack 9 (default)
   it:
     runs-on: ubuntu-latest

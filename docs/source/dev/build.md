@@ -382,6 +382,34 @@ container images may not include Python; install it before running these tests.
 The setting affects this Java test wrapper only. It does not change your system
 Python installation, release scripts, or production FSCrawler behaviour.
 
+## Windows unit-test CI
+
+The pull-request workflow includes a separate `unit-windows` job on
+`windows-latest`, using Temurin JDK 21 and Python 3.15. It runs the default unit
+suite with `mvn test`, `skipIntegTests`, `docker.skip` and
+`tests.python=python`. Surefire 3.6.1 discovers the configured unit-test classes
+without an explicit `test=*Test` selector.
+It runs on pull requests without an Elastic Cloud credential check, including
+workflow-only changes, and independently of the Ubuntu build and Windows
+integration jobs. No external Elasticsearch cluster is needed for this job.
+
+The job uses a short directory under `RUNNER_TEMP` for `java.io.tmpdir` and
+`jdk.net.unixdomain.tmpdir`, avoiding the Windows local-socket startup failure
+observed with longer temporary paths. It preserves normal test-failure handling;
+skipped platform-specific or unavailable-OCR tests remain visible in Maven output.
+The Windows job sets `pdfbox.fontcache.skipchecksums=true` so PDFBox builds its
+system-font cache from font headers without hashing the complete font files.
+This avoids charging that cold-cache I/O against a PDF extraction test's timeout
+on the hosted runner. Font parsing and test assertions still run normally; this
+setting applies to the CI JVMs and does not change production FSCrawler defaults.
+The job uploads Surefire reports and diagnostic files after each run as the
+`windows-unit-test-reports` artifact, retained for seven days. JUnit thread dumps are enabled for timeouts
+to help identify where a test was blocked.
+
+The existing `it-windows` job retains its separate integration-test command and
+Elastic Cloud configuration. Adding the unit job does not make its status a
+required branch-protection check; repository administrators manage that setting.
+
 ## Docker build
 
 The docker images build is run when calling the maven `package` phase. If you want to skip the build of the images,
