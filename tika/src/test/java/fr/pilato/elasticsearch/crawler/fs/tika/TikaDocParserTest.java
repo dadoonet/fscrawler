@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -48,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -203,6 +205,78 @@ class TikaDocParserTest extends DocParserTestCase {
                 .containsEntry("tk:parsed-by", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("tk:parsed-by-full-set", "org.apache.tika.parser.DefaultParser")
                 .containsEntry("tk:resource-name", "issue-163.xml");
+    }
+
+    /**
+     * {@code raw_metadata_include} filters the stored keys. See <a
+     * href="https://github.com/dadoonet/fscrawler/issues/1258">https://github.com/dadoonet/fscrawler/issues/1258</a>.
+     */
+    @Test
+    void rawMetadataIncludeFiltersTkNames() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
+        fsSettings.getFs().setRawMetadataInclude(List.of("^tk:"));
+        Doc doc = extractFromFile("issue-163.xml", fsSettings);
+
+        Assertions.assertThat(doc.getMeta().getRaw())
+                .hasSize(4)
+                .containsEntry("tk:resource-name", "issue-163.xml")
+                .doesNotContainKey("Content-Type");
+    }
+
+    @Test
+    void rawMetadataIncludeEnablesRawWithoutBoolean() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadataInclude(List.of("^tk:resource-name$"));
+        Doc doc = extractFromFile("issue-163.xml", fsSettings);
+
+        Assertions.assertThat(doc.getMeta().getRaw()).hasSize(1).containsEntry("tk:resource-name", "issue-163.xml");
+    }
+
+    @Test
+    void rawMetadataIncludeEmptyKeepsFullDump() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
+        fsSettings.getFs().setRawMetadataInclude(List.of());
+        Doc doc = extractFromFile("issue-163.xml", fsSettings);
+
+        Assertions.assertThat(doc.getMeta().getRaw())
+                .hasSize(5)
+                .containsEntry("Content-Type", "application/xml")
+                .containsEntry("tk:resource-name", "issue-163.xml");
+    }
+
+    @Test
+    void rawMetadataIncludeMatchesNothing() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadataInclude(List.of("^does-not-match$"));
+        Doc doc = extractFromFile("issue-163.xml", fsSettings);
+
+        Assertions.assertThat(doc.getMeta().getRaw()).isNull();
+    }
+
+    @Test
+    void rawMetadataIncludeWildcardCopiesAll() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadataInclude(List.of(".*"));
+        Doc doc = extractFromFile("issue-163.xml", fsSettings);
+
+        Assertions.assertThat(doc.getMeta().getRaw())
+                .hasSize(5)
+                .containsEntry("Content-Type", "application/xml")
+                .containsEntry("tk:content-type-magic-detected", "application/xml")
+                .containsEntry("tk:parsed-by", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("tk:parsed-by-full-set", "org.apache.tika.parser.DefaultParser")
+                .containsEntry("tk:resource-name", "issue-163.xml");
+    }
+
+    @Test
+    void rawMetadataIncludeInvalidPattern() {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadataInclude(List.of("("));
+
+        Assertions.assertThatThrownBy(() -> extractFromFile("issue-163.xml", fsSettings))
+                .isInstanceOf(PatternSyntaxException.class);
     }
 
     @Test

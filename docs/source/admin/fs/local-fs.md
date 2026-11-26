@@ -22,6 +22,7 @@ Here is a list of Local FS settings (under `fs.` prefix):
 | `fs.attributes_support`  | `FSCRAWLER_FS_ATTRIBUTES_SUPPORT`  | `false`         | [Adding file attributes](#adding-file-attributes)       |
 | `fs.acl_support`         | `FSCRAWLER_FS_ACL_SUPPORT`         | `false`         | [Collecting ACL metadata](#collecting-acl-metadata)     |
 | `fs.raw_metadata`        | `FSCRAWLER_FS_RAW_METADATA`        | `false`         | [Enabling raw metadata](#enabling-raw-metadata)         |
+| `fs.raw_metadata_include` | `FSCRAWLER_FS_RAW_METADATA_INCLUDE` | `null`          | [Enabling raw metadata](#enabling-raw-metadata)         |
 | `fs.filename_as_id`      | `FSCRAWLER_FS_FILENAME_AS_ID`      | `false`         | {ref}`filename-as-id`                                   |
 | `fs.hash_algorithm`      | `FSCRAWLER_FS_HASH_ALGORITHM`      | `"MD5"`         | {ref}`document-ids`                                     |
 | `fs.add_filesize`        | `FSCRAWLER_FS_ADD_FILESIZE`        | `true`          | [Disabling file size field](#disabling-file-size-field) |
@@ -636,6 +637,27 @@ internal keys use the `tk:` prefix instead of `X-TIKA:`, ICC keys use `icc:` ins
 `ICC:`, and many PDF keys now use hyphens (`pdf:pdf-version` instead of `pdf:PDFVersion`).
 See the {ref}`3.0 release notes <release-notes-3.0>` for a summary of the renamed keys.
 ```
+
+```{versionadded} 3.1
+```
+
+`raw_metadata_include` is a list of regular expressions that selects which metadata
+names are copied into `meta.raw`. Each expression is matched against the stored key,
+after dots have been rewritten as `:`, and a name is kept when any expression matches.
+A non-empty list enables `meta.raw` on its own, so `raw_metadata` can stay `false`.
+`.*` includes every name, the same result as `raw_metadata: true` with no list.
+When the list is omitted or empty, `raw_metadata: true` still copies every Tika name.
+
+```yaml
+name: "test"
+fs:
+  raw_metadata_include:
+    - "^pdf:.*"
+    - "dc:title"
+```
+
+An invalid regular expression fails extraction of that document before any `meta.raw`
+entry is stored.
 
 Generated raw metadata depends on the file format itself.
 

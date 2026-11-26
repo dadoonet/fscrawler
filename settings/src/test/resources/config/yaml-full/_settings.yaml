@@ -62,6 +62,10 @@ fs:
 
   # optional: usually file metadata will be stored in separate fields, if you want to keep the original set, set this to true
   raw_metadata: true
+  # optional: regular expressions of stored metadata names (dots rewritten as ':') to copy into meta.raw
+  raw_metadata_include:
+    - "^pdf:.*"
+    - "dc:title"
 
   # optional: add checksum meta (requires index_content to be set to true)
   checksum: "MD5"

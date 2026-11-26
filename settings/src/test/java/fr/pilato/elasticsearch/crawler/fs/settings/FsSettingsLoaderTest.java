@@ -151,6 +151,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         expected.getFs().setStoreSource(true);
         expected.getFs().setIndexedChars(new Percentage(10000.0));
         expected.getFs().setRawMetadata(true);
+        expected.getFs().setRawMetadataInclude(List.of("^pdf:.*", "dc:title"));
         expected.getFs().setChecksum("MD5");
         expected.getFs().setHashAlgorithm("MD5");
         expected.getFs().setIndexFolders(false);

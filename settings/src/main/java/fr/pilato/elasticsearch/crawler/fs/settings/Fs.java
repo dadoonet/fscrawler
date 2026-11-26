@@ -100,6 +100,10 @@ public class Fs {
 
     @Config
     @Nullable
+    private List<String> rawMetadataInclude;
+
+    @Config
+    @Nullable
     private String checksum;
 
     @Config(defaultVal = SignTool.LEGACY_MD5_ALGORITHM)
@@ -261,6 +265,14 @@ public class Fs {
 
     public void setRawMetadata(boolean rawMetadata) {
         this.rawMetadata = rawMetadata;
+    }
+
+    public List<String> getRawMetadataInclude() {
+        return rawMetadataInclude;
+    }
+
+    public void setRawMetadataInclude(List<String> rawMetadataInclude) {
+        this.rawMetadataInclude = rawMetadataInclude;
     }
 
     public String getChecksum() {
@@ -442,6 +454,7 @@ public class Fs {
                 && attributesSupport == fs.attributesSupport
                 && aclSupport == fs.aclSupport
                 && rawMetadata == fs.rawMetadata
+                && Objects.equals(rawMetadataInclude, fs.rawMetadataInclude)
                 && xmlSupport == fs.xmlSupport
                 && indexFolders == fs.indexFolders
                 && langDetect == fs.langDetect
@@ -482,6 +495,7 @@ public class Fs {
                 attributesSupport,
                 aclSupport,
                 rawMetadata,
+                rawMetadataInclude,
                 xmlSupport,
                 checksum,
                 hashAlgorithm,
@@ -514,7 +528,8 @@ public class Fs {
                 + indexedChars + ", attributesSupport="
                 + attributesSupport + ", aclSupport="
                 + aclSupport + ", rawMetadata="
-                + rawMetadata + ", xmlSupport="
+                + rawMetadata + ", rawMetadataInclude="
+                + rawMetadataInclude + ", xmlSupport="
                 + xmlSupport + ", checksum='"
                 + checksum + '\'' + ", hashAlgorithm='"
                 + hashAlgorithm + '\'' + ", indexFolders="
