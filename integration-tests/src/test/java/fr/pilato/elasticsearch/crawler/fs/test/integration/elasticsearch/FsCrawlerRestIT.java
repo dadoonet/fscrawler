@@ -83,6 +83,7 @@ import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.nginx.NginxContainer;
+import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 class FsCrawlerRestIT extends AbstractRestITCase {
@@ -534,7 +535,9 @@ class FsCrawlerRestIT extends AbstractRestITCase {
     void uploadDocumentWithS3Plugin() throws Exception {
         logger.info("Starting Minio");
 
-        try (MinIOContainer container = new MinIOContainer("quay.io/minio/minio")) {
+        try (MinIOContainer container =
+                new MinIOContainer(DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
+                        .asCompatibleSubstituteFor("minio/minio"))) {
             container.start();
             String s3Url = container.getS3URL();
             String s3Username = container.getUserName();

@@ -206,7 +206,10 @@ public abstract class AbstractRestITCase extends AbstractFsCrawlerITCase {
         // https://www.jmix.io/cuba-blog/utf-8-in-http-headers/
         // So we need to hack around this and support rfc6266 https://datatracker.ietf.org/doc/html/rfc6266#section-5
         params.forEach((k, v) -> {
-            builder.header(k, v);
+            // A raw Unicode header can be rejected before the server sees filename*.
+            if (StandardCharsets.ISO_8859_1.newEncoder().canEncode((String) v)) {
+                builder.header(k, v);
+            }
             builder.header(k + "*", "UTF-8''" + URLEncoder.encode((String) v, StandardCharsets.UTF_8));
         });
 
