@@ -389,6 +389,59 @@ directory even when includes contains `*`.
 If a folder contains a file named `.fscrawlerignore`, that folder and its
 subfolders are skipped entirely.
 
+### Performance and large crawls
+
+Includes and excludes affect how much work FSCrawler performs:
+
+* **File includes or excludes** prevent rejected files from being read for
+  content extraction and indexing. They do not generally avoid visiting their
+  parent directories. With the local filesystem provider, directory listing
+  and file metadata collection occur before filtering.
+* **Directory excludes** prevent traversal into matching directories and their
+  descendants. Excluding a large unwanted directory tree can therefore save
+  considerably more work than rejecting its files individually. The excluded
+  directory itself is still encountered in its parent's listing.
+* **A narrower `fs.url`** avoids scanning unrelated areas altogether. If only
+  `/data/contracts` is required, use that as the crawl root instead of scanning
+  `/data` with an include pattern for contracts. Includes alone do not prevent
+  traversal through unrelated directories.
+
+These distinctions also matter during subsequent scans: unchanged files may
+avoid content extraction, but non-excluded directories still need to be
+visited.
+
+For example, suppose the crawl root contains five million files, including
+four million below `/archive/`. An include such as `*\.pdf` still requires
+traversal through the archive tree to discover matching files. An exclude such
+as `/archive/*` skips that tree once its directory is encountered in the
+parent listing.
+
+This example illustrates work avoided, not a guaranteed speed improvement.
+Actual performance depends on directory layout, storage latency, document
+formats, extraction settings, and Elasticsearch throughput.
+
+For large crawls:
+
+* Choose the smallest useful crawl root.
+* Exclude unwanted directory trees explicitly.
+* Keep pattern lists short and avoid redundant or unnecessarily complex
+  expressions; matching work increases with the number of patterns evaluated.
+* Measure the initial crawl and an unchanged rescan separately.
+* Test against the intended storage, particularly when using network shares.
+
+```{note}
+Use `/` in patterns on both Windows and Linux. The path and case-matching rules
+described above apply on both systems. Neither operating system guarantees
+faster scans; compare performance using the intended filesystem and storage.
+```
+
+```{warning}
+Adding an exclusion is not a way to delete previously indexed documents. The
+current deletion reconciliation also applies the include and exclude rules,
+so documents outside the configured scope can remain in Elasticsearch. Plan
+any required cleanup separately.
+```
+
 
 ## Filter content
 
