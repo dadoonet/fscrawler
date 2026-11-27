@@ -102,9 +102,13 @@ public class DocUtils {
 
         try {
             JsonNode tagsNode = mapper.readTree(tags);
-            if (tagsNode.isEmpty()) {
+            if (tagsNode == null || tagsNode.isNull() || tagsNode.isMissingNode()) {
                 return doc;
             }
+            if (!tagsNode.isObject()) {
+                throw new FsCrawlerIllegalConfigurationException("Metadata must be an object");
+            }
+            if (tagsNode.isEmpty()) return doc;
             JsonNode docNode = mapper.convertValue(doc, JsonNode.class);
             JsonNode mergedNode = merge(tagsNode, docNode);
             return mapper.treeToValue(mergedNode, Doc.class);
@@ -128,12 +132,8 @@ public class DocUtils {
             JsonNode jsonNode = mainNode.get(fieldName);
 
             if (jsonNode != null) {
-                if (jsonNode.isObject()) {
+                if (jsonNode.isObject() && entry.getValue().isObject()) {
                     merge(jsonNode, updateNode.get(fieldName));
-                } else if (jsonNode.isArray()) {
-                    for (int i = 0; i < jsonNode.size(); i++) {
-                        merge(jsonNode.get(i), updateNode.get(fieldName).get(i));
-                    }
                 }
             } else {
                 if (mainNode instanceof ObjectNode objectNode) {
