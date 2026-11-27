@@ -161,7 +161,6 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         expected.getFs().setLangDetect(true);
         expected.getFs().setStoreSource(true);
         expected.getFs().setIndexedChars(new Percentage(10000.0));
-        expected.getFs().setRawMetadata(true);
         expected.getFs().setRawMetadataInclude(List.of("^pdf:.*", "dc:title"));
         expected.getFs().setChecksum("MD5");
         expected.getFs().setHashAlgorithm("MD5");
@@ -322,6 +321,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    @Deprecated
     void loadDeprecatedRawMetadataTrueMapsToWildcard(@TempDir Path tempDir) throws IOException {
         String name = randomToken();
         Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
@@ -344,6 +344,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
+    @Deprecated
     void loadDeprecatedRawMetadataFalseMapsToEmptyInclude(@TempDir Path tempDir) throws IOException {
         String name = randomToken();
         Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
@@ -366,7 +367,7 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
     }
 
     @Test
-    void loadBothRawMetadataAndIncludePrefersInclude(@TempDir Path tempDir) throws IOException {
+    void loadBothRawMetadataAndIncludeIsRejected(@TempDir Path tempDir) throws IOException {
         String name = randomToken();
         boolean legacyFlag = RandomizedTest.randomBoolean(randomizedRandomForTests);
         String pattern = "^" + randomToken() + ":.*";
@@ -379,21 +380,14 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
                     - "%s"
                 """.formatted(name, legacyFlag, pattern));
 
-        StringBuilder warnings = new StringBuilder();
-        FsSettings settings = captureFsWarnings(warnings, () -> FsSettingsLoader.load(settingsFile));
-
-        Assertions.assertThat(settings.getFs().getRawMetadataInclude()).containsExactly(pattern);
-        List<String> warningLines = nonBlankLines(warnings.toString());
-        Assertions.assertThat(warningLines).hasSize(1);
-        Assertions.assertThat(warningLines.get(0))
-                .contains("fs.raw_metadata")
-                .contains("fs.raw_metadata_include")
-                .contains("future version")
-                .contains("ignored");
+        Assertions.assertThatThrownBy(() -> FsSettingsLoader.load(settingsFile))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .rootCause()
+                .hasMessageContaining("fs.raw_metadata and fs.raw_metadata_include can not be set together");
     }
 
     @Test
-    void loadBothRawMetadataTrueAndEmptyIncludePrefersEmptyInclude(@TempDir Path tempDir) throws IOException {
+    void loadBothRawMetadataTrueAndEmptyIncludeIsRejected(@TempDir Path tempDir) throws IOException {
         String name = randomToken();
         Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
         Files.writeString(settingsFile, """
@@ -403,42 +397,10 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
                   raw_metadata_include: []
                 """.formatted(name));
 
-        StringBuilder warnings = new StringBuilder();
-        FsSettings settings = captureFsWarnings(warnings, () -> FsSettingsLoader.load(settingsFile));
-
-        Assertions.assertThat(settings.getFs().getRawMetadataInclude()).isEmpty();
-        List<String> warningLines = nonBlankLines(warnings.toString());
-        Assertions.assertThat(warningLines).hasSize(1);
-        Assertions.assertThat(warningLines.get(0))
-                .contains("fs.raw_metadata")
-                .contains("fs.raw_metadata_include")
-                .contains("future version")
-                .contains("ignored");
-    }
-
-    @Test
-    void loadWithoutRawMetadataDoesNotLogDeprecationWarning(@TempDir Path tempDir) throws IOException {
-        String name = randomToken();
-        String pattern = "^" + randomToken() + ":.*";
-        Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
-        Files.writeString(settingsFile, """
-                name: "%s"
-                fs:
-                  raw_metadata_include:
-                    - "%s"
-                """.formatted(name, pattern));
-
-        StringBuilder defaultWarnings = new StringBuilder();
-        FsSettings defaultSettings = captureFsWarnings(defaultWarnings, FsSettingsLoader::load);
-        Assertions.assertThat(defaultSettings.getFs().getRawMetadataInclude()).isNull();
-        Assertions.assertThat(nonBlankLines(defaultWarnings.toString())).isEmpty();
-
-        StringBuilder includeOnlyWarnings = new StringBuilder();
-        FsSettings includeOnlySettings =
-                captureFsWarnings(includeOnlyWarnings, () -> FsSettingsLoader.load(settingsFile));
-        Assertions.assertThat(includeOnlySettings.getFs().getRawMetadataInclude())
-                .containsExactly(pattern);
-        Assertions.assertThat(nonBlankLines(includeOnlyWarnings.toString())).isEmpty();
+        Assertions.assertThatThrownBy(() -> FsSettingsLoader.load(settingsFile))
+                .isInstanceOf(FsCrawlerIllegalConfigurationException.class)
+                .rootCause()
+                .hasMessageContaining("fs.raw_metadata and fs.raw_metadata_include can not be set together");
     }
 
     private static <T> T captureFsWarnings(StringBuilder target, java.util.function.Supplier<T> action) {

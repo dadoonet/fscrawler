@@ -57,8 +57,6 @@ fs:
   #indexed_chars: "0"
   indexed_chars: "10000.0"
 
-  # optional: usually file metadata will be stored in separate fields, if you want to keep the original set, set this to true
-  raw_metadata: true
   # optional: regular expressions of stored metadata names (dots rewritten as ':') to copy into meta.raw
   raw_metadata_include:
     - "^pdf:.*"

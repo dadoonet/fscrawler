@@ -105,9 +105,7 @@ public class Fs {
     private List<String> rawMetadataInclude;
 
     /**
-     * Tracks deprecated {@code fs.raw_metadata} when configured via {@link FsSettingsLoader} or
-     * {@link #setRawMetadata(boolean)}. {@link FsSettingsLoader} resolves {@code fs.raw_metadata} together with
-     * {@code fs.raw_metadata_include} through {@link #normalizeRawMetadata(Boolean)} and emits one warning.
+     * Deprecated {@code fs.raw_metadata} flag. Setting it maps to {@link #rawMetadataInclude}.
      *
      * @deprecated since 3.1, replaced by {@link #rawMetadataInclude} ({@code fs.raw_metadata_include})
      */
@@ -115,14 +113,6 @@ public class Fs {
     @JsonIgnore
     @Nullable
     private Boolean rawMetadata;
-
-    @JsonIgnore
-    @Nullable
-    private Boolean rawMetadataIncludeExplicit;
-
-    @JsonIgnore
-    @Nullable
-    private Boolean rawMetadataDeprecationWarned;
 
     @Config
     @Nullable
@@ -302,8 +292,11 @@ public class Fs {
      */
     @Deprecated(since = "3.1", forRemoval = true)
     public void setRawMetadata(boolean rawMetadata) {
+        logger.warn("Setting fs.raw_metadata is deprecated and will be removed in a future version. "
+                + "Please use fs.raw_metadata_include instead ([\".*\"] to keep all raw metadata, "
+                + "omit it to disable raw metadata).");
         this.rawMetadata = rawMetadata;
-        applyDeprecatedRawMetadata();
+        this.rawMetadataInclude = rawMetadata ? ALL_RAW_METADATA : List.of();
     }
 
     public List<String> getRawMetadataInclude() {
@@ -312,54 +305,6 @@ public class Fs {
 
     public void setRawMetadataInclude(List<String> rawMetadataInclude) {
         this.rawMetadataInclude = rawMetadataInclude;
-        this.rawMetadataIncludeExplicit = rawMetadataInclude != null ? Boolean.TRUE : null;
-    }
-
-    /**
-     * Normalizes deprecated {@code fs.raw_metadata} into {@code fs.raw_metadata_include} after loading settings.
-     *
-     * @param rawMetadata the configured value of {@code fs.raw_metadata}, or {@code null} if unset
-     */
-    void normalizeRawMetadata(@Nullable Boolean rawMetadata) {
-        if (rawMetadataInclude != null) {
-            rawMetadataIncludeExplicit = Boolean.TRUE;
-        }
-        if (rawMetadata != null) {
-            this.rawMetadata = rawMetadata;
-            applyDeprecatedRawMetadata();
-        }
-    }
-
-    private void applyDeprecatedRawMetadata() {
-        if (rawMetadata == null) {
-            return;
-        }
-        if (Boolean.TRUE.equals(rawMetadataIncludeExplicit)) {
-            warnDeprecatedRawMetadataOnce(
-                    "Setting fs.raw_metadata is deprecated and will be removed in a future version. "
-                            + "Please use fs.raw_metadata_include instead. "
-                            + "The value from fs.raw_metadata is ignored because fs.raw_metadata_include is set.");
-            return;
-        }
-        if (rawMetadata) {
-            rawMetadataInclude = ALL_RAW_METADATA;
-            warnDeprecatedRawMetadataOnce(
-                    "Setting fs.raw_metadata is deprecated and will be removed in a future version. "
-                            + "Please use fs.raw_metadata_include: [\".*\"] instead.");
-        } else {
-            rawMetadataInclude = List.of();
-            warnDeprecatedRawMetadataOnce(
-                    "Setting fs.raw_metadata is deprecated and will be removed in a future version. "
-                            + "Please use fs.raw_metadata_include instead (omit it or leave it empty to disable raw"
-                            + " metadata).");
-        }
-    }
-
-    private void warnDeprecatedRawMetadataOnce(String message) {
-        if (!Boolean.TRUE.equals(rawMetadataDeprecationWarned)) {
-            rawMetadataDeprecationWarned = Boolean.TRUE;
-            logger.warn(message);
-        }
     }
 
     public String getChecksum() {

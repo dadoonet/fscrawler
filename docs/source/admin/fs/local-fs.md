@@ -646,9 +646,9 @@ entry is stored.
 `fs.raw_metadata` is deprecated and will be removed in a future version. Existing
 configurations using `fs.raw_metadata` still work with a deprecation warning:
 `fs.raw_metadata: true` maps to `fs.raw_metadata_include: [".*"]`, and
-`fs.raw_metadata: false` disables raw metadata (empty include). If both
-`fs.raw_metadata` and `fs.raw_metadata_include` are set, `fs.raw_metadata_include`
-takes precedence.
+`fs.raw_metadata: false` disables raw metadata (empty include). Setting both
+`fs.raw_metadata` and `fs.raw_metadata_include` is rejected: remove `fs.raw_metadata`
+and keep `fs.raw_metadata_include`.
 ```
 
 ```{versionchanged} 3.0
