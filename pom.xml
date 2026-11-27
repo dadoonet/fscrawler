@@ -702,7 +702,7 @@
             <dependency>
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
-                <version>4.3.0</version>
+                <version>4.4.0</version>
             </dependency>
 
             <!-- OpenTelemetry BOM — API only; SDK/agent injected at runtime by elastic-otel-javaagent -->
