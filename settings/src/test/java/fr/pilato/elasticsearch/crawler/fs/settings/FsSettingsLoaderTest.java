@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.settings;
 
 import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
+import com.carrotsearch.randomizedtesting.jupiter.RandomizedTest;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeUnit;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
@@ -29,16 +30,26 @@ import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.test.framework.AbstractFSCrawlerTestCase;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Execution;
 
 @Execution(SAME_THREAD)
@@ -308,5 +319,175 @@ class FsSettingsLoaderTest extends AbstractFSCrawlerTestCase {
         expected.getFs().setUrl("/tmp/test");
         expected.getFs().setXmlSupport(true);
         checkSettings(expected, settings);
+    }
+
+    @Test
+    void loadDeprecatedRawMetadataTrueMapsToWildcard(@TempDir Path tempDir) throws IOException {
+        String name = randomToken();
+        Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
+        Files.writeString(settingsFile, """
+                name: "%s"
+                fs:
+                  raw_metadata: true
+                """.formatted(name));
+
+        StringBuilder warnings = new StringBuilder();
+        FsSettings settings = captureFsWarnings(warnings, () -> FsSettingsLoader.load(settingsFile));
+
+        Assertions.assertThat(settings.getFs().getRawMetadataInclude()).containsExactly(".*");
+        List<String> warningLines = nonBlankLines(warnings.toString());
+        Assertions.assertThat(warningLines).hasSize(1);
+        Assertions.assertThat(warningLines.get(0))
+                .contains("fs.raw_metadata")
+                .contains("fs.raw_metadata_include")
+                .contains("future version");
+    }
+
+    @Test
+    void loadDeprecatedRawMetadataFalseMapsToEmptyInclude(@TempDir Path tempDir) throws IOException {
+        String name = randomToken();
+        Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
+        Files.writeString(settingsFile, """
+                name: "%s"
+                fs:
+                  raw_metadata: false
+                """.formatted(name));
+
+        StringBuilder warnings = new StringBuilder();
+        FsSettings settings = captureFsWarnings(warnings, () -> FsSettingsLoader.load(settingsFile));
+
+        Assertions.assertThat(settings.getFs().getRawMetadataInclude()).isEmpty();
+        List<String> warningLines = nonBlankLines(warnings.toString());
+        Assertions.assertThat(warningLines).hasSize(1);
+        Assertions.assertThat(warningLines.get(0))
+                .contains("fs.raw_metadata")
+                .contains("fs.raw_metadata_include")
+                .contains("future version");
+    }
+
+    @Test
+    void loadBothRawMetadataAndIncludePrefersInclude(@TempDir Path tempDir) throws IOException {
+        String name = randomToken();
+        boolean legacyFlag = RandomizedTest.randomBoolean(randomizedRandomForTests);
+        String pattern = "^" + randomToken() + ":.*";
+        Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
+        Files.writeString(settingsFile, """
+                name: "%s"
+                fs:
+                  raw_metadata: %s
+                  raw_metadata_include:
+                    - "%s"
+                """.formatted(name, legacyFlag, pattern));
+
+        StringBuilder warnings = new StringBuilder();
+        FsSettings settings = captureFsWarnings(warnings, () -> FsSettingsLoader.load(settingsFile));
+
+        Assertions.assertThat(settings.getFs().getRawMetadataInclude()).containsExactly(pattern);
+        List<String> warningLines = nonBlankLines(warnings.toString());
+        Assertions.assertThat(warningLines).hasSize(1);
+        Assertions.assertThat(warningLines.get(0))
+                .contains("fs.raw_metadata")
+                .contains("fs.raw_metadata_include")
+                .contains("future version")
+                .contains("ignored");
+    }
+
+    @Test
+    void loadBothRawMetadataTrueAndEmptyIncludePrefersEmptyInclude(@TempDir Path tempDir) throws IOException {
+        String name = randomToken();
+        Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
+        Files.writeString(settingsFile, """
+                name: "%s"
+                fs:
+                  raw_metadata: true
+                  raw_metadata_include: []
+                """.formatted(name));
+
+        StringBuilder warnings = new StringBuilder();
+        FsSettings settings = captureFsWarnings(warnings, () -> FsSettingsLoader.load(settingsFile));
+
+        Assertions.assertThat(settings.getFs().getRawMetadataInclude()).isEmpty();
+        List<String> warningLines = nonBlankLines(warnings.toString());
+        Assertions.assertThat(warningLines).hasSize(1);
+        Assertions.assertThat(warningLines.get(0))
+                .contains("fs.raw_metadata")
+                .contains("fs.raw_metadata_include")
+                .contains("future version")
+                .contains("ignored");
+    }
+
+    @Test
+    void loadWithoutRawMetadataDoesNotLogDeprecationWarning(@TempDir Path tempDir) throws IOException {
+        String name = randomToken();
+        String pattern = "^" + randomToken() + ":.*";
+        Path settingsFile = tempDir.resolve(FsSettingsLoader.SETTINGS_YAML);
+        Files.writeString(settingsFile, """
+                name: "%s"
+                fs:
+                  raw_metadata_include:
+                    - "%s"
+                """.formatted(name, pattern));
+
+        StringBuilder defaultWarnings = new StringBuilder();
+        FsSettings defaultSettings = captureFsWarnings(defaultWarnings, FsSettingsLoader::load);
+        Assertions.assertThat(defaultSettings.getFs().getRawMetadataInclude()).isNull();
+        Assertions.assertThat(nonBlankLines(defaultWarnings.toString())).isEmpty();
+
+        StringBuilder includeOnlyWarnings = new StringBuilder();
+        FsSettings includeOnlySettings =
+                captureFsWarnings(includeOnlyWarnings, () -> FsSettingsLoader.load(settingsFile));
+        Assertions.assertThat(includeOnlySettings.getFs().getRawMetadataInclude())
+                .containsExactly(pattern);
+        Assertions.assertThat(nonBlankLines(includeOnlyWarnings.toString())).isEmpty();
+    }
+
+    private static <T> T captureFsWarnings(StringBuilder target, java.util.function.Supplier<T> action) {
+        String appenderName = "fs-deprecation-test-writer";
+        String loggerName = Fs.class.getName();
+        StringWriter writer = new StringWriter();
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        WriterAppender appender = WriterAppender.newBuilder()
+                .setName(appenderName)
+                .setTarget(writer)
+                .setLayout(PatternLayout.newBuilder().withPattern("%p %m%n").build())
+                .build();
+        appender.start();
+        config.addAppender(appender);
+
+        LoggerConfig loggerConfig = config.getLoggerConfig(loggerName);
+        boolean createdLoggerConfig = !loggerName.equals(loggerConfig.getName());
+        Level previousLevel = loggerConfig.getLevel();
+        if (createdLoggerConfig) {
+            loggerConfig = new LoggerConfig(loggerName, Level.WARN, true);
+            config.addLogger(loggerName, loggerConfig);
+        } else {
+            loggerConfig.setLevel(Level.WARN);
+        }
+        loggerConfig.addAppender(appender, Level.WARN, null);
+        ctx.updateLoggers();
+        try {
+            return action.get();
+        } finally {
+            loggerConfig.removeAppender(appenderName);
+            if (createdLoggerConfig) {
+                config.removeLogger(loggerName);
+            } else if (previousLevel != null) {
+                loggerConfig.setLevel(previousLevel);
+            }
+            appender.stop();
+            config.getAppenders().remove(appenderName);
+            ctx.updateLoggers();
+            target.append(writer);
+        }
+    }
+
+    private static List<String> nonBlankLines(String text) {
+        return text.lines().filter(line -> !line.isBlank()).toList();
+    }
+
+    private String randomToken() {
+        return RandomizedTest.randomAsciiLettersOfLengthBetween(randomizedRandomForTests, 6, 12)
+                .toLowerCase(Locale.ROOT);
     }
 }

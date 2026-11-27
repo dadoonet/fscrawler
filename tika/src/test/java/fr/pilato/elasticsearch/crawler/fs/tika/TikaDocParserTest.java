@@ -61,6 +61,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("removal")
 class TikaDocParserTest extends DocParserTestCase {
     private static final Logger logger = LogManager.getLogger();
     private static boolean isOcrAvailable;
@@ -234,16 +235,23 @@ class TikaDocParserTest extends DocParserTestCase {
     }
 
     @Test
-    void rawMetadataIncludeEmptyKeepsFullDump() throws IOException {
+    void rawMetadataIncludeEmptyDisablesRaw() throws IOException {
         FsSettings fsSettings = FsSettingsLoader.load();
         fsSettings.getFs().setRawMetadata(true);
         fsSettings.getFs().setRawMetadataInclude(List.of());
         Doc doc = extractFromFile("issue-163.xml", fsSettings);
 
-        Assertions.assertThat(doc.getMeta().getRaw())
-                .hasSize(5)
-                .containsEntry("Content-Type", "application/xml")
-                .containsEntry("tk:resource-name", "issue-163.xml");
+        Assertions.assertThat(doc.getMeta().getRaw()).isNull();
+    }
+
+    @Test
+    void rawMetadataFalseDisablesRaw() throws IOException {
+        FsSettings fsSettings = FsSettingsLoader.load();
+        fsSettings.getFs().setRawMetadata(true);
+        fsSettings.getFs().setRawMetadata(false);
+        Doc doc = extractFromFile("issue-163.xml", fsSettings);
+
+        Assertions.assertThat(doc.getMeta().getRaw()).isNull();
     }
 
     @Test

@@ -441,20 +441,12 @@ public class TikaDocParser {
 
                     // Add support for more OOTB standard metadata
 
-                    // A non-empty include list enables meta.raw on its own. Null or empty keeps the
-                    // historical raw_metadata=true behavior: copy every Tika name.
                     List<String> rawMetadataInclude = fsSettings.getFs().getRawMetadataInclude();
-                    boolean filterRawMetadata = rawMetadataInclude != null && !rawMetadataInclude.isEmpty();
-                    if (fsSettings.getFs().isRawMetadata() || filterRawMetadata) {
+                    if (rawMetadataInclude != null && !rawMetadataInclude.isEmpty()) {
                         // Compile once per document. A bad pattern fails extraction before any raw entry is stored.
-                        final List<Pattern> includePatterns;
-                        if (filterRawMetadata) {
-                            includePatterns = new ArrayList<>(rawMetadataInclude.size());
-                            for (String include : rawMetadataInclude) {
-                                includePatterns.add(Pattern.compile(include, Pattern.MULTILINE | Pattern.UNIX_LINES));
-                            }
-                        } else {
-                            includePatterns = null;
+                        List<Pattern> includePatterns = new ArrayList<>(rawMetadataInclude.size());
+                        for (String include : rawMetadataInclude) {
+                            includePatterns.add(Pattern.compile(include, Pattern.MULTILINE | Pattern.UNIX_LINES));
                         }
                         Metadata finalMetadata = metadata;
                         FSCrawlerLogger.metadata("Listing all available metadata:");
@@ -474,17 +466,15 @@ public class TikaDocParser {
                                     // https://github.com/dadoonet/fscrawler/issues/256
                                     // Patterns match this stored key (tk:resource-name, pdf:docinfo:title).
                                     String storedName = metadataName.replace('.', ':');
-                                    if (includePatterns != null) {
-                                        boolean included = false;
-                                        for (Pattern pattern : includePatterns) {
-                                            if (pattern.matcher(storedName).find()) {
-                                                included = true;
-                                                break;
-                                            }
+                                    boolean included = false;
+                                    for (Pattern pattern : includePatterns) {
+                                        if (pattern.matcher(storedName).find()) {
+                                            included = true;
+                                            break;
                                         }
-                                        if (!included) {
-                                            return;
-                                        }
+                                    }
+                                    if (!included) {
+                                        return;
                                     }
                                     doc.getMeta().addRaw(storedName, value);
                                 });

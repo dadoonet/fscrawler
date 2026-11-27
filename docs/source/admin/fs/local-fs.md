@@ -21,7 +21,6 @@ Here is a list of Local FS settings (under `fs.` prefix):
 | `fs.index_folders`       | `FSCRAWLER_FS_INDEX_FOLDERS`       | `true`          | [Index folders](#index-folders)                         |
 | `fs.attributes_support`  | `FSCRAWLER_FS_ATTRIBUTES_SUPPORT`  | `false`         | [Adding file attributes](#adding-file-attributes)       |
 | `fs.acl_support`         | `FSCRAWLER_FS_ACL_SUPPORT`         | `false`         | [Collecting ACL metadata](#collecting-acl-metadata)     |
-| `fs.raw_metadata`        | `FSCRAWLER_FS_RAW_METADATA`        | `false`         | [Enabling raw metadata](#enabling-raw-metadata)         |
 | `fs.raw_metadata_include` | `FSCRAWLER_FS_RAW_METADATA_INCLUDE` | `null`          | [Enabling raw metadata](#enabling-raw-metadata)         |
 | `fs.filename_as_id`      | `FSCRAWLER_FS_FILENAME_AS_ID`      | `false`         | {ref}`filename-as-id`                                   |
 | `fs.hash_algorithm`      | `FSCRAWLER_FS_HASH_ALGORITHM`      | `"MD5"`         | {ref}`document-ids`                                     |
@@ -620,33 +619,17 @@ When `acl_support` is disabled, FSCrawler skips resolving ACLs even if
 (enabling-raw-metadata)=
 ## Enabling raw metadata
 
-FSCrawler can extract all found metadata within a `meta.raw` object in addition
-to the standard metadata fields.
-If you want to enable this feature, you can set `raw_metadata` to `true`.
-
-```yaml
-name: "test"
-fs:
-  raw_metadata: true
-```
-
-```{versionchanged} 3.0
-The names of the keys stored in `meta.raw` changed compared to FSCrawler 2.9 because of
-the Apache Tika 4 upgrade. For example, `resourceName` is now `tk:resource-name`, Tika
-internal keys use the `tk:` prefix instead of `X-TIKA:`, ICC keys use `icc:` instead of
-`ICC:`, and many PDF keys now use hyphens (`pdf:pdf-version` instead of `pdf:PDFVersion`).
-See the {ref}`3.0 release notes <release-notes-3.0>` for a summary of the renamed keys.
-```
-
 ```{versionadded} 3.1
 ```
 
-`raw_metadata_include` is a list of regular expressions that selects which metadata
-names are copied into `meta.raw`. Each expression is matched against the stored key,
-after dots have been rewritten as `:`, and a name is kept when any expression matches.
-A non-empty list enables `meta.raw` on its own, so `raw_metadata` can stay `false`.
-`.*` includes every name, the same result as `raw_metadata: true` with no list.
-When the list is omitted or empty, `raw_metadata: true` still copies every Tika name.
+FSCrawler can extract raw metadata into a `meta.raw` object in addition to the
+standard metadata fields. Configure `fs.raw_metadata_include` with a list of
+regular expressions that select which metadata names are copied into `meta.raw`.
+Each expression is matched against the stored key, after dots have been rewritten
+as `:`, and a name is kept when any expression matches.
+
+Omitting `raw_metadata_include` or leaving it empty disables `meta.raw`.
+Use `".*"` to include every metadata name.
 
 ```yaml
 name: "test"
@@ -658,6 +641,23 @@ fs:
 
 An invalid regular expression fails extraction of that document before any `meta.raw`
 entry is stored.
+
+```{note}
+`fs.raw_metadata` is deprecated and will be removed in a future version. Existing
+configurations using `fs.raw_metadata` still work with a deprecation warning:
+`fs.raw_metadata: true` maps to `fs.raw_metadata_include: [".*"]`, and
+`fs.raw_metadata: false` disables raw metadata (empty include). If both
+`fs.raw_metadata` and `fs.raw_metadata_include` are set, `fs.raw_metadata_include`
+takes precedence.
+```
+
+```{versionchanged} 3.0
+The names of the keys stored in `meta.raw` changed compared to FSCrawler 2.9 because of
+the Apache Tika 4 upgrade. For example, `resourceName` is now `tk:resource-name`, Tika
+internal keys use the `tk:` prefix instead of `X-TIKA:`, ICC keys use `icc:` instead of
+`ICC:`, and many PDF keys now use hyphens (`pdf:pdf-version` instead of `pdf:PDFVersion`).
+See the {ref}`3.0 release notes <release-notes-3.0>` for a summary of the renamed keys.
+```
 
 Generated raw metadata depends on the file format itself.
 

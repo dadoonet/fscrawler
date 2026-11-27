@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -30,10 +31,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.annotations.Config;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
+    private static final Logger logger = LogManager.getLogger();
+    private static final List<String> ALL_RAW_METADATA = List.of(".*");
+
     @Config(defaultVal = Defaults.DEFAULT_DIR)
     private String url;
 
@@ -95,12 +100,26 @@ public class Fs {
     @Nullable
     private Percentage indexedChars;
 
-    @Config(defaultVal = "false")
-    private boolean rawMetadata;
-
     @Config
     @Nullable
     private List<String> rawMetadataInclude;
+
+    /**
+     * Tracks deprecated {@code fs.raw_metadata} when configured via {@link FsSettingsLoader} or
+     * {@link #setRawMetadata(boolean)}. Kept separate from Gestalt's field binding so {@link FsSettingsLoader} can
+     * resolve {@code fs.raw_metadata} together with {@code fs.raw_metadata_include} and emit one warning.
+     */
+    @JsonIgnore
+    @Nullable
+    private Boolean legacyRawMetadata;
+
+    @JsonIgnore
+    @Nullable
+    private Boolean rawMetadataIncludeExplicit;
+
+    @JsonIgnore
+    @Nullable
+    private Boolean rawMetadataDeprecationWarned;
 
     @Config
     @Nullable
@@ -259,12 +278,29 @@ public class Fs {
         this.aclSupport = aclSupport;
     }
 
+    /**
+     * Returns whether legacy {@code fs.raw_metadata} was set to {@code true}.
+     *
+     * @return {@code true} if deprecated {@code fs.raw_metadata} was set to {@code true}
+     * @deprecated since 3.1, replaced by {@link #getRawMetadataInclude()} ({@code fs.raw_metadata_include})
+     */
+    @Deprecated(since = "3.1", forRemoval = true)
+    @JsonIgnore
     public boolean isRawMetadata() {
-        return rawMetadata;
+        return Boolean.TRUE.equals(legacyRawMetadata);
     }
 
+    /**
+     * Enables or disables raw metadata extraction.
+     *
+     * @param rawMetadata {@code true} to include all raw metadata (equivalent to {@code [".*"]}), {@code false} to
+     *     disable raw metadata
+     * @deprecated since 3.1, replaced by {@link #setRawMetadataInclude(List)} ({@code fs.raw_metadata_include})
+     */
+    @Deprecated(since = "3.1", forRemoval = true)
     public void setRawMetadata(boolean rawMetadata) {
-        this.rawMetadata = rawMetadata;
+        this.legacyRawMetadata = rawMetadata;
+        applyDeprecatedRawMetadata();
     }
 
     public List<String> getRawMetadataInclude() {
@@ -273,6 +309,54 @@ public class Fs {
 
     public void setRawMetadataInclude(List<String> rawMetadataInclude) {
         this.rawMetadataInclude = rawMetadataInclude;
+        this.rawMetadataIncludeExplicit = rawMetadataInclude != null ? Boolean.TRUE : null;
+    }
+
+    /**
+     * Normalizes deprecated {@code fs.raw_metadata} into {@code fs.raw_metadata_include} after loading settings.
+     *
+     * @param legacyRawMetadata the configured value of {@code fs.raw_metadata}, or {@code null} if unset
+     */
+    void normalizeRawMetadata(@Nullable Boolean legacyRawMetadata) {
+        if (rawMetadataInclude != null) {
+            rawMetadataIncludeExplicit = Boolean.TRUE;
+        }
+        if (legacyRawMetadata != null) {
+            this.legacyRawMetadata = legacyRawMetadata;
+            applyDeprecatedRawMetadata();
+        }
+    }
+
+    private void applyDeprecatedRawMetadata() {
+        if (legacyRawMetadata == null) {
+            return;
+        }
+        if (Boolean.TRUE.equals(rawMetadataIncludeExplicit)) {
+            warnDeprecatedRawMetadataOnce(
+                    "Setting fs.raw_metadata is deprecated and will be removed in a future version. "
+                            + "Please use fs.raw_metadata_include instead. "
+                            + "The value from fs.raw_metadata is ignored because fs.raw_metadata_include is set.");
+            return;
+        }
+        if (legacyRawMetadata) {
+            rawMetadataInclude = ALL_RAW_METADATA;
+            warnDeprecatedRawMetadataOnce(
+                    "Setting fs.raw_metadata is deprecated and will be removed in a future version. "
+                            + "Please use fs.raw_metadata_include: [\".*\"] instead.");
+        } else {
+            rawMetadataInclude = List.of();
+            warnDeprecatedRawMetadataOnce(
+                    "Setting fs.raw_metadata is deprecated and will be removed in a future version. "
+                            + "Please use fs.raw_metadata_include instead (omit it or leave it empty to disable raw"
+                            + " metadata).");
+        }
+    }
+
+    private void warnDeprecatedRawMetadataOnce(String message) {
+        if (!Boolean.TRUE.equals(rawMetadataDeprecationWarned)) {
+            rawMetadataDeprecationWarned = Boolean.TRUE;
+            logger.warn(message);
+        }
     }
 
     public String getChecksum() {
@@ -453,7 +537,7 @@ public class Fs {
                 && indexContent == fs.indexContent
                 && attributesSupport == fs.attributesSupport
                 && aclSupport == fs.aclSupport
-                && rawMetadata == fs.rawMetadata
+                && Objects.equals(legacyRawMetadata, fs.legacyRawMetadata)
                 && Objects.equals(rawMetadataInclude, fs.rawMetadataInclude)
                 && xmlSupport == fs.xmlSupport
                 && indexFolders == fs.indexFolders
@@ -494,7 +578,7 @@ public class Fs {
                 indexedChars,
                 attributesSupport,
                 aclSupport,
-                rawMetadata,
+                legacyRawMetadata,
                 rawMetadataInclude,
                 xmlSupport,
                 checksum,
@@ -528,7 +612,7 @@ public class Fs {
                 + indexedChars + ", attributesSupport="
                 + attributesSupport + ", aclSupport="
                 + aclSupport + ", rawMetadata="
-                + rawMetadata + ", rawMetadataInclude="
+                + legacyRawMetadata + ", rawMetadataInclude="
                 + rawMetadataInclude + ", xmlSupport="
                 + xmlSupport + ", checksum='"
                 + checksum + '\'' + ", hashAlgorithm='"

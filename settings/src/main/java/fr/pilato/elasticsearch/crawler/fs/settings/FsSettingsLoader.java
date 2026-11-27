@@ -205,6 +205,8 @@ public class FsSettingsLoader extends MetaFileHandler {
         Map<String, Object> providers = loadNestedMap(configFiles, "fs", "providers");
         overlayProviderScalars(providers, gestalt, fs.getProvider());
         fs.setProviders(providers.isEmpty() ? null : providers);
+        fs.normalizeRawMetadata(
+                gestalt.getConfigOptional("fs.raw_metadata", Boolean.class).orElse(null));
 
         return fs;
     }
