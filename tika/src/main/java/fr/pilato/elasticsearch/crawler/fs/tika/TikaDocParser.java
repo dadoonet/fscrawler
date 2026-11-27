@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.language.detect.LanguageResult;
@@ -440,7 +441,13 @@ public class TikaDocParser {
 
                     // Add support for more OOTB standard metadata
 
-                    if (fsSettings.getFs().isRawMetadata()) {
+                    List<String> rawMetadataInclude = fsSettings.getFs().getRawMetadataInclude();
+                    if (rawMetadataInclude != null && !rawMetadataInclude.isEmpty()) {
+                        // Compile once per document. A bad pattern fails extraction before any raw entry is stored.
+                        List<Pattern> includePatterns = new ArrayList<>(rawMetadataInclude.size());
+                        for (String include : rawMetadataInclude) {
+                            includePatterns.add(Pattern.compile(include, Pattern.MULTILINE | Pattern.UNIX_LINES));
+                        }
                         Metadata finalMetadata = metadata;
                         FSCrawlerLogger.metadata("Listing all available metadata:");
                         FSCrawlerLogger.metadata("  Assertions.assertThat(raw)");
@@ -457,7 +464,19 @@ public class TikaDocParser {
 
                                     // We need to remove dots in field names if any. See
                                     // https://github.com/dadoonet/fscrawler/issues/256
-                                    doc.getMeta().addRaw(metadataName.replace('.', ':'), value);
+                                    // Patterns match this stored key (tk:resource-name, pdf:docinfo:title).
+                                    String storedName = metadataName.replace('.', ':');
+                                    boolean included = false;
+                                    for (Pattern pattern : includePatterns) {
+                                        if (pattern.matcher(storedName).find()) {
+                                            included = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!included) {
+                                        return;
+                                    }
+                                    doc.getMeta().addRaw(storedName, value);
                                 });
                         FSCrawlerLogger.metadata(";");
                     }

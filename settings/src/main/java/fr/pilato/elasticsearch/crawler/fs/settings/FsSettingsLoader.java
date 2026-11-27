@@ -36,6 +36,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.builder.GestaltBuilder;
+import org.github.gestalt.config.reflect.TypeCapture;
 import org.github.gestalt.config.source.ClassPathConfigSourceBuilder;
 import org.github.gestalt.config.source.EnvironmentConfigSourceBuilder;
 import org.github.gestalt.config.source.FileConfigSourceBuilder;
@@ -205,8 +206,23 @@ public class FsSettingsLoader extends MetaFileHandler {
         Map<String, Object> providers = loadNestedMap(configFiles, "fs", "providers");
         overlayProviderScalars(providers, gestalt, fs.getProvider());
         fs.setProviders(providers.isEmpty() ? null : providers);
+        checkRawMetadata(gestalt);
 
         return fs;
+    }
+
+    /**
+     * Rejects a job that sets both the deprecated {@code fs.raw_metadata} and {@code fs.raw_metadata_include}. When
+     * only {@code fs.raw_metadata} is set, Gestalt has already mapped it through {@link Fs#setRawMetadata(boolean)}.
+     */
+    private static void checkRawMetadata(Gestalt gestalt) {
+        if (gestalt.getConfigOptional("fs.raw_metadata", Boolean.class).isPresent()
+                && gestalt.getConfigOptional("fs.raw_metadata_include", new TypeCapture<List<String>>() {})
+                        .isPresent()) {
+            throw new FsCrawlerIllegalConfigurationException(
+                    "fs.raw_metadata and fs.raw_metadata_include can not be set together. "
+                            + "fs.raw_metadata is deprecated: remove it and keep fs.raw_metadata_include.");
+        }
     }
 
     /**

@@ -29,7 +29,10 @@
     "lang_detect": true,
     "store_source": true,
     "indexed_chars": "10000.0",
-    "raw_metadata": true,
+    "raw_metadata_include": [
+      "^pdf:.*",
+      "dc:title"
+    ],
     "checksum": "MD5",
     "index_folders": false,
     "tika_config_path": "/path/to/tika-config.xml",

@@ -20,6 +20,7 @@
  */
 package fr.pilato.elasticsearch.crawler.fs.settings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.pilato.elasticsearch.crawler.fs.framework.ByteSizeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Percentage;
 import fr.pilato.elasticsearch.crawler.fs.framework.SignTool;
@@ -30,10 +31,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.annotations.Config;
 
 @SuppressWarnings("SameParameterValue")
 public class Fs {
+    private static final Logger logger = LogManager.getLogger();
+    private static final List<String> ALL_RAW_METADATA = List.of(".*");
+
     @Config(defaultVal = Defaults.DEFAULT_DIR)
     private String url;
 
@@ -95,8 +100,19 @@ public class Fs {
     @Nullable
     private Percentage indexedChars;
 
-    @Config(defaultVal = "false")
-    private boolean rawMetadata;
+    @Config
+    @Nullable
+    private List<String> rawMetadataInclude;
+
+    /**
+     * Deprecated {@code fs.raw_metadata} flag. Setting it maps to {@link #rawMetadataInclude}.
+     *
+     * @deprecated since 3.1, replaced by {@link #rawMetadataInclude} ({@code fs.raw_metadata_include})
+     */
+    @Deprecated(since = "3.1", forRemoval = true)
+    @JsonIgnore
+    @Nullable
+    private Boolean rawMetadata;
 
     @Config
     @Nullable
@@ -255,12 +271,40 @@ public class Fs {
         this.aclSupport = aclSupport;
     }
 
+    /**
+     * Returns whether legacy {@code fs.raw_metadata} was set to {@code true}.
+     *
+     * @return {@code true} if deprecated {@code fs.raw_metadata} was set to {@code true}
+     * @deprecated since 3.1, replaced by {@link #getRawMetadataInclude()} ({@code fs.raw_metadata_include})
+     */
+    @Deprecated(since = "3.1", forRemoval = true)
+    @JsonIgnore
     public boolean isRawMetadata() {
-        return rawMetadata;
+        return Boolean.TRUE.equals(rawMetadata);
     }
 
+    /**
+     * Enables or disables raw metadata extraction.
+     *
+     * @param rawMetadata {@code true} to include all raw metadata (equivalent to {@code [".*"]}), {@code false} to
+     *     disable raw metadata
+     * @deprecated since 3.1, replaced by {@link #setRawMetadataInclude(List)} ({@code fs.raw_metadata_include})
+     */
+    @Deprecated(since = "3.1", forRemoval = true)
     public void setRawMetadata(boolean rawMetadata) {
+        logger.warn("Setting fs.raw_metadata is deprecated and will be removed in a future version. "
+                + "Please use fs.raw_metadata_include instead ([\".*\"] to keep all raw metadata, "
+                + "omit it to disable raw metadata).");
         this.rawMetadata = rawMetadata;
+        this.rawMetadataInclude = rawMetadata ? ALL_RAW_METADATA : List.of();
+    }
+
+    public List<String> getRawMetadataInclude() {
+        return rawMetadataInclude;
+    }
+
+    public void setRawMetadataInclude(List<String> rawMetadataInclude) {
+        this.rawMetadataInclude = rawMetadataInclude;
     }
 
     public String getChecksum() {
@@ -441,7 +485,8 @@ public class Fs {
                 && indexContent == fs.indexContent
                 && attributesSupport == fs.attributesSupport
                 && aclSupport == fs.aclSupport
-                && rawMetadata == fs.rawMetadata
+                && Objects.equals(rawMetadata, fs.rawMetadata)
+                && Objects.equals(rawMetadataInclude, fs.rawMetadataInclude)
                 && xmlSupport == fs.xmlSupport
                 && indexFolders == fs.indexFolders
                 && langDetect == fs.langDetect
@@ -482,6 +527,7 @@ public class Fs {
                 attributesSupport,
                 aclSupport,
                 rawMetadata,
+                rawMetadataInclude,
                 xmlSupport,
                 checksum,
                 hashAlgorithm,
@@ -514,7 +560,8 @@ public class Fs {
                 + indexedChars + ", attributesSupport="
                 + attributesSupport + ", aclSupport="
                 + aclSupport + ", rawMetadata="
-                + rawMetadata + ", xmlSupport="
+                + rawMetadata + ", rawMetadataInclude="
+                + rawMetadataInclude + ", xmlSupport="
                 + xmlSupport + ", checksum='"
                 + checksum + '\'' + ", hashAlgorithm='"
                 + hashAlgorithm + '\'' + ", indexFolders="

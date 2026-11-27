@@ -21,7 +21,7 @@ Here is a list of Local FS settings (under `fs.` prefix):
 | `fs.index_folders`       | `FSCRAWLER_FS_INDEX_FOLDERS`       | `true`          | [Index folders](#index-folders)                         |
 | `fs.attributes_support`  | `FSCRAWLER_FS_ATTRIBUTES_SUPPORT`  | `false`         | [Adding file attributes](#adding-file-attributes)       |
 | `fs.acl_support`         | `FSCRAWLER_FS_ACL_SUPPORT`         | `false`         | [Collecting ACL metadata](#collecting-acl-metadata)     |
-| `fs.raw_metadata`        | `FSCRAWLER_FS_RAW_METADATA`        | `false`         | [Enabling raw metadata](#enabling-raw-metadata)         |
+| `fs.raw_metadata_include` | `FSCRAWLER_FS_RAW_METADATA_INCLUDE` | `null`          | [Enabling raw metadata](#enabling-raw-metadata)         |
 | `fs.filename_as_id`      | `FSCRAWLER_FS_FILENAME_AS_ID`      | `false`         | {ref}`filename-as-id`                                   |
 | `fs.hash_algorithm`      | `FSCRAWLER_FS_HASH_ALGORITHM`      | `"MD5"`         | {ref}`document-ids`                                     |
 | `fs.add_filesize`        | `FSCRAWLER_FS_ADD_FILESIZE`        | `true`          | [Disabling file size field](#disabling-file-size-field) |
@@ -619,14 +619,36 @@ When `acl_support` is disabled, FSCrawler skips resolving ACLs even if
 (enabling-raw-metadata)=
 ## Enabling raw metadata
 
-FSCrawler can extract all found metadata within a `meta.raw` object in addition
-to the standard metadata fields.
-If you want to enable this feature, you can set `raw_metadata` to `true`.
+```{versionadded} 3.1
+```
+
+FSCrawler can extract raw metadata into a `meta.raw` object in addition to the
+standard metadata fields. Configure `fs.raw_metadata_include` with a list of
+regular expressions that select which metadata names are copied into `meta.raw`.
+Each expression is matched against the stored key, after dots have been rewritten
+as `:`, and a name is kept when any expression matches.
+
+Omitting `raw_metadata_include` or leaving it empty disables `meta.raw`.
+Use `".*"` to include every metadata name.
 
 ```yaml
 name: "test"
 fs:
-  raw_metadata: true
+  raw_metadata_include:
+    - "^pdf:.*"
+    - "dc:title"
+```
+
+An invalid regular expression fails extraction of that document before any `meta.raw`
+entry is stored.
+
+```{note}
+`fs.raw_metadata` is deprecated and will be removed in a future version. Existing
+configurations using `fs.raw_metadata` still work with a deprecation warning:
+`fs.raw_metadata: true` maps to `fs.raw_metadata_include: [".*"]`, and
+`fs.raw_metadata: false` disables raw metadata (empty include). Setting both
+`fs.raw_metadata` and `fs.raw_metadata_include` is rejected: remove `fs.raw_metadata`
+and keep `fs.raw_metadata_include`.
 ```
 
 ```{versionchanged} 3.0
