@@ -1774,48 +1774,53 @@ public class ElasticsearchClient implements IElasticsearchClient {
     @SafeVarargs
     private String httpCall(String method, String localPath, Object data, Map.Entry<String, Object>... params)
             throws ElasticsearchClientException {
-        String node = getNode();
         String path = localPath;
         if (settings.getElasticsearch().getPathPrefix() != null) {
             path = settings.getElasticsearch().getPathPrefix() + PATH_DELIMITER + localPath;
         }
-        logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);
-        try {
-            Invocation.Builder callBuilder = prepareHttpCall(node, path, params);
-            return invokeHttp(callBuilder, method, node, path, data);
-        } catch (WebApplicationException e) {
-            // Don't read the entity here — executeWithRetry / callers need it for error details.
-            if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
-                logger.debug(
-                        "Server-side HTTP error on {} {}/{}: {}",
-                        method,
-                        node,
-                        path == null ? "" : path,
-                        e.getResponse().getStatus());
-            } else {
-                logger.trace(
-                        "Error while running {} {}/{}: HTTP {}",
-                        method,
-                        node,
-                        path == null ? "" : path,
-                        e.getResponse().getStatus());
-            }
-            throw e;
-        } catch (ProcessingException e) {
-            if (e.getCause() instanceof ConnectException && initialHosts.size() > 1) {
-                // Test with non-existing nodes.
-                logger.warn("We can not connect to {}. Let's try to find another one if available.", node);
-                // Remove the node from the list and try again
-                removeNode();
-                return httpCall(method, path, data, params);
-            } else {
-                throw new ElasticsearchClientException(
-                        "Can not execute " + method + " " + node
-                                + "/" + (path == null ? "" : path) + " : "
-                                + e.getCause().getMessage(),
-                        e);
+        ProcessingException lastFailure = null;
+        // One request has a fixed budget, even if another request reloads the host list.
+        for (int attempt = 0; attempt < initialHosts.size(); attempt++) {
+            String node = getNode();
+            logger.trace("Calling {} {}/{} with params {}", method, node, path == null ? "" : path, params);
+            try {
+                Invocation.Builder callBuilder = prepareHttpCall(node, path, params);
+                return invokeHttp(callBuilder, method, node, path, data);
+            } catch (WebApplicationException e) {
+                // Don't read the entity here — executeWithRetry / callers need it for error details.
+                if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.SERVER_ERROR) {
+                    logger.debug(
+                            "Server-side HTTP error on {} {}/{}: {}",
+                            method,
+                            node,
+                            path == null ? "" : path,
+                            e.getResponse().getStatus());
+                } else {
+                    logger.trace(
+                            "Error while running {} {}/{}: HTTP {}",
+                            method,
+                            node,
+                            path == null ? "" : path,
+                            e.getResponse().getStatus());
+                }
+                throw e;
+            } catch (ProcessingException e) {
+                if (e.getCause() instanceof ConnectException && initialHosts.size() > 1) {
+                    logger.warn("We can not connect to {}. Trying another configured node.", node);
+                    removeNode(node);
+                    lastFailure = e;
+                } else {
+                    throw new ElasticsearchClientException(
+                            "Can not execute " + method + " " + node + "/" + (path == null ? "" : path) + " : "
+                                    + e.getMessage(),
+                            e);
+                }
             }
         }
+        throw new ElasticsearchClientException(
+                "All nodes are failing. You need to check your configuration and "
+                        + "your Elasticsearch cluster which should be running at " + initialHosts,
+                lastFailure);
     }
 
     private String invokeHttp(Invocation.Builder callBuilder, String method, String node, String path, Object data) {
@@ -1877,9 +1882,11 @@ public class ElasticsearchClient implements IElasticsearchClient {
         }
     }
 
-    private synchronized void removeNode() {
-        logger.debug("Removing node {}.", hosts.get(currentNode));
-        hosts.remove(currentNode);
+    private synchronized void removeNode(String failedNode) {
+        logger.debug("Removing node {}.", failedNode);
+        if (hosts.remove(failedNode)) {
+            currentNode = -1;
+        }
         logger.trace("List of remaining nodes {}.", hosts);
     }
 
