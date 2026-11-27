@@ -106,12 +106,15 @@ public class Fs {
 
     /**
      * Tracks deprecated {@code fs.raw_metadata} when configured via {@link FsSettingsLoader} or
-     * {@link #setRawMetadata(boolean)}. Kept separate from Gestalt's field binding so {@link FsSettingsLoader} can
-     * resolve {@code fs.raw_metadata} together with {@code fs.raw_metadata_include} and emit one warning.
+     * {@link #setRawMetadata(boolean)}. {@link FsSettingsLoader} resolves {@code fs.raw_metadata} together with
+     * {@code fs.raw_metadata_include} through {@link #normalizeRawMetadata(Boolean)} and emits one warning.
+     *
+     * @deprecated since 3.1, replaced by {@link #rawMetadataInclude} ({@code fs.raw_metadata_include})
      */
+    @Deprecated(since = "3.1", forRemoval = true)
     @JsonIgnore
     @Nullable
-    private Boolean legacyRawMetadata;
+    private Boolean rawMetadata;
 
     @JsonIgnore
     @Nullable
@@ -287,7 +290,7 @@ public class Fs {
     @Deprecated(since = "3.1", forRemoval = true)
     @JsonIgnore
     public boolean isRawMetadata() {
-        return Boolean.TRUE.equals(legacyRawMetadata);
+        return Boolean.TRUE.equals(rawMetadata);
     }
 
     /**
@@ -299,7 +302,7 @@ public class Fs {
      */
     @Deprecated(since = "3.1", forRemoval = true)
     public void setRawMetadata(boolean rawMetadata) {
-        this.legacyRawMetadata = rawMetadata;
+        this.rawMetadata = rawMetadata;
         applyDeprecatedRawMetadata();
     }
 
@@ -315,20 +318,20 @@ public class Fs {
     /**
      * Normalizes deprecated {@code fs.raw_metadata} into {@code fs.raw_metadata_include} after loading settings.
      *
-     * @param legacyRawMetadata the configured value of {@code fs.raw_metadata}, or {@code null} if unset
+     * @param rawMetadata the configured value of {@code fs.raw_metadata}, or {@code null} if unset
      */
-    void normalizeRawMetadata(@Nullable Boolean legacyRawMetadata) {
+    void normalizeRawMetadata(@Nullable Boolean rawMetadata) {
         if (rawMetadataInclude != null) {
             rawMetadataIncludeExplicit = Boolean.TRUE;
         }
-        if (legacyRawMetadata != null) {
-            this.legacyRawMetadata = legacyRawMetadata;
+        if (rawMetadata != null) {
+            this.rawMetadata = rawMetadata;
             applyDeprecatedRawMetadata();
         }
     }
 
     private void applyDeprecatedRawMetadata() {
-        if (legacyRawMetadata == null) {
+        if (rawMetadata == null) {
             return;
         }
         if (Boolean.TRUE.equals(rawMetadataIncludeExplicit)) {
@@ -338,7 +341,7 @@ public class Fs {
                             + "The value from fs.raw_metadata is ignored because fs.raw_metadata_include is set.");
             return;
         }
-        if (legacyRawMetadata) {
+        if (rawMetadata) {
             rawMetadataInclude = ALL_RAW_METADATA;
             warnDeprecatedRawMetadataOnce(
                     "Setting fs.raw_metadata is deprecated and will be removed in a future version. "
@@ -537,7 +540,7 @@ public class Fs {
                 && indexContent == fs.indexContent
                 && attributesSupport == fs.attributesSupport
                 && aclSupport == fs.aclSupport
-                && Objects.equals(legacyRawMetadata, fs.legacyRawMetadata)
+                && Objects.equals(rawMetadata, fs.rawMetadata)
                 && Objects.equals(rawMetadataInclude, fs.rawMetadataInclude)
                 && xmlSupport == fs.xmlSupport
                 && indexFolders == fs.indexFolders
@@ -578,7 +581,7 @@ public class Fs {
                 indexedChars,
                 attributesSupport,
                 aclSupport,
-                legacyRawMetadata,
+                rawMetadata,
                 rawMetadataInclude,
                 xmlSupport,
                 checksum,
@@ -612,7 +615,7 @@ public class Fs {
                 + indexedChars + ", attributesSupport="
                 + attributesSupport + ", aclSupport="
                 + aclSupport + ", rawMetadata="
-                + legacyRawMetadata + ", rawMetadataInclude="
+                + rawMetadata + ", rawMetadataInclude="
                 + rawMetadataInclude + ", xmlSupport="
                 + xmlSupport + ", checksum='"
                 + checksum + '\'' + ", hashAlgorithm='"
