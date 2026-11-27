@@ -226,7 +226,8 @@ public class FsCrawlerCli {
      * @throws IOException In case of IO problem
      */
     static void createJob(String jobName, Path configDir) throws IOException {
-        Path configJobDir = configDir.resolve(jobName);
+        Path configJobDir =
+                fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler.resolveJobDirectory(configDir, jobName);
         Files.createDirectories(configJobDir);
         Path configFile = configJobDir.resolve(FsSettingsLoader.SETTINGS_YAML);
 

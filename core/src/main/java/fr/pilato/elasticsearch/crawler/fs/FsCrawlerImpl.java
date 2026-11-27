@@ -23,6 +23,7 @@ package fr.pilato.elasticsearch.crawler.fs;
 import fr.pilato.elasticsearch.crawler.fs.beans.FsCrawlerCheckpointFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerIllegalConfigurationException;
 import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.framework.MetaFileHandler;
 import fr.pilato.elasticsearch.crawler.fs.kibana.IKibanaClient;
 import fr.pilato.elasticsearch.crawler.fs.kibana.KibanaClientException;
 import fr.pilato.elasticsearch.crawler.fs.service.FsCrawlerDocumentService;
@@ -65,6 +66,12 @@ public class FsCrawlerImpl implements AutoCloseable {
     private final Thread fsCrawlerThread;
 
     public FsCrawlerImpl(Path config, FsSettings settings, Integer loop, boolean rest) {
+        final Path jobSettingsFolder;
+        try {
+            jobSettingsFolder = MetaFileHandler.resolveJobDirectory(config, settings.getName());
+        } catch (IOException e) {
+            throw new FsCrawlerIllegalConfigurationException("Invalid job directory", e);
+        }
         FsCrawlerUtil.createDirIfMissing(config);
 
         this.settings = settings;
@@ -88,7 +95,6 @@ public class FsCrawlerImpl implements AutoCloseable {
         }
 
         // Generate the directory where we write status and other files
-        Path jobSettingsFolder = config.resolve(settings.getName());
         FsCrawlerUtil.createDirIfMissing(jobSettingsFolder);
 
         // Migrate the old status file to the new checkpoint file if needed

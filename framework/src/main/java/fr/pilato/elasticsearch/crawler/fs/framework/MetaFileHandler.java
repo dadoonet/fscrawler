@@ -22,6 +22,7 @@ package fr.pilato.elasticsearch.crawler.fs.framework;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.logging.log4j.LogManager;
@@ -39,6 +40,41 @@ public class MetaFileHandler {
         this.root = root;
     }
 
+    /** Resolve a job inside the configuration root. The root must be trusted against concurrent local mutation. */
+    public static Path resolveJobDirectory(Path root, String jobName) throws IOException {
+        if (jobName == null
+                || jobName.isBlank()
+                || jobName.equals(".")
+                || jobName.equals("..")
+                || jobName.indexOf('/') >= 0
+                || jobName.indexOf('\\') >= 0
+                || jobName.indexOf(':') >= 0) {
+            throw new IOException("Invalid job name: expected a single directory name");
+        }
+        try {
+            Path base = root.toAbsolutePath().normalize();
+            Path directory = base.resolve(jobName).normalize();
+            if (!directory.startsWith(base)
+                    || Files.isSymbolicLink(directory)
+                    || (Files.exists(directory)
+                            && !directory.toRealPath().equals(base.toRealPath().resolve(jobName)))) {
+                throw new IOException("Job directory escapes configuration root");
+            }
+            return directory;
+        } catch (InvalidPathException e) {
+            throw new IOException("Invalid job directory", e);
+        }
+    }
+
+    private Path metadataFile(String subdir, String filename) throws IOException {
+        Path directory = subdir == null ? root.toAbsolutePath().normalize() : resolveJobDirectory(root, subdir);
+        Path file = directory.resolve(filename);
+        if (Files.isSymbolicLink(file)) {
+            throw new IOException("Metadata file must not be a symbolic link");
+        }
+        return file;
+    }
+
     /**
      * Read a file in ~/.fscrawler/{subdir} dir
      *
@@ -48,12 +84,9 @@ public class MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     protected String readFile(String subdir, String filename) throws IOException {
-        Path dir = root;
-        if (subdir != null) {
-            dir = dir.resolve(subdir);
-        }
-        logger.trace("Reading file {} from {}", filename, dir);
-        return Files.readString(dir.resolve(filename));
+        Path file = metadataFile(subdir, filename);
+        logger.trace("Reading metadata file {}", file);
+        return Files.readString(file);
     }
 
     /**
@@ -65,13 +98,12 @@ public class MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     protected void writeFile(String subdir, String filename, String content) throws IOException {
-        Path dir = root;
+        Path file = metadataFile(subdir, filename);
         if (subdir != null) {
-            dir = dir.resolve(subdir);
-            Files.createDirectories(dir);
+            Files.createDirectories(file.getParent());
         }
-        logger.trace("Writing file {} to {}", filename, dir);
-        Files.writeString(dir.resolve(filename), content);
+        logger.trace("Writing metadata file {}", file);
+        Files.writeString(file, content);
     }
 
     /**
@@ -82,11 +114,8 @@ public class MetaFileHandler {
      * @throws IOException in case of error while reading
      */
     protected void removeFile(String subdir, String filename) throws IOException {
-        Path dir = root;
-        if (subdir != null) {
-            dir = dir.resolve(subdir);
-        }
-        logger.trace("Removing file {} from {} if exists", filename, dir);
-        Files.deleteIfExists(dir.resolve(filename));
+        Path file = metadataFile(subdir, filename);
+        logger.trace("Removing metadata file {} if exists", file);
+        Files.deleteIfExists(file);
     }
 }
