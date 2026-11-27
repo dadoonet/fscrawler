@@ -41,17 +41,26 @@ public class ElasticsearchBulkResponse extends FsCrawlerBulkResponse<Elasticsear
         DocumentContext document = JsonUtil.parseJsonAsDocumentContext(response);
         List<Map<String, Object>> responseItems = document.read("$.items");
         for (Map<String, Object> responseItem : responseItems) {
+            var entry = responseItem.entrySet().iterator().next();
             @SuppressWarnings("unchecked")
-            Map<String, Object> jsonItemResponse = (Map<String, Object>)
-                    responseItem.entrySet().iterator().next().getValue();
+            Map<String, Object> jsonItemResponse = (Map<String, Object>) entry.getValue();
             String index = (String) jsonItemResponse.get("_index");
             String id = (String) jsonItemResponse.get("_id");
             BulkItemResponse<ElasticsearchOperation> itemResponse = new BulkItemResponse<>();
-            itemResponse.setOperation(new ElasticsearchIndexOperation(index, id, null, null));
+            itemResponse.setOperation(
+                    switch (entry.getKey()) {
+                        case "create" -> new ElasticsearchCreateOperation(index, id, null, null);
+                        case "delete" -> new ElasticsearchDeleteOperation(index, id);
+                        default -> new ElasticsearchIndexOperation(index, id, null, null);
+                    });
+            if (jsonItemResponse.get("status") instanceof Number status) {
+                itemResponse.setStatus(status.intValue());
+            }
             @SuppressWarnings("unchecked")
             Map<String, Object> error = (Map<String, Object>) jsonItemResponse.get("error");
             if (error != null) {
                 String errorMessage = (String) error.get("reason");
+                itemResponse.setFailureType((String) error.get("type"));
                 if (!"version_conflict_engine_exception".equals(error.get("type"))) {
                     itemResponse.setFailureMessage(errorMessage);
                     itemResponse.setFailed(true);

@@ -73,6 +73,8 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
         private boolean failed;
         private O operation;
         private String failureMessage;
+        private String failureType;
+        private Integer status;
 
         public boolean isFailed() {
             return failed;
@@ -80,6 +82,23 @@ public abstract class FsCrawlerBulkResponse<O extends FsCrawlerOperation<O>> {
 
         public O getOperation() {
             return operation;
+        }
+
+        /** Structured error information when supplied by the backend. */
+        public String getFailureType() {
+            return failureType;
+        }
+
+        public void setFailureType(String failureType) {
+            this.failureType = failureType;
+        }
+
+        public Integer getStatus() {
+            return status;
+        }
+
+        public void setStatus(Integer status) {
+            this.status = status;
         }
 
         public String getFailureMessage() {

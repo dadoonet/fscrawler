@@ -30,6 +30,7 @@ import fr.pilato.elasticsearch.crawler.fs.framework.JsonUtil;
 import fr.pilato.elasticsearch.crawler.fs.framework.TimeValue;
 import fr.pilato.elasticsearch.crawler.fs.framework.Version;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkProcessor;
+import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerBulkResponse;
 import fr.pilato.elasticsearch.crawler.fs.framework.bulk.FsCrawlerRetryBulkProcessorListener;
 import fr.pilato.elasticsearch.crawler.fs.settings.BulkOperation;
 import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
@@ -152,7 +153,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     private FsCrawlerBulkProcessor<ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse>
             bulkProcessor = null;
     /**
-     * Set when a whole {@code _bulk} HTTP call fails after retries (429/5xx). Observed by
+     * Set for terminal item failures or whole {@code _bulk} request failures. Observed by
      * {@link #ensureBulkSucceeded()} (without clearing) and cleared by {@link #clearFatalBulkFailure()}.
      */
     private final AtomicReference<Exception> fatalBulkFailure = new AtomicReference<>();
@@ -331,7 +332,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
      */
     protected void initBulkProcessor() {
         bulkProcessor = new FsCrawlerBulkProcessor.Builder<>(
-                        new ElasticsearchEngine(this), new FailOnHttpBulkErrorListener(), ElasticsearchBulkRequest::new)
+                        new ElasticsearchEngine(this), new FailOnBulkErrorListener(), ElasticsearchBulkRequest::new)
                 .setBulkActions(settings.getElasticsearch().getBulkSize())
                 .setFlushInterval(settings.getElasticsearch().getFlushInterval())
                 .setByteSize(settings.getElasticsearch().getByteSize())
@@ -339,15 +340,15 @@ public class ElasticsearchClient implements IElasticsearchClient {
     }
 
     /**
-     * Retries item-level {@code es_rejected_execution_exception} and records whole-request HTTP failures (after
-     * retries) so {@link #ensureBulkSucceeded()} can fail the crawl/run.
+     * Retries eligible items and records terminal item failures and whole-request HTTP failures so
+     * {@link #ensureBulkSucceeded()} can fail the crawl/run.
      */
-    private final class FailOnHttpBulkErrorListener
+    private final class FailOnBulkErrorListener
             extends FsCrawlerRetryBulkProcessorListener<
                     ElasticsearchOperation, ElasticsearchBulkRequest, ElasticsearchBulkResponse> {
 
-        private FailOnHttpBulkErrorListener() {
-            super("es_rejected_execution_exception");
+        private FailOnBulkErrorListener() {
+            super(retryMaxDuration, retryInitialDelay, retryMaxDelay, "es_rejected_execution_exception");
         }
 
         @Override
@@ -379,6 +380,22 @@ public class ElasticsearchClient implements IElasticsearchClient {
                     ? e
                     : new ElasticsearchClientException("Bulk request failed", failure);
             recordFatalBulkFailure(asException);
+        }
+
+        @Override
+        protected void onTerminalItemFailure(
+                long executionId,
+                ElasticsearchBulkRequest request,
+                FsCrawlerBulkResponse.BulkItemResponse<ElasticsearchOperation> item,
+                Exception retryFailure) {
+            String detail = "Bulk item failed: " + item.getOperation()
+                    + ", status=" + item.getStatus()
+                    + ", type=" + item.getFailureType()
+                    + ", reason=" + item.getFailureMessage();
+            if (retryFailure != null) {
+                detail += "; retry could not be queued: " + retryFailure.getMessage();
+            }
+            recordFatalBulkFailure(new ElasticsearchClientException(detail, retryFailure));
         }
 
         @Override
@@ -1495,7 +1512,7 @@ public class ElasticsearchClient implements IElasticsearchClient {
     public void ensureBulkSucceeded() throws ElasticsearchClientException {
         Exception failure = fatalBulkFailure.get();
         if (failure != null) {
-            throw new ElasticsearchClientException("Bulk indexing failed after retries", failure);
+            throw new ElasticsearchClientException("Bulk indexing failed: " + failure.getMessage(), failure);
         }
     }
 
@@ -1509,8 +1526,8 @@ public class ElasticsearchClient implements IElasticsearchClient {
         if (bulkFailureGeneration.get() != generation) {
             Exception failure = fatalBulkFailure.get();
             throw new ElasticsearchClientException(
-                    "Bulk indexing failed after retries",
-                    failure != null ? failure : new ElasticsearchClientException("Bulk indexing failed after retries"));
+                    failure != null ? "Bulk indexing failed: " + failure.getMessage() : "Bulk indexing failed",
+                    failure != null ? failure : new ElasticsearchClientException("Bulk indexing failed"));
         }
         ensureBulkSucceeded();
     }
