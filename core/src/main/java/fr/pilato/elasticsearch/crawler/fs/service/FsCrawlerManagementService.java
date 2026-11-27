@@ -21,6 +21,7 @@
 package fr.pilato.elasticsearch.crawler.fs.service;
 
 import fr.pilato.elasticsearch.crawler.fs.beans.Folder;
+import fr.pilato.elasticsearch.crawler.fs.client.ElasticsearchClientException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
@@ -30,22 +31,30 @@ public interface FsCrawlerManagementService extends FsCrawlerService {
     int DIRECTORY_QUERY_LIMIT = 10_000;
 
     /**
-     * Retrieve the list of files that are currently available within a dir
+     * Retrieve the filenames currently indexed under a source directory.
      *
-     * @param path the virtual path
-     * @return a list of known files
+     * <p>A missing index or a successful empty search returns an empty collection. Other query failures propagate;
+     * callers must not treat an unavailable inventory as proof that deletion is complete.
+     *
+     * @param path the source directory path identifying the indexed parent
+     * @return a list of indexed files
      * @throws NoSuchAlgorithmException if the configured hash algorithm is unavailable
+     * @throws ElasticsearchClientException if the inventory search fails for a reason other than a missing index
      */
-    Collection<String> getFileDirectory(String path) throws NoSuchAlgorithmException;
+    Collection<String> getFileDirectory(String path) throws NoSuchAlgorithmException, ElasticsearchClientException;
 
     /**
-     * Retrieve the list of sub folders that are currently available within a dir
+     * Retrieve the real paths of child folders currently indexed under a source directory.
      *
-     * @param path the virtual path
-     * @return a list of known folders
+     * <p>A missing index or a successful empty search returns an empty collection. Other query failures propagate;
+     * callers must not treat an unavailable inventory as proof that deletion is complete.
+     *
+     * @param path the source directory path identifying the indexed parent
+     * @return a list of indexed folders
      * @throws NoSuchAlgorithmException if the configured hash algorithm is unavailable
+     * @throws ElasticsearchClientException if the inventory search fails for a reason other than a missing index
      */
-    Collection<String> getFolderDirectory(String path) throws NoSuchAlgorithmException;
+    Collection<String> getFolderDirectory(String path) throws NoSuchAlgorithmException, ElasticsearchClientException;
 
     /**
      * Store a visited directory. It will be used to compare old dirs vs current directories. So we will be able to
